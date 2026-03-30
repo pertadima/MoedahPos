@@ -1,0 +1,52 @@
+-- =============================================================================
+-- MoedahPOS — Demo Seed Reference
+-- =============================================================================
+-- This file documents the demo data structure.
+-- Run via: make seed   (which executes cmd/seed/main.go)
+-- Or:      go run ./backend/cmd/seed/main.go  (from project root)
+-- With reset: go run ./backend/cmd/seed/main.go --reset
+-- =============================================================================
+
+-- ─── Demo Users ───────────────────────────────────────────────────────────────
+-- admin@moedah.com     / Admin1234!     → superadmin (all stores)
+-- manager@moedah.com   / Manager1234!   → manager    (Toko Utama)
+-- kasir@moedah.com     / Kasir1234!     → cashier    (Toko Utama)
+-- staff@moedah.com     / Staff1234!     → staff      (Toko Utama)
+
+-- ─── Demo Stores ──────────────────────────────────────────────────────────────
+-- Toko Utama — Jakarta
+-- Cabang Bandung
+
+-- ─── Demo Suppliers ───────────────────────────────────────────────────────────
+-- PT Sumber Makmur      (Jakarta)
+-- CV Mitra Jaya Sejahtera (Bandung)
+-- UD Berkah Abadi       (Surabaya)
+
+-- ─── Demo Products (Toko Utama) ───────────────────────────────────────────────
+-- Category: Minuman
+--   BEV-001 Kopi Americano      Rp 22.000  (stock: 85)
+--   BEV-002 Kopi Latte          Rp 28.000  (stock: 72)
+--   BEV-003 Kopi Cappuccino     Rp 28.000  (stock: 60)
+--   BEV-004 Teh Hijau           Rp 15.000  (stock: 95)
+--   BEV-005 Jus Jeruk           Rp 18.000  (stock: 50)
+--   BEV-006 Air Mineral 600ml   Rp  6.000  (stock: 200)
+--   BEV-007 Susu Segar          Rp 18.000  (stock: 45)
+--   BEV-008 Es Teh Manis        Rp 12.000  (stock: 120)
+-- Category: Makanan
+--   FOOD-001 Nasi Goreng Spesial Rp 30.000 (stock: 30)
+--   FOOD-002 Mie Goreng          Rp 25.000 (stock: 30)
+--   FOOD-003 Roti Bakar Coklat   Rp 15.000 (stock: 40)
+--   FOOD-004 Sandwich Ayam       Rp 28.000 (stock: 20)
+--   FOOD-005 Pisang Goreng 5pcs  Rp 13.000 (stock: 25)
+-- Category: Snack & Cemilan
+--   SNK-001 Keripik Kentang      Rp 12.000 (stock: 80)
+--   SNK-002 Coklat Wafer         Rp 10.000 (stock: 100)
+--   SNK-003 Kacang Goreng        Rp  8.000 (stock: 60)
+--   SNK-004 Donat Gula           Rp 10.000 (stock: 35)
+-- Category: Rokok & Tembakau
+--   ROK-001 Rokok Surya 16       Rp 24.000 (stock: 3  ← low stock alert)
+--   ROK-002 Rokok Djarum Super   Rp 26.000 (stock: 5  ← low stock alert)
+
+-- ─── Sample Transactions ──────────────────────────────────────────────────────
+-- 5 completed transactions spread over the last 12 hours
+-- by kasir@moedah.com covering various products and payment methods

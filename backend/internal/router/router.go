@@ -45,6 +45,7 @@ func New(deps *Dependencies) http.Handler {
 	r.Use(chimiddleware.RealIP)
 	r.Use(chimiddleware.Recoverer)
 	r.Use(middleware.Logger(deps.Log))
+	r.Use(corsMiddleware)
 
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -169,4 +170,27 @@ func New(deps *Dependencies) http.Handler {
 // withPerm wraps a HandlerFunc with the RequirePermission middleware.
 func withPerm(deps *Dependencies, perm string, fn http.HandlerFunc) http.HandlerFunc {
 	return middleware.RequirePermission(deps.RoleStore, perm)(fn).ServeHTTP
+}
+
+// corsMiddleware adds CORS headers and handles OPTIONS preflight requests.
+// This allows the Next.js frontend (localhost:3000) to call the API (localhost:8080).
+func corsMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		origin := r.Header.Get("Origin")
+		if origin == "" {
+			origin = "*"
+		}
+		w.Header().Set("Access-Control-Allow-Origin", origin)
+		w.Header().Set("Access-Control-Allow-Credentials", "true")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Accept, Authorization, Content-Type, X-Request-Id")
+		w.Header().Set("Access-Control-Max-Age", "86400")
+
+		// Respond immediately to preflight
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
 }
