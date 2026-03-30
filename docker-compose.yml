@@ -1,0 +1,51 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: moedah_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-moedah}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-moedahsecret}
+      POSTGRES_DB: ${POSTGRES_DB:-moedah_pos}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-moedah} -d ${POSTGRES_DB:-moedah_pos}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - moedah_net
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: moedah_backend
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: ${POSTGRES_USER:-moedah}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-moedahsecret}
+      DB_NAME: ${POSTGRES_DB:-moedah_pos}
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - moedah_net
+
+volumes:
+  postgres_data:
+
+networks:
+  moedah_net:
+    driver: bridge

@@ -1,0 +1,41 @@
+package domain
+
+import "time"
+
+// Product is a sellable item belonging to a store.
+type Product struct {
+	ID          string     `db:"id"`
+	StoreID     string     `db:"store_id"`
+	CategoryID  *string    `db:"category_id"`
+	SKU         string     `db:"sku"`
+	Name        string     `db:"name"`
+	Description string     `db:"description"`
+	Barcode     *string    `db:"barcode"`
+	Unit        string     `db:"unit"`
+	CostPrice   float64    `db:"cost_price"`
+	SellPrice   float64    `db:"sell_price"`
+	TaxRate     float64    `db:"tax_rate"`
+	ImageURL    *string    `db:"image_url"`
+	IsActive    bool       `db:"is_active"`
+	CreatedAt   time.Time  `db:"created_at"`
+	UpdatedAt   time.Time  `db:"updated_at"`
+	DeletedAt   *time.Time `db:"deleted_at"`
+
+	// Populated via JOIN
+	CategoryName *string  `db:"category_name"`
+	StockQty     *float64 `db:"stock_qty"` // from stock_levels join
+}
+
+// Category groups products within a store (supports nested parent/child).
+type Category struct {
+	ID        string     `db:"id"`
+	StoreID   string     `db:"store_id"`
+	Name      string     `db:"name"`
+	ParentID  *string    `db:"parent_id"`
+	CreatedAt time.Time  `db:"created_at"`
+	UpdatedAt time.Time  `db:"updated_at"`
+	DeletedAt *time.Time `db:"deleted_at"`
+
+	// Populated via JOIN
+	ParentName *string `db:"parent_name"`
+}

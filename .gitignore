@@ -1,0 +1,39 @@
+# MoedahPOS — Root .gitignore
+
+# ── OS & Editor ──────────────────────────────────────────────
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+*.swp
+*.swo
+.idea/
+.vscode/
+*.code-workspace
+
+# ── Backend (Go) ─────────────────────────────────────────────
+backend/bin/
+backend/*.exe
+backend/*.test
+backend/vendor/
+backend/.env
+# Keep .env.example
+!backend/.env.example
+
+# ── Frontend (Next.js) ───────────────────────────────────────
+frontend/.next/
+frontend/out/
+frontend/build/
+frontend/node_modules/
+frontend/.env.local
+frontend/.env*.local
+# Keep example
+!frontend/.env.example
+
+# ── Docker ───────────────────────────────────────────────────
+.docker/
+
+# ── Logs ─────────────────────────────────────────────────────
+*.log
+logs/
+/tmp/
