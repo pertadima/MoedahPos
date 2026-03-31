@@ -23,7 +23,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedStore, setSelectedStore] = useState<UserStore | null>(null);
 
-  const stores = user?.stores?.filter(s => s.is_active) ?? [];
+  const stores = user?.stores ?? [];
 
   // On mount: try to restore session from stored refresh token
   useEffect(() => {
@@ -36,7 +36,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(u);
         // Restore selected store from localStorage
         const savedStoreId = localStorage.getItem('selected_store_id');
-        const storeList = u.stores?.filter(s => s.is_active) ?? [];
+        const storeList = u.stores ?? [];
         if (savedStoreId) {
           const found = storeList.find(s => s.store_id === savedStoreId);
           setSelectedStore(found ?? storeList[0] ?? null);
@@ -54,10 +54,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = useCallback(async (email: string, password: string) => {
     const res = await authApi.login(email, password);
-    const { access_token, refresh_token, user: u } = res.data;
+    const { access_token, refresh_token } = res.data;
     setTokens(access_token, refresh_token);
+    // Fetch full user profile (includes stores) via /me
+    const meRes = await authApi.me();
+    const u = meRes.data as User;
     setUser(u);
-    const storeList = u.stores?.filter(s => s.is_active) ?? [];
+    const storeList = u.stores ?? [];
     if (storeList.length === 1) {
       setSelectedStore(storeList[0]);
       localStorage.setItem('selected_store_id', storeList[0].store_id);

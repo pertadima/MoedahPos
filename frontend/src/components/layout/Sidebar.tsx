@@ -58,7 +58,7 @@ export default function Sidebar() {
           </select>
           {selectedStore && (
             <div style={{ fontSize: '0.7rem', color: 'var(--accent-em)', marginTop: 4 }}>
-              Role: {selectedStore.role_name}
+              Role: {selectedStore.role}
             </div>
           )}
         </div>

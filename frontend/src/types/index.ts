@@ -20,8 +20,7 @@ export interface User {
 export interface UserStore {
   store_id: string;
   store_name: string;
-  role_name: string;
-  is_active: boolean;
+  role: string;          // matches backend json:"role"
 }
 export interface LoginResponse {
   access_token: string;
