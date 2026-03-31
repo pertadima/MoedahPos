@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard, ShoppingCart, Package, Warehouse,
   ClipboardList, BarChart3, Users, LogOut,
-  Store, CreditCard, Tag, UtensilsCrossed, Grid3x3,
+  Store, CreditCard, Tag, UtensilsCrossed, Grid3x3, Receipt,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthContext';
 
@@ -13,6 +13,7 @@ const baseNavItems = [
   { href: '/dashboard',        icon: LayoutDashboard, label: 'Dashboard' },
   { href: '/stores',           icon: Store,           label: 'Toko' },
   { href: '/pos',              icon: ShoppingCart,    label: 'Kasir / POS' },
+  { href: '/transactions',     icon: Receipt,         label: 'Riwayat Transaksi' },
   { href: '/products',         icon: Package,         label: 'Produk' },
   { href: '/categories',       icon: Tag,             label: 'Kategori' },
   { href: '/stock',            icon: Warehouse,       label: 'Stok' },

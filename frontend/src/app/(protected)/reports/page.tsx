@@ -23,15 +23,26 @@ export default function ReportsPage() {
   const load = () => {
     if (!storeId) return;
     setLoading(true);
-    Promise.all([
-      reportsApi.salesSummary(storeId, dateFrom, dateTo),
-      reportsApi.byProduct(storeId, dateFrom, dateTo),
-      reportsApi.stockValuation(storeId),
-    ]).then(([s, bp, sv]) => {
-      setSummary(s.data as SalesSummaryResponse);
-      setByProduct(bp.data as SalesByProductRow[]);
-      setValuation(sv.data);
-    }).catch(console.error).finally(() => setLoading(false));
+
+    // Run all three independently — one failure should not blank the others.
+    const run = async () => {
+      const [sRes, bpRes, svRes] = await Promise.allSettled([
+        reportsApi.salesSummary(storeId, dateFrom, dateTo),
+        reportsApi.byProduct(storeId, dateFrom, dateTo),
+        reportsApi.stockValuation(storeId),
+      ]);
+
+      if (sRes.status === 'fulfilled')  setSummary(sRes.value.data as SalesSummaryResponse);
+      if (bpRes.status === 'fulfilled') setByProduct((bpRes.value.data ?? []) as SalesByProductRow[]);
+      if (svRes.status === 'fulfilled') setValuation(svRes.value.data);
+
+      if (sRes.status  === 'rejected') console.error('salesSummary:', sRes.reason);
+      if (bpRes.status === 'rejected') console.error('byProduct:', bpRes.reason);
+      if (svRes.status === 'rejected') console.error('stockValuation:', svRes.reason);
+
+      setLoading(false);
+    };
+    run();
   };
 
   useEffect(() => { load(); }, [storeId]);

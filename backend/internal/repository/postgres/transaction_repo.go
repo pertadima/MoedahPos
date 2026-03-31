@@ -118,12 +118,13 @@ func (r *TransactionRepo) FindAll(ctx context.Context, f dto.TransactionListFilt
 		i++
 	}
 	if f.DateFrom != "" {
-		conds = append(conds, fmt.Sprintf("t.created_at >= $%d", i))
+		conds = append(conds, fmt.Sprintf("t.created_at >= $%d::date", i))
 		args = append(args, f.DateFrom)
 		i++
 	}
 	if f.DateTo != "" {
-		conds = append(conds, fmt.Sprintf("t.created_at < $%d", i))
+		// inclusive end: add 1 day so "2026-03-31" covers all timestamps on that day
+		conds = append(conds, fmt.Sprintf("t.created_at < ($%d::date + INTERVAL '1 day')", i))
 		args = append(args, f.DateTo)
 		i++
 	}

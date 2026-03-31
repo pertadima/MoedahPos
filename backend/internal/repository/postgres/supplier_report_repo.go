@@ -139,7 +139,7 @@ func (r *ReportRepo) SalesSummary(ctx context.Context, storeID string, from, to 
 func (r *ReportRepo) SalesByProduct(ctx context.Context, storeID string, from, to time.Time) ([]dto.SalesByProductRow, error) {
 	const q = `
 		SELECT
-			ti.product_id,
+			COALESCE(ti.product_id::text, '') AS product_id,
 			ti.product_name,
 			ti.sku,
 			ROUND(SUM(ti.quantity)::numeric, 3)  AS total_quantity,
