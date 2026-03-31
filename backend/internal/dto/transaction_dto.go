@@ -13,8 +13,10 @@ type CreateTransactionRequest struct {
 }
 
 // TxItemInput is a single line in a sale request.
+// For retail: set product_id. For restaurant menus: set menu_item_id.
 type TxItemInput struct {
-	ProductID   string  `json:"product_id"   validate:"required,uuid"`
+	ProductID   string  `json:"product_id"   validate:"omitempty,uuid"`
+	MenuItemID  string  `json:"menu_item_id" validate:"omitempty,uuid"`
 	Quantity    float64 `json:"quantity"     validate:"required,gt=0"`
 	DiscountPct float64 `json:"discount_pct" validate:"min=0,max=100"`
 }

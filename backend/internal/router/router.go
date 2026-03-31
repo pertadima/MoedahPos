@@ -85,17 +85,17 @@ func New(deps *Dependencies) http.Handler {
 			// ── Store-scoped routes ────────────────────────────────────────────
 			r.Route("/stores", func(r chi.Router) {
 				r.Get("/",   deps.StoreHandler.List)
-				r.Post("/",  withPerm(deps, "stores.create", deps.StoreHandler.Create))
+				r.Post("/",  deps.StoreHandler.Create) // JWT-auth only; superadmin bypasses store-scoped RBAC
 
 				r.Route("/{storeId}", func(r chi.Router) {
 					r.Get("/", deps.StoreHandler.Get)
 
+					// Global store CRUD — JWT-auth only (no store-scoped role required)
+					r.Put("/",    deps.StoreHandler.Update)
+					r.Delete("/", deps.StoreHandler.Delete)
+
 					r.Group(func(r chi.Router) {
 						r.Use(middleware.StoreContext(deps.DB))
-
-						// Store CRUD
-						r.Put("/",    withPerm(deps, "stores.update", deps.StoreHandler.Update))
-						r.Delete("/", withPerm(deps, "stores.delete", deps.StoreHandler.Delete))
 
 						// Members
 						r.Route("/members", func(r chi.Router) {

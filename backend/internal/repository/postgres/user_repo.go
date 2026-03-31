@@ -89,8 +89,9 @@ func (r *UserRepo) FindStoresByUserID(ctx context.Context, userID string) ([]dom
 			us.role_id,
 			us.is_active,
 			us.created_at,
-			s.name  AS store_name,
-			ro.name AS role_name
+			s.name       AS store_name,
+			s.store_type AS store_type,
+			ro.name      AS role_name
 		FROM user_stores us
 		JOIN stores s  ON s.id  = us.store_id AND s.deleted_at IS NULL
 		JOIN roles  ro ON ro.id = us.role_id

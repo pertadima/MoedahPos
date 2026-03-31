@@ -205,6 +205,7 @@ func (s *AuthService) Me(ctx context.Context, userID string) (*dto.MeResponse, e
 		storeInfos = append(storeInfos, dto.StoreRoleInfo{
 			StoreID:   us.StoreID,
 			StoreName: us.StoreName,
+			StoreType: us.StoreType,
 			Role:      us.RoleName,
 		})
 	}

@@ -1,6 +1,7 @@
 // cmd/seed/main.go — Demo data seeder for MoedahPOS
 // Usage: go run ./cmd/seed/main.go
-//        go run ./cmd/seed/main.go --reset   (drop all data, then re-seed)
+//
+//	go run ./cmd/seed/main.go --reset   (drop all data, then re-seed)
 package main
 
 import (
@@ -127,7 +128,7 @@ var catalogBandung = []ProductSeed{
 	{"Gula Pasir 250g", "BDG-DLY-008", "pcs", "Kebutuhan Harian", 5_000, 8_000, 0, 50, 10, "8998000008"},
 }
 
-// ── Main ──────────────────────────────────────────────────────────────────────
+// ── Main ────────────────────────────────────────────────────────────────────── d
 
 func main() {
 	reset := flag.Bool("reset", false, "Truncate all demo tables before seeding")
@@ -197,28 +198,33 @@ func main() {
 	rows.Close()
 
 	// ── Stores ────────────────────────────────────────────────────────────────
-	type storeRow struct{ ID, Name, Address, Phone, TaxNum string }
+	type storeRow struct{ ID, Name, Address, Phone, TaxNum, StoreType string }
 	storeList := []storeRow{
-		{uuid.NewString(), "Toko Utama — Jakarta", "Jl. Sudirman No. 12, Jakarta Pusat", "021-5551234", "02.123.456.7-001.000"},
-		{uuid.NewString(), "Cabang Bandung", "Jl. Dago No. 88, Bandung", "022-7778899", "02.123.456.7-002.000"},
+		{uuid.NewString(), "Toko Utama — Jakarta", "Jl. Sudirman No. 12, Jakarta Pusat", "021-5551234", "02.123.456.7-001.000", "retail"},
+		{uuid.NewString(), "Cabang Bandung", "Jl. Dago No. 88, Bandung", "022-7778899", "02.123.456.7-002.000", "retail"},
+		{uuid.NewString(), "Rumah Makan Padang Saiyo", "Jl. Minangkabau No. 17, Jakarta Selatan", "021-7779988", "02.456.789.1-003.000", "restaurant"},
 	}
 	for _, s := range storeList {
 		_, err = db.ExecContext(ctx, `
-			INSERT INTO stores (id, name, address, phone, tax_number, currency, is_active)
-			VALUES ($1, $2, $3, $4, $5, 'IDR', true) ON CONFLICT DO NOTHING
-		`, s.ID, s.Name, s.Address, s.Phone, s.TaxNum)
+			INSERT INTO stores (id, name, address, phone, tax_number, currency, store_type, is_active)
+			VALUES ($1, $2, $3, $4, $5, 'IDR', $6, true) ON CONFLICT DO NOTHING
+		`, s.ID, s.Name, s.Address, s.Phone, s.TaxNum, s.StoreType)
 		must(err)
-		log.Printf("   ✓ Store: %s", s.Name)
+		log.Printf("   ✓ Store: %s (%s)", s.Name, s.StoreType)
 	}
 	mainStoreID := storeList[0].ID
 	branchStoreID := storeList[1].ID
+	padangStoreID := storeList[2].ID
 
 	// ── User ↔ Store Memberships ───────────────────────────────────────────────
 	memberships := []struct{ Email, StoreID, Role string }{
 		{"admin@moedah.com", mainStoreID, "superadmin"},
 		{"admin@moedah.com", branchStoreID, "superadmin"},
+		{"admin@moedah.com", padangStoreID, "superadmin"},
 		{"manager@moedah.com", mainStoreID, "manager"},
+		{"manager@moedah.com", padangStoreID, "manager"},
 		{"kasir@moedah.com", mainStoreID, "cashier"},
+		{"kasir@moedah.com", padangStoreID, "cashier"},
 		{"staff@moedah.com", mainStoreID, "staff"},
 		{"kasir.bdg@moedah.com", branchStoreID, "cashier"},
 	}
@@ -265,6 +271,11 @@ func main() {
 	catMapBandung := seedCategories(ctx, db, branchStoreID, uniqueCategories(catalogBandung))
 	n2 := seedProducts(ctx, db, branchStoreID, catalogBandung, catMapBandung)
 	log.Printf("   ✓ Cabang Bandung       : %d products / %d categories", n2, len(catMapBandung))
+
+	// ── Restaurant Padang Seed ────────────────────────────────────────────────
+	log.Println("")
+	log.Println("   🍽️  Seeding restaurant (Padang) data...")
+	seedRestaurantPadang(ctx, db, padangStoreID, userIDs["admin@moedah.com"])
 
 	// ── Sample Purchase Orders ────────────────────────────────────────────────
 	adminID := userIDs["admin@moedah.com"]
@@ -464,6 +475,8 @@ func seedTransactions(ctx context.Context, db *sqlx.DB, storeID, cashierID strin
 // resetData deletes all demo tables (preserves roles/permissions/migrations).
 func resetData(ctx context.Context, db *sqlx.DB) {
 	tables := []string{
+		"menu_item_ingredients", "menu_items",
+		"restaurant_tables",
 		"transaction_items", "transactions",
 		"stock_movements", "stock_levels",
 		"purchase_order_items", "purchase_orders",
@@ -477,4 +490,256 @@ func resetData(ctx context.Context, db *sqlx.DB) {
 		}
 	}
 	log.Println("   ✓ All demo tables cleared")
+}
+
+// ── Restaurant Padang Seeder ──────────────────────────────────────────────────
+
+// catalogPadang defines the raw ingredients / stock items used by a Padang restaurant.
+// These are stored in products/stock_levels as ingredients.
+var catalogPadang = []ProductSeed{
+	// ── Daging & Protein ───────────────────────────────────
+	{"Daging Sapi", "PDG-001", "kg", "Daging & Protein", 130_000, 0, 0, 20, 2, ""},
+	{"Ayam Kampung", "PDG-002", "kg", "Daging & Protein", 65_000, 0, 0, 25, 3, ""},
+	{"Ikan Kakap", "PDG-003", "kg", "Daging & Protein", 80_000, 0, 0, 10, 2, ""},
+	{"Telur Ayam", "PDG-004", "butir", "Daging & Protein", 2_500, 0, 0, 300, 50, ""},
+	{"Paru Sapi", "PDG-005", "kg", "Daging & Protein", 90_000, 0, 0, 8, 1, ""},
+	{"Kikil Sapi", "PDG-006", "kg", "Daging & Protein", 70_000, 0, 0, 5, 1, ""},
+	// ── Sayur & Nabati ────────────────────────────────────
+	{"Nangka Muda", "PDG-011", "kg", "Sayur & Nabati", 8_000, 0, 0, 15, 2, ""},
+	{"Kacang Panjang", "PDG-012", "kg", "Sayur & Nabati", 12_000, 0, 0, 10, 2, ""},
+	{"Daun Singkong", "PDG-013", "ikat", "Sayur & Nabati", 5_000, 0, 0, 30, 5, ""},
+	{"Terong Ungu", "PDG-014", "kg", "Sayur & Nabati", 15_000, 0, 0, 10, 2, ""},
+	{"Pare", "PDG-015", "kg", "Sayur & Nabati", 12_000, 0, 0, 8, 1, ""},
+	// ── Bumbu & Rempah ────────────────────────────────────
+	{"Santan Kelapa", "PDG-021", "liter", "Bumbu & Rempah", 20_000, 0, 0, 40, 5, ""},
+	{"Cabai Merah", "PDG-022", "kg", "Bumbu & Rempah", 45_000, 0, 0, 10, 2, ""},
+	{"Bawang Merah", "PDG-023", "kg", "Bumbu & Rempah", 35_000, 0, 0, 15, 3, ""},
+	{"Bawang Putih", "PDG-024", "kg", "Bumbu & Rempah", 40_000, 0, 0, 10, 2, ""},
+	{"Lengkuas", "PDG-025", "kg", "Bumbu & Rempah", 25_000, 0, 0, 5, 1, ""},
+	{"Serai", "PDG-026", "batang", "Bumbu & Rempah", 2_000, 0, 0, 50, 10, ""},
+	{"Daun Jeruk", "PDG-027", "lembar", "Bumbu & Rempah", 500, 0, 0, 100, 20, ""},
+	{"Kunyit", "PDG-028", "kg", "Bumbu & Rempah", 20_000, 0, 0, 5, 1, ""},
+	// ── Karbohidrat ───────────────────────────────────────
+	{"Beras", "PDG-031", "kg", "Karbohidrat", 13_000, 0, 0, 100, 20, ""},
+	{"Lontong", "PDG-032", "porsi", "Karbohidrat", 3_000, 0, 0, 80, 10, ""},
+	// ── Minuman ───────────────────────────────────────────
+	{"Es Batu", "PDG-041", "kg", "Minuman", 3_000, 0, 0, 20, 5, ""},
+	{"Teh Celup", "PDG-042", "sachet", "Minuman", 500, 0, 0, 200, 30, ""},
+	{"Gula Pasir", "PDG-043", "kg", "Minuman", 14_000, 0, 0, 20, 5, ""},
+	{"Jeruk Nipis", "PDG-044", "buah", "Minuman", 1_500, 0, 0, 50, 10, ""},
+}
+
+// menuPadang defines the sold menu items with their ingredient compositions.
+type menuItemSeed struct {
+	Name, Category, Description string
+	SellPrice, TaxRate          float64
+	Ingredients                 []struct{ SKU string; Qty float64 }
+}
+
+var menuPadang = []menuItemSeed{
+	{
+		"Rendang Sapi", "Masakan Utama",
+		"Rendang daging sapi empuk dimasak lama dengan santan dan rempah khas Minang",
+		45_000, 11,
+		[]struct{ SKU string; Qty float64 }{
+			{"PDG-001", 0.25}, // 250g daging sapi
+			{"PDG-021", 0.2},  // 200ml santan
+			{"PDG-022", 0.05}, // 50g cabai
+			{"PDG-023", 0.03}, // 30g bawang merah
+			{"PDG-024", 0.02}, // 20g bawang putih
+			{"PDG-025", 0.02}, // 20g lengkuas
+			{"PDG-028", 0.01}, // 10g kunyit
+			{"PDG-031", 0.2},  // 200g beras (nasi)
+		},
+	},
+	{
+		"Gulai Ayam", "Masakan Utama",
+		"Ayam kampung dimasak gulai kuning dengan santan gurih dan rempah lengkap",
+		35_000, 11,
+		[]struct{ SKU string; Qty float64 }{
+			{"PDG-002", 0.25},
+			{"PDG-021", 0.25},
+			{"PDG-022", 0.04},
+			{"PDG-023", 0.03},
+			{"PDG-028", 0.01},
+			{"PDG-026", 2},
+			{"PDG-031", 0.2},
+		},
+	},
+	{
+		"Gulai Paku (Gulai Pakis)", "Masakan Utama",
+		"Sayur pakis dimasak gulai santan khas Minang",
+		20_000, 11,
+		[]struct{ SKU string; Qty float64 }{
+			{"PDG-013", 0.15},
+			{"PDG-021", 0.15},
+			{"PDG-022", 0.03},
+			{"PDG-023", 0.02},
+			{"PDG-031", 0.2},
+		},
+	},
+	{
+		"Sayur Nangka", "Masakan Utama",
+		"Nangka muda dimasak dengan santan dan bumbu Padang",
+		18_000, 11,
+		[]struct{ SKU string; Qty float64 }{
+			{"PDG-011", 0.2},
+			{"PDG-021", 0.15},
+			{"PDG-023", 0.02},
+			{"PDG-031", 0.2},
+		},
+	},
+	{
+		"Telur Balado", "Lauk Pelengkap",
+		"Telur ayam goreng dibalut sambal balado merah pedas",
+		12_000, 0,
+		[]struct{ SKU string; Qty float64 }{
+			{"PDG-004", 2},
+			{"PDG-022", 0.03},
+			{"PDG-023", 0.02},
+			{"PDG-024", 0.01},
+		},
+	},
+	{
+		"Gulai Ikan Kakap", "Masakan Utama",
+		"Ikan kakap segar dimasak gulai kuning pedas khas Minanga",
+		38_000, 11,
+		[]struct{ SKU string; Qty float64 }{
+			{"PDG-003", 0.25},
+			{"PDG-021", 0.2},
+			{"PDG-022", 0.04},
+			{"PDG-028", 0.01},
+			{"PDG-026", 2},
+			{"PDG-027", 3},
+			{"PDG-031", 0.2},
+		},
+	},
+	{
+		"Dendeng Balado", "Masakan Utama",
+		"Irisan daging sapi tipis digoreng kering dilumuri balado",
+		42_000, 11,
+		[]struct{ SKU string; Qty float64 }{
+			{"PDG-001", 0.2},
+			{"PDG-022", 0.05},
+			{"PDG-023", 0.03},
+			{"PDG-031", 0.2},
+		},
+	},
+	{
+		"Gulai Tunjang (Kikil)", "Masakan Utama",
+		"Kikil sapi empuk dimasak gulai santan kental",
+		30_000, 11,
+		[]struct{ SKU string; Qty float64 }{
+			{"PDG-006", 0.2},
+			{"PDG-021", 0.2},
+			{"PDG-022", 0.04},
+			{"PDG-025", 0.02},
+			{"PDG-031", 0.2},
+		},
+	},
+	{
+		"Nasi Putih", "Nasi",
+		"Nasi putih pulen porsi dewasa",
+		5_000, 0,
+		[]struct{ SKU string; Qty float64 }{
+			{"PDG-031", 0.2},
+		},
+	},
+	{
+		"Es Teh Manis", "Minuman",
+		"Teh manis segar dengan es batu",
+		8_000, 0,
+		[]struct{ SKU string; Qty float64 }{
+			{"PDG-042", 1},
+			{"PDG-043", 0.02},
+			{"PDG-041", 0.1},
+		},
+	},
+	{
+		"Es Jeruk", "Minuman",
+		"Jeruk nipis peras segar dengan es batu dan gula",
+		10_000, 0,
+		[]struct{ SKU string; Qty float64 }{
+			{"PDG-044", 3},
+			{"PDG-043", 0.03},
+			{"PDG-041", 0.15},
+		},
+	},
+	{
+		"Teh Hangat", "Minuman",
+		"Teh tawar atau manis, disajikan hangat",
+		6_000, 0,
+		[]struct{ SKU string; Qty float64 }{
+			{"PDG-042", 1},
+			{"PDG-043", 0.02},
+		},
+	},
+}
+
+// seedRestaurantPadang seeds tables, ingredient products, and menu items.
+func seedRestaurantPadang(ctx context.Context, db *sqlx.DB, storeID, adminID string) {
+	// ── Tables (Meja) ──────────────────────────────────────────────────────────
+	tableNames := []struct{ Number string; Capacity int; Notes string }{
+		{"1", 4, "Dekat pintu masuk"},
+		{"2", 4, ""},
+		{"3", 6, "Meja keluarga"},
+		{"4", 6, "Meja keluarga"},
+		{"5", 2, "Pojok"},
+		{"6", 2, "Pojok"},
+		{"VIP-1", 8, "Ruang VIP ber-AC"},
+		{"VIP-2", 8, "Ruang VIP ber-AC"},
+	}
+	for _, t := range tableNames {
+		_, err := db.ExecContext(ctx, `
+			INSERT INTO restaurant_tables (id, store_id, table_number, capacity, status, notes)
+			VALUES ($1, $2, $3, $4, 'available', $5)
+			ON CONFLICT DO NOTHING
+		`, uuid.NewString(), storeID, t.Number, t.Capacity, t.Notes)
+		must(err)
+	}
+	log.Printf("   ✓ Seeded %d restaurant tables", len(tableNames))
+
+	// ── Ingredient products (raw materials) ───────────────────────────────────
+	catMap := seedCategories(ctx, db, storeID, uniqueCategories(catalogPadang))
+	n := seedProducts(ctx, db, storeID, catalogPadang, catMap)
+	log.Printf("   ✓ Seeded %d ingredient products / %d categories", n, len(catMap))
+
+	// ── Menu items ────────────────────────────────────────────────────────────
+	// Ensure menu categories exist
+	menucatNames := []string{"Masakan Utama", "Lauk Pelengkap", "Nasi", "Minuman"}
+	menucatMap := seedCategories(ctx, db, storeID, menucatNames)
+
+	for _, m := range menuPadang {
+		catID := menucatMap[m.Category]
+		menuItemID := uuid.NewString()
+		_, err := db.ExecContext(ctx, `
+			INSERT INTO menu_items (id, store_id, category_id, name, description, sell_price, tax_rate)
+			VALUES ($1, $2, $3, $4, $5, $6, $7)
+			ON CONFLICT DO NOTHING
+		`, menuItemID, storeID, catID, m.Name, m.Description, m.SellPrice, m.TaxRate)
+		must(err)
+
+		// re-read actual id (may already exist)
+		var actualMenuID string
+		must(db.QueryRowContext(ctx,
+			`SELECT id FROM menu_items WHERE store_id=$1 AND name=$2`, storeID, m.Name,
+		).Scan(&actualMenuID))
+
+		for _, ing := range m.Ingredients {
+			var prodID string
+			err := db.QueryRowContext(ctx,
+				`SELECT id FROM products WHERE store_id=$1 AND sku=$2`, storeID, ing.SKU,
+			).Scan(&prodID)
+			if err != nil {
+				log.Printf("   warn: ingredient SKU %s not found for menu %s", ing.SKU, m.Name)
+				continue
+			}
+			_, _ = db.ExecContext(ctx, `
+				INSERT INTO menu_item_ingredients (id, menu_item_id, product_id, quantity)
+				VALUES ($1, $2, $3, $4)
+				ON CONFLICT DO NOTHING
+			`, uuid.NewString(), actualMenuID, prodID, ing.Qty)
+		}
+	}
+	log.Printf("   ✓ Seeded %d menu items with ingredients", len(menuPadang))
 }

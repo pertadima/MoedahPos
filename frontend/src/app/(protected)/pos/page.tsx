@@ -1,39 +1,101 @@
 'use client';
 
 import { useEffect, useReducer, useState, useCallback } from 'react';
-import { Search, ShoppingCart, Trash2, Printer, X, Minus, Plus, Loader2, CheckCircle2 } from 'lucide-react';
+import {
+  Search, ShoppingCart, Trash2, Printer, X, Minus, Plus, Loader2,
+  CheckCircle2, UtensilsCrossed, ShoppingBag,
+} from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { productsApi } from '@/lib/api/products';
+import { menuItemsApi } from '@/lib/api/store-apis';
 import { transactionsApi } from '@/lib/api/transactions';
 import { formatRp, productEmoji } from '@/lib/utils';
-import type { Product, Category, CartItem, Transaction } from '@/types';
+import type { Product, Category, CartItem, Transaction, MenuItem } from '@/types';
 import { ApiError } from '@/lib/api/client';
 
-// ── Cart Reducer ─────────────────────────────────────────────────────────────
+// ── Unified cart item type ────────────────────────────────────────────────────
+// We re-use CartItem but may hold either a product or a menu item.
+// menuItemId is set for restaurant items.
+interface PosCartItem extends CartItem {
+  menuItemId?: string;
+}
+
 type CartAction =
-  | { type: 'ADD'; product: Product }
-  | { type: 'REMOVE'; productId: string }
-  | { type: 'SET_QTY'; productId: string; qty: number }
+  | { type: 'ADD_PRODUCT'; product: Product }
+  | { type: 'ADD_MENU'; item: MenuItem }
+  | { type: 'REMOVE'; id: string }
+  | { type: 'SET_QTY'; id: string; qty: number }
   | { type: 'CLEAR' };
 
-function makeCartItem(product: Product, qty = 1): CartItem {
+function makeFromProduct(product: Product, qty = 1): PosCartItem {
   const net = product.sell_price * qty;
   const tax = net * (product.tax_rate / 100);
-  return { product, quantity: qty, discount_pct: 0, unitPrice: product.sell_price, subtotal: net, taxAmt: tax };
+  return {
+    product,
+    quantity: qty,
+    discount_pct: 0,
+    unitPrice: product.sell_price,
+    subtotal: net,
+    taxAmt: tax,
+  };
 }
-function cartReducer(state: CartItem[], action: CartAction): CartItem[] {
+
+function makeFromMenu(item: MenuItem, qty = 1): PosCartItem {
+  const price = item.sell_price;
+  const taxRate = item.tax_rate ?? 0;
+  const net = price * qty;
+  const tax = net * (taxRate / 100);
+  // Coerce MenuItem into Product shape enough for the cart
+  const fakeProduct: Product = {
+    id: item.id,
+    name: item.name,
+    sku: 'MENU',
+    unit: 'porsi',
+    sell_price: price,
+    cost_price: 0,
+    tax_rate: taxRate,
+    is_active: true,
+    store_id: item.store_id,
+    category_id: item.category_id ?? '',
+    barcode: '',
+    created_at: '',
+    updated_at: '',
+  };
+  return {
+    product: fakeProduct,
+    quantity: qty,
+    discount_pct: 0,
+    unitPrice: price,
+    subtotal: net,
+    taxAmt: tax,
+    menuItemId: item.id,
+  };
+}
+
+function cartReducer(state: PosCartItem[], action: CartAction): PosCartItem[] {
   switch (action.type) {
-    case 'ADD': {
-      const idx = state.findIndex(i => i.product.id === action.product.id);
-      if (idx >= 0) {
-        return state.map((item, i) => i === idx ? makeCartItem(item.product, item.quantity + 1) : item);
-      }
-      return [...state, makeCartItem(action.product)];
+    case 'ADD_PRODUCT': {
+      const idx = state.findIndex(i => i.product.id === action.product.id && !i.menuItemId);
+      if (idx >= 0) return state.map((item, i) => i === idx ? makeFromProduct(item.product, item.quantity + 1) : item);
+      return [...state, makeFromProduct(action.product)];
     }
-    case 'REMOVE': return state.filter(i => i.product.id !== action.productId);
+    case 'ADD_MENU': {
+      const idx = state.findIndex(i => i.menuItemId === action.item.id);
+      if (idx >= 0) return state.map((item, i) => i === idx ? makeFromMenu(action.item, item.quantity + 1) : item);
+      return [...state, makeFromMenu(action.item)];
+    }
+    case 'REMOVE': return state.filter(i => i.product.id !== action.id);
     case 'SET_QTY': {
-      if (action.qty < 1) return state.filter(i => i.product.id !== action.productId);
-      return state.map(i => i.product.id === action.productId ? makeCartItem(i.product, action.qty) : i);
+      if (action.qty < 1) return state.filter(i => i.product.id !== action.id);
+      return state.map(i => {
+        if (i.product.id !== action.id) return i;
+        if (i.menuItemId) {
+          const net = i.unitPrice * action.qty;
+          const tax = net * ((i.product.tax_rate) / 100);
+          return { ...i, quantity: action.qty, subtotal: net, taxAmt: tax };
+        }
+        return makeFromProduct(i.product, action.qty);
+      });
     }
     case 'CLEAR': return [];
     default: return state;
@@ -42,7 +104,7 @@ function cartReducer(state: CartItem[], action: CartAction): CartItem[] {
 
 // ── Payment Modal ─────────────────────────────────────────────────────────────
 function PaymentModal({
-  total, onClose, onConfirm, loading
+  total, onClose, onConfirm, loading,
 }: {
   total: number; onClose: () => void;
   onConfirm: (method: string, amount: number) => void; loading: boolean;
@@ -69,13 +131,11 @@ function PaymentModal({
           <button onClick={onClose} className="btn btn-ghost btn-sm"><X size={16} /></button>
         </div>
 
-        {/* Total */}
         <div style={{ background: 'rgba(16,185,129,0.1)', borderRadius: 10, padding: '14px 18px', marginBottom: 18, textAlign: 'center' }}>
           <div style={{ fontSize: '0.8rem', color: 'var(--text-2)', marginBottom: 2 }}>Total Pembayaran</div>
           <div style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--accent-em)' }}>{formatRp(total)}</div>
         </div>
 
-        {/* Method */}
         <div style={{ marginBottom: 16 }}>
           <div style={{ fontSize: '0.78rem', color: 'var(--text-3)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Metode Bayar</div>
           <div className="pay-method-tabs">
@@ -87,7 +147,6 @@ function PaymentModal({
           </div>
         </div>
 
-        {/* Cash numpad */}
         {method === 'cash' && (
           <>
             <div style={{ marginBottom: 8 }}>
@@ -143,8 +202,6 @@ function PaymentModal({
 
 // ── Receipt Modal ─────────────────────────────────────────────────────────────
 function ReceiptModal({ txn, onClose }: { txn: Transaction; onClose: () => void }) {
-  const handlePrint = () => window.print();
-
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-box" style={{ maxWidth: 340 }} onClick={e => e.stopPropagation()}>
@@ -153,7 +210,6 @@ function ReceiptModal({ txn, onClose }: { txn: Transaction; onClose: () => void 
           <button onClick={onClose} className="btn btn-ghost btn-sm"><X size={16} /></button>
         </div>
 
-        {/* Receipt content (also printed) */}
         <div id="receipt-content" style={{ fontFamily: "'Courier New', monospace", fontSize: '0.82rem', lineHeight: 1.6 }}>
           <div style={{ textAlign: 'center', marginBottom: 12, borderBottom: '1px dashed var(--border-md)', paddingBottom: 10 }}>
             <div style={{ fontWeight: 800, fontSize: '1rem' }}>MoedahPOS</div>
@@ -205,7 +261,7 @@ function ReceiptModal({ txn, onClose }: { txn: Transaction; onClose: () => void 
 
         <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
           <button className="btn btn-secondary" style={{ flex: 1 }} onClick={onClose}>Tutup</button>
-          <button className="btn btn-primary" style={{ flex: 1 }} onClick={handlePrint}>
+          <button className="btn btn-primary" style={{ flex: 1 }} onClick={() => window.print()}>
             <Printer size={15} /> Cetak
           </button>
         </div>
@@ -217,8 +273,16 @@ function ReceiptModal({ txn, onClose }: { txn: Transaction; onClose: () => void 
 // ── Main POS Page ─────────────────────────────────────────────────────────────
 export default function POSPage() {
   const { selectedStore } = useAuth();
+  const isRestaurant = selectedStore?.store_type === 'restaurant';
+
+  // Retail state
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+
+  // Restaurant state
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [menuCategories, setMenuCategories] = useState<string[]>([]);
+
   const [cart, dispatch] = useReducer(cartReducer, []);
   const [search, setSearch] = useState('');
   const [activeCat, setActiveCat] = useState('all');
@@ -230,20 +294,39 @@ export default function POSPage() {
 
   const storeId = selectedStore?.store_id;
 
+  // Reset cart and refetch when store / mode changes
   useEffect(() => {
     if (!storeId) return;
+    dispatch({ type: 'CLEAR' });
+    setActiveCat('all');
+    setSearch('');
     setLoading(true);
-    Promise.all([
-      productsApi.list(storeId, { per_page: 200 }),
-      productsApi.listCategories(storeId),
-    ]).then(([p, c]) => {
-      setProducts((p.data as any).data ?? []);
-      setCategories(c.data as Category[]);
-    }).catch(console.error)
-      .finally(() => setLoading(false));
-  }, [storeId]);
 
-  const filtered = products.filter(p => {
+    if (isRestaurant) {
+      menuItemsApi.list(storeId)
+        .then(res => {
+          const items: MenuItem[] = (res.data as any) ?? [];
+          setMenuItems(items);
+          // Collect unique categories
+          const cats = Array.from(new Set(items.map(i => i.category_name ?? 'Lainnya').filter(Boolean)));
+          setMenuCategories(cats);
+        })
+        .catch(console.error)
+        .finally(() => setLoading(false));
+    } else {
+      Promise.all([
+        productsApi.list(storeId, { per_page: 200 }),
+        productsApi.listCategories(storeId),
+      ]).then(([p, c]) => {
+        setProducts((p.data as any).data ?? []);
+        setCategories(c.data as Category[]);
+      }).catch(console.error)
+        .finally(() => setLoading(false));
+    }
+  }, [storeId, isRestaurant]);
+
+  // ── Filtered lists ──────────────────────────────────────────────────────────
+  const filteredProducts = products.filter(p => {
     if (!p.is_active) return false;
     const matchSearch = p.name.toLowerCase().includes(search.toLowerCase()) ||
                         p.sku.toLowerCase().includes(search.toLowerCase());
@@ -251,21 +334,35 @@ export default function POSPage() {
     return matchSearch && matchCat;
   });
 
-  // Totals
+  const filteredMenuItems = menuItems.filter(m => {
+    const matchSearch = m.name.toLowerCase().includes(search.toLowerCase());
+    const catName = m.category_name ?? 'Lainnya';
+    const matchCat = activeCat === 'all' || catName === activeCat;
+    return matchSearch && matchCat;
+  });
+
+  // ── Totals ──────────────────────────────────────────────────────────────────
   const subtotal = cart.reduce((s, i) => s + i.subtotal, 0);
-  const taxAmt = cart.reduce((s, i) => s + i.taxAmt, 0);
-  const total = subtotal + taxAmt;
+  const taxAmt   = cart.reduce((s, i) => s + i.taxAmt, 0);
+  const total    = subtotal + taxAmt;
   const itemCount = cart.reduce((s, i) => s + i.quantity, 0);
 
+  // ── Checkout ────────────────────────────────────────────────────────────────
   const handleConfirmPayment = useCallback(async (method: string, amount: number) => {
     if (!storeId) return;
     setPayLoading(true);
     setError('');
     try {
+      const items = (cart as PosCartItem[]).map(i => ({
+        product_id:   i.menuItemId ? '' : i.product.id,
+        menu_item_id: i.menuItemId ?? '',
+        quantity:     i.quantity,
+        discount_pct: 0,
+      }));
       const res = await transactionsApi.checkout(storeId, {
         payment_method: method,
         payment_amount: amount,
-        items: cart.map(i => ({ product_id: i.product.id, quantity: i.quantity, discount_pct: 0 })),
+        items,
       });
       setReceipt(res.data as Transaction);
       dispatch({ type: 'CLEAR' });
@@ -286,16 +383,30 @@ export default function POSPage() {
     );
   }
 
+  // ── Render ──────────────────────────────────────────────────────────────────
   return (
     <div className="pos-layout">
-      {/* ── LEFT: Product Catalog ── */}
+      {/* ── LEFT: Catalog ── */}
       <div className="pos-catalog">
+        {/* Mode badge */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+          <div style={{
+            display: 'inline-flex', alignItems: 'center', gap: 5,
+            padding: '4px 10px', borderRadius: 8, fontSize: '0.75rem', fontWeight: 600,
+            background: isRestaurant ? 'rgba(251,146,60,0.12)' : 'rgba(16,185,129,0.12)',
+            color: isRestaurant ? '#fb923c' : '#10b981',
+          }}>
+            {isRestaurant ? <UtensilsCrossed size={13} /> : <ShoppingBag size={13} />}
+            {isRestaurant ? 'Mode Restoran — Menu' : 'Mode Retail — Produk'}
+          </div>
+        </div>
+
         {/* Search */}
-        <div style={{ position: 'relative' }}>
+        <div style={{ position: 'relative', marginBottom: 10 }}>
           <Search size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-3)' }} />
           <input
             className="input" style={{ paddingLeft: 36 }}
-            placeholder="Cari produk atau SKU..."
+            placeholder={isRestaurant ? 'Cari menu...' : 'Cari produk atau SKU...'}
             value={search} onChange={e => setSearch(e.target.value)}
           />
         </div>
@@ -305,80 +416,138 @@ export default function POSPage() {
           <button className={`cat-tab ${activeCat === 'all' ? 'active' : ''}`} onClick={() => setActiveCat('all')}>
             Semua
           </button>
-          {categories.map(c => (
-            <button key={c.id} className={`cat-tab ${activeCat === c.id ? 'active' : ''}`} onClick={() => setActiveCat(c.id)}>
-              {c.name}
-            </button>
-          ))}
+          {isRestaurant
+            ? menuCategories.map(c => (
+                <button key={c} className={`cat-tab ${activeCat === c ? 'active' : ''}`} onClick={() => setActiveCat(c)}>
+                  {c}
+                </button>
+              ))
+            : categories.map(c => (
+                <button key={c.id} className={`cat-tab ${activeCat === c.id ? 'active' : ''}`} onClick={() => setActiveCat(c.id)}>
+                  {c.name}
+                </button>
+              ))
+          }
         </div>
 
         {/* Error */}
         {error && (
-          <div style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 8, padding: '10px 14px', color: '#f87171', fontSize: '0.85rem', display: 'flex', justifyContent: 'space-between' }}>
+          <div style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 8, padding: '10px 14px', color: '#f87171', fontSize: '0.85rem', display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
             {error}
             <button onClick={() => setError('')} style={{ background: 'none', border: 'none', color: '#f87171', cursor: 'pointer' }}><X size={14} /></button>
           </div>
         )}
 
-        {/* Product Grid */}
+        {/* Grid */}
         {loading ? (
           <div style={{ display: 'flex', justifyContent: 'center', padding: 48 }}>
             <Loader2 size={28} className="loading-spin" style={{ color: 'var(--accent-em)' }} />
           </div>
-        ) : filtered.length === 0 ? (
-          <div className="empty-state">
-            <Search size={32} />
-            <p>Tidak ada produk ditemukan</p>
-          </div>
-        ) : (
-          <div className="product-grid">
-            {filtered.map(p => {
-              const inCart = cart.find(i => i.product.id === p.id);
-              const outOfStock = (p.stock_qty ?? 1) <= 0;
-              return (
-                <div
-                  key={p.id}
-                  className={`product-card ${outOfStock ? 'out-of-stock' : ''}`}
-                  onClick={() => !outOfStock && dispatch({ type: 'ADD', product: p })}
-                >
-                  {inCart && (
-                    <div style={{
-                      position: 'absolute', top: 6, right: 6,
-                      background: 'var(--accent-em)', color: '#fff',
-                      borderRadius: '50%', width: 20, height: 20,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: '0.7rem', fontWeight: 700,
-                    }}>
-                      {inCart.quantity}
-                    </div>
-                  )}
-                  <div className="product-icon">{productEmoji(p.name)}</div>
-                  <div className="product-name">{p.name}</div>
-                  <div className="product-sku">{p.sku}</div>
-                  <div className="product-price">{formatRp(p.sell_price)}</div>
-                  <div className="product-stock">
-                    {outOfStock
-                      ? <span className="badge badge-red">Habis</span>
-                      : p.stock_qty !== undefined && p.stock_qty <= 5
-                        ? <span className="badge badge-amber">{p.stock_qty} {p.unit}</span>
-                        : <span className="badge badge-green">{p.stock_qty ?? '–'} {p.unit}</span>
-                    }
+        ) : isRestaurant ? (
+          /* ── Restaurant: Menu Items ── */
+          filteredMenuItems.length === 0 ? (
+            <div className="empty-state">
+              <UtensilsCrossed size={32} />
+              <p>Tidak ada menu ditemukan</p>
+            </div>
+          ) : (
+            <div className="product-grid">
+              {filteredMenuItems.map(m => {
+                const inCart = cart.find(i => i.menuItemId === m.id);
+                return (
+                  <div
+                    key={m.id}
+                    className="product-card"
+                    onClick={() => dispatch({ type: 'ADD_MENU', item: m })}
+                  >
+                    {inCart && (
+                      <div style={{
+                        position: 'absolute', top: 6, right: 6,
+                        background: '#fb923c', color: '#fff',
+                        borderRadius: '50%', width: 20, height: 20,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: '0.7rem', fontWeight: 700,
+                      }}>
+                        {inCart.quantity}
+                      </div>
+                    )}
+                    <div className="product-icon">🍽️</div>
+                    <div className="product-name">{m.name}</div>
+                    {m.category_name && <div className="product-sku">{m.category_name}</div>}
+                    <div className="product-price">{formatRp(m.sell_price)}</div>
+                    {m.description && (
+                      <div style={{ fontSize: '0.68rem', color: 'var(--text-3)', lineHeight: 1.3, marginTop: 2, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+                        {m.description}
+                      </div>
+                    )}
+                    {m.ingredients && m.ingredients.length > 0 && (
+                      <div style={{ fontSize: '0.65rem', color: 'var(--text-3)', marginTop: 3 }}>
+                        🧂 {m.ingredients.length} bahan
+                      </div>
+                    )}
                   </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )
+        ) : (
+          /* ── Retail: Products ── */
+          filteredProducts.length === 0 ? (
+            <div className="empty-state">
+              <Search size={32} />
+              <p>Tidak ada produk ditemukan</p>
+            </div>
+          ) : (
+            <div className="product-grid">
+              {filteredProducts.map(p => {
+                const inCart = cart.find(i => i.product.id === p.id && !i.menuItemId);
+                const outOfStock = (p.stock_qty ?? 1) <= 0;
+                return (
+                  <div
+                    key={p.id}
+                    className={`product-card ${outOfStock ? 'out-of-stock' : ''}`}
+                    onClick={() => !outOfStock && dispatch({ type: 'ADD_PRODUCT', product: p })}
+                  >
+                    {inCart && (
+                      <div style={{
+                        position: 'absolute', top: 6, right: 6,
+                        background: 'var(--accent-em)', color: '#fff',
+                        borderRadius: '50%', width: 20, height: 20,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: '0.7rem', fontWeight: 700,
+                      }}>
+                        {inCart.quantity}
+                      </div>
+                    )}
+                    <div className="product-icon">{productEmoji(p.name)}</div>
+                    <div className="product-name">{p.name}</div>
+                    <div className="product-sku">{p.sku}</div>
+                    <div className="product-price">{formatRp(p.sell_price)}</div>
+                    <div className="product-stock">
+                      {outOfStock
+                        ? <span className="badge badge-red">Habis</span>
+                        : p.stock_qty !== undefined && p.stock_qty <= 5
+                          ? <span className="badge badge-amber">{p.stock_qty} {p.unit}</span>
+                          : <span className="badge badge-green">{p.stock_qty ?? '–'} {p.unit}</span>
+                      }
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )
         )}
       </div>
 
       {/* ── RIGHT: Cart ── */}
       <div className="pos-cart">
-        {/* Cart Header */}
         <div className="cart-header">
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <ShoppingCart size={18} style={{ color: 'var(--accent-em)' }} />
-              <span style={{ fontWeight: 700, fontSize: '0.95rem' }}>Keranjang</span>
+              <span style={{ fontWeight: 700, fontSize: '0.95rem' }}>
+                {isRestaurant ? 'Pesanan' : 'Keranjang'}
+              </span>
               {itemCount > 0 && (
                 <span className="badge badge-green">{itemCount} item</span>
               )}
@@ -391,30 +560,37 @@ export default function POSPage() {
           </div>
         </div>
 
-        {/* Cart Items */}
         <div className="cart-items">
           {cart.length === 0 ? (
             <div className="empty-state" style={{ paddingTop: 48 }}>
-              <ShoppingCart size={36} style={{ color: 'var(--text-3)' }} />
-              <p style={{ fontSize: '0.85rem' }}>Klik produk untuk menambahkan</p>
+              {isRestaurant
+                ? <UtensilsCrossed size={36} style={{ color: 'var(--text-3)' }} />
+                : <ShoppingCart size={36} style={{ color: 'var(--text-3)' }} />
+              }
+              <p style={{ fontSize: '0.85rem' }}>
+                {isRestaurant ? 'Klik menu untuk memesan' : 'Klik produk untuk menambahkan'}
+              </p>
             </div>
           ) : (
-            cart.map(item => (
+            (cart as PosCartItem[]).map(item => (
               <div key={item.product.id} className="cart-item">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <div className="cart-item-name" style={{ flex: 1, paddingRight: 8 }}>{item.product.name}</div>
+                  <div className="cart-item-name" style={{ flex: 1, paddingRight: 8 }}>
+                    {item.menuItemId && <span style={{ fontSize: '0.65rem', color: '#fb923c', marginRight: 4 }}>🍽</span>}
+                    {item.product.name}
+                  </div>
                   <button className="btn btn-ghost btn-sm" style={{ padding: '2px 4px', color: 'var(--accent-rd)' }}
-                    onClick={() => dispatch({ type: 'REMOVE', productId: item.product.id })}>
+                    onClick={() => dispatch({ type: 'REMOVE', id: item.product.id })}>
                     <X size={13} />
                   </button>
                 </div>
                 <div className="cart-item-row">
                   <div className="qty-ctrl">
-                    <button className="qty-btn" onClick={() => dispatch({ type: 'SET_QTY', productId: item.product.id, qty: item.quantity - 1 })}>
+                    <button className="qty-btn" onClick={() => dispatch({ type: 'SET_QTY', id: item.product.id, qty: item.quantity - 1 })}>
                       <Minus size={12} />
                     </button>
                     <span className="qty-val">{item.quantity}</span>
-                    <button className="qty-btn" onClick={() => dispatch({ type: 'SET_QTY', productId: item.product.id, qty: item.quantity + 1 })}>
+                    <button className="qty-btn" onClick={() => dispatch({ type: 'SET_QTY', id: item.product.id, qty: item.quantity + 1 })}>
                       <Plus size={12} />
                     </button>
                   </div>
@@ -431,7 +607,6 @@ export default function POSPage() {
           )}
         </div>
 
-        {/* Cart Footer */}
         <div className="cart-footer">
           <div className="cart-total-row">
             <span className="text-2">Subtotal</span>
@@ -451,7 +626,7 @@ export default function POSPage() {
             onClick={() => setShowPayment(true)}
           >
             <CheckCircle2 size={18} />
-            Bayar {cart.length > 0 ? formatRp(total) : ''}
+            {isRestaurant ? 'Proses Pesanan' : 'Bayar'} {cart.length > 0 ? formatRp(total) : ''}
           </button>
         </div>
       </div>
@@ -467,15 +642,6 @@ export default function POSPage() {
       )}
       {receipt && (
         <ReceiptModal txn={receipt} onClose={() => setReceipt(null)} />
-      )}
-
-      {/* Hidden print DOM */}
-      {receipt && (
-        <div id="receipt-root" style={{ display: 'none' }}>
-          <div id="receipt-content-print" style={{ fontFamily: 'Courier New, monospace', fontSize: 12, color: '#000' }}>
-            {/* Mirrors receipt content for print CSS targeting */}
-          </div>
-        </div>
       )}
     </div>
   );

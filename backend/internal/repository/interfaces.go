@@ -65,6 +65,14 @@ type StockRepository interface {
 	SetMinQuantity(ctx context.Context, productID, storeID string, min float64) error
 	Adjust(ctx context.Context, input domain.AdjustInput) (*domain.StockLevel, error)
 	FindMovements(ctx context.Context, filter dto.StockMovementFilter) ([]*domain.StockMovement, int, error)
+	// DeductStock subtracts qty from stock_levels and records a stock_movement.
+	DeductStock(ctx context.Context, productID, storeID string, qty float64, refID, cashierID string) error
+}
+
+// MenuItemRepository handles menu item retrieval for restaurant checkouts.
+type MenuItemRepository interface {
+	FindByID(ctx context.Context, id string) (*domain.MenuItem, error)
+	FindAllByStore(ctx context.Context, storeID string) ([]*domain.MenuItem, error)
 }
 
 // ─── Phase 3 ──────────────────────────────────────────────────────────────────

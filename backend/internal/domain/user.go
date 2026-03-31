@@ -35,6 +35,7 @@ type UserStore struct {
 
 	// Joined fields (not stored in users_stores, populated by queries)
 	StoreName string `db:"store_name"`
+	StoreType string `db:"store_type"`
 	RoleName  string `db:"role_name"`
 }
 

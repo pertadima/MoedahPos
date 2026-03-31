@@ -1,5 +1,25 @@
 import { api } from './client';
-import type { Category, RestaurantTable, MenuItem, StockLevel, StockMovement, PaginatedData } from '@/types';
+import type { Category, Store, RestaurantTable, MenuItem, StockLevel, StockMovement, PaginatedData } from '@/types';
+
+export const storesApi = {
+  list: (params?: { page?: number; per_page?: number; search?: string }) => {
+    const q = new URLSearchParams();
+    if (params?.page)     q.set('page',     String(params.page));
+    if (params?.per_page) q.set('per_page', String(params.per_page));
+    if (params?.search)   q.set('search',   params.search);
+    return api.get<PaginatedData<Store>>(`/stores?${q}`);
+  },
+  get:    (id: string) =>
+    api.get<Store>(`/stores/${id}`),
+  create: (payload: { name: string; address?: string; phone?: string; tax_number?: string; currency?: string; store_type: string }) =>
+    api.post<Store>('/stores', payload),
+  update: (id: string, payload: { name: string; address?: string; phone?: string; tax_number?: string; currency?: string; store_type: string; is_active?: boolean }) =>
+    api.put<Store>(`/stores/${id}`, payload),
+  softDelete: (id: string) =>
+    api.delete(`/stores/${id}`),
+};
+
+
 
 export const categoriesApi = {
   list: (storeId: string) =>

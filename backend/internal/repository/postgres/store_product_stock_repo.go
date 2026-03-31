@@ -569,5 +569,32 @@ func (r *StockRepo) FindMovements(ctx context.Context, f dto.StockMovementFilter
 	return movements, total, nil
 }
 
+// DeductStock subtracts qty from stock_levels and records a 'sale' stock_movement.
+// Used for menu item ingredient deduction in restaurant checkouts.
+func (r *StockRepo) DeductStock(ctx context.Context, productID, storeID string, qty float64, refID, cashierID string) error {
+	tx, err := r.db.BeginTxx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("StockRepo.DeductStock begin tx: %w", err)
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	const mvQ = `
+		INSERT INTO stock_movements (product_id, store_id, ref_type, ref_id, quantity_delta, notes, created_by)
+		VALUES ($1, $2, 'sale', $3, $4, 'Penjualan menu restoran', $5)`
+	if _, err := tx.ExecContext(ctx, mvQ, productID, storeID, refID, -qty, cashierID); err != nil {
+		return fmt.Errorf("StockRepo.DeductStock insert movement: %w", err)
+	}
+
+	const slQ = `
+		UPDATE stock_levels
+		SET quantity = GREATEST(0, quantity - $1), updated_at = NOW()
+		WHERE product_id = $2 AND store_id = $3`
+	if _, err := tx.ExecContext(ctx, slQ, qty, productID, storeID); err != nil {
+		return fmt.Errorf("StockRepo.DeductStock update level: %w", err)
+	}
+
+	return tx.Commit()
+}
+
 // Ensure unused import does not cause issues
 var _ = time.Now

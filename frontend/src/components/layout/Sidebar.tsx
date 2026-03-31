@@ -11,6 +11,7 @@ import { useAuth } from '@/lib/auth/AuthContext';
 
 const baseNavItems = [
   { href: '/dashboard',        icon: LayoutDashboard, label: 'Dashboard' },
+  { href: '/stores',           icon: Store,           label: 'Toko' },
   { href: '/pos',              icon: ShoppingCart,    label: 'Kasir / POS' },
   { href: '/products',         icon: Package,         label: 'Produk' },
   { href: '/categories',       icon: Tag,             label: 'Kategori' },

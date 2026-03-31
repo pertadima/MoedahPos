@@ -61,6 +61,7 @@ type CreateTransactionInput struct {
 // CreateTransactionItemInput is a pre-calculated item ready for DB insertion.
 type CreateTransactionItemInput struct {
 	ProductID   *string
+	MenuItemID  *string // set for restaurant menu items
 	ProductName string
 	SKU         string
 	Quantity    float64

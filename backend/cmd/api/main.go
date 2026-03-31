@@ -78,7 +78,7 @@ func main() {
 	storeSvc       := service.NewStoreService(storeRepo, userRepo, log)
 	productSvc     := service.NewProductService(productRepo, categoryRepo, stockRepo, log)
 	stockSvc       := service.NewStockService(stockRepo, productRepo, log)
-	transactionSvc := service.NewTransactionService(transactionRepo, productRepo, stockRepo, log)
+	transactionSvc := service.NewTransactionService(transactionRepo, productRepo, stockRepo, menuItemRepo, log)
 	poSvc          := service.NewPurchaseOrderService(poRepo, productRepo, log)
 	supplierSvc    := service.NewSupplierService(supplierRepo, log)
 	reportSvc      := service.NewReportService(reportRepo, log)

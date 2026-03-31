@@ -68,6 +68,7 @@ type MeResponse struct {
 type StoreRoleInfo struct {
 	StoreID   string `json:"store_id"`
 	StoreName string `json:"store_name"`
+	StoreType string `json:"store_type"`
 	Role      string `json:"role"`
 }
 

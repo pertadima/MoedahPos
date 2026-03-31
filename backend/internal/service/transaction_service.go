@@ -22,19 +22,21 @@ var (
 
 // TransactionService implements cashier checkout logic.
 type TransactionService struct {
-	txnRepo     repository.TransactionRepository
-	productRepo repository.ProductRepository
-	stockRepo   repository.StockRepository
-	log         zerolog.Logger
+	txnRepo      repository.TransactionRepository
+	productRepo  repository.ProductRepository
+	stockRepo    repository.StockRepository
+	menuItemRepo repository.MenuItemRepository
+	log          zerolog.Logger
 }
 
 func NewTransactionService(
 	txnRepo repository.TransactionRepository,
 	productRepo repository.ProductRepository,
 	stockRepo repository.StockRepository,
+	menuItemRepo repository.MenuItemRepository,
 	log zerolog.Logger,
 ) *TransactionService {
-	return &TransactionService{txnRepo: txnRepo, productRepo: productRepo, stockRepo: stockRepo, log: log}
+	return &TransactionService{txnRepo: txnRepo, productRepo: productRepo, stockRepo: stockRepo, menuItemRepo: menuItemRepo, log: log}
 }
 
 // Checkout processes a sale: validates stock, calculates totals, persists atomically.
@@ -47,49 +49,96 @@ func (s *TransactionService) Checkout(ctx context.Context, storeID string, req *
 	)
 
 	for _, item := range req.Items {
-		product, err := s.productRepo.FindByID(ctx, item.ProductID)
-		if err != nil {
-			return nil, fmt.Errorf("finding product %s: %w", item.ProductID, err)
-		}
-		if product == nil || product.StoreID != storeID {
-			return nil, fmt.Errorf("%w: product %s", ErrProductNotFound, item.ProductID)
-		}
-		if !product.IsActive {
-			return nil, fmt.Errorf("product %s is inactive", product.Name)
-		}
+		if item.MenuItemID != "" {
+			// ── Restaurant path: menu item → deduct ingredients ──────────────
+			menuItem, err := s.menuItemRepo.FindByID(ctx, item.MenuItemID)
+			if err != nil {
+				return nil, fmt.Errorf("finding menu item %s: %w", item.MenuItemID, err)
+			}
+			if menuItem == nil || menuItem.StoreID != storeID {
+				return nil, fmt.Errorf("menu item %s not found", item.MenuItemID)
+			}
 
-		// Stock check (advisory — race condition acceptable in Phase 3)
-		level, err := s.stockRepo.FindLevelByProduct(ctx, item.ProductID, storeID)
-		if err != nil {
-			return nil, fmt.Errorf("checking stock: %w", err)
+			// Validate ingredient stock
+			for _, ing := range menuItem.Ingredients {
+				needed := ing.Quantity * item.Quantity
+				level, err := s.stockRepo.FindLevelByProduct(ctx, ing.ProductID, storeID)
+				if err != nil {
+					return nil, fmt.Errorf("checking ingredient stock: %w", err)
+				}
+				if level != nil && level.Quantity < needed {
+					return nil, fmt.Errorf("%w: bahan %s (perlu %.2f, tersedia %.2f)",
+						ErrInsufficientStock, ing.ProductName, needed, level.Quantity)
+				}
+			}
+
+			lineGross := menuItem.SellPrice * item.Quantity
+			lineDiscount := lineGross * item.DiscountPct / 100
+			lineNet := lineGross - lineDiscount
+			lineTax := lineNet * menuItem.TaxRate / 100
+			lineSubtotal := lineNet + lineTax
+
+			subtotal += lineNet
+			discountAmt += lineDiscount
+			taxAmt += lineTax
+
+			mid := item.MenuItemID
+			_ = mid // stored in ProductName as label; no product_id column for menu items
+			inputItems = append(inputItems, domain.CreateTransactionItemInput{
+				ProductID:   nil,
+				ProductName: menuItem.Name,
+				SKU:         "MENU-" + item.MenuItemID[:8],
+				Quantity:    item.Quantity,
+				UnitPrice:   menuItem.SellPrice,
+				DiscountPct: item.DiscountPct,
+				TaxRate:     menuItem.TaxRate,
+				Subtotal:    lineSubtotal,
+				MenuItemID:  &mid,
+			})
+		} else {
+			// ── Retail path: single product ──────────────────────────────────
+			product, err := s.productRepo.FindByID(ctx, item.ProductID)
+			if err != nil {
+				return nil, fmt.Errorf("finding product %s: %w", item.ProductID, err)
+			}
+			if product == nil || product.StoreID != storeID {
+				return nil, fmt.Errorf("%w: product %s", ErrProductNotFound, item.ProductID)
+			}
+			if !product.IsActive {
+				return nil, fmt.Errorf("product %s is inactive", product.Name)
+			}
+
+			level, err := s.stockRepo.FindLevelByProduct(ctx, item.ProductID, storeID)
+			if err != nil {
+				return nil, fmt.Errorf("checking stock: %w", err)
+			}
+			if level != nil && level.Quantity < item.Quantity {
+				return nil, fmt.Errorf("%w: %s (have %.2f, need %.2f)",
+					ErrInsufficientStock, product.Name, level.Quantity, item.Quantity)
+			}
+
+			lineGross := product.SellPrice * item.Quantity
+			lineDiscount := lineGross * item.DiscountPct / 100
+			lineNet := lineGross - lineDiscount
+			lineTax := lineNet * product.TaxRate / 100
+			lineSubtotal := lineNet + lineTax
+
+			subtotal += lineNet
+			discountAmt += lineDiscount
+			taxAmt += lineTax
+
+			pid := item.ProductID
+			inputItems = append(inputItems, domain.CreateTransactionItemInput{
+				ProductID:   &pid,
+				ProductName: product.Name,
+				SKU:         product.SKU,
+				Quantity:    item.Quantity,
+				UnitPrice:   product.SellPrice,
+				DiscountPct: item.DiscountPct,
+				TaxRate:     product.TaxRate,
+				Subtotal:    lineSubtotal,
+			})
 		}
-		if level != nil && level.Quantity < item.Quantity {
-			return nil, fmt.Errorf("%w: %s (have %.2f, need %.2f)",
-				ErrInsufficientStock, product.Name, level.Quantity, item.Quantity)
-		}
-
-		// Price calculation
-		lineGross := product.SellPrice * item.Quantity
-		lineDiscount := lineGross * item.DiscountPct / 100
-		lineNet := lineGross - lineDiscount
-		lineTax := lineNet * product.TaxRate / 100
-		lineSubtotal := lineNet + lineTax
-
-		subtotal += lineNet
-		discountAmt += lineDiscount
-		taxAmt += lineTax
-
-		pid := item.ProductID
-		inputItems = append(inputItems, domain.CreateTransactionItemInput{
-			ProductID:   &pid,
-			ProductName: product.Name,
-			SKU:         product.SKU,
-			Quantity:    item.Quantity,
-			UnitPrice:   product.SellPrice,
-			DiscountPct: item.DiscountPct,
-			TaxRate:     product.TaxRate,
-			Subtotal:    lineSubtotal,
-		})
 	}
 
 	total := subtotal + taxAmt
@@ -114,6 +163,21 @@ func (s *TransactionService) Checkout(ctx context.Context, storeID string, req *
 	})
 	if err != nil {
 		return nil, fmt.Errorf("creating transaction: %w", err)
+	}
+
+	// ── Post-commit: deduct ingredient stocks for menu items ─────────────────
+	for _, item := range req.Items {
+		if item.MenuItemID == "" {
+			continue
+		}
+		menuItem, _ := s.menuItemRepo.FindByID(ctx, item.MenuItemID)
+		if menuItem == nil {
+			continue
+		}
+		for _, ing := range menuItem.Ingredients {
+			needed := ing.Quantity * item.Quantity
+			_ = s.stockRepo.DeductStock(ctx, ing.ProductID, storeID, needed, txn.ID, cashierID)
+		}
 	}
 
 	s.log.Info().Str("txn_id", txn.ID).Float64("total", total).Msg("transaction completed")
