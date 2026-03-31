@@ -70,6 +70,8 @@ func main() {
 	poRepo           := postgres.NewPORepo(sqlxDB)
 	supplierRepo     := postgres.NewSupplierRepo(sqlxDB)
 	reportRepo       := postgres.NewReportRepo(sqlxDB)
+	tableRepo        := postgres.NewTableRepo(sqlxDB)
+	menuItemRepo     := postgres.NewMenuItemRepo(sqlxDB)
 
 	// ── Services ──────────────────────────────────────────────────────────────
 	authSvc        := service.NewAuthService(userRepo, refreshTokenRepo, jwtMgr, cfg.Bcrypt.Cost, log)
@@ -80,6 +82,8 @@ func main() {
 	poSvc          := service.NewPurchaseOrderService(poRepo, productRepo, log)
 	supplierSvc    := service.NewSupplierService(supplierRepo, log)
 	reportSvc      := service.NewReportService(reportRepo, log)
+	tableSvc       := service.NewTableService(tableRepo, log)
+	menuItemSvc    := service.NewMenuItemService(menuItemRepo, log)
 
 	// ── Handlers ──────────────────────────────────────────────────────────────
 	authHandler        := handler.NewAuthHandler(authSvc, validate, log)
@@ -90,6 +94,7 @@ func main() {
 	poHandler          := handler.NewPurchaseOrderHandler(poSvc, validate, log)
 	supplierHandler    := handler.NewSupplierHandler(supplierSvc, validate, log)
 	reportHandler      := handler.NewReportHandler(reportSvc, log)
+	restaurantHandler  := handler.NewRestaurantHandler(tableSvc, menuItemSvc, validate, log)
 
 	// ── Router ────────────────────────────────────────────────────────────────
 	r := router.New(&router.Dependencies{
@@ -102,6 +107,7 @@ func main() {
 		PurchaseOrderHandler:  poHandler,
 		SupplierHandler:       supplierHandler,
 		ReportHandler:         reportHandler,
+		RestaurantHandler:     restaurantHandler,
 		RoleStore:             roleStore,
 		DB:                    sqlxDB,
 		Log:                   log,

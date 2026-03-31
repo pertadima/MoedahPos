@@ -30,6 +30,9 @@ type Dependencies struct {
 	SupplierHandler       *handler.SupplierHandler
 	ReportHandler         *handler.ReportHandler
 
+	// Restaurant mode (Phase 4)
+	RestaurantHandler *handler.RestaurantHandler
+
 	// Shared
 	RoleStore *rbac.RoleStore
 	DB        *sqlx.DB
@@ -157,6 +160,25 @@ func New(deps *Dependencies) http.Handler {
 							r.Get("/sales/by-product",  withPerm(deps, "reports.read", deps.ReportHandler.SalesByProduct))
 							r.Get("/sales/by-cashier",  withPerm(deps, "reports.read", deps.ReportHandler.SalesByCashier))
 							r.Get("/stock-valuation",   withPerm(deps, "reports.read", deps.ReportHandler.StockValuation))
+						})
+
+						// ── Restaurant Mode ───────────────────────────────────
+
+						// Tables
+						r.Route("/tables", func(r chi.Router) {
+							r.Get("/",                        withPerm(deps, "products.read",   deps.RestaurantHandler.ListTables))
+							r.Post("/",                       withPerm(deps, "products.create", deps.RestaurantHandler.CreateTable))
+							r.Put("/{tableId}",               withPerm(deps, "products.update", deps.RestaurantHandler.UpdateTable))
+							r.Put("/{tableId}/status",        withPerm(deps, "products.update", deps.RestaurantHandler.UpdateTableStatus))
+							r.Delete("/{tableId}",            withPerm(deps, "products.delete", deps.RestaurantHandler.DeleteTable))
+						})
+
+						// Menu Items
+						r.Route("/menu-items", func(r chi.Router) {
+							r.Get("/",                        withPerm(deps, "products.read",   deps.RestaurantHandler.ListMenuItems))
+							r.Post("/",                       withPerm(deps, "products.create", deps.RestaurantHandler.CreateMenuItem))
+							r.Put("/{menuItemId}",            withPerm(deps, "products.update", deps.RestaurantHandler.UpdateMenuItem))
+							r.Delete("/{menuItemId}",         withPerm(deps, "products.delete", deps.RestaurantHandler.DeleteMenuItem))
 						})
 					})
 				})

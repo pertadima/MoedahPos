@@ -1,5 +1,5 @@
 import { api } from './client';
-import type { Category, StockLevel, StockMovement, PaginatedData } from '@/types';
+import type { Category, RestaurantTable, MenuItem, StockLevel, StockMovement, PaginatedData } from '@/types';
 
 export const categoriesApi = {
   list: (storeId: string) =>
@@ -10,6 +10,30 @@ export const categoriesApi = {
     api.put<Category>(`/stores/${storeId}/categories/${categoryId}`, payload),
   softDelete: (storeId: string, categoryId: string) =>
     api.delete(`/stores/${storeId}/categories/${categoryId}`),
+};
+
+export const tablesApi = {
+  list: (storeId: string) =>
+    api.get<RestaurantTable[]>(`/stores/${storeId}/tables`),
+  create: (storeId: string, payload: { table_number: string; capacity: number; notes?: string }) =>
+    api.post<RestaurantTable>(`/stores/${storeId}/tables`, payload),
+  update: (storeId: string, tableId: string, payload: { table_number: string; capacity: number; notes?: string; is_active?: boolean }) =>
+    api.put<RestaurantTable>(`/stores/${storeId}/tables/${tableId}`, payload),
+  updateStatus: (storeId: string, tableId: string, status: string) =>
+    api.put(`/stores/${storeId}/tables/${tableId}/status`, { status }),
+  delete: (storeId: string, tableId: string) =>
+    api.delete(`/stores/${storeId}/tables/${tableId}`),
+};
+
+export const menuItemsApi = {
+  list: (storeId: string) =>
+    api.get<MenuItem[]>(`/stores/${storeId}/menu-items`),
+  create: (storeId: string, payload: object) =>
+    api.post<MenuItem>(`/stores/${storeId}/menu-items`, payload),
+  update: (storeId: string, menuItemId: string, payload: object) =>
+    api.put<MenuItem>(`/stores/${storeId}/menu-items/${menuItemId}`, payload),
+  delete: (storeId: string, menuItemId: string) =>
+    api.delete(`/stores/${storeId}/menu-items/${menuItemId}`),
 };
 
 

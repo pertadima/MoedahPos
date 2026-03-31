@@ -9,6 +9,7 @@ type CreateStoreRequest struct {
 	Phone     string `json:"phone"      validate:"max=20"`
 	TaxNumber string `json:"tax_number" validate:"max=50"`
 	Currency  string `json:"currency"   validate:"len=3"`
+	StoreType string `json:"store_type" validate:"oneof=retail restaurant"`
 }
 
 // UpdateStoreRequest is the input for PUT /stores/:id.
@@ -18,6 +19,7 @@ type UpdateStoreRequest struct {
 	Phone     string `json:"phone"      validate:"max=20"`
 	TaxNumber string `json:"tax_number" validate:"max=50"`
 	Currency  string `json:"currency"   validate:"len=3"`
+	StoreType string `json:"store_type" validate:"oneof=retail restaurant"`
 	IsActive  *bool  `json:"is_active"`
 }
 
@@ -29,6 +31,7 @@ type StoreResponse struct {
 	Phone     string  `json:"phone"`
 	TaxNumber string  `json:"tax_number"`
 	Currency  string  `json:"currency"`
+	StoreType string  `json:"store_type"`
 	IsActive  bool    `json:"is_active"`
 	CreatedAt string  `json:"created_at"`
 	UpdatedAt string  `json:"updated_at"`

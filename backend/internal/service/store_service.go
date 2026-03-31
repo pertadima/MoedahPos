@@ -59,9 +59,13 @@ func (s *StoreService) CreateStore(ctx context.Context, req *dto.CreateStoreRequ
 	if req.Currency == "" {
 		req.Currency = "IDR"
 	}
+	if req.StoreType == "" {
+		req.StoreType = "retail"
+	}
 	store, err := s.storeRepo.Create(ctx, &domain.Store{
 		Name: req.Name, Address: req.Address, Phone: req.Phone,
-		TaxNumber: req.TaxNumber, Currency: req.Currency, IsActive: true,
+		TaxNumber: req.TaxNumber, Currency: req.Currency,
+		StoreType: req.StoreType, IsActive: true,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("creating store: %w", err)
@@ -84,6 +88,9 @@ func (s *StoreService) UpdateStore(ctx context.Context, id string, req *dto.Upda
 	store.TaxNumber = req.TaxNumber
 	if req.Currency != "" {
 		store.Currency = req.Currency
+	}
+	if req.StoreType != "" {
+		store.StoreType = req.StoreType
 	}
 	if req.IsActive != nil {
 		store.IsActive = *req.IsActive
@@ -170,6 +177,10 @@ func (s *StoreService) RemoveMember(ctx context.Context, storeID, userID string)
 // ─── Mappers ──────────────────────────────────────────────────────────────────
 
 func toStoreResponse(s *domain.Store) *dto.StoreResponse {
+	storeType := s.StoreType
+	if storeType == "" {
+		storeType = "retail"
+	}
 	r := &dto.StoreResponse{
 		ID:        s.ID,
 		Name:      s.Name,
@@ -177,6 +188,7 @@ func toStoreResponse(s *domain.Store) *dto.StoreResponse {
 		Phone:     s.Phone,
 		TaxNumber: s.TaxNumber,
 		Currency:  s.Currency,
+		StoreType: storeType,
 		IsActive:  s.IsActive,
 		CreatedAt: s.CreatedAt.Format(time.RFC3339),
 		UpdatedAt: s.UpdatedAt.Format(time.RFC3339),

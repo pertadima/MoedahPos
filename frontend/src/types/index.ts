@@ -20,7 +20,8 @@ export interface User {
 export interface UserStore {
   store_id: string;
   store_name: string;
-  role: string;          // matches backend json:"role"
+  role: string;
+  store_type?: 'retail' | 'restaurant';
 }
 export interface LoginResponse {
   access_token: string;
@@ -37,6 +38,7 @@ export interface Store {
   phone: string;
   tax_number: string;
   currency: string;
+  store_type: 'retail' | 'restaurant';
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -59,6 +61,45 @@ export interface Category {
   name: string;
   parent_id?: string;
   parent_name?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// ── Restaurant ────────────────────────────────────────────────────────────────
+export type TableStatus = 'available' | 'occupied' | 'reserved';
+export interface RestaurantTable {
+  id: string;
+  store_id: string;
+  table_number: string;
+  capacity: number;
+  status: TableStatus;
+  notes?: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MenuItemIngredient {
+  id: string;
+  product_id: string;
+  product_name: string;
+  product_sku: string;
+  unit: string;
+  quantity: number;
+}
+
+export interface MenuItem {
+  id: string;
+  store_id: string;
+  category_id?: string;
+  category_name?: string;
+  name: string;
+  description: string;
+  sell_price: number;
+  tax_rate: number;
+  image_url?: string;
+  is_active: boolean;
+  ingredients: MenuItemIngredient[];
   created_at: string;
   updated_at: string;
 }

@@ -5,11 +5,11 @@ import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard, ShoppingCart, Package, Warehouse,
   ClipboardList, BarChart3, Users, LogOut,
-  Store, CreditCard, Tag,
+  Store, CreditCard, Tag, UtensilsCrossed, Grid3x3,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthContext';
 
-const navItems = [
+const baseNavItems = [
   { href: '/dashboard',        icon: LayoutDashboard, label: 'Dashboard' },
   { href: '/pos',              icon: ShoppingCart,    label: 'Kasir / POS' },
   { href: '/products',         icon: Package,         label: 'Produk' },
@@ -20,9 +20,22 @@ const navItems = [
   { href: '/reports',          icon: BarChart3,       label: 'Laporan' },
 ];
 
+const restaurantNavItems = [
+  { href: '/tables',           icon: Grid3x3,         label: 'Meja' },
+  { href: '/menu-items',       icon: UtensilsCrossed, label: 'Menu' },
+];
+
 export default function Sidebar() {
   const pathname = usePathname();
   const { user, selectedStore, stores, selectStore, logout } = useAuth();
+  const isRestaurant = selectedStore?.store_type === 'restaurant';
+  const navItems = isRestaurant
+    ? [
+        ...baseNavItems.slice(0, 2), // Dashboard + POS
+        ...restaurantNavItems,        // Meja + Menu before products
+        ...baseNavItems.slice(2),     // the rest
+      ]
+    : baseNavItems;
 
   return (
     <aside className="sidebar">
@@ -58,8 +71,17 @@ export default function Sidebar() {
             ))}
           </select>
           {selectedStore && (
-            <div style={{ fontSize: '0.7rem', color: 'var(--accent-em)', marginTop: 4 }}>
-              Role: {selectedStore.role}
+            <div style={{ display: 'flex', gap: 6, marginTop: 4, alignItems: 'center' }}>
+              <div style={{ fontSize: '0.7rem', color: 'var(--accent-em)' }}>
+                {selectedStore.role}
+              </div>
+              <div style={{
+                fontSize: '0.62rem', padding: '1px 5px', borderRadius: 4, fontWeight: 600,
+                background: isRestaurant ? 'rgba(251,146,60,0.15)' : 'rgba(16,185,129,0.12)',
+                color: isRestaurant ? '#fb923c' : 'var(--accent-em)',
+              }}>
+                {isRestaurant ? '🍽️ Restaurant' : '🏪 Retail'}
+              </div>
             </div>
           )}
         </div>

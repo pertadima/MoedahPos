@@ -10,6 +10,7 @@ type Store struct {
 	Phone     string     `db:"phone"`
 	TaxNumber string     `db:"tax_number"`
 	Currency  string     `db:"currency"`
+	StoreType string     `db:"store_type"` // retail | restaurant
 	IsActive  bool       `db:"is_active"`
 	CreatedAt time.Time  `db:"created_at"`
 	UpdatedAt time.Time  `db:"updated_at"`
