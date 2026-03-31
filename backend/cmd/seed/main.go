@@ -1,6 +1,6 @@
 // cmd/seed/main.go — Demo data seeder for MoedahPOS
 // Usage: go run ./cmd/seed/main.go
-//        go run ./cmd/seed/main.go --reset   (drops and re-seeds everything)
+//        go run ./cmd/seed/main.go --reset   (drop all data, then re-seed)
 package main
 
 import (
@@ -17,7 +17,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
 func must(err error) {
 	if err != nil {
@@ -31,7 +31,101 @@ func hashpw(plain string) string {
 	return string(h)
 }
 
-func ptr[T any](v T) *T { return &v }
+// ── Product catalog definition ────────────────────────────────────────────────
+
+type ProductSeed struct {
+	Name, SKU, Unit, Category string
+	CostPrice, SellPrice      float64
+	TaxRate                   float64
+	InitQty, MinQty           float64
+	Barcode                   string
+}
+
+// catalogJakarta — Cafe / coffee-shop style (Toko Utama — Jakarta)
+var catalogJakarta = []ProductSeed{
+	// ── Minuman ────────────────────────────────────────
+	{"Kopi Americano", "BEV-001", "cup", "Minuman", 8_000, 22_000, 11, 85, 5, "8991000001"},
+	{"Kopi Latte", "BEV-002", "cup", "Minuman", 10_000, 28_000, 11, 72, 5, "8991000002"},
+	{"Kopi Cappuccino", "BEV-003", "cup", "Minuman", 10_000, 28_000, 11, 60, 5, "8991000003"},
+	{"Kopi V60", "BEV-004", "cup", "Minuman", 12_000, 32_000, 11, 40, 5, "8991000004"},
+	{"Kopi Cold Brew", "BEV-005", "cup", "Minuman", 14_000, 35_000, 11, 30, 5, "8991000005"},
+	{"Teh Hijau", "BEV-006", "cup", "Minuman", 4_000, 15_000, 11, 95, 10, "8991000006"},
+	{"Teh Tarik", "BEV-007", "cup", "Minuman", 5_000, 16_000, 11, 80, 10, "8991000007"},
+	{"Es Teh Manis", "BEV-008", "cup", "Minuman", 3_000, 12_000, 0, 120, 10, "8991000008"},
+	{"Jus Jeruk Segar", "BEV-009", "cup", "Minuman", 6_000, 18_000, 11, 50, 5, "8991000009"},
+	{"Jus Alpukat", "BEV-010", "cup", "Minuman", 8_000, 22_000, 11, 40, 5, "8991000010"},
+	{"Susu Segar", "BEV-011", "cup", "Minuman", 7_000, 18_000, 11, 45, 5, "8991000011"},
+	{"Air Mineral 600ml", "BEV-012", "botol", "Minuman", 2_500, 6_000, 0, 200, 20, "8991000012"},
+	{"Air Mineral 1500ml", "BEV-013", "botol", "Minuman", 4_000, 9_000, 0, 100, 10, "8991000013"},
+	{"Cokelat Panas", "BEV-014", "cup", "Minuman", 9_000, 24_000, 11, 35, 5, "8991000014"},
+	{"Matcha Latte", "BEV-015", "cup", "Minuman", 12_000, 30_000, 11, 28, 5, "8991000015"},
+	// ── Makanan ────────────────────────────────────────
+	{"Nasi Goreng Spesial", "FOOD-001", "porsi", "Makanan", 12_000, 30_000, 11, 30, 5, "8992000001"},
+	{"Nasi Goreng Seafood", "FOOD-002", "porsi", "Makanan", 15_000, 38_000, 11, 20, 5, "8992000002"},
+	{"Mie Goreng", "FOOD-003", "porsi", "Makanan", 10_000, 25_000, 11, 25, 5, "8992000003"},
+	{"Kwetiau Goreng", "FOOD-004", "porsi", "Makanan", 11_000, 27_000, 11, 20, 5, "8992000004"},
+	{"Roti Bakar Coklat", "FOOD-005", "pcs", "Makanan", 6_000, 15_000, 0, 40, 5, "8992000005"},
+	{"Roti Bakar Keju", "FOOD-006", "pcs", "Makanan", 7_000, 17_000, 0, 35, 5, "8992000006"},
+	{"Sandwich Ayam", "FOOD-007", "pcs", "Makanan", 12_000, 28_000, 11, 20, 3, "8992000007"},
+	{"Croissant Butter", "FOOD-008", "pcs", "Makanan", 8_000, 20_000, 0, 25, 3, "8992000008"},
+	{"Pisang Goreng (5 pcs)", "FOOD-009", "porsi", "Makanan", 5_000, 13_000, 0, 25, 5, "8992000009"},
+	{"Kentang Goreng", "FOOD-010", "porsi", "Makanan", 8_000, 20_000, 11, 20, 5, "8992000010"},
+	// ── Snack & Cemilan ────────────────────────────────
+	{"Keripik Kentang", "SNK-001", "pcs", "Snack & Cemilan", 5_000, 12_000, 0, 80, 10, "8993000001"},
+	{"Coklat Wafer", "SNK-002", "pcs", "Snack & Cemilan", 4_000, 10_000, 0, 100, 10, "8993000002"},
+	{"Kacang Goreng", "SNK-003", "pcs", "Snack & Cemilan", 3_500, 8_000, 0, 60, 10, "8993000003"},
+	{"Donat Gula", "SNK-004", "pcs", "Snack & Cemilan", 4_500, 10_000, 0, 35, 5, "8993000004"},
+	{"Choco Chip Cookie", "SNK-005", "pcs", "Snack & Cemilan", 5_000, 12_000, 0, 50, 5, "8993000005"},
+	{"Banana Cake", "SNK-006", "pcs", "Snack & Cemilan", 6_000, 14_000, 0, 30, 5, "8993000006"},
+	// ── Rokok & Tembakau ───────────────────────────────
+	{"Rokok Surya 16", "ROK-001", "bungkus", "Rokok & Tembakau", 18_000, 24_000, 0, 3, 5, "8994000001"},
+	{"Rokok Djarum Super", "ROK-002", "bungkus", "Rokok & Tembakau", 20_000, 26_000, 0, 5, 5, "8994000002"},
+	{"Rokok Gudang Garam", "ROK-003", "bungkus", "Rokok & Tembakau", 19_000, 25_000, 0, 4, 5, "8994000003"},
+}
+
+// catalogBandung — Minimart / convenience-store style (Cabang Bandung)
+var catalogBandung = []ProductSeed{
+	// ── Minuman Kemasan ────────────────────────────────
+	{"Aqua 600ml", "BDG-BEV-001", "botol", "Minuman Kemasan", 3_000, 6_000, 0, 144, 20, "8995000001"},
+	{"Aqua 1500ml", "BDG-BEV-002", "botol", "Minuman Kemasan", 5_000, 9_000, 0, 72, 10, "8995000002"},
+	{"Teh Botol Sosro 450ml", "BDG-BEV-003", "botol", "Minuman Kemasan", 4_500, 8_000, 0, 96, 15, "8995000003"},
+	{"Pocari Sweat 500ml", "BDG-BEV-004", "botol", "Minuman Kemasan", 7_000, 12_000, 0, 60, 10, "8995000004"},
+	{"Coca-Cola 330ml", "BDG-BEV-005", "kaleng", "Minuman Kemasan", 6_500, 11_000, 0, 48, 10, "8995000005"},
+	{"Sprite 330ml", "BDG-BEV-006", "kaleng", "Minuman Kemasan", 6_500, 11_000, 0, 48, 10, "8995000006"},
+	{"Fanta Orange 330ml", "BDG-BEV-007", "kaleng", "Minuman Kemasan", 6_500, 11_000, 0, 36, 10, "8995000007"},
+	{"Susu Ultra 250ml", "BDG-BEV-008", "kotak", "Minuman Kemasan", 5_000, 9_000, 0, 72, 10, "8995000008"},
+	{"Good Day Coffee 250ml", "BDG-BEV-009", "botol", "Minuman Kemasan", 5_500, 10_000, 0, 60, 10, "8995000009"},
+	{"Nescafe RTD 220ml", "BDG-BEV-010", "kaleng", "Minuman Kemasan", 6_000, 11_000, 0, 48, 10, "8995000010"},
+	{"Milo 200ml", "BDG-BEV-011", "kotak", "Minuman Kemasan", 5_500, 10_000, 0, 60, 10, "8995000011"},
+	{"Teh Pucuk 350ml", "BDG-BEV-012", "botol", "Minuman Kemasan", 4_000, 7_000, 0, 96, 15, "8995000012"},
+	// ── Makanan Instan ─────────────────────────────────
+	{"Indomie Goreng", "BDG-FOOD-001", "pcs", "Makanan Instan", 2_800, 5_000, 0, 200, 30, "8996000001"},
+	{"Indomie Kuah Ayam", "BDG-FOOD-002", "pcs", "Makanan Instan", 2_800, 5_000, 0, 180, 30, "8996000002"},
+	{"Mie Sedaap Goreng", "BDG-FOOD-003", "pcs", "Makanan Instan", 2_600, 4_500, 0, 120, 20, "8996000003"},
+	{"Pop Mie Ayam 75g", "BDG-FOOD-004", "pcs", "Makanan Instan", 4_000, 7_000, 0, 96, 15, "8996000004"},
+	{"Bihun Goreng", "BDG-FOOD-005", "pcs", "Makanan Instan", 2_500, 4_500, 0, 100, 15, "8996000005"},
+	{"Sarimi Soto", "BDG-FOOD-006", "pcs", "Makanan Instan", 2_700, 4_800, 0, 80, 15, "8996000006"},
+	// ── Snack & Cemilan ────────────────────────────────
+	{"Chitato Sapi Panggang", "BDG-SNK-001", "pcs", "Snack & Cemilan", 8_000, 14_000, 0, 60, 10, "8997000001"},
+	{"Lays Original", "BDG-SNK-002", "pcs", "Snack & Cemilan", 9_000, 15_000, 0, 48, 10, "8997000002"},
+	{"Taro Net", "BDG-SNK-003", "pcs", "Snack & Cemilan", 4_000, 7_000, 0, 80, 10, "8997000003"},
+	{"Qtela Tempe", "BDG-SNK-004", "pcs", "Snack & Cemilan", 5_000, 9_000, 0, 60, 10, "8997000004"},
+	{"Cheetos Jagung", "BDG-SNK-005", "pcs", "Snack & Cemilan", 6_000, 11_000, 0, 60, 10, "8997000005"},
+	{"Oreo Original", "BDG-SNK-006", "pcs", "Snack & Cemilan", 6_000, 11_000, 0, 72, 10, "8997000006"},
+	{"Roma Kelapa", "BDG-SNK-007", "pcs", "Snack & Cemilan", 4_500, 8_000, 0, 80, 10, "8997000007"},
+	{"Wafer Astor", "BDG-SNK-008", "pcs", "Snack & Cemilan", 5_000, 9_000, 0, 60, 10, "8997000008"},
+	{"Gery Saluut", "BDG-SNK-009", "pcs", "Snack & Cemilan", 3_500, 6_500, 0, 100, 15, "8997000009"},
+	{"Silverqueen Chunky 95g", "BDG-SNK-010", "pcs", "Snack & Cemilan", 16_000, 25_000, 0, 30, 5, "8997000010"},
+	// ── Kebutuhan Harian ───────────────────────────────
+	{"Sabun Lifebuoy 90g", "BDG-DLY-001", "pcs", "Kebutuhan Harian", 4_500, 8_000, 0, 60, 10, "8998000001"},
+	{"Shampoo Pantene Sachet", "BDG-DLY-002", "sachet", "Kebutuhan Harian", 1_000, 2_000, 0, 200, 30, "8998000002"},
+	{"Pasta Gigi Pepsodent 75g", "BDG-DLY-003", "pcs", "Kebutuhan Harian", 8_000, 14_000, 0, 40, 10, "8998000003"},
+	{"Sikat Gigi Formula", "BDG-DLY-004", "pcs", "Kebutuhan Harian", 7_000, 12_000, 0, 30, 5, "8998000004"},
+	{"Tisu Paseo 250 sheets", "BDG-DLY-005", "pcs", "Kebutuhan Harian", 8_000, 14_000, 0, 30, 5, "8998000005"},
+	{"Pembalut Softex Regular", "BDG-DLY-006", "pcs", "Kebutuhan Harian", 12_000, 19_000, 0, 24, 5, "8998000006"},
+	{"Kopi Kapal Api Sachet", "BDG-DLY-007", "sachet", "Kebutuhan Harian", 1_200, 2_500, 0, 300, 50, "8998000007"},
+	{"Gula Pasir 250g", "BDG-DLY-008", "pcs", "Kebutuhan Harian", 5_000, 8_000, 0, 50, 10, "8998000008"},
+}
 
 // ── Main ──────────────────────────────────────────────────────────────────────
 
@@ -39,14 +133,12 @@ func main() {
 	reset := flag.Bool("reset", false, "Truncate all demo tables before seeding")
 	flag.Parse()
 
-	// Load env + config
 	cfg, err := config.Load()
 	if err != nil {
 		log.Fatalf("config error: %v", err)
 	}
 
-	dsn := cfg.DB.DSN()
-	db, err := sqlx.Connect("postgres", dsn)
+	db, err := sqlx.Connect("postgres", cfg.DB.DSN())
 	must(err)
 	defer db.Close()
 
@@ -59,7 +151,7 @@ func main() {
 
 	log.Println("🌱 Seeding MoedahPOS demo data...")
 
-	// ── Roles (read from DB — already seeded by goose migrations) ────────────
+	// ── Roles ─────────────────────────────────────────────────────────────────
 	roles := map[string]string{}
 	rows, err := db.QueryxContext(ctx, `SELECT name, id FROM roles`)
 	must(err)
@@ -70,38 +162,30 @@ func main() {
 	}
 	rows.Close()
 	if len(roles) == 0 {
-		log.Fatal("No roles found — make sure goose migrations have run first")
+		log.Fatal("No roles found — run goose migrations first")
 	}
 	log.Printf("   ✓ Loaded %d roles", len(roles))
 
 	// ── Users ─────────────────────────────────────────────────────────────────
-	users := []struct {
-		ID       string
-		Name     string
-		Email    string
-		Password string
-	}{
-		{uuid.NewString(), "Admin Sistem", "admin@moedah.com", "Admin1234!"},
-		{uuid.NewString(), "Budi Manager", "manager@moedah.com", "Manager1234!"},
-		{uuid.NewString(), "Sari Kasir", "kasir@moedah.com", "Kasir1234!"},
-		{uuid.NewString(), "Andi Staff", "staff@moedah.com", "Staff1234!"},
+	seedUsers := []struct{ Name, Email, Password string }{
+		{"Admin Sistem", "admin@moedah.com", "Admin1234!"},
+		{"Budi Manager", "manager@moedah.com", "Manager1234!"},
+		{"Sari Kasir", "kasir@moedah.com", "Kasir1234!"},
+		{"Andi Staff", "staff@moedah.com", "Staff1234!"},
+		{"Rini Kasir BDG", "kasir.bdg@moedah.com", "Kasir1234!"},
 	}
-
-	for _, u := range users {
+	for _, u := range seedUsers {
 		_, err = db.ExecContext(ctx, `
 			INSERT INTO users (id, name, email, password_hash, is_active)
 			VALUES ($1, $2, $3, $4, true)
 			ON CONFLICT (email) DO UPDATE SET
-				name          = EXCLUDED.name,
-				password_hash = EXCLUDED.password_hash,
-				is_active     = true,
-				deleted_at    = NULL
-		`, u.ID, u.Name, u.Email, hashpw(u.Password))
+				name=EXCLUDED.name, password_hash=EXCLUDED.password_hash,
+				is_active=true, deleted_at=NULL
+		`, uuid.NewString(), u.Name, u.Email, hashpw(u.Password))
 		must(err)
 		log.Printf("   ✓ User: %s (%s)", u.Name, u.Email)
 	}
 
-	// Re-read actual IDs (upsert may keep old IDs)
 	userIDs := map[string]string{}
 	rows, err = db.QueryxContext(ctx, `SELECT email, id FROM users WHERE deleted_at IS NULL`)
 	must(err)
@@ -113,260 +197,271 @@ func main() {
 	rows.Close()
 
 	// ── Stores ────────────────────────────────────────────────────────────────
-	type Store struct {
-		ID      string
-		Name    string
-		Address string
-		Phone   string
-		TaxNum  string
-	}
-	stores := []Store{
+	type storeRow struct{ ID, Name, Address, Phone, TaxNum string }
+	storeList := []storeRow{
 		{uuid.NewString(), "Toko Utama — Jakarta", "Jl. Sudirman No. 12, Jakarta Pusat", "021-5551234", "02.123.456.7-001.000"},
 		{uuid.NewString(), "Cabang Bandung", "Jl. Dago No. 88, Bandung", "022-7778899", "02.123.456.7-002.000"},
 	}
-
-	for _, s := range stores {
+	for _, s := range storeList {
 		_, err = db.ExecContext(ctx, `
 			INSERT INTO stores (id, name, address, phone, tax_number, currency, is_active)
-			VALUES ($1, $2, $3, $4, $5, 'IDR', true)
-			ON CONFLICT DO NOTHING
+			VALUES ($1, $2, $3, $4, $5, 'IDR', true) ON CONFLICT DO NOTHING
 		`, s.ID, s.Name, s.Address, s.Phone, s.TaxNum)
 		must(err)
 		log.Printf("   ✓ Store: %s", s.Name)
 	}
-
-	mainStoreID := stores[0].ID
-	branchStoreID := stores[1].ID
+	mainStoreID := storeList[0].ID
+	branchStoreID := storeList[1].ID
 
 	// ── User ↔ Store Memberships ───────────────────────────────────────────────
-	memberships := []struct{ UserEmail, StoreID, RoleName string }{
+	memberships := []struct{ Email, StoreID, Role string }{
 		{"admin@moedah.com", mainStoreID, "superadmin"},
 		{"admin@moedah.com", branchStoreID, "superadmin"},
 		{"manager@moedah.com", mainStoreID, "manager"},
 		{"kasir@moedah.com", mainStoreID, "cashier"},
 		{"staff@moedah.com", mainStoreID, "staff"},
+		{"kasir.bdg@moedah.com", branchStoreID, "cashier"},
 	}
 	for _, m := range memberships {
 		_, err = db.ExecContext(ctx, `
 			INSERT INTO user_stores (user_id, store_id, role_id, is_active)
 			VALUES ($1, $2, $3, true)
-			ON CONFLICT (user_id, store_id) DO UPDATE SET role_id = EXCLUDED.role_id, is_active = true
-		`, userIDs[m.UserEmail], m.StoreID, roles[m.RoleName])
+			ON CONFLICT (user_id, store_id) DO UPDATE SET role_id=EXCLUDED.role_id, is_active=true
+		`, userIDs[m.Email], m.StoreID, roles[m.Role])
 		must(err)
 	}
 	log.Printf("   ✓ Assigned %d user-store memberships", len(memberships))
 
 	// ── Suppliers ─────────────────────────────────────────────────────────────
-	supplierIDs := map[string]string{}
-	suppliersData := []struct {
-		Name, Contact, Phone, Email, Address string
-	}{
+	type supplierRow struct{ Name, Contact, Phone, Email, Address string }
+	suppliers := []supplierRow{
 		{"PT Sumber Makmur", "Bapak Hendra", "021-8887766", "hendra@sumbermakmur.co.id", "Jl. Industri No. 5, Tangerang"},
 		{"CV Mitra Jaya Sejahtera", "Ibu Dewi", "022-3334455", "dewi@mitrajaya.com", "Jl. Raya Cimahi No. 30, Bandung"},
 		{"UD Berkah Abadi", "Bapak Rudi", "031-6667788", "rudi@berkah-abadi.com", "Jl. Pahlawan No. 9, Surabaya"},
+		{"PT Indofood Distributor", "Ibu Rina", "021-7778899", "rina@indofood-dist.co.id", "Jl. Raya Bekasi No. 100, Bekasi"},
 	}
-	for _, s := range suppliersData {
+	supplierIDs := map[string]string{}
+	for _, s := range suppliers {
 		id := uuid.NewString()
 		_, err = db.ExecContext(ctx, `
 			INSERT INTO suppliers (id, name, contact_name, phone, email, address, is_active)
-			VALUES ($1, $2, $3, $4, $5, $6, true)
-			ON CONFLICT DO NOTHING
+			VALUES ($1, $2, $3, $4, $5, $6, true) ON CONFLICT DO NOTHING
 		`, id, s.Name, s.Contact, s.Phone, s.Email, s.Address)
 		must(err)
 		supplierIDs[s.Name] = id
 	}
-	log.Printf("   ✓ Seeded %d suppliers", len(suppliersData))
+	log.Printf("   ✓ Seeded %d suppliers", len(suppliers))
 
-	// ── Categories ────────────────────────────────────────────────────────────
-	type Category struct{ ID, Name string }
-	seedCategories := func(storeID string, names []string) map[string]string {
-		catIDs := map[string]string{}
-		for _, n := range names {
-			id := uuid.NewString()
-			_, err = db.ExecContext(ctx, `
-				INSERT INTO categories (id, store_id, name)
-				VALUES ($1, $2, $3) ON CONFLICT DO NOTHING
-			`, id, storeID, n)
-			must(err)
-			catIDs[n] = id
+	// ── Products per Store ────────────────────────────────────────────────────
+	log.Println("")
+	log.Println("   📦 Seeding products...")
+
+	// Toko Utama — Jakarta (cafe / coffee-shop)
+	catMapJakarta := seedCategories(ctx, db, mainStoreID, uniqueCategories(catalogJakarta))
+	n1 := seedProducts(ctx, db, mainStoreID, catalogJakarta, catMapJakarta)
+	log.Printf("   ✓ Toko Utama — Jakarta : %d products / %d categories", n1, len(catMapJakarta))
+
+	// Cabang Bandung (minimart / convenience)
+	catMapBandung := seedCategories(ctx, db, branchStoreID, uniqueCategories(catalogBandung))
+	n2 := seedProducts(ctx, db, branchStoreID, catalogBandung, catMapBandung)
+	log.Printf("   ✓ Cabang Bandung       : %d products / %d categories", n2, len(catMapBandung))
+
+	// ── Sample Purchase Orders ────────────────────────────────────────────────
+	adminID := userIDs["admin@moedah.com"]
+	seedPurchaseOrders(ctx, db, mainStoreID, branchStoreID, adminID, supplierIDs)
+
+	// ── Sample Transactions ───────────────────────────────────────────────────
+	kasirID := userIDs["kasir@moedah.com"]
+	kasirBDGID := userIDs["kasir.bdg@moedah.com"]
+	t1 := seedTransactions(ctx, db, mainStoreID, kasirID, catalogJakarta)
+	t2 := seedTransactions(ctx, db, branchStoreID, kasirBDGID, catalogBandung)
+
+	log.Println("")
+	log.Println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+	log.Println("✅  Seed completed!")
+	log.Println("")
+	log.Printf("   Products   : %d (Jakarta) + %d (Bandung) = %d total", n1, n2, n1+n2)
+	log.Printf("   Transactions: %d (Jakarta) + %d (Bandung)", t1, t2)
+	log.Println("")
+	log.Println("   Demo Credentials:")
+	log.Println("   ┌──────────────────────────────────────────────────────┐")
+	log.Println("   │ Role           Email                  Password       │")
+	log.Println("   ├──────────────────────────────────────────────────────┤")
+	log.Println("   │ superadmin     admin@moedah.com       Admin1234!     │")
+	log.Println("   │ manager        manager@moedah.com     Manager1234!   │")
+	log.Println("   │ cashier(JKT)   kasir@moedah.com       Kasir1234!     │")
+	log.Println("   │ cashier(BDG)   kasir.bdg@moedah.com   Kasir1234!     │")
+	log.Println("   │ staff          staff@moedah.com        Staff1234!     │")
+	log.Println("   └──────────────────────────────────────────────────────┘")
+	log.Println("   Frontend : http://localhost:3000")
+	log.Println("   API      : http://localhost:8080")
+	log.Println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+}
+
+// ── Seed helpers ──────────────────────────────────────────────────────────────
+
+// uniqueCategories extracts ordered unique category names from a catalog.
+func uniqueCategories(catalog []ProductSeed) []string {
+	seen := map[string]bool{}
+	var out []string
+	for _, p := range catalog {
+		if !seen[p.Category] {
+			seen[p.Category] = true
+			out = append(out, p.Category)
 		}
-		return catIDs
 	}
+	return out
+}
 
-	mainCats := seedCategories(mainStoreID, []string{"Minuman", "Makanan", "Snack & Cemilan", "Rokok & Tembakau"})
-	seedCategories(branchStoreID, []string{"Minuman", "Makanan", "Snack & Cemilan"})
-	log.Println("   ✓ Seeded categories for 2 stores")
-
-	// ── Products (Toko Utama) ─────────────────────────────────────────────────
-	type Product struct {
-		Name, SKU, Unit, CategoryName string
-		CostPrice, SellPrice, TaxRate float64
-		InitQty                       float64
+// seedCategories upserts categories for a store and returns name→id map.
+func seedCategories(ctx context.Context, db *sqlx.DB, storeID string, names []string) map[string]string {
+	ids := map[string]string{}
+	for _, n := range names {
+		id := uuid.NewString()
+		_, err := db.ExecContext(ctx, `
+			INSERT INTO categories (id, store_id, name)
+			VALUES ($1, $2, $3) ON CONFLICT DO NOTHING
+		`, id, storeID, n)
+		must(err)
+		// read back actual id (may already exist)
+		var actual string
+		must(db.QueryRowContext(ctx,
+			`SELECT id FROM categories WHERE store_id=$1 AND name=$2`, storeID, n,
+		).Scan(&actual))
+		ids[n] = actual
 	}
+	return ids
+}
 
-	products := []Product{
-		// Minuman
-		{"Kopi Americano", "BEV-001", "cup", "Minuman", 8000, 22000, 11, 85},
-		{"Kopi Latte", "BEV-002", "cup", "Minuman", 10000, 28000, 11, 72},
-		{"Kopi Cappuccino", "BEV-003", "cup", "Minuman", 10000, 28000, 11, 60},
-		{"Teh Hijau", "BEV-004", "cup", "Minuman", 4000, 15000, 11, 95},
-		{"Jus Jeruk", "BEV-005", "cup", "Minuman", 6000, 18000, 11, 50},
-		{"Air Mineral 600ml", "BEV-006", "botol", "Minuman", 2500, 6000, 0, 200},
-		{"Susu Segar", "BEV-007", "cup", "Minuman", 7000, 18000, 11, 45},
-		{"Es Teh Manis", "BEV-008", "cup", "Minuman", 3000, 12000, 0, 120},
-		// Makanan
-		{"Nasi Goreng Spesial", "FOOD-001", "porsi", "Makanan", 12000, 30000, 11, 30},
-		{"Mie Goreng", "FOOD-002", "porsi", "Makanan", 10000, 25000, 11, 30},
-		{"Roti Bakar Coklat", "FOOD-003", "pcs", "Makanan", 6000, 15000, 0, 40},
-		{"Sandwich Ayam", "FOOD-004", "pcs", "Makanan", 12000, 28000, 11, 20},
-		{"Pisang Goreng (5 pcs)", "FOOD-005", "pcs", "Makanan", 5000, 13000, 0, 25},
-		// Snack
-		{"Keripik Kentang", "SNK-001", "pcs", "Snack & Cemilan", 5000, 12000, 0, 80},
-		{"Coklat Wafer", "SNK-002", "pcs", "Snack & Cemilan", 4000, 10000, 0, 100},
-		{"Kacang Goreng", "SNK-003", "pcs", "Snack & Cemilan", 3500, 8000, 0, 60},
-		{"Donat Gula", "SNK-004", "pcs", "Snack & Cemilan", 4500, 10000, 0, 35},
-		// Rokok
-		{"Rokok Surya 16", "ROK-001", "bungkus", "Rokok & Tembakau", 18000, 24000, 0, 3},
-		{"Rokok Djarum Super", "ROK-002", "bungkus", "Rokok & Tembakau", 20000, 26000, 0, 5},
-	}
-
-	for _, p := range products {
-		prodID := uuid.NewString()
-		catID := mainCats[p.CategoryName]
-
-		_, err = db.ExecContext(ctx, `
-			INSERT INTO products (id, store_id, category_id, sku, name, unit, cost_price, sell_price, tax_rate, is_active)
-			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, true)
+// seedProducts upserts all products + stock_levels for a given store.
+// Returns the number of products seeded.
+func seedProducts(ctx context.Context, db *sqlx.DB, storeID string, catalog []ProductSeed, catMap map[string]string) int {
+	for _, p := range catalog {
+		catID := catMap[p.Category]
+		_, err := db.ExecContext(ctx, `
+			INSERT INTO products
+			  (id, store_id, category_id, sku, name, barcode, unit, cost_price, sell_price, tax_rate, is_active)
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, true)
 			ON CONFLICT (store_id, sku) DO UPDATE SET
-				name       = EXCLUDED.name,
-				cost_price = EXCLUDED.cost_price,
-				sell_price = EXCLUDED.sell_price,
-				deleted_at = NULL
-		`, prodID, mainStoreID, catID, p.SKU, p.Name, p.Unit, p.CostPrice, p.SellPrice, p.TaxRate)
+			  name=EXCLUDED.name, category_id=EXCLUDED.category_id,
+			  barcode=EXCLUDED.barcode, cost_price=EXCLUDED.cost_price,
+			  sell_price=EXCLUDED.sell_price, tax_rate=EXCLUDED.tax_rate,
+			  updated_at=NOW(), deleted_at=NULL
+		`, uuid.NewString(), storeID, catID, p.SKU, p.Name, p.Barcode,
+			p.Unit, p.CostPrice, p.SellPrice, p.TaxRate)
 		must(err)
 
-		// Get actual product ID (may have existed)
-		var actualID string
-		must(db.QueryRowContext(ctx, `SELECT id FROM products WHERE store_id=$1 AND sku=$2`, mainStoreID, p.SKU).Scan(&actualID))
+		// read actual product id after upsert
+		var prodID string
+		must(db.QueryRowContext(ctx,
+			`SELECT id FROM products WHERE store_id=$1 AND sku=$2`, storeID, p.SKU,
+		).Scan(&prodID))
 
 		_, err = db.ExecContext(ctx, `
 			INSERT INTO stock_levels (product_id, store_id, quantity, min_quantity)
 			VALUES ($1, $2, $3, $4)
-			ON CONFLICT (product_id, store_id) DO UPDATE SET quantity = EXCLUDED.quantity
-		`, actualID, mainStoreID, p.InitQty, 5)
+			ON CONFLICT (product_id, store_id) DO UPDATE SET
+			  quantity=EXCLUDED.quantity, min_quantity=EXCLUDED.min_quantity, updated_at=NOW()
+		`, prodID, storeID, p.InitQty, p.MinQty)
 		must(err)
 	}
-	log.Printf("   ✓ Seeded %d products with stock for Toko Utama", len(products))
-
-	// ── Purchase Orders (sample, draft) ──────────────────────────────────────
-	adminID := userIDs["admin@moedah.com"]
-	poID := uuid.NewString()
-	poNum := fmt.Sprintf("PO-%s", time.Now().Format("20060102-0001"))
-
-	_, err = db.ExecContext(ctx, `
-		INSERT INTO purchase_orders (id, store_id, supplier_id, po_number, status, total_amount, ordered_by, notes)
-		VALUES ($1, $2, $3, $4, 'draft', 0, $5, 'Pembelian rutin mingguan')
-		ON CONFLICT DO NOTHING
-	`, poID, mainStoreID, supplierIDs["PT Sumber Makmur"], poNum, adminID)
-	must(err)
-	log.Printf("   ✓ Sample purchase order: %s", poNum)
-
-	// ── Sample Transactions ───────────────────────────────────────────────────
-	kasirID := userIDs["kasir@moedah.com"]
-	seedTransactions(ctx, db, mainStoreID, kasirID)
-
-	log.Println("")
-	log.Println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-	log.Println("✅  Seed completed successfully!")
-	log.Println("")
-	log.Println("   Demo Credentials:")
-	log.Println("   ┌─────────────────────────────────────────┐")
-	log.Println("   │ Role     │ Email                │ Pass   │")
-	log.Println("   ├─────────────────────────────────────────┤")
-	log.Println("   │ Admin    │ admin@moedah.com     │ Admin1234!   │")
-	log.Println("   │ Manager  │ manager@moedah.com   │ Manager1234! │")
-	log.Println("   │ Kasir    │ kasir@moedah.com     │ Kasir1234!   │")
-	log.Println("   │ Staff    │ staff@moedah.com     │ Staff1234!   │")
-	log.Println("   └─────────────────────────────────────────┘")
-	log.Println("   Frontend: http://localhost:3000")
-	log.Println("   Backend:  http://localhost:8080")
-	log.Println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+	return len(catalog)
 }
 
-// seedTransactions inserts 5 sample completed transactions
-func seedTransactions(ctx context.Context, db *sqlx.DB, storeID, cashierID string) {
-	type txData struct {
-		CustomerName  string
-		ProductSKU    string
-		Qty           float64
-		PaymentMethod string
+// seedPurchaseOrders creates sample POs for both stores.
+func seedPurchaseOrders(ctx context.Context, db *sqlx.DB, mainStoreID, branchStoreID, adminID string, supplierIDs map[string]string) {
+	pos := []struct {
+		StoreID, SupplierKey, Status, Notes string
+		Offset                              int // days ago
+	}{
+		{mainStoreID, "PT Sumber Makmur", "draft", "Pembelian rutin mingguan", 0},
+		{mainStoreID, "CV Mitra Jaya Sejahtera", "ordered", "Restock minuman kemasan", 3},
+		{branchStoreID, "PT Indofood Distributor", "draft", "Restock mie dan snack", 0},
+		{branchStoreID, "CV Mitra Jaya Sejahtera", "received", "Pembelian bulan lalu", 14},
 	}
-	samples := []txData{
-		{"Budi Santoso", "BEV-001", 2, "cash"},
-		{"Pelanggan Umum", "FOOD-001", 1, "qris"},
-		{"Ani Rahayu", "BEV-002", 1, "cash"},
-		{"Pelanggan Umum", "SNK-001", 3, "cash"},
-		{"Dewi Lestari", "BEV-008", 2, "card"},
+	for i, po := range pos {
+		poID := uuid.NewString()
+		poNum := fmt.Sprintf("PO-%s-%03d", time.Now().Format("20060102"), i+1)
+		_, _ = db.ExecContext(ctx, `
+			INSERT INTO purchase_orders
+			  (id, store_id, supplier_id, po_number, status, total_amount, ordered_by, notes, created_at)
+			VALUES ($1, $2, $3, $4, $5, 0, $6, $7, NOW() - ($8 * interval '1 day'))
+			ON CONFLICT DO NOTHING
+		`, poID, po.StoreID, supplierIDs[po.SupplierKey], poNum, po.Status, adminID, po.Notes, po.Offset)
 	}
+	log.Printf("   ✓ Seeded %d sample purchase orders", len(pos))
+}
 
-	for i, s := range samples {
-		// Fetch product details
+// seedTransactions creates sample completed transactions for a store.
+// Returns number of transactions created.
+func seedTransactions(ctx context.Context, db *sqlx.DB, storeID, cashierID string, catalog []ProductSeed) int {
+	// pick first 8 products from this store's catalog
+	picks := catalog
+	if len(picks) > 8 {
+		picks = picks[:8]
+	}
+	customers := []string{
+		"Budi Santoso", "Pelanggan Umum", "Ani Rahayu",
+		"Dewi Lestari", "Rudi Hartono", "Maya Indah",
+	}
+	methods := []string{"cash", "qris", "cash", "card", "cash", "qris"}
+	count := 0
+
+	for i, p := range picks {
 		var prodID string
 		var sellPrice, taxRate float64
 		var prodName, sku string
 		err := db.QueryRowContext(ctx, `
 			SELECT id, name, sku, sell_price, tax_rate FROM products WHERE store_id=$1 AND sku=$2
-		`, storeID, s.ProductSKU).Scan(&prodID, &prodName, &sku, &sellPrice, &taxRate)
+		`, storeID, p.SKU).Scan(&prodID, &prodName, &sku, &sellPrice, &taxRate)
 		if err != nil {
 			continue
 		}
 
-		lineSubtotal := sellPrice * s.Qty
-		lineTax := lineSubtotal * (taxRate / 100)
-		total := lineSubtotal + lineTax
-		payAmt := total + float64((i+1)*5000) // add some change for cash txns
+		qty := float64(i%3 + 1)
+		subtotal := sellPrice * qty
+		tax := subtotal * (taxRate / 100)
+		total := subtotal + tax
+		payAmt := total + float64((i+1)*2000)
+		customer := customers[i%len(customers)]
+		method := methods[i%len(methods)]
+		hoursAgo := float64(i * 2)
 
 		txID := uuid.NewString()
-
 		_, err = db.ExecContext(ctx, `
 			INSERT INTO transactions
 			  (id, store_id, cashier_id, customer_name, subtotal, discount_amt, tax_amt, total,
 			   payment_method, payment_amount, change_amount, status, created_at)
-			VALUES ($1, $2, $3, $4, $5, 0, $6, $7, $8, $9, $10, 'completed',
-			        NOW() - ($11 * interval '1 hour'))
+			VALUES ($1,$2,$3,$4,$5,0,$6,$7,$8,$9,$10,'completed', NOW()-($11 * interval '1 hour'))
 			ON CONFLICT DO NOTHING
-		`, txID, storeID, cashierID, s.CustomerName,
-			lineSubtotal, lineTax, total,
-			s.PaymentMethod, payAmt, payAmt-total,
-			float64(i*3))
+		`, txID, storeID, cashierID, customer,
+			subtotal, tax, total, method, payAmt, payAmt-total, hoursAgo)
 		if err != nil {
 			continue
 		}
-
 		_, err = db.ExecContext(ctx, `
 			INSERT INTO transaction_items
 			  (id, transaction_id, product_id, product_name, sku, quantity, unit_price, discount_pct, tax_rate, subtotal)
-			VALUES ($1, $2, $3, $4, $5, $6, $7, 0, $8, $9)
-		`, uuid.NewString(), txID, prodID, prodName, sku, s.Qty, sellPrice, taxRate, lineSubtotal)
+			VALUES ($1,$2,$3,$4,$5,$6,$7,0,$8,$9)
+		`, uuid.NewString(), txID, prodID, prodName, sku, qty, sellPrice, taxRate, subtotal)
 		if err != nil {
 			continue
 		}
-
-		// Deduct stock
+		// deduct stock
 		_, _ = db.ExecContext(ctx, `
-			UPDATE stock_levels SET quantity = GREATEST(0, quantity - $1), updated_at = NOW()
-			WHERE product_id = $2 AND store_id = $3
-		`, s.Qty, prodID, storeID)
-
+			UPDATE stock_levels SET quantity=GREATEST(0,quantity-$1), updated_at=NOW()
+			WHERE product_id=$2 AND store_id=$3
+		`, qty, prodID, storeID)
 		_, _ = db.ExecContext(ctx, `
-			INSERT INTO stock_movements (id, product_id, store_id, ref_type, ref_id, quantity_delta, notes, created_by)
-			VALUES ($1, $2, $3, 'sale', $4, $5, 'Penjualan kasir', $6)
-		`, uuid.NewString(), prodID, storeID, txID, -s.Qty, cashierID)
+			INSERT INTO stock_movements (id,product_id,store_id,ref_type,ref_id,quantity_delta,notes,created_by)
+			VALUES ($1,$2,$3,'sale',$4,$5,'Penjualan kasir',$6)
+		`, uuid.NewString(), prodID, storeID, txID, -qty, cashierID)
+		count++
 	}
-	log.Println("   ✓ Seeded 5 sample transactions with stock movements")
+	return count
 }
 
-// resetData truncates all data tables (keeps roles/permissions/migrations)
+// resetData deletes all demo tables (preserves roles/permissions/migrations).
 func resetData(ctx context.Context, db *sqlx.DB) {
 	tables := []string{
 		"transaction_items", "transactions",
@@ -377,8 +472,7 @@ func resetData(ctx context.Context, db *sqlx.DB) {
 		"refresh_tokens", "users", "stores",
 	}
 	for _, t := range tables {
-		_, err := db.ExecContext(ctx, fmt.Sprintf("DELETE FROM %s", t))
-		if err != nil {
+		if _, err := db.ExecContext(ctx, fmt.Sprintf("DELETE FROM %s", t)); err != nil {
 			log.Printf("   warn: could not clear %s: %v", t, err)
 		}
 	}
