@@ -32,9 +32,12 @@ func (r *TransactionRepo) Create(ctx context.Context, input domain.CreateTransac
 		   subtotal, discount_amt, tax_amt, total,
 		   payment_method, payment_amount, change_amount, status, notes)
 		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,'completed',$12)
-		RETURNING id, store_id, cashier_id, customer_name, customer_phone,
+		RETURNING id, store_id, cashier_id,
+		          COALESCE(customer_name,'')  AS customer_name,
+		          COALESCE(customer_phone,'') AS customer_phone,
 		          subtotal, discount_amt, tax_amt, total,
-		          payment_method, payment_amount, change_amount, status, notes,
+		          payment_method, payment_amount, change_amount, status,
+		          COALESCE(notes,'') AS notes,
 		          created_at, updated_at`
 
 	txn := &domain.Transaction{}
@@ -136,9 +139,12 @@ func (r *TransactionRepo) FindAll(ctx context.Context, f dto.TransactionListFilt
 
 	args = append(args, f.PerPage, f.Offset())
 	dataQ := fmt.Sprintf(`
-		SELECT t.id, t.store_id, t.cashier_id, t.customer_name, t.customer_phone,
+		SELECT t.id, t.store_id, t.cashier_id,
+		       COALESCE(t.customer_name,'')  AS customer_name,
+		       COALESCE(t.customer_phone,'') AS customer_phone,
 		       t.subtotal, t.discount_amt, t.tax_amt, t.total,
-		       t.payment_method, t.payment_amount, t.change_amount, t.status, t.notes,
+		       t.payment_method, t.payment_amount, t.change_amount, t.status,
+		       COALESCE(t.notes,'') AS notes,
 		       t.created_at, t.updated_at, u.name AS cashier_name
 		FROM transactions t
 		JOIN users u ON u.id = t.cashier_id
@@ -156,9 +162,12 @@ func (r *TransactionRepo) FindAll(ctx context.Context, f dto.TransactionListFilt
 // FindByID returns a transaction with all its items.
 func (r *TransactionRepo) FindByID(ctx context.Context, id string) (*domain.Transaction, error) {
 	const txnQ = `
-		SELECT t.id, t.store_id, t.cashier_id, t.customer_name, t.customer_phone,
+		SELECT t.id, t.store_id, t.cashier_id,
+		       COALESCE(t.customer_name,'')  AS customer_name,
+		       COALESCE(t.customer_phone,'') AS customer_phone,
 		       t.subtotal, t.discount_amt, t.tax_amt, t.total,
-		       t.payment_method, t.payment_amount, t.change_amount, t.status, t.notes,
+		       t.payment_method, t.payment_amount, t.change_amount, t.status,
+		       COALESCE(t.notes,'') AS notes,
 		       t.created_at, t.updated_at, u.name AS cashier_name
 		FROM transactions t
 		JOIN users u ON u.id = t.cashier_id
