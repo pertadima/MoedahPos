@@ -144,7 +144,7 @@ func (s *ProductService) CreateProduct(ctx context.Context, storeID string, req 
 
 	product, err := s.productRepo.Create(ctx, &domain.Product{
 		StoreID: storeID, CategoryID: req.CategoryID, SKU: req.SKU, Name: req.Name,
-		Description: req.Description, Barcode: req.Barcode, Unit: req.Unit,
+		Description: &req.Description, Barcode: req.Barcode, Unit: req.Unit,
 		CostPrice: req.CostPrice, SellPrice: req.SellPrice, TaxRate: req.TaxRate,
 		ImageURL: req.ImageURL, IsActive: true,
 	})
@@ -178,7 +178,7 @@ func (s *ProductService) UpdateProduct(ctx context.Context, id string, req *dto.
 	}
 	product.CategoryID = req.CategoryID
 	product.Name = req.Name
-	product.Description = req.Description
+	product.Description = &req.Description
 	product.Barcode = req.Barcode
 	product.Unit = req.Unit
 	product.CostPrice = req.CostPrice
@@ -232,6 +232,10 @@ func toCategoryResponse(c *domain.Category) *dto.CategoryResponse {
 }
 
 func toProductResponse(p *domain.Product) *dto.ProductResponse {
+	desc := ""
+	if p.Description != nil {
+		desc = *p.Description
+	}
 	r := &dto.ProductResponse{
 		ID:           p.ID,
 		StoreID:      p.StoreID,
@@ -239,7 +243,7 @@ func toProductResponse(p *domain.Product) *dto.ProductResponse {
 		CategoryName: p.CategoryName,
 		SKU:          p.SKU,
 		Name:         p.Name,
-		Description:  p.Description,
+		Description:  desc,
 		Barcode:      p.Barcode,
 		Unit:         p.Unit,
 		CostPrice:    p.CostPrice,
@@ -247,7 +251,7 @@ func toProductResponse(p *domain.Product) *dto.ProductResponse {
 		TaxRate:      p.TaxRate,
 		ImageURL:     p.ImageURL,
 		IsActive:     p.IsActive,
-		StockQty:     p.StockQty, // ← Phase 2 bug fix
+		StockQty:     p.StockQty,
 		CreatedAt:    p.CreatedAt.Format(time.RFC3339),
 		UpdatedAt:    p.UpdatedAt.Format(time.RFC3339),
 	}

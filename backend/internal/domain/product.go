@@ -9,7 +9,7 @@ type Product struct {
 	CategoryID  *string    `db:"category_id"`
 	SKU         string     `db:"sku"`
 	Name        string     `db:"name"`
-	Description string     `db:"description"`
+	Description *string    `db:"description"`
 	Barcode     *string    `db:"barcode"`
 	Unit        string     `db:"unit"`
 	CostPrice   float64    `db:"cost_price"`
