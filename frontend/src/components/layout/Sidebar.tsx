@@ -4,8 +4,8 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard, ShoppingCart, Package, Warehouse,
-  ClipboardList, BarChart3, Users, LogOut, ChevronDown,
-  Store, CreditCard,
+  ClipboardList, BarChart3, Users, LogOut,
+  Store, CreditCard, Tag,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthContext';
 
@@ -13,6 +13,7 @@ const navItems = [
   { href: '/dashboard',        icon: LayoutDashboard, label: 'Dashboard' },
   { href: '/pos',              icon: ShoppingCart,    label: 'Kasir / POS' },
   { href: '/products',         icon: Package,         label: 'Produk' },
+  { href: '/categories',       icon: Tag,             label: 'Kategori' },
   { href: '/stock',            icon: Warehouse,       label: 'Stok' },
   { href: '/purchase-orders',  icon: ClipboardList,   label: 'Purchase Order' },
   { href: '/suppliers',        icon: Users,           label: 'Supplier' },

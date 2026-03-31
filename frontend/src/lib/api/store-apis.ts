@@ -1,5 +1,17 @@
 import { api } from './client';
-import type { StockLevel, StockMovement, PaginatedData } from '@/types';
+import type { Category, StockLevel, StockMovement, PaginatedData } from '@/types';
+
+export const categoriesApi = {
+  list: (storeId: string) =>
+    api.get<Category[]>(`/stores/${storeId}/categories`),
+  create: (storeId: string, payload: { name: string; parent_id?: string }) =>
+    api.post<Category>(`/stores/${storeId}/categories`, payload),
+  update: (storeId: string, categoryId: string, payload: { name: string; parent_id?: string }) =>
+    api.put<Category>(`/stores/${storeId}/categories/${categoryId}`, payload),
+  softDelete: (storeId: string, categoryId: string) =>
+    api.delete(`/stores/${storeId}/categories/${categoryId}`),
+};
+
 
 export const stockApi = {
   levels: (storeId: string, lowStockOnly = false) =>

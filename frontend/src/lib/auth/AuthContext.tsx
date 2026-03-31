@@ -37,11 +37,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Restore selected store from localStorage
         const savedStoreId = localStorage.getItem('selected_store_id');
         const storeList = u.stores ?? [];
-        if (savedStoreId) {
-          const found = storeList.find(s => s.store_id === savedStoreId);
-          setSelectedStore(found ?? storeList[0] ?? null);
-        } else if (storeList.length === 1) {
-          setSelectedStore(storeList[0]);
+        const preferred = savedStoreId ? storeList.find(s => s.store_id === savedStoreId) : null;
+        const autoSelected = preferred ?? storeList[0] ?? null;
+        if (autoSelected) {
+          setSelectedStore(autoSelected);
+          localStorage.setItem('selected_store_id', autoSelected.store_id);
         }
       } catch {
         clearTokens();
@@ -61,9 +61,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const u = meRes.data as User;
     setUser(u);
     const storeList = u.stores ?? [];
-    if (storeList.length === 1) {
-      setSelectedStore(storeList[0]);
-      localStorage.setItem('selected_store_id', storeList[0].store_id);
+    const savedStoreId = localStorage.getItem('selected_store_id');
+    const preferred = savedStoreId ? storeList.find(s => s.store_id === savedStoreId) : null;
+    const autoSelected = preferred ?? storeList[0] ?? null;
+    if (autoSelected) {
+      setSelectedStore(autoSelected);
+      localStorage.setItem('selected_store_id', autoSelected.store_id);
     }
   }, []);
 

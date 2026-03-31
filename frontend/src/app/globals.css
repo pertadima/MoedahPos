@@ -339,3 +339,13 @@ body {
 .text-em { color: var(--accent-em); }
 .text-2 { color: var(--text-2); }
 .text-3 { color: var(--text-3); }
+
+/* ── Category row hover ──────────────────────────────────────────────────── */
+.category-row:hover { background: var(--bg-elevated) !important; }
+.category-row:last-child { border-bottom: none !important; }
+
+/* ── Slide-in animation (modals / toasts) ───────────────────────────────── */
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(-8px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0)    scale(1);    }
+}
