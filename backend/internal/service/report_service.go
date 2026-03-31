@@ -53,16 +53,25 @@ func (s *ReportService) SalesSummary(ctx context.Context, filter dto.ReportFilte
 		return nil, fmt.Errorf("sales summary: %w", err)
 	}
 
-	var totalSales float64
+	var totalSales, totalCost, grossProfit float64
 	var totalTxns int
 	for _, r := range rows {
 		totalSales += r.TotalSales
+		totalCost += r.TotalCost
+		grossProfit += r.GrossProfit
 		totalTxns += r.TransactionCount
+	}
+	var margin float64
+	if totalSales > 0 {
+		margin = grossProfit / totalSales * 100
 	}
 	return &dto.SalesSummaryResponse{
 		Rows:              rows,
 		TotalSales:        totalSales,
 		TotalTransactions: totalTxns,
+		TotalCost:         totalCost,
+		GrossProfit:       grossProfit,
+		ProfitMargin:      margin,
 	}, nil
 }
 
@@ -99,5 +108,31 @@ func (s *ReportService) StockValuation(ctx context.Context, storeID string) (*dt
 	return &dto.StockValuationResponse{
 		Rows:       rows,
 		GrandTotal: grandTotal,
+	}, nil
+}
+
+// ProfitSummary returns gross profit grouped by day, week, or month.
+func (s *ReportService) ProfitSummary(ctx context.Context, filter dto.ReportFilter, groupBy string) (*dto.ProfitSummaryResponse, error) {
+	from, to := defaultDateRange(filter)
+	rows, err := s.reportRepo.ProfitSummary(ctx, filter.StoreID, from, to, groupBy)
+	if err != nil {
+		return nil, fmt.Errorf("profit summary: %w", err)
+	}
+	var totalSales, totalCost, grossProfit float64
+	for _, r := range rows {
+		totalSales += r.TotalSales
+		totalCost += r.TotalCost
+		grossProfit += r.GrossProfit
+	}
+	var margin float64
+	if totalSales > 0 {
+		margin = grossProfit / totalSales * 100
+	}
+	return &dto.ProfitSummaryResponse{
+		Rows:         rows,
+		TotalSales:   totalSales,
+		TotalCost:    totalCost,
+		GrossProfit:  grossProfit,
+		ProfitMargin: margin,
 	}, nil
 }

@@ -12,7 +12,7 @@ type ReportFilter struct {
 
 // ─── Sales Summary ────────────────────────────────────────────────────────────
 
-// SalesSummaryRow is one day's aggregated sales totals.
+// SalesSummaryRow is one day's aggregated sales totals (with profit).
 type SalesSummaryRow struct {
 	Date             string  `json:"date"              db:"date"`
 	TransactionCount int     `json:"transaction_count" db:"transaction_count"`
@@ -20,13 +20,18 @@ type SalesSummaryRow struct {
 	TotalTax         float64 `json:"total_tax"         db:"total_tax"`
 	TotalDiscount    float64 `json:"total_discount"    db:"total_discount"`
 	TotalNet         float64 `json:"total_net"         db:"total_net"` // sales - discount
+	TotalCost        float64 `json:"total_cost"        db:"total_cost"`
+	GrossProfit      float64 `json:"gross_profit"      db:"gross_profit"`
 }
 
 // SalesSummaryResponse wraps rows + period totals.
 type SalesSummaryResponse struct {
-	Rows             []SalesSummaryRow `json:"rows"`
-	TotalSales       float64           `json:"total_sales"`
-	TotalTransactions int              `json:"total_transactions"`
+	Rows              []SalesSummaryRow `json:"rows"`
+	TotalSales        float64           `json:"total_sales"`
+	TotalTransactions int               `json:"total_transactions"`
+	TotalCost         float64           `json:"total_cost"`
+	GrossProfit       float64           `json:"gross_profit"`
+	ProfitMargin      float64           `json:"profit_margin"` // %
 }
 
 // ─── Sales by Product ─────────────────────────────────────────────────────────
@@ -38,6 +43,9 @@ type SalesByProductRow struct {
 	SKU           string  `json:"sku"            db:"sku"`
 	TotalQuantity float64 `json:"total_quantity" db:"total_quantity"`
 	TotalRevenue  float64 `json:"total_revenue"  db:"total_revenue"`
+	TotalCost     float64 `json:"total_cost"     db:"total_cost"`
+	GrossProfit   float64 `json:"gross_profit"   db:"gross_profit"`
+	ProfitMargin  float64 `json:"profit_margin"  db:"profit_margin"` // %
 	TotalTax      float64 `json:"total_tax"      db:"total_tax"`
 }
 
@@ -68,4 +76,24 @@ type StockValuationRow struct {
 type StockValuationResponse struct {
 	Rows       []StockValuationRow `json:"rows"`
 	GrandTotal float64             `json:"grand_total"`
+}
+
+// ─── Profit Summary (period) ─────────────────────────────────────────────────
+
+// ProfitPeriodRow is aggregated profit for one day (or week/month grouping).
+type ProfitPeriodRow struct {
+	Period      string  `json:"period"       db:"period"`
+	TotalSales  float64 `json:"total_sales"  db:"total_sales"`
+	TotalCost   float64 `json:"total_cost"   db:"total_cost"`
+	GrossProfit float64 `json:"gross_profit" db:"gross_profit"`
+	ProfitMargin float64 `json:"profit_margin" db:"profit_margin"`
+}
+
+// ProfitSummaryResponse wraps rows + period totals.
+type ProfitSummaryResponse struct {
+	Rows         []ProfitPeriodRow `json:"rows"`
+	TotalSales   float64           `json:"total_sales"`
+	TotalCost    float64           `json:"total_cost"`
+	GrossProfit  float64           `json:"gross_profit"`
+	ProfitMargin float64           `json:"profit_margin"` // %
 }

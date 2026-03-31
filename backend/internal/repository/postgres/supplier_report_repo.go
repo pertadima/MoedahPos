@@ -118,13 +118,17 @@ func NewReportRepo(db *sqlx.DB) *ReportRepo { return &ReportRepo{db: db} }
 func (r *ReportRepo) SalesSummary(ctx context.Context, storeID string, from, to time.Time) ([]dto.SalesSummaryRow, error) {
 	const q = `
 		SELECT
-			TO_CHAR(created_at AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD') AS date,
+			TO_CHAR(t.created_at AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD') AS date,
 			COUNT(*)                 AS transaction_count,
-			ROUND(SUM(total)::numeric, 2)        AS total_sales,
-			ROUND(SUM(tax_amt)::numeric, 2)      AS total_tax,
-			ROUND(SUM(discount_amt)::numeric, 2) AS total_discount,
-			ROUND((SUM(total) - SUM(discount_amt))::numeric, 2) AS total_net
-		FROM transactions
+			ROUND(SUM(t.total)::numeric, 2)        AS total_sales,
+			ROUND(SUM(t.tax_amt)::numeric, 2)      AS total_tax,
+			ROUND(SUM(t.discount_amt)::numeric, 2) AS total_discount,
+			ROUND((SUM(t.total) - SUM(t.discount_amt))::numeric, 2) AS total_net,
+			ROUND(COALESCE((SELECT SUM(ti.cost_price * ti.quantity)
+			                FROM transaction_items ti WHERE ti.transaction_id = ANY(ARRAY_AGG(t.id))), 0)::numeric, 2) AS total_cost,
+			ROUND((SUM(t.total) - COALESCE((SELECT SUM(ti.cost_price * ti.quantity)
+			                               FROM transaction_items ti WHERE ti.transaction_id = ANY(ARRAY_AGG(t.id))), 0))::numeric, 2) AS gross_profit
+		FROM transactions t
 		WHERE store_id = $1 AND status = 'completed'
 		  AND created_at >= $2 AND created_at < $3
 		GROUP BY 1
@@ -142,9 +146,14 @@ func (r *ReportRepo) SalesByProduct(ctx context.Context, storeID string, from, t
 			COALESCE(ti.product_id::text, '') AS product_id,
 			ti.product_name,
 			ti.sku,
-			ROUND(SUM(ti.quantity)::numeric, 3)  AS total_quantity,
-			ROUND(SUM(ti.subtotal)::numeric, 2)  AS total_revenue,
-			ROUND(SUM(ti.subtotal * ti.tax_rate / 100)::numeric, 2) AS total_tax
+			ROUND(SUM(ti.quantity)::numeric, 3)                                   AS total_quantity,
+			ROUND(SUM(ti.subtotal)::numeric, 2)                                   AS total_revenue,
+			ROUND(SUM(ti.cost_price * ti.quantity)::numeric, 2)                   AS total_cost,
+			ROUND((SUM(ti.subtotal) - SUM(ti.cost_price * ti.quantity))::numeric, 2) AS gross_profit,
+			CASE WHEN SUM(ti.subtotal) > 0
+			     THEN ROUND(((SUM(ti.subtotal) - SUM(ti.cost_price * ti.quantity)) / SUM(ti.subtotal) * 100)::numeric, 1)
+			     ELSE 0 END                                                        AS profit_margin,
+			ROUND(SUM(ti.subtotal * ti.tax_rate / 100)::numeric, 2)               AS total_tax
 		FROM transaction_items ti
 		JOIN transactions t ON t.id = ti.transaction_id
 		WHERE t.store_id = $1 AND t.status = 'completed'
@@ -195,6 +204,47 @@ func (r *ReportRepo) StockValuation(ctx context.Context, storeID string) ([]dto.
 	var rows []dto.StockValuationRow
 	if err := r.db.SelectContext(ctx, &rows, q, storeID); err != nil {
 		return nil, fmt.Errorf("ReportRepo.StockValuation: %w", err)
+	}
+	return rows, nil
+}
+
+// ProfitSummary returns profit grouped by the given period expression.
+// groupBy must be a trusted pg expression (e.g. "day" | "week" | "month").
+func (r *ReportRepo) ProfitSummary(ctx context.Context, storeID string, from, to time.Time, groupBy string) ([]dto.ProfitPeriodRow, error) {
+	// Safe allowlist — never interpolated from user input directly
+	periodExpr := map[string]string{
+		"day":   "TO_CHAR(t.created_at AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD')",
+		"week":  "TO_CHAR(DATE_TRUNC('week', t.created_at AT TIME ZONE 'Asia/Jakarta'), 'YYYY-MM-DD')",
+		"month": "TO_CHAR(DATE_TRUNC('month', t.created_at AT TIME ZONE 'Asia/Jakarta'), 'YYYY-MM')",
+	}
+	expr, ok := periodExpr[groupBy]
+	if !ok {
+		expr = periodExpr["day"]
+	}
+
+	q := fmt.Sprintf(`
+		SELECT
+			%s AS period,
+			ROUND(SUM(t.total)::numeric, 2) AS total_sales,
+			ROUND(COALESCE(SUM(ti_agg.item_cost), 0)::numeric, 2) AS total_cost,
+			ROUND((SUM(t.total) - COALESCE(SUM(ti_agg.item_cost), 0))::numeric, 2) AS gross_profit,
+			CASE WHEN SUM(t.total) > 0
+			     THEN ROUND(((SUM(t.total) - COALESCE(SUM(ti_agg.item_cost), 0)) / SUM(t.total) * 100)::numeric, 1)
+			     ELSE 0 END AS profit_margin
+		FROM transactions t
+		LEFT JOIN (
+			SELECT transaction_id, SUM(cost_price * quantity) AS item_cost
+			FROM transaction_items
+			GROUP BY transaction_id
+		) ti_agg ON ti_agg.transaction_id = t.id
+		WHERE t.store_id = $1 AND t.status = 'completed'
+		  AND t.created_at >= $2 AND t.created_at < $3
+		GROUP BY 1
+		ORDER BY 1`, expr)
+
+	var rows []dto.ProfitPeriodRow
+	if err := r.db.SelectContext(ctx, &rows, q, storeID, from, to); err != nil {
+		return nil, fmt.Errorf("ReportRepo.ProfitSummary: %w", err)
 	}
 	return rows, nil
 }

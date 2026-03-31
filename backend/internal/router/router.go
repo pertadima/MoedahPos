@@ -160,6 +160,7 @@ func New(deps *Dependencies) http.Handler {
 							r.Get("/sales/by-product",  withPerm(deps, "reports.read", deps.ReportHandler.SalesByProduct))
 							r.Get("/sales/by-cashier",  withPerm(deps, "reports.read", deps.ReportHandler.SalesByCashier))
 							r.Get("/stock-valuation",   withPerm(deps, "reports.read", deps.ReportHandler.StockValuation))
+							r.Get("/profit",            withPerm(deps, "reports.read", deps.ReportHandler.ProfitSummary))
 						})
 
 						// ── Restaurant Mode ───────────────────────────────────

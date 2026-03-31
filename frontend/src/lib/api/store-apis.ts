@@ -129,4 +129,10 @@ export const reportsApi = {
   },
   stockValuation: (storeId: string) =>
     api.get<any>(`/stores/${storeId}/reports/stock-valuation`),
+  profit: (storeId: string, dateFrom?: string, dateTo?: string, groupBy: 'day' | 'week' | 'month' = 'day') => {
+    const q = new URLSearchParams({ group_by: groupBy });
+    if (dateFrom) q.set('date_from', dateFrom);
+    if (dateTo) q.set('date_to', dateTo);
+    return api.get<any>(`/stores/${storeId}/reports/profit?${q}`);
+  },
 };

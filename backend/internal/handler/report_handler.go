@@ -77,5 +77,21 @@ func (h *ReportHandler) StockValuation(w http.ResponseWriter, r *http.Request) {
 	response.Success(w, result)
 }
 
+// GET /stores/:storeId/reports/profit?group_by=day|week|month
+func (h *ReportHandler) ProfitSummary(w http.ResponseWriter, r *http.Request) {
+	storeID := chi.URLParam(r, "storeId")
+	groupBy := r.URL.Query().Get("group_by")
+	if groupBy == "" {
+		groupBy = "day"
+	}
+	result, err := h.reportSvc.ProfitSummary(r.Context(), filterFromQuery(r, storeID), groupBy)
+	if err != nil {
+		h.log.Error().Err(err).Msg("profit summary failed")
+		response.InternalError(w)
+		return
+	}
+	response.Success(w, result)
+}
+
 // unused errors suppressor
 var _ = errors.New

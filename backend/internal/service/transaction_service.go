@@ -82,14 +82,23 @@ func (s *TransactionService) Checkout(ctx context.Context, storeID string, req *
 			discountAmt += lineDiscount
 			taxAmt += lineTax
 
+			// Compute BOM cost (sum of ingredient cost_price × qty per portion)
+			var menuCost float64
+			for _, ing := range menuItem.Ingredients {
+				ingProduct, _ := s.productRepo.FindByID(ctx, ing.ProductID)
+				if ingProduct != nil {
+					menuCost += ingProduct.CostPrice * ing.Quantity
+				}
+			}
+
 			mid := item.MenuItemID
-			_ = mid // stored in ProductName as label; no product_id column for menu items
 			inputItems = append(inputItems, domain.CreateTransactionItemInput{
 				ProductID:   nil,
 				ProductName: menuItem.Name,
 				SKU:         "MENU-" + item.MenuItemID[:8],
 				Quantity:    item.Quantity,
 				UnitPrice:   menuItem.SellPrice,
+				CostPrice:   menuCost, // BOM cost per portion, snapshot at sale time
 				DiscountPct: item.DiscountPct,
 				TaxRate:     menuItem.TaxRate,
 				Subtotal:    lineSubtotal,
@@ -134,6 +143,7 @@ func (s *TransactionService) Checkout(ctx context.Context, storeID string, req *
 				SKU:         product.SKU,
 				Quantity:    item.Quantity,
 				UnitPrice:   product.SellPrice,
+				CostPrice:   product.CostPrice, // snapshot at time of sale
 				DiscountPct: item.DiscountPct,
 				TaxRate:     product.TaxRate,
 				Subtotal:    lineSubtotal,

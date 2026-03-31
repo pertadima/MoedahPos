@@ -35,6 +35,7 @@ type TransactionItem struct {
 	SKU           string  `db:"sku"`           // snapshot
 	Quantity      float64 `db:"quantity"`
 	UnitPrice     float64 `db:"unit_price"`
+	CostPrice     float64 `db:"cost_price"`    // snapshot of cost at time of sale
 	DiscountPct   float64 `db:"discount_pct"`
 	TaxRate       float64 `db:"tax_rate"`
 	Subtotal      float64 `db:"subtotal"`
@@ -66,6 +67,7 @@ type CreateTransactionItemInput struct {
 	SKU         string
 	Quantity    float64
 	UnitPrice   float64
+	CostPrice   float64 // snapshot of cost at time of sale
 	DiscountPct float64
 	TaxRate     float64
 	Subtotal    float64

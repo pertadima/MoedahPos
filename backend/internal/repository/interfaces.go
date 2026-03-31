@@ -116,4 +116,5 @@ type ReportRepository interface {
 	SalesByProduct(ctx context.Context, storeID string, from, to time.Time) ([]dto.SalesByProductRow, error)
 	SalesByCashier(ctx context.Context, storeID string, from, to time.Time) ([]dto.SalesByCashierRow, error)
 	StockValuation(ctx context.Context, storeID string) ([]dto.StockValuationRow, error)
+	ProfitSummary(ctx context.Context, storeID string, from, to time.Time, groupBy string) ([]dto.ProfitPeriodRow, error)
 }

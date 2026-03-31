@@ -53,9 +53,9 @@ func (r *TransactionRepo) Create(ctx context.Context, input domain.CreateTransac
 	// 2. INSERT items + stock movements per item
 	const itemQ = `
 		INSERT INTO transaction_items
-		  (transaction_id, product_id, product_name, sku, quantity, unit_price, discount_pct, tax_rate, subtotal)
-		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
-		RETURNING id, transaction_id, product_id, product_name, sku, quantity, unit_price, discount_pct, tax_rate, subtotal`
+		  (transaction_id, product_id, product_name, sku, quantity, unit_price, cost_price, discount_pct, tax_rate, subtotal)
+		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+		RETURNING id, transaction_id, product_id, product_name, sku, quantity, unit_price, cost_price, discount_pct, tax_rate, subtotal`
 
 	const mvQ = `
 		INSERT INTO stock_movements (product_id, store_id, ref_type, ref_id, quantity_delta, notes, created_by)
@@ -71,7 +71,7 @@ func (r *TransactionRepo) Create(ctx context.Context, input domain.CreateTransac
 		ti := &domain.TransactionItem{}
 		if err := tx.QueryRowxContext(ctx, itemQ,
 			txn.ID, item.ProductID, item.ProductName, item.SKU,
-			item.Quantity, item.UnitPrice, item.DiscountPct, item.TaxRate, item.Subtotal,
+			item.Quantity, item.UnitPrice, item.CostPrice, item.DiscountPct, item.TaxRate, item.Subtotal,
 		).StructScan(ti); err != nil {
 			return nil, fmt.Errorf("TransactionRepo.Create insert item: %w", err)
 		}
@@ -184,7 +184,7 @@ func (r *TransactionRepo) FindByID(ctx context.Context, id string) (*domain.Tran
 
 	const itemQ = `
 		SELECT id, transaction_id, product_id, product_name, sku,
-		       quantity, unit_price, discount_pct, tax_rate, subtotal
+		       quantity, unit_price, cost_price, discount_pct, tax_rate, subtotal
 		FROM transaction_items WHERE transaction_id = $1`
 
 	if err := r.db.SelectContext(ctx, &txn.Items, itemQ, id); err != nil {
