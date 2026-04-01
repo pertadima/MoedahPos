@@ -1,16 +1,16 @@
 'use client';
 
-import { useEffect, useReducer, useState, useCallback } from 'react';
+import { useEffect, useReducer, useState, useCallback, useRef } from 'react';
 import {
   Search, ShoppingCart, Trash2, Printer, X, Minus, Plus, Loader2,
-  CheckCircle2, UtensilsCrossed, ShoppingBag,
+  CheckCircle2, UtensilsCrossed, ShoppingBag, UserRound,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { productsApi } from '@/lib/api/products';
-import { menuItemsApi } from '@/lib/api/store-apis';
+import { menuItemsApi, customersApi } from '@/lib/api/store-apis';
 import { transactionsApi } from '@/lib/api/transactions';
 import { formatRp, productEmoji } from '@/lib/utils';
-import type { Product, Category, CartItem, Transaction, MenuItem } from '@/types';
+import type { Product, Category, CartItem, Transaction, MenuItem, Customer } from '@/types';
 import { ApiError } from '@/lib/api/client';
 
 // ── Unified cart item type ────────────────────────────────────────────────────
@@ -292,7 +292,34 @@ export default function POSPage() {
   const [receipt, setReceipt] = useState<Transaction | null>(null);
   const [error, setError] = useState('');
 
+  // Customer picker
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [custSearch, setCustSearch]             = useState('');
+  const [custResults, setCustResults]           = useState<Customer[]>([]);
+  const [custOpen, setCustOpen]                 = useState(false);
+  const custRef = useRef<HTMLDivElement>(null);
+
   const storeId = selectedStore?.store_id;
+
+  // Customer search
+  const searchCustomers = useCallback(async (q: string) => {
+    if (!storeId || q.length < 1) { setCustResults([]); return; }
+    try {
+      const r = await customersApi.search(storeId, q);
+      setCustResults((r.data as Customer[]) ?? []);
+    } catch { setCustResults([]); }
+  }, [storeId]);
+
+  useEffect(() => {
+    const t = setTimeout(() => searchCustomers(custSearch), 250);
+    return () => clearTimeout(t);
+  }, [custSearch, searchCustomers]);
+
+  useEffect(() => {
+    const h = (e: MouseEvent) => { if (custRef.current && !custRef.current.contains(e.target as Node)) setCustOpen(false); };
+    document.addEventListener('mousedown', h);
+    return () => document.removeEventListener('mousedown', h);
+  }, []);
 
   // Reset cart and refetch when store / mode changes
   useEffect(() => {
@@ -362,10 +389,14 @@ export default function POSPage() {
       const res = await transactionsApi.checkout(storeId, {
         payment_method: method,
         payment_amount: amount,
+        customer_name:  selectedCustomer?.name ?? '',
+        customer_phone: selectedCustomer?.phone ?? '',
         items,
       });
       setReceipt(res.data as Transaction);
       dispatch({ type: 'CLEAR' });
+      setSelectedCustomer(null);
+      setCustSearch('');
       setShowPayment(false);
     } catch (err) {
       if (err instanceof ApiError) setError(err.message);
@@ -629,6 +660,49 @@ export default function POSPage() {
             {isRestaurant ? 'Proses Pesanan' : 'Bayar'} {cart.length > 0 ? formatRp(total) : ''}
           </button>
         </div>
+      </div>
+
+      {/* Customer Picker */}
+      <div ref={custRef} style={{ padding: '0 12px 10px', position: 'relative' }}>
+        {selectedCustomer ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.25)', borderRadius: 8, padding: '6px 10px' }}>
+            <UserRound size={14} style={{ color: '#10b981', flexShrink: 0 }} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontWeight: 700, fontSize: '0.83rem', color: '#10b981' }}>{selectedCustomer.name}</div>
+              {selectedCustomer.phone && <div style={{ fontSize: '0.72rem', color: 'var(--text-3)' }}>{selectedCustomer.phone}</div>}
+            </div>
+            <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-3)', padding: 2 }} onClick={() => { setSelectedCustomer(null); setCustSearch(''); }}>
+              <X size={13} />
+            </button>
+          </div>
+        ) : (
+          <div style={{ position: 'relative' }}>
+            <UserRound size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-3)' }} />
+            <input
+              className="input"
+              style={{ paddingLeft: 30, fontSize: '0.82rem' }}
+              placeholder="Cari customer (opsional)..."
+              value={custSearch}
+              onChange={e => { setCustSearch(e.target.value); setCustOpen(true); }}
+              onFocus={() => setCustOpen(true)}
+            />
+            {custOpen && custResults.length > 0 && (
+              <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, boxShadow: '0 8px 24px rgba(0,0,0,0.3)', marginTop: 4, overflow: 'hidden' }}>
+                {custResults.map(c => (
+                  <button key={c.id} onClick={() => { setSelectedCustomer(c); setCustSearch(''); setCustOpen(false); }} style={{ width: '100%', padding: '8px 12px', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'linear-gradient(135deg, var(--accent-in), var(--accent-em))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '0.75rem', color: '#fff', flexShrink: 0 }}>
+                      {c.name.charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                      <div style={{ fontWeight: 600, fontSize: '0.83rem' }}>{c.name}</div>
+                      {c.phone && <div style={{ fontSize: '0.72rem', color: 'var(--text-3)' }}>{c.phone}</div>}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* ── Modals ── */}

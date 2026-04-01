@@ -134,3 +134,13 @@ type POPaymentRepository interface {
 	PayableSummary(ctx context.Context, storeID string) (*dto.PayableSummary, error)
 	PopulatePOPayments(ctx context.Context, pos []*domain.PurchaseOrder)
 }
+
+// CustomerRepository manages customer master data per store.
+type CustomerRepository interface {
+	Create(ctx context.Context, c *domain.Customer) (*domain.Customer, error)
+	FindAll(ctx context.Context, f dto.CustomerListFilter) ([]*domain.Customer, int, error)
+	FindByID(ctx context.Context, id string) (*domain.Customer, error)
+	Update(ctx context.Context, c *domain.Customer) (*domain.Customer, error)
+	SoftDelete(ctx context.Context, id string) error
+	SearchByPhone(ctx context.Context, storeID, phone string) ([]*domain.Customer, error)
+}

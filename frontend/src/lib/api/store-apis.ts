@@ -160,3 +160,19 @@ export const priceHistoryApi = {
     return api.get<any>(`/stores/${storeId}/products/${productId}/price-history?${q}`);
   },
 };
+
+export const customersApi = {
+  list: (storeId: string, params?: { page?: number; per_page?: number; search?: string }) => {
+    const q = new URLSearchParams();
+    if (params?.page)     q.set('page', String(params.page));
+    if (params?.per_page) q.set('per_page', String(params.per_page));
+    if (params?.search)   q.set('search', params.search);
+    return api.get<any>(`/stores/${storeId}/customers?${q}`);
+  },
+  search: (storeId: string, query: string) =>
+    api.get<any>(`/stores/${storeId}/customers/search?q=${encodeURIComponent(query)}`),
+  get:    (storeId: string, id: string) => api.get<any>(`/stores/${storeId}/customers/${id}`),
+  create: (storeId: string, body: object) => api.post<any>(`/stores/${storeId}/customers`, body),
+  update: (storeId: string, id: string, body: object) => api.put<any>(`/stores/${storeId}/customers/${id}`, body),
+  delete: (storeId: string, id: string) => api.delete<any>(`/stores/${storeId}/customers/${id}`),
+};

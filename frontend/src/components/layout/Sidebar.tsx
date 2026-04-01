@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard, ShoppingCart, Package, Warehouse,
   ClipboardList, BarChart3, Users, LogOut,
-  Store, CreditCard, Tag, UtensilsCrossed, Grid3x3, Receipt, History,
+  Store, CreditCard, Tag, UtensilsCrossed, Grid3x3, Receipt, History, UserRound,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthContext';
 
@@ -33,6 +33,7 @@ const baseGroups: NavGroup[] = [
     items: [
       { href: '/pos',          icon: ShoppingCart, label: 'Kasir / POS' },
       { href: '/transactions', icon: Receipt,      label: 'Riwayat Transaksi' },
+      { href: '/customers',   icon: UserRound,    label: 'Customer' },
     ],
   },
   {

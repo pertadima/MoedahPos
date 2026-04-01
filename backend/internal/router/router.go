@@ -36,6 +36,9 @@ type Dependencies struct {
 	// Price History
 	PriceHistoryHandler *handler.PriceHistoryHandler
 
+	// Customers
+	CustomerHandler *handler.CustomerHandler
+
 	// Shared
 	RoleStore *rbac.RoleStore
 	DB        *sqlx.DB
@@ -129,6 +132,16 @@ func New(deps *Dependencies) http.Handler {
 
 						// Price history (store-wide)
 						r.Get("/price-history", withPerm(deps, "products.read", deps.PriceHistoryHandler.ListByStore))
+
+						// Customers
+						r.Route("/customers", func(r chi.Router) {
+							r.Get("/",                    withPerm(deps, "products.read",   deps.CustomerHandler.List))
+							r.Get("/search",              withPerm(deps, "products.read",   deps.CustomerHandler.Search))
+							r.Post("/",                   withPerm(deps, "products.create", deps.CustomerHandler.Create))
+							r.Get("/{customerId}",        withPerm(deps, "products.read",   deps.CustomerHandler.Get))
+							r.Put("/{customerId}",        withPerm(deps, "products.update", deps.CustomerHandler.Update))
+							r.Delete("/{customerId}",     withPerm(deps, "products.delete", deps.CustomerHandler.Delete))
+						})
 
 						// Stock
 						r.Route("/stock", func(r chi.Router) {
