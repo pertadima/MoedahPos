@@ -196,16 +196,17 @@ func (r *PORepo) Submit(ctx context.Context, poID, userID string) error {
 	return nil
 }
 
-// Receive marks a PO as received and atomically updates stock levels.
+// Receive marks a PO as received, updates stock levels and product cost prices atomically.
 func (r *PORepo) Receive(ctx context.Context, poID, userID string) error {
-	// Load items
+	// Load items (now inc. unit_cost)
 	type itemRow struct {
 		ProductID string  `db:"product_id"`
 		Quantity  float64 `db:"quantity"`
+		UnitCost  float64 `db:"unit_cost"`
 	}
 	var items []itemRow
 	if err := r.db.SelectContext(ctx, &items,
-		`SELECT product_id, quantity FROM purchase_order_items WHERE po_id = $1`, poID,
+		`SELECT product_id, quantity, unit_cost FROM purchase_order_items WHERE po_id = $1`, poID,
 	); err != nil {
 		return fmt.Errorf("PORepo.Receive load items: %w", err)
 	}
@@ -248,6 +249,10 @@ func (r *PORepo) Receive(ctx context.Context, poID, userID string) error {
 		VALUES ($1,$2,$3,NOW())
 		ON CONFLICT (product_id, store_id)
 		DO UPDATE SET quantity = stock_levels.quantity + $3, updated_at = NOW()`
+	// Update product cost_price to the received unit_cost (Last Cost method)
+	const cpQ = `
+		UPDATE products SET cost_price = $1, updated_at = NOW()
+		WHERE id = $2`
 
 	for _, item := range items {
 		if _, err := tx.ExecContext(ctx, mvQ, item.ProductID, storeID, poID, item.Quantity, userID); err != nil {
@@ -255,6 +260,10 @@ func (r *PORepo) Receive(ctx context.Context, poID, userID string) error {
 		}
 		if _, err := tx.ExecContext(ctx, slQ, item.ProductID, storeID, item.Quantity); err != nil {
 			return fmt.Errorf("PORepo.Receive stock level: %w", err)
+		}
+		// Always update cost_price to the actual purchase cost
+		if _, err := tx.ExecContext(ctx, cpQ, item.UnitCost, item.ProductID); err != nil {
+			return fmt.Errorf("PORepo.Receive cost price: %w", err)
 		}
 	}
 
