@@ -73,6 +73,7 @@ func main() {
 	tableRepo         := postgres.NewTableRepo(sqlxDB)
 	menuItemRepo      := postgres.NewMenuItemRepo(sqlxDB)
 	priceHistoryRepo  := postgres.NewPriceHistoryRepo(sqlxDB)
+	poPaymentRepo     := postgres.NewPOPaymentRepo(sqlxDB)
 
 	// ── Services ──────────────────────────────────────────────────────────────
 	authSvc          := service.NewAuthService(userRepo, refreshTokenRepo, jwtMgr, cfg.Bcrypt.Cost, log)
@@ -81,7 +82,7 @@ func main() {
 	productSvc       := service.NewProductService(productRepo, categoryRepo, stockRepo, priceHistorySvc, log)
 	stockSvc         := service.NewStockService(stockRepo, productRepo, log)
 	transactionSvc   := service.NewTransactionService(transactionRepo, productRepo, stockRepo, menuItemRepo, log)
-	poSvc            := service.NewPurchaseOrderService(poRepo, productRepo, priceHistorySvc, log)
+	poSvc            := service.NewPurchaseOrderService(poRepo, productRepo, poPaymentRepo, priceHistorySvc, log)
 	supplierSvc      := service.NewSupplierService(supplierRepo, log)
 	reportSvc        := service.NewReportService(reportRepo, log)
 	tableSvc         := service.NewTableService(tableRepo, log)

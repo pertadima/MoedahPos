@@ -92,6 +92,13 @@ export const purchaseOrdersApi = {
     api.post(`/stores/${storeId}/purchase-orders/${poId}/receive`, {}),
   cancel: (storeId: string, poId: string) =>
     api.delete(`/stores/${storeId}/purchase-orders/${poId}`),
+  // Accounts Payable
+  payableSummary: (storeId: string) =>
+    api.get<any>(`/stores/${storeId}/purchase-orders/payables`),
+  listPayments: (storeId: string, poId: string) =>
+    api.get<any>(`/stores/${storeId}/purchase-orders/${poId}/payments`),
+  createPayment: (storeId: string, poId: string, body: { amount: number; note?: string }) =>
+    api.post<any>(`/stores/${storeId}/purchase-orders/${poId}/payments`, body),
 };
 
 export const suppliersApi = {

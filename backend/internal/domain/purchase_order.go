@@ -23,6 +23,10 @@ type PurchaseOrder struct {
 	OrderedByName  string   `db:"ordered_by_name"`
 	ReceivedByName *string  `db:"received_by_name"`
 	Items          []POItem `db:"-"`
+
+	// Payment aggregation (loaded separately)
+	AmountPaid    float64 `db:"amount_paid"`
+	PaymentStatus string  `db:"payment_status"` // unpaid | partial | paid
 }
 
 // POItem is a single line in a purchase order.
@@ -40,3 +44,16 @@ type POItem struct {
 	ProductSKU  string `db:"product_sku"`
 	Unit        string `db:"unit"`
 }
+
+// POPayment records a single payment against a purchase order.
+type POPayment struct {
+	ID        string    `db:"id"`
+	POID      string    `db:"po_id"`
+	StoreID   string    `db:"store_id"`
+	Amount    float64   `db:"amount"`
+	Note      *string   `db:"note"`
+	PaidBy    string    `db:"paid_by"`
+	PaidByName string   `db:"paid_by_name"`
+	PaidAt    time.Time `db:"paid_at"`
+}
+

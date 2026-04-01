@@ -152,13 +152,16 @@ func New(deps *Dependencies) http.Handler {
 
 						// Purchase Orders
 						r.Route("/purchase-orders", func(r chi.Router) {
-							r.Get("/",                    withPerm(deps, "purchases.read",   deps.PurchaseOrderHandler.List))
-							r.Post("/",                   withPerm(deps, "purchases.create", deps.PurchaseOrderHandler.Create))
-							r.Get("/{poId}",              withPerm(deps, "purchases.read",   deps.PurchaseOrderHandler.Get))
-							r.Put("/{poId}",              withPerm(deps, "purchases.update", deps.PurchaseOrderHandler.Update))
-							r.Post("/{poId}/submit",      withPerm(deps, "purchases.update", deps.PurchaseOrderHandler.Submit))
+							r.Get("/",                    withPerm(deps, "purchases.read",    deps.PurchaseOrderHandler.List))
+							r.Post("/",                   withPerm(deps, "purchases.create",  deps.PurchaseOrderHandler.Create))
+							r.Get("/payables",            withPerm(deps, "purchases.read",    deps.PurchaseOrderHandler.PayableSummary))
+							r.Get("/{poId}",              withPerm(deps, "purchases.read",    deps.PurchaseOrderHandler.Get))
+							r.Put("/{poId}",              withPerm(deps, "purchases.update",  deps.PurchaseOrderHandler.Update))
+							r.Post("/{poId}/submit",      withPerm(deps, "purchases.update",  deps.PurchaseOrderHandler.Submit))
 							r.Post("/{poId}/receive",     withPerm(deps, "purchases.receive", deps.PurchaseOrderHandler.Receive))
-							r.Delete("/{poId}",           withPerm(deps, "purchases.delete", deps.PurchaseOrderHandler.Cancel))
+							r.Delete("/{poId}",           withPerm(deps, "purchases.delete",  deps.PurchaseOrderHandler.Cancel))
+							r.Get("/{poId}/payments",     withPerm(deps, "purchases.read",    deps.PurchaseOrderHandler.ListPayments))
+							r.Post("/{poId}/payments",    withPerm(deps, "purchases.update",  deps.PurchaseOrderHandler.CreatePayment))
 						})
 
 						// Reports

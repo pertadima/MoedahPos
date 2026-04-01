@@ -125,3 +125,12 @@ type PriceHistoryRepository interface {
 	FindByProduct(ctx context.Context, productID string, f dto.PriceHistoryFilter) ([]*domain.PriceHistory, int, error)
 	FindByStore(ctx context.Context, storeID string, f dto.PriceHistoryFilter) ([]*domain.PriceHistory, int, error)
 }
+
+// POPaymentRepository records and retrieves payments made against purchase orders.
+type POPaymentRepository interface {
+	Create(ctx context.Context, p domain.POPayment) (*domain.POPayment, error)
+	FindByPO(ctx context.Context, poID string) ([]*domain.POPayment, error)
+	AggregateByPO(ctx context.Context, poID string, totalAmount float64) (float64, string, error)
+	PayableSummary(ctx context.Context, storeID string) (*dto.PayableSummary, error)
+	PopulatePOPayments(ctx context.Context, pos []*domain.PurchaseOrder)
+}

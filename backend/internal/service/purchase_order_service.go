@@ -26,6 +26,7 @@ var (
 type PurchaseOrderService struct {
 	poRepo          repository.PurchaseOrderRepository
 	productRepo     repository.ProductRepository
+	paymentRepo     repository.POPaymentRepository
 	priceHistorySvc *PriceHistoryService
 	log             zerolog.Logger
 }
@@ -33,10 +34,11 @@ type PurchaseOrderService struct {
 func NewPurchaseOrderService(
 	poRepo repository.PurchaseOrderRepository,
 	productRepo repository.ProductRepository,
+	paymentRepo repository.POPaymentRepository,
 	priceHistorySvc *PriceHistoryService,
 	log zerolog.Logger,
 ) *PurchaseOrderService {
-	return &PurchaseOrderService{poRepo: poRepo, productRepo: productRepo, priceHistorySvc: priceHistorySvc, log: log}
+	return &PurchaseOrderService{poRepo: poRepo, productRepo: productRepo, paymentRepo: paymentRepo, priceHistorySvc: priceHistorySvc, log: log}
 }
 
 func (s *PurchaseOrderService) ListPOs(ctx context.Context, filter dto.POListFilter) ([]*dto.POResponse, dto.PaginationMeta, error) {
@@ -45,6 +47,8 @@ func (s *PurchaseOrderService) ListPOs(ctx context.Context, filter dto.POListFil
 	if err != nil {
 		return nil, dto.PaginationMeta{}, fmt.Errorf("listing POs: %w", err)
 	}
+	// Enrich with payment aggregation
+	s.paymentRepo.PopulatePOPayments(ctx, pos)
 	resp := make([]*dto.POResponse, 0, len(pos))
 	for _, po := range pos {
 		resp = append(resp, toPOResponse(po))
@@ -59,6 +63,12 @@ func (s *PurchaseOrderService) GetPO(ctx context.Context, id string) (*dto.PORes
 	}
 	if po == nil {
 		return nil, ErrPONotFound
+	}
+	// Enrich with payment aggregation
+	paid, status, err := s.paymentRepo.AggregateByPO(ctx, po.ID, po.TotalAmount)
+	if err == nil {
+		po.AmountPaid = paid
+		po.PaymentStatus = status
 	}
 	return toPOResponse(po), nil
 }
@@ -227,11 +237,17 @@ func toPOResponse(po *domain.PurchaseOrder) *dto.POResponse {
 		PONumber:       po.PONumber,
 		Status:         po.Status,
 		TotalAmount:    po.TotalAmount,
+		AmountPaid:     po.AmountPaid,
+		AmountDue:      po.TotalAmount - po.AmountPaid,
+		PaymentStatus:  po.PaymentStatus,
 		OrderedByName:  po.OrderedByName,
 		ReceivedByName: po.ReceivedByName,
 		Notes:          po.Notes,
 		CreatedAt:      po.CreatedAt.Format(time.RFC3339),
 		UpdatedAt:      po.UpdatedAt.Format(time.RFC3339),
+	}
+	if po.PaymentStatus == "" {
+		resp.PaymentStatus = "unpaid"
 	}
 	if po.OrderedAt != nil {
 		t := po.OrderedAt.Format(time.RFC3339)
@@ -255,4 +271,68 @@ func toPOResponse(po *domain.PurchaseOrder) *dto.POResponse {
 		})
 	}
 	return resp
+}
+
+// ─── Payment methods ───────────────────────────────────────────────────────────
+
+// CreatePayment records a payment against a received PO.
+func (s *PurchaseOrderService) CreatePayment(ctx context.Context, poID, storeID, userID string, req dto.POPaymentRequest) (*dto.POPaymentResponse, error) {
+	po, err := s.poRepo.FindByID(ctx, poID)
+	if err != nil {
+		return nil, fmt.Errorf("finding PO: %w", err)
+	}
+	if po == nil {
+		return nil, ErrPONotFound
+	}
+	if po.Status != "received" {
+		return nil, fmt.Errorf("hutang hanya bisa dicatat untuk PO yang sudah diterima")
+	}
+
+	note := req.Note
+	var notePtr *string
+	if note != "" {
+		notePtr = &note
+	}
+
+	out, err := s.paymentRepo.Create(ctx, domain.POPayment{
+		POID:    poID,
+		StoreID: storeID,
+		Amount:  req.Amount,
+		Note:    notePtr,
+		PaidBy:  userID,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("recording payment: %w", err)
+	}
+	return toPaymentResponse(out), nil
+}
+
+// ListPayments returns all payments for a PO.
+func (s *PurchaseOrderService) ListPayments(ctx context.Context, poID string) ([]*dto.POPaymentResponse, error) {
+	rows, err := s.paymentRepo.FindByPO(ctx, poID)
+	if err != nil {
+		return nil, fmt.Errorf("listing payments: %w", err)
+	}
+	out := make([]*dto.POPaymentResponse, 0, len(rows))
+	for _, r := range rows {
+		out = append(out, toPaymentResponse(r))
+	}
+	return out, nil
+}
+
+// PayableSummary returns aggregate debt metrics for the store.
+func (s *PurchaseOrderService) PayableSummary(ctx context.Context, storeID string) (*dto.PayableSummary, error) {
+	return s.paymentRepo.PayableSummary(ctx, storeID)
+}
+
+func toPaymentResponse(p *domain.POPayment) *dto.POPaymentResponse {
+	return &dto.POPaymentResponse{
+		ID:         p.ID,
+		POID:       p.POID,
+		Amount:     p.Amount,
+		Note:       p.Note,
+		PaidBy:     p.PaidBy,
+		PaidByName: p.PaidByName,
+		PaidAt:     p.PaidAt.Format(time.RFC3339),
+	}
 }

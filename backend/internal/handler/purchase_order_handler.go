@@ -169,3 +169,52 @@ func (h *PurchaseOrderHandler) Cancel(w http.ResponseWriter, r *http.Request) {
 		"success": true, "message": "Purchase order cancelled",
 	})
 }
+
+// GET /stores/:storeId/purchase-orders/payables
+func (h *PurchaseOrderHandler) PayableSummary(w http.ResponseWriter, r *http.Request) {
+	storeID := chi.URLParam(r, "storeId")
+	summary, err := h.poSvc.PayableSummary(r.Context(), storeID)
+	if err != nil {
+		h.log.Error().Err(err).Msg("payable summary failed")
+		response.InternalError(w)
+		return
+	}
+	response.Success(w, summary)
+}
+
+// POST /stores/:storeId/purchase-orders/:poId/payments
+func (h *PurchaseOrderHandler) CreatePayment(w http.ResponseWriter, r *http.Request) {
+	storeID := chi.URLParam(r, "storeId")
+	poID    := chi.URLParam(r, "poId")
+	var req dto.POPaymentRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		response.Error(w, http.StatusBadRequest, "Invalid JSON body")
+		return
+	}
+	if errs := h.validator.ValidateStruct(req); errs != nil {
+		response.ValidationError(w, errs)
+		return
+	}
+	result, err := h.poSvc.CreatePayment(r.Context(), poID, storeID, userIDFromCtx(r), req)
+	if err != nil {
+		if errors.Is(err, service.ErrPONotFound) {
+			response.NotFound(w, "Purchase Order")
+			return
+		}
+		response.Error(w, http.StatusConflict, err.Error())
+		return
+	}
+	response.Created(w, result)
+}
+
+// GET /stores/:storeId/purchase-orders/:poId/payments
+func (h *PurchaseOrderHandler) ListPayments(w http.ResponseWriter, r *http.Request) {
+	poID := chi.URLParam(r, "poId")
+	rows, err := h.poSvc.ListPayments(r.Context(), poID)
+	if err != nil {
+		h.log.Error().Err(err).Msg("list payments failed")
+		response.InternalError(w)
+		return
+	}
+	response.Success(w, rows)
+}
