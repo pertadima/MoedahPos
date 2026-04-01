@@ -404,7 +404,7 @@ export default function POSPage() {
     } finally {
       setPayLoading(false);
     }
-  }, [storeId, cart]);
+  }, [storeId, cart, selectedCustomer]);
 
   if (!selectedStore) {
     return (
@@ -590,6 +590,57 @@ export default function POSPage() {
             )}
           </div>
         </div>
+        {/* ── Customer Picker — inside cart, always visible ── */}
+        <div ref={custRef} style={{ padding: '10px 12px', borderBottom: '1px solid var(--border)', background: 'var(--bg-elevated)', position: 'relative' }}>
+          <div style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 4 }}>
+            <UserRound size={11} /> Customer
+          </div>
+          {selectedCustomer ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(16,185,129,0.1)', border: '1.5px solid rgba(16,185,129,0.4)', borderRadius: 8, padding: '7px 10px' }}>
+              <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'linear-gradient(135deg, #10b981, #059669)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '0.75rem', color: '#fff', flexShrink: 0 }}>
+                {selectedCustomer.name.charAt(0).toUpperCase()}
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontWeight: 700, fontSize: '0.85rem', color: '#10b981' }}>{selectedCustomer.name}</div>
+                {selectedCustomer.phone && <div style={{ fontSize: '0.72rem', color: 'var(--text-3)' }}>{selectedCustomer.phone}</div>}
+              </div>
+              <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-3)', padding: 4, borderRadius: 4, display: 'flex', alignItems: 'center' }} onClick={() => { setSelectedCustomer(null); setCustSearch(''); }} title="Hapus customer">
+                <X size={13} />
+              </button>
+            </div>
+          ) : (
+            <div style={{ position: 'relative' }}>
+              <UserRound size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-3)', pointerEvents: 'none' }} />
+              <input
+                className="input"
+                style={{ paddingLeft: 32, fontSize: '0.83rem', height: 36 }}
+                placeholder="Cari nama / telepon customer..."
+                value={custSearch}
+                onChange={e => { setCustSearch(e.target.value); setCustOpen(true); }}
+                onFocus={() => setCustOpen(true)}
+              />
+              {custOpen && custResults.length > 0 && (
+                <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 100, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, boxShadow: '0 8px 32px rgba(0,0,0,0.35)', marginTop: 4, overflow: 'hidden' }}>
+                  {custResults.map((c: Customer) => (
+                    <button
+                      key={c.id}
+                      onClick={() => { setSelectedCustomer(c); setCustSearch(''); setCustOpen(false); }}
+                      style={{ width: '100%', padding: '8px 12px', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}
+                    >
+                      <div style={{ width: 30, height: 30, borderRadius: '50%', background: 'linear-gradient(135deg, var(--accent-in), var(--accent-em))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '0.78rem', color: '#fff', flexShrink: 0 }}>
+                        {c.name.charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>{c.name}</div>
+                        {c.phone && <div style={{ fontSize: '0.73rem', color: 'var(--text-3)' }}>{c.phone}</div>}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
 
         <div className="cart-items">
           {cart.length === 0 ? (
@@ -660,49 +711,6 @@ export default function POSPage() {
             {isRestaurant ? 'Proses Pesanan' : 'Bayar'} {cart.length > 0 ? formatRp(total) : ''}
           </button>
         </div>
-      </div>
-
-      {/* Customer Picker */}
-      <div ref={custRef} style={{ padding: '0 12px 10px', position: 'relative' }}>
-        {selectedCustomer ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.25)', borderRadius: 8, padding: '6px 10px' }}>
-            <UserRound size={14} style={{ color: '#10b981', flexShrink: 0 }} />
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontWeight: 700, fontSize: '0.83rem', color: '#10b981' }}>{selectedCustomer.name}</div>
-              {selectedCustomer.phone && <div style={{ fontSize: '0.72rem', color: 'var(--text-3)' }}>{selectedCustomer.phone}</div>}
-            </div>
-            <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-3)', padding: 2 }} onClick={() => { setSelectedCustomer(null); setCustSearch(''); }}>
-              <X size={13} />
-            </button>
-          </div>
-        ) : (
-          <div style={{ position: 'relative' }}>
-            <UserRound size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-3)' }} />
-            <input
-              className="input"
-              style={{ paddingLeft: 30, fontSize: '0.82rem' }}
-              placeholder="Cari customer (opsional)..."
-              value={custSearch}
-              onChange={e => { setCustSearch(e.target.value); setCustOpen(true); }}
-              onFocus={() => setCustOpen(true)}
-            />
-            {custOpen && custResults.length > 0 && (
-              <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, boxShadow: '0 8px 24px rgba(0,0,0,0.3)', marginTop: 4, overflow: 'hidden' }}>
-                {custResults.map(c => (
-                  <button key={c.id} onClick={() => { setSelectedCustomer(c); setCustSearch(''); setCustOpen(false); }} style={{ width: '100%', padding: '8px 12px', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'linear-gradient(135deg, var(--accent-in), var(--accent-em))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '0.75rem', color: '#fff', flexShrink: 0 }}>
-                      {c.name.charAt(0).toUpperCase()}
-                    </div>
-                    <div>
-                      <div style={{ fontWeight: 600, fontSize: '0.83rem' }}>{c.name}</div>
-                      {c.phone && <div style={{ fontSize: '0.72rem', color: 'var(--text-3)' }}>{c.phone}</div>}
-                    </div>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
       </div>
 
       {/* ── Modals ── */}

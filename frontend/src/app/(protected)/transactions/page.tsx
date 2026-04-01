@@ -248,13 +248,29 @@ function DetailDrawer({ txn, onClose, onReprint }: {
           </div>
 
           {/* customer info */}
-          {(txn.customer_name || txn.customer_phone) && (
-            <div style={{ marginBottom: 16, padding: '10px 14px', background: 'var(--bg-elevated)', borderRadius: 8, border: '1px solid var(--border-md)' }}>
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-3)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Pelanggan</div>
-              <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>{txn.customer_name}</div>
-              {txn.customer_phone && <div style={{ fontSize: '0.8rem', color: 'var(--text-2)' }}>{txn.customer_phone}</div>}
+          <div style={{
+            marginBottom: 16, padding: '12px 14px',
+            background: txn.customer_name ? 'rgba(16,185,129,0.07)' : 'var(--bg-elevated)',
+            borderRadius: 10,
+            border: txn.customer_name ? '1px solid rgba(16,185,129,0.25)' : '1px solid var(--border-md)',
+          }}>
+            <div style={{ fontSize: '0.68rem', color: txn.customer_name ? '#10b981' : 'var(--text-3)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4 }}>
+              <User size={11} /> Pelanggan
             </div>
-          )}
+            {txn.customer_name ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'linear-gradient(135deg, #10b981, #059669)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '0.85rem', color: '#fff', flexShrink: 0 }}>
+                  {txn.customer_name.charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: '0.92rem', color: '#10b981' }}>{txn.customer_name}</div>
+                  {txn.customer_phone && <div style={{ fontSize: '0.78rem', color: 'var(--text-2)' }}>📞 {txn.customer_phone}</div>}
+                </div>
+              </div>
+            ) : (
+              <div style={{ fontSize: '0.82rem', color: 'var(--text-3)', fontStyle: 'italic' }}>Tidak ada data customer</div>
+            )}
+          </div>
 
           {/* items */}
           <div style={{ fontSize: '0.75rem', color: 'var(--text-3)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Item ({txn.items?.length ?? 0})</div>
@@ -544,8 +560,23 @@ export default function TransactionsPage() {
                       <span style={{ fontSize: '0.85rem' }}>{txn.cashier_name}</span>
                     </div>
                   </td>
-                  <td style={{ fontSize: '0.82rem', color: 'var(--text-2)' }}>
-                    {txn.customer_name || <span style={{ color: 'var(--text-3)', fontStyle: 'italic' }}>–</span>}
+                  <td>
+                    {txn.customer_name ? (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <div style={{
+                          width: 24, height: 24, borderRadius: '50%', flexShrink: 0,
+                          background: 'linear-gradient(135deg, rgba(16,185,129,0.3), rgba(16,185,129,0.15))',
+                          border: '1.5px solid rgba(16,185,129,0.4)',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          fontSize: '0.62rem', fontWeight: 800, color: '#10b981',
+                        }}>
+                          {txn.customer_name.charAt(0).toUpperCase()}
+                        </div>
+                        <span style={{ fontSize: '0.83rem', fontWeight: 500 }}>{txn.customer_name}</span>
+                      </div>
+                    ) : (
+                      <span style={{ color: 'var(--text-3)', fontStyle: 'italic', fontSize: '0.8rem' }}>–</span>
+                    )}
                   </td>
                   <td><PayBadge method={txn.payment_method} /></td>
                   <td style={{ fontWeight: 700, color: 'var(--accent-em)' }}>{formatRp(txn.total)}</td>
