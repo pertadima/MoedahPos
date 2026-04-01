@@ -136,3 +136,20 @@ export const reportsApi = {
     return api.get<any>(`/stores/${storeId}/reports/profit?${q}`);
   },
 };
+
+export const priceHistoryApi = {
+  listByStore: (storeId: string, params?: { product_id?: string; source?: string; page?: number; per_page?: number }) => {
+    const q = new URLSearchParams();
+    if (params?.product_id) q.set('product_id', params.product_id);
+    if (params?.source)     q.set('source', params.source);
+    if (params?.page)       q.set('page', String(params.page));
+    if (params?.per_page)   q.set('per_page', String(params.per_page));
+    return api.get<any>(`/stores/${storeId}/price-history?${q}`);
+  },
+  listByProduct: (storeId: string, productId: string, params?: { page?: number; per_page?: number }) => {
+    const q = new URLSearchParams();
+    if (params?.page)     q.set('page', String(params.page));
+    if (params?.per_page) q.set('per_page', String(params.per_page));
+    return api.get<any>(`/stores/${storeId}/products/${productId}/price-history?${q}`);
+  },
+};

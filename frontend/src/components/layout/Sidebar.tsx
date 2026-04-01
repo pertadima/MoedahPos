@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard, ShoppingCart, Package, Warehouse,
   ClipboardList, BarChart3, Users, LogOut,
-  Store, CreditCard, Tag, UtensilsCrossed, Grid3x3, Receipt,
+  Store, CreditCard, Tag, UtensilsCrossed, Grid3x3, Receipt, History,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthContext';
 
@@ -16,6 +16,7 @@ const baseNavItems = [
   { href: '/transactions',     icon: Receipt,         label: 'Riwayat Transaksi' },
   { href: '/products',         icon: Package,         label: 'Produk' },
   { href: '/categories',       icon: Tag,             label: 'Kategori' },
+  { href: '/price-history',    icon: History,         label: 'Riwayat Harga' },
   { href: '/stock',            icon: Warehouse,       label: 'Stok' },
   { href: '/purchase-orders',  icon: ClipboardList,   label: 'Purchase Order' },
   { href: '/suppliers',        icon: Users,           label: 'Supplier' },
