@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
   Users, Plus, Loader2, X, Search, Phone, Mail, MapPin,
-  FileText, Edit3, Trash2, User, ChevronRight,
+  FileText, Edit3, Archive, User, ChevronRight,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { customersApi } from '@/lib/api/store-apis';
@@ -109,24 +109,29 @@ function DeleteConfirm({ customer, storeId, onSuccess, onClose }: { customer: Cu
   const handleDelete = async () => {
     setLoading(true);
     try { await customersApi.delete(storeId, customer.id); onSuccess(); }
-    catch (e) { alert(e instanceof ApiError ? e.message : 'Gagal menghapus'); }
+    catch (e) { alert(e instanceof ApiError ? e.message : 'Gagal menonaktifkan'); }
     finally { setLoading(false); }
   };
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-box" style={{ maxWidth: 380 }} onClick={e => e.stopPropagation()}>
+      <div className="modal-box" style={{ maxWidth: 400 }} onClick={e => e.stopPropagation()}>
         <div style={{ textAlign: 'center', padding: '8px 0 16px' }}>
-          <Trash2 size={28} style={{ color: '#ef4444', marginBottom: 12 }} />
-          <h2 style={{ fontWeight: 800, marginBottom: 8 }}>Hapus Customer?</h2>
+          <Archive size={28} style={{ color: '#f59e0b', marginBottom: 12 }} />
+          <h2 style={{ fontWeight: 800, marginBottom: 8 }}>Nonaktifkan Customer?</h2>
           <p style={{ color: 'var(--text-2)', fontSize: '0.875rem', lineHeight: 1.6 }}>
-            <strong>{customer.name}</strong> akan dihapus dari daftar customer. Data transaksi tetap tersimpan.
+            <strong>{customer.name}</strong> akan diarsipkan dan tidak muncul di daftar customer maupun pencarian kasir.
+            Data transaksi tetap tersimpan dan customer dapat dipulihkan dari database jika diperlukan.
           </p>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <button className="btn btn-secondary" style={{ flex: 1 }} onClick={onClose} disabled={loading}>Batal</button>
-          <button className="btn btn-danger" style={{ flex: 1 }} onClick={handleDelete} disabled={loading}>
-            {loading ? <Loader2 size={14} className="loading-spin" /> : <Trash2 size={14} />}
-            {loading ? 'Menghapus...' : 'Ya, Hapus'}
+          <button
+            style={{ flex: 1, background: '#f59e0b', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 0', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+            onClick={handleDelete}
+            disabled={loading}
+          >
+            {loading ? <Loader2 size={14} className="loading-spin" /> : <Archive size={14} />}
+            {loading ? 'Memproses...' : 'Ya, Nonaktifkan'}
           </button>
         </div>
       </div>
@@ -145,7 +150,12 @@ function DetailDrawer({ customer, onClose, onEdit, onDelete }: { customer: Custo
           <div style={{ fontWeight: 800 }}>Detail Customer</div>
           <div style={{ display: 'flex', gap: 6 }}>
             <button className="btn btn-secondary btn-sm" onClick={onEdit}><Edit3 size={13} /> Edit</button>
-            <button className="btn btn-danger btn-sm" onClick={onDelete}><Trash2 size={13} /></button>
+            <button
+              style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '5px 10px', borderRadius: 6, border: '1px solid rgba(245,158,11,0.4)', background: 'rgba(245,158,11,0.1)', color: '#f59e0b', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer' }}
+              onClick={onDelete}
+            >
+              <Archive size={12} /> Nonaktifkan
+            </button>
             <button className="btn btn-ghost btn-sm" onClick={onClose}><X size={15} /></button>
           </div>
         </div>
@@ -325,8 +335,12 @@ export default function CustomersPage() {
                         <button className="btn btn-ghost btn-sm" onClick={e => { e.stopPropagation(); setForm(c); }} title="Edit">
                           <Edit3 size={13} />
                         </button>
-                        <button className="btn btn-ghost btn-sm" style={{ color: 'var(--accent-rd)' }} onClick={e => { e.stopPropagation(); setDeleting(c); }} title="Hapus">
-                          <Trash2 size={13} />
+                        <button
+                          title="Nonaktifkan"
+                          style={{ display: 'flex', alignItems: 'center', gap: 3, padding: '4px 6px', borderRadius: 6, border: '1px solid rgba(245,158,11,0.35)', background: 'rgba(245,158,11,0.08)', color: '#f59e0b', cursor: 'pointer', fontSize: '0.72rem' }}
+                          onClick={e => { e.stopPropagation(); setDeleting(c); }}
+                        >
+                          <Archive size={12} />
                         </button>
                         <button className="btn btn-ghost btn-sm" onClick={() => setDetail(c)}>
                           <ChevronRight size={14} />
