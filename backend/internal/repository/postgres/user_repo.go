@@ -104,6 +104,131 @@ func (r *UserRepo) FindStoresByUserID(ctx context.Context, userID string) ([]dom
 	return stores, nil
 }
 
+// ─── Admin Operations ─────────────────────────────────────────────────────────
+
+// ListAll returns a paginated list of users; optionally includes inactive/deleted records.
+func (r *UserRepo) ListAll(ctx context.Context, search string, includeInactive bool, page, perPage int) ([]*domain.User, int, error) {
+	offset := (page - 1) * perPage
+	where := "WHERE 1=1"
+	args := []any{}
+	argIdx := 1
+
+	if !includeInactive {
+		where += " AND deleted_at IS NULL AND is_active = true"
+	}
+	if search != "" {
+		where += fmt.Sprintf(" AND (name ILIKE $%d OR email ILIKE $%d)", argIdx, argIdx+1)
+		like := "%" + search + "%"
+		args = append(args, like, like)
+		argIdx += 2
+	}
+
+	// total
+	var total int
+	cq := fmt.Sprintf("SELECT COUNT(*) FROM users %s", where)
+	if err := r.db.QueryRowxContext(ctx, cq, args...).Scan(&total); err != nil {
+		return nil, 0, fmt.Errorf("UserRepo.ListAll count: %w", err)
+	}
+
+	// rows
+	args = append(args, perPage, offset)
+	q := fmt.Sprintf(`
+		SELECT id, name, email, password_hash, is_active, created_at, updated_at, deleted_at
+		FROM users %s
+		ORDER BY name ASC
+		LIMIT $%d OFFSET $%d`, where, argIdx, argIdx+1)
+
+	var users []*domain.User
+	if err := r.db.SelectContext(ctx, &users, q, args...); err != nil {
+		return nil, 0, fmt.Errorf("UserRepo.ListAll: %w", err)
+	}
+	return users, total, nil
+}
+
+// Update changes user name and/or email.
+func (r *UserRepo) Update(ctx context.Context, id, name, email string) (*domain.User, error) {
+	const q = `
+		UPDATE users SET name=$2, email=$3, updated_at=NOW()
+		WHERE id=$1 AND deleted_at IS NULL
+		RETURNING id, name, email, password_hash, is_active, created_at, updated_at, deleted_at`
+	u := &domain.User{}
+	if err := r.db.QueryRowxContext(ctx, q, id, name, email).StructScan(u); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, fmt.Errorf("user not found")
+		}
+		return nil, fmt.Errorf("UserRepo.Update: %w", err)
+	}
+	return u, nil
+}
+
+// SoftDelete marks a user as deleted and deactivated.
+func (r *UserRepo) SoftDelete(ctx context.Context, id string) error {
+	res, err := r.db.ExecContext(ctx,
+		`UPDATE users SET deleted_at=NOW(), is_active=false, updated_at=NOW() WHERE id=$1 AND deleted_at IS NULL`, id)
+	if err != nil {
+		return fmt.Errorf("UserRepo.SoftDelete: %w", err)
+	}
+	if n, _ := res.RowsAffected(); n == 0 {
+		return fmt.Errorf("user not found")
+	}
+	return nil
+}
+
+// Deactivate sets is_active=false without setting deleted_at.
+func (r *UserRepo) Deactivate(ctx context.Context, id string) error {
+	res, err := r.db.ExecContext(ctx,
+		`UPDATE users SET is_active=false, updated_at=NOW() WHERE id=$1 AND deleted_at IS NULL`, id)
+	if err != nil {
+		return fmt.Errorf("UserRepo.Deactivate: %w", err)
+	}
+	if n, _ := res.RowsAffected(); n == 0 {
+		return fmt.Errorf("user not found")
+	}
+	return nil
+}
+
+// ResetPassword updates the password hash for a user.
+func (r *UserRepo) ResetPassword(ctx context.Context, id, hash string) error {
+	res, err := r.db.ExecContext(ctx,
+		`UPDATE users SET password_hash=$2, updated_at=NOW() WHERE id=$1 AND deleted_at IS NULL`, id, hash)
+	if err != nil {
+		return fmt.Errorf("UserRepo.ResetPassword: %w", err)
+	}
+	if n, _ := res.RowsAffected(); n == 0 {
+		return fmt.Errorf("user not found")
+	}
+	return nil
+}
+
+// SetStores atomically replaces all store memberships for a user.
+// It deactivates existing memberships then upserts the new ones.
+func (r *UserRepo) SetStores(ctx context.Context, userID string, assignments []domain.StoreAssignment) error {
+	tx, err := r.db.BeginTxx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("UserRepo.SetStores begin: %w", err)
+	}
+	defer tx.Rollback()
+
+	// Deactivate all existing
+	if _, err = tx.ExecContext(ctx, `UPDATE user_stores SET is_active=false WHERE user_id=$1`, userID); err != nil {
+		return fmt.Errorf("UserRepo.SetStores deactivate: %w", err)
+	}
+
+	// Upsert new
+	for _, a := range assignments {
+		_, err = tx.ExecContext(ctx, `
+			INSERT INTO user_stores (user_id, store_id, role_id, is_active)
+			VALUES ($1, $2, $3, true)
+			ON CONFLICT (user_id, store_id)
+			DO UPDATE SET role_id=$3, is_active=true`,
+			userID, a.StoreID, a.RoleID)
+		if err != nil {
+			return fmt.Errorf("UserRepo.SetStores upsert: %w", err)
+		}
+	}
+	return tx.Commit()
+}
+
 // ─── RefreshTokenRepo ─────────────────────────────────────────────────────────
 
 // RefreshTokenRepo is the PostgreSQL implementation of repository.RefreshTokenRepository.

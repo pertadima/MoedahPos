@@ -176,3 +176,25 @@ export const customersApi = {
   update: (storeId: string, id: string, body: object) => api.put<any>(`/stores/${storeId}/customers/${id}`, body),
   delete: (storeId: string, id: string) => api.delete<any>(`/stores/${storeId}/customers/${id}`),
 };
+
+export const usersAdminApi = {
+  list:          (params?: { search?: string; include_inactive?: boolean; page?: number; per_page?: number }) => {
+    const q = new URLSearchParams();
+    if (params?.search)           q.set('search', params.search);
+    if (params?.include_inactive) q.set('include_inactive', 'true');
+    if (params?.page)             q.set('page', String(params.page));
+    if (params?.per_page)         q.set('per_page', String(params.per_page));
+    return api.get<any>(`/admin/users?${q}`);
+  },
+  get:           (id: string) => api.get<any>(`/admin/users/${id}`),
+  create:        (body: object) => api.post<any>('/admin/users', body),
+  update:        (id: string, body: object) => api.put<any>(`/admin/users/${id}`, body),
+  deactivate:    (id: string) => api.post<any>(`/admin/users/${id}/deactivate`, {}),
+  resetPassword: (id: string, body: { password: string }) => api.post<any>(`/admin/users/${id}/reset-password`, body),
+  setStores:     (id: string, stores: { store_id: string; role_id: string }[]) =>
+    api.put<any>(`/admin/users/${id}/stores`, { stores }),
+};
+
+export const rolesApi = {
+  list: () => api.get<any>('/admin/roles'),
+};

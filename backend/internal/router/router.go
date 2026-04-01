@@ -39,6 +39,9 @@ type Dependencies struct {
 	// Customers
 	CustomerHandler *handler.CustomerHandler
 
+	// User Admin
+	UserAdminHandler *handler.UserAdminHandler
+
 	// Shared
 	RoleStore *rbac.RoleStore
 	DB        *sqlx.DB
@@ -86,6 +89,23 @@ func New(deps *Dependencies) http.Handler {
 				r.Get("/{supplierId}",     deps.SupplierHandler.Get)
 				r.Put("/{supplierId}",     withPerm(deps, "suppliers.update", deps.SupplierHandler.Update))
 				r.Delete("/{supplierId}",  withPerm(deps, "suppliers.delete", deps.SupplierHandler.Delete))
+			})
+
+			// ── Admin: User & Role management ─────────────────────────────────
+			r.Group(func(r chi.Router) {
+				r.Use(middleware.RequireAdminOrSuperAdmin(deps.DB))
+				r.Route("/admin", func(r chi.Router) {
+					r.Get("/roles", deps.UserAdminHandler.ListRoles)
+					r.Route("/users", func(r chi.Router) {
+						r.Get("/",                         deps.UserAdminHandler.List)
+						r.Post("/",                        deps.UserAdminHandler.Create)
+						r.Get("/{userId}",                 deps.UserAdminHandler.Get)
+						r.Put("/{userId}",                 deps.UserAdminHandler.Update)
+						r.Post("/{userId}/deactivate",     deps.UserAdminHandler.Deactivate)
+						r.Post("/{userId}/reset-password", deps.UserAdminHandler.ResetPassword)
+						r.Put("/{userId}/stores",          deps.UserAdminHandler.SetStores)
+					})
+				})
 			})
 
 			// ── Store-scoped routes ────────────────────────────────────────────

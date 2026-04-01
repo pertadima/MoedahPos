@@ -51,3 +51,9 @@ type StoreMember struct {
 	IsActive  bool      `db:"is_active"`
 	JoinedAt  time.Time `db:"joined_at"`
 }
+
+// StoreAssignment carries a store + role pair for bulk user-store assignment.
+type StoreAssignment struct {
+	StoreID string
+	RoleID  string
+}

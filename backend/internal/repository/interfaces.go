@@ -16,6 +16,17 @@ type UserRepository interface {
 	FindByEmail(ctx context.Context, email string) (*domain.User, error)
 	ExistsByEmail(ctx context.Context, email string) (bool, error)
 	FindStoresByUserID(ctx context.Context, userID string) ([]domain.UserStore, error)
+	// Admin operations
+	ListAll(ctx context.Context, search string, includeInactive bool, page, perPage int) ([]*domain.User, int, error)
+	Update(ctx context.Context, id, name, email string) (*domain.User, error)
+	SoftDelete(ctx context.Context, id string) error
+	Deactivate(ctx context.Context, id string) error
+	ResetPassword(ctx context.Context, id, hash string) error
+	SetStores(ctx context.Context, userID string, assignments []domain.StoreAssignment) error
+}
+
+type RoleRepository interface {
+	ListRoles(ctx context.Context) ([]*domain.Role, error)
 }
 
 type RefreshTokenRepository interface {

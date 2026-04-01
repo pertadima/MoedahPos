@@ -9,6 +9,7 @@ type Role struct {
 	Description string    `db:"description"`
 	CreatedAt   time.Time `db:"created_at"`
 	UpdatedAt   time.Time `db:"updated_at"`
+	Permissions []string  `db:"-"` // populated by service layer
 }
 
 // Permission represents a granular action (e.g., "products.create").

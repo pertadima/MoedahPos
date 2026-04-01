@@ -284,3 +284,33 @@ export interface Customer {
   created_at: string;
   updated_at: string;
 }
+
+// ── User Admin ────────────────────────────────────────────────────────────────
+export interface UserStoreAssignment {
+  store_id: string;
+  store_name: string;
+  store_type: string;
+  role_id: string;
+  role_name: string;
+  is_active: boolean;
+}
+
+export interface UserAdmin {
+  id: string;
+  name: string;
+  email: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  deleted_at?: string;
+  store_count: number;
+  stores?: UserStoreAssignment[];
+}
+
+// ── Role ──────────────────────────────────────────────────────────────────────
+export interface Role {
+  id: string;
+  name: string;
+  description: string;
+  permissions: string[];
+}
