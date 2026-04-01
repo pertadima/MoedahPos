@@ -33,6 +33,9 @@ type Dependencies struct {
 	// Restaurant mode (Phase 4)
 	RestaurantHandler *handler.RestaurantHandler
 
+	// Price History
+	PriceHistoryHandler *handler.PriceHistoryHandler
+
 	// Shared
 	RoleStore *rbac.RoleStore
 	DB        *sqlx.DB
@@ -121,7 +124,11 @@ func New(deps *Dependencies) http.Handler {
 							r.Get("/{productId}",             withPerm(deps, "products.read",   deps.ProductHandler.Get))
 							r.Put("/{productId}",             withPerm(deps, "products.update", deps.ProductHandler.Update))
 							r.Delete("/{productId}",          withPerm(deps, "products.delete", deps.ProductHandler.Delete))
+							r.Get("/{productId}/price-history", withPerm(deps, "products.read", deps.PriceHistoryHandler.ListByProduct))
 						})
+
+						// Price history (store-wide)
+						r.Get("/price-history", withPerm(deps, "products.read", deps.PriceHistoryHandler.ListByStore))
 
 						// Stock
 						r.Route("/stock", func(r chi.Router) {

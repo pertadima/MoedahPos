@@ -193,7 +193,7 @@ func (h *ProductHandler) Update(w http.ResponseWriter, r *http.Request) {
 		response.ValidationError(w, errs)
 		return
 	}
-	result, err := h.productSvc.UpdateProduct(r.Context(), id, &req)
+	result, err := h.productSvc.UpdateProduct(r.Context(), id, &req, userIDFromCtx(r))
 	if err != nil {
 		if errors.Is(err, service.ErrProductNotFound) {
 			response.NotFound(w, "Product")

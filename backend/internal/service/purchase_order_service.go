@@ -24,17 +24,19 @@ var (
 
 // PurchaseOrderService implements PO lifecycle business logic.
 type PurchaseOrderService struct {
-	poRepo      repository.PurchaseOrderRepository
-	productRepo repository.ProductRepository
-	log         zerolog.Logger
+	poRepo          repository.PurchaseOrderRepository
+	productRepo     repository.ProductRepository
+	priceHistorySvc *PriceHistoryService
+	log             zerolog.Logger
 }
 
 func NewPurchaseOrderService(
 	poRepo repository.PurchaseOrderRepository,
 	productRepo repository.ProductRepository,
+	priceHistorySvc *PriceHistoryService,
 	log zerolog.Logger,
 ) *PurchaseOrderService {
-	return &PurchaseOrderService{poRepo: poRepo, productRepo: productRepo, log: log}
+	return &PurchaseOrderService{poRepo: poRepo, productRepo: productRepo, priceHistorySvc: priceHistorySvc, log: log}
 }
 
 func (s *PurchaseOrderService) ListPOs(ctx context.Context, filter dto.POListFilter) ([]*dto.POResponse, dto.PaginationMeta, error) {
@@ -148,6 +150,28 @@ func (s *PurchaseOrderService) ReceivePO(ctx context.Context, id, userID string)
 	if err := s.poRepo.Receive(ctx, id, userID); err != nil {
 		return fmt.Errorf("receiving PO: %w", err)
 	}
+
+	// Record cost price changes from PO items
+	if s.priceHistorySvc != nil {
+		poID := id
+		for _, item := range po.Items {
+			product, err := s.productRepo.FindByID(ctx, item.ProductID)
+			if err != nil || product == nil {
+				continue
+			}
+			if product.CostPrice == item.UnitCost {
+				continue // no cost change
+			}
+			notes := fmt.Sprintf("PO %s received — qty %.2f @ %.2f", po.PONumber, item.ReceivedQty, item.UnitCost)
+			_ = s.priceHistorySvc.RecordChange(ctx,
+				item.ProductID, po.StoreID, userID,
+				product.CostPrice, item.UnitCost,
+				product.SellPrice, product.SellPrice, // sell price unchanged
+				"purchase_order", &poID, &notes,
+			)
+		}
+	}
+
 	s.log.Info().Str("po_id", id).Str("received_by", userID).Msg("PO received — stock updated")
 	return nil
 }

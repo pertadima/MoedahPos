@@ -22,19 +22,21 @@ var (
 
 // ProductService implements business logic for products and categories.
 type ProductService struct {
-	productRepo  repository.ProductRepository
-	categoryRepo repository.CategoryRepository
-	stockRepo    repository.StockRepository
-	log          zerolog.Logger
+	productRepo      repository.ProductRepository
+	categoryRepo     repository.CategoryRepository
+	stockRepo        repository.StockRepository
+	priceHistorySvc  *PriceHistoryService
+	log              zerolog.Logger
 }
 
 func NewProductService(
 	productRepo repository.ProductRepository,
 	categoryRepo repository.CategoryRepository,
 	stockRepo repository.StockRepository,
+	priceHistorySvc *PriceHistoryService,
 	log zerolog.Logger,
 ) *ProductService {
-	return &ProductService{productRepo: productRepo, categoryRepo: categoryRepo, stockRepo: stockRepo, log: log}
+	return &ProductService{productRepo: productRepo, categoryRepo: categoryRepo, stockRepo: stockRepo, priceHistorySvc: priceHistorySvc, log: log}
 }
 
 // ─── Categories ───────────────────────────────────────────────────────────────
@@ -168,7 +170,7 @@ func (s *ProductService) CreateProduct(ctx context.Context, storeID string, req 
 	return toProductResponse(product), nil
 }
 
-func (s *ProductService) UpdateProduct(ctx context.Context, id string, req *dto.UpdateProductRequest) (*dto.ProductResponse, error) {
+func (s *ProductService) UpdateProduct(ctx context.Context, id string, req *dto.UpdateProductRequest, changedBy string) (*dto.ProductResponse, error) {
 	product, err := s.productRepo.FindByID(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("finding product: %w", err)
@@ -176,6 +178,11 @@ func (s *ProductService) UpdateProduct(ctx context.Context, id string, req *dto.
 	if product == nil {
 		return nil, ErrProductNotFound
 	}
+
+	// Snapshot old prices before mutation
+	oldCost := product.CostPrice
+	oldSell := product.SellPrice
+
 	product.CategoryID = req.CategoryID
 	product.Name = req.Name
 	product.Description = &req.Description
@@ -193,6 +200,19 @@ func (s *ProductService) UpdateProduct(ctx context.Context, id string, req *dto.
 	if err != nil {
 		return nil, fmt.Errorf("updating product: %w", err)
 	}
+
+	// Record price change if anything changed (non-blocking)
+	if s.priceHistorySvc != nil {
+		source := "manual"
+		if err2 := s.priceHistorySvc.RecordChange(ctx,
+			product.ID, product.StoreID, changedBy,
+			oldCost, req.CostPrice, oldSell, req.SellPrice,
+			source, nil, nil,
+		); err2 != nil {
+			s.log.Warn().Err(err2).Str("product_id", product.ID).Msg("failed to record price history")
+		}
+	}
+
 	return toProductResponse(updated), nil
 }
 

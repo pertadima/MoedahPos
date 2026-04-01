@@ -69,32 +69,35 @@ func main() {
 	transactionRepo  := postgres.NewTransactionRepo(sqlxDB)
 	poRepo           := postgres.NewPORepo(sqlxDB)
 	supplierRepo     := postgres.NewSupplierRepo(sqlxDB)
-	reportRepo       := postgres.NewReportRepo(sqlxDB)
-	tableRepo        := postgres.NewTableRepo(sqlxDB)
-	menuItemRepo     := postgres.NewMenuItemRepo(sqlxDB)
+	reportRepo        := postgres.NewReportRepo(sqlxDB)
+	tableRepo         := postgres.NewTableRepo(sqlxDB)
+	menuItemRepo      := postgres.NewMenuItemRepo(sqlxDB)
+	priceHistoryRepo  := postgres.NewPriceHistoryRepo(sqlxDB)
 
 	// ── Services ──────────────────────────────────────────────────────────────
-	authSvc        := service.NewAuthService(userRepo, refreshTokenRepo, jwtMgr, cfg.Bcrypt.Cost, log)
-	storeSvc       := service.NewStoreService(storeRepo, userRepo, log)
-	productSvc     := service.NewProductService(productRepo, categoryRepo, stockRepo, log)
-	stockSvc       := service.NewStockService(stockRepo, productRepo, log)
-	transactionSvc := service.NewTransactionService(transactionRepo, productRepo, stockRepo, menuItemRepo, log)
-	poSvc          := service.NewPurchaseOrderService(poRepo, productRepo, log)
-	supplierSvc    := service.NewSupplierService(supplierRepo, log)
-	reportSvc      := service.NewReportService(reportRepo, log)
-	tableSvc       := service.NewTableService(tableRepo, log)
-	menuItemSvc    := service.NewMenuItemService(menuItemRepo, log)
+	authSvc          := service.NewAuthService(userRepo, refreshTokenRepo, jwtMgr, cfg.Bcrypt.Cost, log)
+	storeSvc         := service.NewStoreService(storeRepo, userRepo, log)
+	priceHistorySvc  := service.NewPriceHistoryService(priceHistoryRepo, log)
+	productSvc       := service.NewProductService(productRepo, categoryRepo, stockRepo, priceHistorySvc, log)
+	stockSvc         := service.NewStockService(stockRepo, productRepo, log)
+	transactionSvc   := service.NewTransactionService(transactionRepo, productRepo, stockRepo, menuItemRepo, log)
+	poSvc            := service.NewPurchaseOrderService(poRepo, productRepo, priceHistorySvc, log)
+	supplierSvc      := service.NewSupplierService(supplierRepo, log)
+	reportSvc        := service.NewReportService(reportRepo, log)
+	tableSvc         := service.NewTableService(tableRepo, log)
+	menuItemSvc      := service.NewMenuItemService(menuItemRepo, log)
 
 	// ── Handlers ──────────────────────────────────────────────────────────────
-	authHandler        := handler.NewAuthHandler(authSvc, validate, log)
-	storeHandler       := handler.NewStoreHandler(storeSvc, validate, log)
-	productHandler     := handler.NewProductHandler(productSvc, validate, log)
-	stockHandler       := handler.NewStockHandler(stockSvc, validate, log)
-	transactionHandler := handler.NewTransactionHandler(transactionSvc, validate, log)
-	poHandler          := handler.NewPurchaseOrderHandler(poSvc, validate, log)
-	supplierHandler    := handler.NewSupplierHandler(supplierSvc, validate, log)
-	reportHandler      := handler.NewReportHandler(reportSvc, log)
-	restaurantHandler  := handler.NewRestaurantHandler(tableSvc, menuItemSvc, validate, log)
+	authHandler          := handler.NewAuthHandler(authSvc, validate, log)
+	storeHandler         := handler.NewStoreHandler(storeSvc, validate, log)
+	productHandler       := handler.NewProductHandler(productSvc, validate, log)
+	stockHandler         := handler.NewStockHandler(stockSvc, validate, log)
+	transactionHandler   := handler.NewTransactionHandler(transactionSvc, validate, log)
+	poHandler            := handler.NewPurchaseOrderHandler(poSvc, validate, log)
+	supplierHandler      := handler.NewSupplierHandler(supplierSvc, validate, log)
+	reportHandler        := handler.NewReportHandler(reportSvc, log)
+	restaurantHandler    := handler.NewRestaurantHandler(tableSvc, menuItemSvc, validate, log)
+	priceHistoryHandler  := handler.NewPriceHistoryHandler(priceHistorySvc, log)
 
 	// ── Router ────────────────────────────────────────────────────────────────
 	r := router.New(&router.Dependencies{
@@ -108,6 +111,7 @@ func main() {
 		SupplierHandler:       supplierHandler,
 		ReportHandler:         reportHandler,
 		RestaurantHandler:     restaurantHandler,
+		PriceHistoryHandler:   priceHistoryHandler,
 		RoleStore:             roleStore,
 		DB:                    sqlxDB,
 		Log:                   log,

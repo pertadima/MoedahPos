@@ -118,3 +118,10 @@ type ReportRepository interface {
 	StockValuation(ctx context.Context, storeID string) ([]dto.StockValuationRow, error)
 	ProfitSummary(ctx context.Context, storeID string, from, to time.Time, groupBy string) ([]dto.ProfitPeriodRow, error)
 }
+
+// PriceHistoryRepository records and retrieves price-change audit logs.
+type PriceHistoryRepository interface {
+	Record(ctx context.Context, h domain.PriceHistory) error
+	FindByProduct(ctx context.Context, productID string, f dto.PriceHistoryFilter) ([]*domain.PriceHistory, int, error)
+	FindByStore(ctx context.Context, storeID string, f dto.PriceHistoryFilter) ([]*domain.PriceHistory, int, error)
+}

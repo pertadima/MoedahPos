@@ -39,3 +39,21 @@ type Category struct {
 	// Populated via JOIN
 	ParentName *string `db:"parent_name"`
 }
+
+// PriceHistory is an audit log entry for cost / sell price changes on a product.
+type PriceHistory struct {
+	ID            string    `db:"id"`
+	ProductID     string    `db:"product_id"`
+	ProductName   string    `db:"product_name"` // denormalised via JOIN
+	StoreID       string    `db:"store_id"`
+	ChangedBy     string    `db:"changed_by"`
+	ChangedByName string    `db:"changed_by_name"` // JOIN from users
+	OldCost       float64   `db:"old_cost"`
+	NewCost       float64   `db:"new_cost"`
+	OldSell       float64   `db:"old_sell"`
+	NewSell       float64   `db:"new_sell"`
+	Source        string    `db:"source"` // manual | purchase_order
+	RefID         *string   `db:"ref_id"`
+	Notes         *string   `db:"notes"`
+	ChangedAt     time.Time `db:"changed_at"`
+}
