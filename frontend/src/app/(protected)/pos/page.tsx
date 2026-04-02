@@ -339,7 +339,8 @@ export default function POSPage() {
   const [tablesLoading, setTablesLoading] = useState(false);
   const [tablesDraftMap, setTablesDraftMap] = useState<Record<string, Transaction | null>>({});
   const [selectedTable, setSelectedTable] = useState<RestaurantTable | null>(null);
-  const [activeDraft, setActiveDraft] = useState<Transaction | null>(null); // open draft for selected table
+  const [isTakeAway, setIsTakeAway] = useState(false); // restaurant take-away (no table)
+  const [activeDraft, setActiveDraft] = useState<Transaction | null>(null);
   const [holdLoading, setHoldLoading] = useState(false);
 
   // Retail state
@@ -474,6 +475,7 @@ export default function POSPage() {
   // Back to table selection (restaurant)
   const handleBackToTables = useCallback(() => {
     setSelectedTable(null);
+    setIsTakeAway(false);
     setActiveDraft(null);
     dispatch({ type: 'CLEAR' });
     setError('');
@@ -603,16 +605,36 @@ export default function POSPage() {
   }
 
   // ── Restaurant: table selection screen ─────────────────────────────────────
-  if (isRestaurant && !selectedTable) {
+  if (isRestaurant && !selectedTable && !isTakeAway) {
     return (
       <div style={{ marginLeft: 220, padding: '24px 28px', minHeight: '100vh' }}>
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
-          <UtensilsCrossed size={22} style={{ color: 'var(--brand)' }} />
-          <div>
-            <h1 style={{ fontSize: '1.3rem', fontWeight: 800, margin: 0 }}>Pilih Meja</h1>
-            <p style={{ color: 'var(--text-2)', fontSize: '0.85rem', margin: 0 }}>{selectedStore.store_name}</p>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <UtensilsCrossed size={22} style={{ color: 'var(--brand)' }} />
+            <div>
+              <h1 style={{ fontSize: '1.3rem', fontWeight: 800, margin: 0 }}>Pilih Meja</h1>
+              <p style={{ color: 'var(--text-2)', fontSize: '0.85rem', margin: 0 }}>{selectedStore.store_name}</p>
+            </div>
           </div>
+
+          {/* Take Away shortcut button */}
+          <button
+            onClick={() => { setIsTakeAway(true); dispatch({ type: 'CLEAR' }); setError(''); setHoldError(''); }}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 8,
+              background: 'linear-gradient(135deg, rgba(255,167,36,0.15), rgba(255,167,36,0.05))',
+              border: '1.5px solid rgba(255,167,36,0.5)',
+              borderRadius: 12, padding: '10px 18px',
+              cursor: 'pointer', fontWeight: 700, fontSize: '0.9rem',
+              color: '#FFA724',
+              boxShadow: '0 2px 12px rgba(255,167,36,0.15)',
+              transition: 'all 0.18s',
+            }}
+          >
+            <ShoppingBag size={16} />
+            Take Away
+          </button>
         </div>
 
         {tablesLoading ? (
@@ -713,7 +735,7 @@ export default function POSPage() {
       <div className="pos-catalog">
         {/* Mode badge + table back button (restaurant only) */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-          {isRestaurant && selectedTable && (
+          {isRestaurant && (selectedTable || isTakeAway) && (
             <button
               onClick={handleBackToTables}
               className="btn btn-ghost btn-sm"
@@ -730,7 +752,9 @@ export default function POSPage() {
           }}>
             {isRestaurant ? <UtensilsCrossed size={13} /> : <ShoppingBag size={13} />}
             {isRestaurant
-              ? `Meja ${selectedTable?.table_number ?? ''} — Pesanan`
+              ? isTakeAway
+                ? 'Take Away — Pesanan'
+                : `Meja ${selectedTable?.table_number ?? ''} — Pesanan`
               : 'Mode Retail — Produk'
             }
           </div>
@@ -1012,7 +1036,7 @@ export default function POSPage() {
             <div style={{ fontSize: '0.8rem', color: '#f87171', padding: '4px 0' }}>{holdError}</div>
           )}
 
-          {/* Restaurant: Hold + Pay buttons */}
+          {/* Restaurant dine-in: Hold + Pay buttons */}
           {isRestaurant && selectedTable ? (
             <div style={{ display: 'flex', gap: 8 }}>
               <button
@@ -1035,6 +1059,7 @@ export default function POSPage() {
               </button>
             </div>
           ) : (
+            /* Retail + Take Away: single Pay button */
             <button
               className="checkout-btn"
               disabled={cart.length === 0}
