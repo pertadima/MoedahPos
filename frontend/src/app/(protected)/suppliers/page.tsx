@@ -2,12 +2,14 @@
 
 import { useEffect, useState } from 'react';
 import { Users, Plus, Pencil, Trash2, Loader2, X, Search } from 'lucide-react';
+import { usePermission } from '@/hooks/usePermission';
 import { suppliersApi } from '@/lib/api/store-apis';
 import type { Supplier } from '@/types';
 import { formatDate } from '@/lib/utils';
 import { ApiError } from '@/lib/api/client';
 
 export default function SuppliersPage() {
+  const { can } = usePermission();
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -46,7 +48,9 @@ export default function SuppliersPage() {
     <div style={{ padding: 24 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
         <div><h1 className="page-title">Supplier</h1><p className="page-subtitle">Kelola daftar pemasok dan vendor</p></div>
-        <button className="btn btn-primary" onClick={openCreate}><Plus size={15} /> Tambah Supplier</button>
+        {can('suppliers.create') && (
+          <button className="btn btn-primary" onClick={openCreate}><Plus size={15} /> Tambah Supplier</button>
+        )}
       </div>
 
       <div style={{ position: 'relative', maxWidth: 360, marginBottom: 16 }}>
@@ -71,8 +75,12 @@ export default function SuppliersPage() {
                   <td style={{ color: 'var(--text-3)', fontSize: '0.8rem' }}>{formatDate(s.created_at)}</td>
                   <td>
                     <div style={{ display: 'flex', gap: 4 }}>
-                      <button className="btn btn-ghost btn-sm" onClick={() => openEdit(s)}><Pencil size={13} /></button>
-                      <button className="btn btn-ghost btn-sm" style={{ color: 'var(--accent-rd)' }} onClick={() => handleDelete(s.id)}><Trash2 size={13} /></button>
+                      {can('suppliers.update') && (
+                        <button className="btn btn-ghost btn-sm" onClick={() => openEdit(s)}><Pencil size={13} /></button>
+                      )}
+                      {can('suppliers.delete') && (
+                        <button className="btn btn-ghost btn-sm" style={{ color: 'var(--accent-rd)' }} onClick={() => handleDelete(s.id)}><Trash2 size={13} /></button>
+                      )}
                     </div>
                   </td>
                 </tr>

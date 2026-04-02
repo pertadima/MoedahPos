@@ -6,6 +6,7 @@ import {
   AlertTriangle, Search, UtensilsCrossed, ShoppingBag,
   MapPin, Phone, Hash, ToggleLeft, ToggleRight,
 } from 'lucide-react';
+import { usePermission } from '@/hooks/usePermission';
 import { storesApi } from '@/lib/api/store-apis';
 import type { Store as StoreType } from '@/types';
 import { formatDate } from '@/lib/utils';
@@ -34,6 +35,7 @@ const STORE_TYPE_CONFIG = {
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function StoresPage() {
+  const { can } = usePermission();
   const [stores, setStores] = useState<StoreType[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -191,9 +193,11 @@ export default function StoresPage() {
           </h1>
           <p className="page-subtitle">{total} toko terdaftar</p>
         </div>
-        <button className="btn btn-primary" onClick={openCreate} style={{ gap: 8 }}>
-          <Plus size={16} /> Tambah Toko
-        </button>
+        {can('stores.create') && (
+          <button className="btn btn-primary" onClick={openCreate} style={{ gap: 8 }}>
+            <Plus size={16} /> Tambah Toko
+          </button>
+        )}
       </div>
 
       {/* Search bar */}
@@ -297,36 +301,36 @@ export default function StoresPage() {
                       {store.currency} · dibuat {formatDate(store.created_at)}
                     </span>
                     <div style={{ display: 'flex', gap: 6 }}>
-                      <button
-                        className="btn btn-ghost btn-sm"
-                        onClick={() => toggleActive(store)}
-                        title={store.is_active ? 'Nonaktifkan toko' : 'Aktifkan toko'}
-                        style={{
-                          padding: '4px 9px', fontSize: '0.72rem', gap: 4,
-                          color: store.is_active ? '#f59e0b' : '#10b981',
-                        }}
-                      >
-                        {store.is_active
-                          ? <><ToggleLeft  size={13} /> Nonaktifkan</>
-                          : <><ToggleRight size={13} /> Aktifkan</>
-                        }
-                      </button>
-                      <button
-                        className="btn btn-ghost btn-sm"
-                        onClick={() => openEdit(store)}
-                        title="Edit toko"
-                        style={{ padding: '4px 9px', fontSize: '0.72rem', gap: 4 }}
-                      >
-                        <Pencil size={13} /> Edit
-                      </button>
-                      <button
-                        className="btn btn-ghost btn-sm"
-                        onClick={() => setDeleteConfirm({ open: true, store })}
-                        title="Hapus toko"
-                        style={{ padding: '4px 9px', fontSize: '0.72rem', gap: 4, color: 'rgba(239,68,68,0.8)' }}
-                      >
-                        <Trash2 size={13} /> Hapus
-                      </button>
+                      {can('stores.update') && (
+                        <button
+                          className="btn btn-ghost btn-sm"
+                          onClick={() => toggleActive(store)}
+                          title={store.is_active ? 'Nonaktifkan toko' : 'Aktifkan toko'}
+                          style={{ padding: '4px 9px', fontSize: '0.72rem', gap: 4, color: store.is_active ? '#f59e0b' : '#10b981' }}
+                        >
+                          {store.is_active ? <><ToggleLeft size={13} /> Nonaktifkan</> : <><ToggleRight size={13} /> Aktifkan</>}
+                        </button>
+                      )}
+                      {can('stores.update') && (
+                        <button
+                          className="btn btn-ghost btn-sm"
+                          onClick={() => openEdit(store)}
+                          title="Edit toko"
+                          style={{ padding: '4px 9px', fontSize: '0.72rem', gap: 4 }}
+                        >
+                          <Pencil size={13} /> Edit
+                        </button>
+                      )}
+                      {can('stores.delete') && (
+                        <button
+                          className="btn btn-ghost btn-sm"
+                          onClick={() => setDeleteConfirm({ open: true, store })}
+                          title="Hapus toko"
+                          style={{ padding: '4px 9px', fontSize: '0.72rem', gap: 4, color: 'rgba(239,68,68,0.8)' }}
+                        >
+                          <Trash2 size={13} /> Hapus
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>

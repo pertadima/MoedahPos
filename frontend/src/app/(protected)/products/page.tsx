@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Search, Plus, Package, Pencil, Trash2, Loader2, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthContext';
+import { usePermission } from '@/hooks/usePermission';
 import { productsApi } from '@/lib/api/products';
 import { formatRp, formatDate } from '@/lib/utils';
 import type { Product, Category } from '@/types';
@@ -10,6 +11,7 @@ import { ApiError } from '@/lib/api/client';
 
 export default function ProductsPage() {
   const { selectedStore } = useAuth();
+  const { can } = usePermission();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -70,7 +72,9 @@ export default function ProductsPage() {
           <h1 className="page-title">Produk</h1>
           <p className="page-subtitle">Kelola katalog produk {selectedStore?.store_name}</p>
         </div>
-        <button className="btn btn-primary" onClick={openCreate}><Plus size={15} /> Tambah Produk</button>
+        {can('products.create') && (
+          <button className="btn btn-primary" onClick={openCreate}><Plus size={15} /> Tambah Produk</button>
+        )}
       </div>
 
       {/* Search */}
@@ -105,8 +109,12 @@ export default function ProductsPage() {
                   <td><span className={`badge ${p.is_active ? 'badge-green' : 'badge-gray'}`}>{p.is_active ? 'Aktif' : 'Nonaktif'}</span></td>
                   <td>
                     <div style={{ display: 'flex', gap: 4 }}>
-                      <button className="btn btn-ghost btn-sm" onClick={() => openEdit(p)}><Pencil size={13} /></button>
-                      <button className="btn btn-ghost btn-sm" style={{ color: 'var(--accent-rd)' }} onClick={() => handleDelete(p.id)}><Trash2 size={13} /></button>
+                      {can('products.update') && (
+                        <button className="btn btn-ghost btn-sm" onClick={() => openEdit(p)}><Pencil size={13} /></button>
+                      )}
+                      {can('products.delete') && (
+                        <button className="btn btn-ghost btn-sm" style={{ color: 'var(--accent-rd)' }} onClick={() => handleDelete(p.id)}><Trash2 size={13} /></button>
+                      )}
                     </div>
                   </td>
                 </tr>

@@ -6,6 +6,7 @@ import {
   Users, AlertTriangle, Clock,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthContext';
+import { usePermission } from '@/hooks/usePermission';
 import { tablesApi } from '@/lib/api/store-apis';
 import type { RestaurantTable, TableStatus } from '@/types';
 
@@ -21,6 +22,7 @@ const STATUS_CONFIG: Record<TableStatus, { label: string; color: string; bg: str
 
 export default function TablesPage() {
   const { selectedStore } = useAuth();
+  const { can } = usePermission();
   const [tables, setTables] = useState<RestaurantTable[]>([]);
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState<{ open: boolean; mode: 'create' | 'edit'; table?: RestaurantTable }>({ open: false, mode: 'create' });
@@ -159,9 +161,11 @@ export default function TablesPage() {
           </h1>
           <p className="page-subtitle">{selectedStore.store_name} · {tables.length} meja</p>
         </div>
-        <button className="btn btn-primary" onClick={openCreate} style={{ gap: 8 }}>
-          <Plus size={16} /> Tambah Meja
-        </button>
+        {can('products.create') && (
+          <button className="btn btn-primary" onClick={openCreate} style={{ gap: 8 }}>
+            <Plus size={16} /> Tambah Meja
+          </button>
+        )}
       </div>
 
       {/* Stats */}
@@ -236,20 +240,24 @@ export default function TablesPage() {
 
                   {/* Actions */}
                   <div style={{ display: 'flex', gap: 6 }}>
-                    <button
-                      className="btn btn-ghost btn-sm"
-                      onClick={() => openEdit(table)}
-                      style={{ flex: 1, justifyContent: 'center', padding: '5px' }}
-                    >
-                      <Pencil size={13} />
-                    </button>
-                    <button
-                      className="btn btn-ghost btn-sm"
-                      onClick={() => setDeleteConfirm({ open: true, table })}
-                      style={{ flex: 1, justifyContent: 'center', padding: '5px', color: 'rgba(239,68,68,0.7)' }}
-                    >
-                      <Trash2 size={13} />
-                    </button>
+                    {can('products.update') && (
+                      <button
+                        className="btn btn-ghost btn-sm"
+                        onClick={() => openEdit(table)}
+                        style={{ flex: 1, justifyContent: 'center', padding: '5px' }}
+                      >
+                        <Pencil size={13} />
+                      </button>
+                    )}
+                    {can('products.delete') && (
+                      <button
+                        className="btn btn-ghost btn-sm"
+                        onClick={() => setDeleteConfirm({ open: true, table })}
+                        style={{ flex: 1, justifyContent: 'center', padding: '5px', color: 'rgba(239,68,68,0.7)' }}
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>

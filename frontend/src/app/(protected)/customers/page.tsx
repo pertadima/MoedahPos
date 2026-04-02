@@ -6,6 +6,7 @@ import {
   FileText, Edit3, Archive, User, ChevronRight,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthContext';
+import { usePermission } from '@/hooks/usePermission';
 import { customersApi } from '@/lib/api/store-apis';
 import { formatDate } from '@/lib/utils';
 import type { Customer } from '@/types';
@@ -140,7 +141,10 @@ function DeleteConfirm({ customer, storeId, onSuccess, onClose }: { customer: Cu
 }
 
 // ── Detail Drawer ─────────────────────────────────────────────────────────────
-function DetailDrawer({ customer, onClose, onEdit, onDelete }: { customer: Customer; onClose: () => void; onEdit: () => void; onDelete: () => void }) {
+function DetailDrawer({ customer, onClose, onEdit, onDelete, canEdit, canDelete }: {
+  customer: Customer; onClose: () => void; onEdit: () => void; onDelete: () => void;
+  canEdit?: boolean; canDelete?: boolean;
+}) {
   const avatar = customer.name.charAt(0).toUpperCase();
   return (
     <>
@@ -149,13 +153,17 @@ function DetailDrawer({ customer, onClose, onEdit, onDelete }: { customer: Custo
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '18px 20px', borderBottom: '1px solid var(--border)' }}>
           <div style={{ fontWeight: 800 }}>Detail Customer</div>
           <div style={{ display: 'flex', gap: 6 }}>
-            <button className="btn btn-secondary btn-sm" onClick={onEdit}><Edit3 size={13} /> Edit</button>
-            <button
-              style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '5px 10px', borderRadius: 6, border: '1px solid rgba(245,158,11,0.4)', background: 'rgba(245,158,11,0.1)', color: '#f59e0b', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer' }}
-              onClick={onDelete}
-            >
-              <Archive size={12} /> Nonaktifkan
-            </button>
+            {canEdit !== false && (
+              <button className="btn btn-secondary btn-sm" onClick={onEdit}><Edit3 size={13} /> Edit</button>
+            )}
+            {canDelete !== false && (
+              <button
+                style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '5px 10px', borderRadius: 6, border: '1px solid rgba(245,158,11,0.4)', background: 'rgba(245,158,11,0.1)', color: '#f59e0b', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer' }}
+                onClick={onDelete}
+              >
+                <Archive size={12} /> Nonaktifkan
+              </button>
+            )}
             <button className="btn btn-ghost btn-sm" onClick={onClose}><X size={15} /></button>
           </div>
         </div>
@@ -222,6 +230,7 @@ function DetailDrawer({ customer, onClose, onEdit, onDelete }: { customer: Custo
 // ── Main Page ─────────────────────────────────────────────────────────────────
 export default function CustomersPage() {
   const { selectedStore } = useAuth();
+  const { can } = usePermission();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [total, setTotal]         = useState(0);
   const [page, setPage]           = useState(1);
@@ -270,9 +279,11 @@ export default function CustomersPage() {
           <h1 className="page-title">Customer</h1>
           <p className="page-subtitle">{total} customer terdaftar · {selectedStore.store_name}</p>
         </div>
-        <button className="btn btn-primary" onClick={() => setForm('create')}>
-          <Plus size={15} /> Tambah Customer
-        </button>
+        {can('sales.create') && (
+          <button className="btn btn-primary" onClick={() => setForm('create')}>
+            <Plus size={15} /> Tambah Customer
+          </button>
+        )}
       </div>
 
       {/* Search */}
@@ -332,16 +343,20 @@ export default function CustomersPage() {
                     <td style={{ color: 'var(--text-3)', fontSize: '0.8rem' }}>{formatDate(c.created_at)}</td>
                     <td>
                       <div style={{ display: 'flex', gap: 4 }}>
-                        <button className="btn btn-ghost btn-sm" onClick={e => { e.stopPropagation(); setForm(c); }} title="Edit">
-                          <Edit3 size={13} />
-                        </button>
-                        <button
-                          title="Nonaktifkan"
-                          style={{ display: 'flex', alignItems: 'center', gap: 3, padding: '4px 6px', borderRadius: 6, border: '1px solid rgba(245,158,11,0.35)', background: 'rgba(245,158,11,0.08)', color: '#f59e0b', cursor: 'pointer', fontSize: '0.72rem' }}
-                          onClick={e => { e.stopPropagation(); setDeleting(c); }}
-                        >
-                          <Archive size={12} />
-                        </button>
+                        {can('sales.create') && (
+                          <button className="btn btn-ghost btn-sm" onClick={e => { e.stopPropagation(); setForm(c); }} title="Edit">
+                            <Edit3 size={13} />
+                          </button>
+                        )}
+                        {can('sales.create') && (
+                          <button
+                            title="Nonaktifkan"
+                            style={{ display: 'flex', alignItems: 'center', gap: 3, padding: '4px 6px', borderRadius: 6, border: '1px solid rgba(245,158,11,0.35)', background: 'rgba(245,158,11,0.08)', color: '#f59e0b', cursor: 'pointer', fontSize: '0.72rem' }}
+                            onClick={e => { e.stopPropagation(); setDeleting(c); }}
+                          >
+                            <Archive size={12} />
+                          </button>
+                        )}
                         <button className="btn btn-ghost btn-sm" onClick={() => setDetail(c)}>
                           <ChevronRight size={14} />
                         </button>
@@ -376,6 +391,8 @@ export default function CustomersPage() {
           onClose={() => setDetail(null)}
           onEdit={() => { setForm(detail); setDetail(null); }}
           onDelete={() => { setDeleting(detail); setDetail(null); }}
+          canEdit={can('sales.create')}
+          canDelete={can('sales.create')}
         />
       )}
     </div>

@@ -6,6 +6,7 @@ import {
   ChevronRight, FolderOpen, AlertTriangle,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthContext';
+import { usePermission } from '@/hooks/usePermission';
 import { categoriesApi } from '@/lib/api/store-apis';
 import type { Category } from '@/types';
 import { formatDate } from '@/lib/utils';
@@ -27,6 +28,7 @@ interface DeleteConfirm {
 
 export default function CategoriesPage() {
   const { selectedStore } = useAuth();
+  const { can } = usePermission();
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState<ModalState>({ open: false, mode: 'create' });
@@ -176,10 +178,12 @@ export default function CategoriesPage() {
           </h1>
           <p className="page-subtitle">{selectedStore.store_name} · {categories.length} kategori</p>
         </div>
-        <button className="btn btn-primary" onClick={openCreate} style={{ gap: 8 }}>
-          <Plus size={16} />
-          Tambah Kategori
-        </button>
+        {can('products.create') && (
+          <button className="btn btn-primary" onClick={openCreate} style={{ gap: 8 }}>
+            <Plus size={16} />
+            Tambah Kategori
+          </button>
+        )}
       </div>
 
       {/* Category grid */}
@@ -206,6 +210,8 @@ export default function CategoriesPage() {
                   isParent
                   onEdit={openEdit}
                   onDelete={confirmDelete}
+                  canEdit={can('products.update')}
+                  canDelete={can('products.delete')}
                 />
                 {/* Child rows */}
                 {children.map(child => (
@@ -215,6 +221,8 @@ export default function CategoriesPage() {
                     isParent={false}
                     onEdit={openEdit}
                     onDelete={confirmDelete}
+                    canEdit={can('products.update')}
+                    canDelete={can('products.delete')}
                   />
                 ))}
               </div>
@@ -224,7 +232,7 @@ export default function CategoriesPage() {
           {/* Orphaned categories (parent was deleted) */}
           {categories.filter(c => c.parent_id && !categories.find(p => p.id === c.parent_id)).map(cat => (
             <div key={cat.id} className="card" style={{ padding: 0, overflow: 'hidden' }}>
-              <CategoryRow cat={cat} isParent={false} onEdit={openEdit} onDelete={confirmDelete} />
+              <CategoryRow cat={cat} isParent={false} onEdit={openEdit} onDelete={confirmDelete} canEdit={can('products.update')} canDelete={can('products.delete')} />
             </div>
           ))}
         </div>
@@ -382,12 +390,14 @@ export default function CategoriesPage() {
 // ── CategoryRow component ──────────────────────────────────────────────────────
 
 function CategoryRow({
-  cat, isParent, onEdit, onDelete,
+  cat, isParent, onEdit, onDelete, canEdit, canDelete,
 }: {
   cat: Category;
   isParent: boolean;
   onEdit: (c: Category) => void;
   onDelete: (c: Category) => void;
+  canEdit?: boolean;
+  canDelete?: boolean;
 }) {
   return (
     <div style={{
@@ -433,25 +443,26 @@ function CategoryRow({
           {formatDate(cat.created_at)}
         </span>
         <div style={{ display: 'flex', gap: 6 }}>
-          <button
-            className="btn btn-ghost btn-sm"
-            onClick={() => onEdit(cat)}
-            title="Edit kategori"
-            style={{ padding: '5px 8px' }}
-          >
-            <Pencil size={14} />
-          </button>
-          <button
-            className="btn btn-ghost btn-sm"
-            onClick={() => onDelete(cat)}
-            title="Hapus kategori"
-            style={{
-              padding: '5px 8px',
-              color: 'rgba(239,68,68,0.7)',
-            }}
-          >
-            <Trash2 size={14} />
-          </button>
+          {canEdit !== false && (
+            <button
+              className="btn btn-ghost btn-sm"
+              onClick={() => onEdit(cat)}
+              title="Edit kategori"
+              style={{ padding: '5px 8px' }}
+            >
+              <Pencil size={14} />
+            </button>
+          )}
+          {canDelete !== false && (
+            <button
+              className="btn btn-ghost btn-sm"
+              onClick={() => onDelete(cat)}
+              title="Hapus kategori"
+              style={{ padding: '5px 8px', color: 'rgba(239,68,68,0.7)' }}
+            >
+              <Trash2 size={14} />
+            </button>
+          )}
         </div>
       </div>
     </div>

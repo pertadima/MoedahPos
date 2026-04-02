@@ -14,10 +14,77 @@ interface NavItem {
   href: string;
   icon: React.ElementType;
   label: string;
+  /** Backend permission key required to see this item. Undefined = visible to all. */
+  permission?: string;
+  /** If true, only superadmin sees this item (global admin feature). */
+  adminOnly?: boolean;
 }
 interface NavGroup {
   label: string;
   items: NavItem[];
+  /** If set, the whole group is hidden when the user lacks this permission. */
+  permission?: string;
+}
+
+// ── Role → permission map (mirrors backend role_permissions seed) ─────────────
+//
+// Rather than fetching permissions from the API on every render, we mirror the
+// backend RBAC model here. This is safe because:
+//   - The role name lives in the JWT / /me response (`selectedStore.role`).
+//   - Menu visibility is *cosmetic*; the backend still enforces per-request checks.
+//   - If the seed changes, update this map too.
+//
+type Permission =
+  | 'products.read'  | 'products.create' | 'products.update' | 'products.delete'
+  | 'stock.read'     | 'stock.update'
+  | 'reports.read'
+  | 'suppliers.read' | 'suppliers.create'
+  | 'sales.create'   | 'sales.read'
+  | 'users.read'     | 'users.create'    | 'users.update'    | 'users.delete';
+
+type RoleName = 'superadmin' | 'admin' | 'manager' | 'cashier' | 'staff';
+
+const ROLE_PERMISSIONS: Record<RoleName, Set<Permission>> = {
+  superadmin: new Set<Permission>([
+    'products.read', 'products.create', 'products.update', 'products.delete',
+    'stock.read', 'stock.update',
+    'reports.read',
+    'suppliers.read', 'suppliers.create',
+    'sales.create', 'sales.read',
+    'users.read', 'users.create', 'users.update', 'users.delete',
+  ]),
+  admin: new Set<Permission>([
+    'products.read', 'products.create', 'products.update', 'products.delete',
+    'stock.read', 'stock.update',
+    'reports.read',
+    'suppliers.read', 'suppliers.create',
+    'sales.create', 'sales.read',
+    'users.read', 'users.create', 'users.update', 'users.delete',
+  ]),
+  manager: new Set<Permission>([
+    'products.read', 'products.create', 'products.update',
+    'stock.read', 'stock.update',
+    'reports.read',
+    'suppliers.read',
+    'sales.create', 'sales.read',
+  ]),
+  cashier: new Set<Permission>([
+    'products.read',
+    'stock.read',
+    'sales.create', 'sales.read',
+  ]),
+  staff: new Set<Permission>([
+    'products.read',
+    'stock.read',
+    'sales.read',
+  ]),
+};
+
+function hasPermission(role: string | undefined, perm: string): boolean {
+  if (!role) return false;
+  if (role === 'superadmin') return true;
+  const perms = ROLE_PERMISSIONS[role as RoleName];
+  return perms ? perms.has(perm as Permission) : false;
 }
 
 // ── Nav group definitions ─────────────────────────────────────────────────────
@@ -30,48 +97,53 @@ const baseGroups: NavGroup[] = [
   },
   {
     label: 'Penjualan',
+    permission: 'sales.create',
     items: [
-      { href: '/pos',          icon: ShoppingCart, label: 'Kasir / POS' },
-      { href: '/transactions', icon: Receipt,      label: 'Riwayat Transaksi' },
-      { href: '/customers',   icon: UserRound,    label: 'Customer' },
+      { href: '/pos',          icon: ShoppingCart, label: 'Kasir / POS',       permission: 'sales.create' },
+      { href: '/transactions', icon: Receipt,      label: 'Riwayat Transaksi', permission: 'sales.read'   },
+      { href: '/customers',    icon: UserRound,    label: 'Customer',           permission: 'sales.read'   },
     ],
   },
   {
     label: 'Inventori',
+    permission: 'products.read',
     items: [
-      { href: '/products',      icon: Package,   label: 'Produk' },
-      { href: '/categories',    icon: Tag,        label: 'Kategori' },
-      { href: '/price-history', icon: History,    label: 'Riwayat Harga' },
-      { href: '/stock',         icon: Warehouse,  label: 'Stok' },
+      { href: '/products',      icon: Package,   label: 'Produk',        permission: 'products.read' },
+      { href: '/categories',    icon: Tag,        label: 'Kategori',      permission: 'products.read' },
+      { href: '/price-history', icon: History,    label: 'Riwayat Harga', permission: 'products.read' },
+      { href: '/stock',         icon: Warehouse,  label: 'Stok',          permission: 'stock.read'    },
     ],
   },
   {
     label: 'Pembelian',
+    permission: 'suppliers.read',
     items: [
-      { href: '/purchase-orders', icon: ClipboardList, label: 'Purchase Order' },
-      { href: '/suppliers',       icon: Users,         label: 'Supplier' },
+      { href: '/purchase-orders', icon: ClipboardList, label: 'Purchase Order', permission: 'suppliers.read'   },
+      { href: '/suppliers',       icon: Users,         label: 'Supplier',       permission: 'suppliers.read'   },
     ],
   },
   {
     label: 'Analitik',
+    permission: 'reports.read',
     items: [
-      { href: '/reports', icon: BarChart3, label: 'Laporan' },
+      { href: '/reports', icon: BarChart3, label: 'Laporan', permission: 'reports.read' },
     ],
   },
   {
     label: 'Pengaturan',
     items: [
-      { href: '/stores', icon: Store,   label: 'Toko' },
-      { href: '/users',  icon: UserCog, label: 'Pengguna' },
+      { href: '/stores', icon: Store,   label: 'Toko',      adminOnly: true },
+      { href: '/users',  icon: UserCog, label: 'Pengguna',  adminOnly: true },
     ],
   },
 ];
 
 const restaurantGroup: NavGroup = {
   label: 'Restoran',
+  permission: 'products.read',
   items: [
-    { href: '/tables',     icon: Grid3x3,         label: 'Meja' },
-    { href: '/menu-items', icon: UtensilsCrossed, label: 'Menu' },
+    { href: '/tables',     icon: Grid3x3,         label: 'Meja', permission: 'products.read' },
+    { href: '/menu-items', icon: UtensilsCrossed, label: 'Menu', permission: 'products.read' },
   ],
 };
 
@@ -80,16 +152,38 @@ export default function Sidebar() {
   const pathname = usePathname();
   const { user, selectedStore, stores, selectStore, logout } = useAuth();
   const isRestaurant = selectedStore?.store_type === 'restaurant';
+  const role = selectedStore?.role;
+  const isSuperOrAdmin = role === 'superadmin' || role === 'admin';
 
   // Inject restaurant group after "Penjualan" when in restaurant mode
-  const groups: NavGroup[] = isRestaurant
+  const allGroups: NavGroup[] = isRestaurant
     ? [
-        baseGroups[0],                        // Umum
-        baseGroups[1],                        // Penjualan
-        restaurantGroup,                      // Restoran (tables + menu)
-        ...baseGroups.slice(2),               // Inventori … Pengaturan
+        baseGroups[0],
+        baseGroups[1],
+        restaurantGroup,
+        ...baseGroups.slice(2),
       ]
     : baseGroups;
+
+  // Build the final visible groups based on the current store role
+  const finalGroups = allGroups
+    .map(group => {
+      const isSettings = group.label === 'Pengaturan';
+
+      const visibleItems = group.items.filter(item => {
+        if (item.adminOnly) return isSuperOrAdmin;
+        if (item.permission) return hasPermission(role, item.permission);
+        return true;
+      });
+
+      if (visibleItems.length === 0) return null;
+
+      // For non-settings groups, check group-level permission gate
+      if (!isSettings && group.permission && !hasPermission(role, group.permission)) return null;
+
+      return { ...group, items: visibleItems };
+    })
+    .filter(Boolean) as NavGroup[];
 
   return (
     <aside className="sidebar">
@@ -141,7 +235,7 @@ export default function Sidebar() {
 
       {/* Grouped Navigation */}
       <nav className="sidebar-nav" style={{ flex: 1, overflowY: 'auto' }}>
-        {groups.map(group => (
+        {finalGroups.map(group => (
           <div key={group.label} style={{ marginBottom: 4 }}>
             {/* Group label */}
             <div style={{

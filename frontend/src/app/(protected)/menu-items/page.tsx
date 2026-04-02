@@ -6,6 +6,7 @@ import {
   ChevronDown, ChevronUp, AlertTriangle, FlaskConical, Package,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthContext';
+import { usePermission } from '@/hooks/usePermission';
 import { menuItemsApi, categoriesApi } from '@/lib/api/store-apis';
 import { productsApi } from '@/lib/api/products';
 import type { MenuItem, Category, Product } from '@/types';
@@ -32,6 +33,7 @@ const emptyForm = (): FormState => ({
 
 export default function MenuItemsPage() {
   const { selectedStore } = useAuth();
+  const { can } = usePermission();
   const [items, setItems] = useState<MenuItem[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -212,9 +214,11 @@ export default function MenuItemsPage() {
           </h1>
           <p className="page-subtitle">{selectedStore.store_name} · {items.length} menu item</p>
         </div>
-        <button className="btn btn-primary" onClick={openCreate} style={{ gap: 8 }}>
-          <Plus size={16} /> Tambah Menu
-        </button>
+        {can('products.create') && (
+          <button className="btn btn-primary" onClick={openCreate} style={{ gap: 8 }}>
+            <Plus size={16} /> Tambah Menu
+          </button>
+        )}
       </div>
 
       {/* Menu list */}
@@ -255,12 +259,16 @@ export default function MenuItemsPage() {
                     <button className="btn btn-ghost btn-sm" onClick={() => setExpanded(isExpanded ? null : item.id)} style={{ padding: '5px 8px' }}>
                       {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                     </button>
-                    <button className="btn btn-ghost btn-sm" onClick={() => openEdit(item)} style={{ padding: '5px 8px' }}>
-                      <Pencil size={14} />
-                    </button>
-                    <button className="btn btn-ghost btn-sm" onClick={() => setDeleteConfirm({ open: true, item })} style={{ padding: '5px 8px', color: 'rgba(239,68,68,0.7)' }}>
-                      <Trash2 size={14} />
-                    </button>
+                    {can('products.update') && (
+                      <button className="btn btn-ghost btn-sm" onClick={() => openEdit(item)} style={{ padding: '5px 8px' }}>
+                        <Pencil size={14} />
+                      </button>
+                    )}
+                    {can('products.delete') && (
+                      <button className="btn btn-ghost btn-sm" onClick={() => setDeleteConfirm({ open: true, item })} style={{ padding: '5px 8px', color: 'rgba(239,68,68,0.7)' }}>
+                        <Trash2 size={14} />
+                      </button>
+                    )}
                   </div>
                 </div>
 

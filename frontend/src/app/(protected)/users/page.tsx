@@ -6,6 +6,7 @@ import {
   Edit3, Archive, ChevronRight, Mail, Store,
   KeyRound, Eye, EyeOff, CheckCircle2, XCircle,
 } from 'lucide-react';
+import { usePermission } from '@/hooks/usePermission';
 import { usersAdminApi, rolesApi } from '@/lib/api/store-apis';
 import { storesApi } from '@/lib/api/store-apis';
 import { ApiError } from '@/lib/api/client';
@@ -400,6 +401,7 @@ function DetailDrawer({ user, roles, stores, onClose, onEdit, onDeactivate, onRe
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
 export default function UsersPage() {
+  const { can } = usePermission();
   const [users, setUsers] = useState<UserAdmin[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);
   const [allStores, setAllStores] = useState<{ id: string; name: string }[]>([]);
@@ -467,9 +469,11 @@ export default function UsersPage() {
           <h1 className="page-title">Manajemen Pengguna</h1>
           <p className="page-subtitle">Kelola akun pengguna dan penugasan toko</p>
         </div>
-        <button className="btn btn-primary" onClick={() => setCreateOpen(true)}>
-          <Plus size={16} /> Tambah Pengguna
-        </button>
+        {can('users.create') && (
+          <button className="btn btn-primary" onClick={() => setCreateOpen(true)}>
+            <Plus size={16} /> Tambah Pengguna
+          </button>
+        )}
       </div>
 
       {/* ── Filters ── */}
@@ -561,8 +565,10 @@ export default function UsersPage() {
                   <td><StatusBadge active={u.is_active} /></td>
                   <td onClick={e => e.stopPropagation()}>
                     <div style={{ display: 'flex', gap: 4 }}>
-                      <button className="btn btn-ghost btn-sm" onClick={() => { setEditUser(u); }} title="Edit"><Edit3 size={13} /></button>
-                      {u.is_active && (
+                      {can('users.update') && (
+                        <button className="btn btn-ghost btn-sm" onClick={() => { setEditUser(u); }} title="Edit"><Edit3 size={13} /></button>
+                      )}
+                      {can('users.update') && u.is_active && (
                         <button
                           title="Nonaktifkan"
                           style={{ display: 'flex', alignItems: 'center', padding: '4px 6px', borderRadius: 6, border: '1px solid rgba(245,158,11,0.35)', background: 'rgba(245,158,11,0.08)', color: '#f59e0b', cursor: 'pointer' }}
