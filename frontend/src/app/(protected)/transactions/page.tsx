@@ -84,7 +84,86 @@ function PayBadge({ method }: { method: string }) {
 
 // ── Receipt Printout ─────────────────────────────────────────────────────────
 function ReceiptModal({ txn, onClose }: { txn: Transaction; onClose: () => void }) {
-  const handlePrint = () => window.print();
+  const handlePrint = () => {
+    // Build self-contained receipt HTML with print-safe (hardcoded) styles.
+    // We cannot rely on CSS custom properties (--var) in a print context because
+    // those resolve to transparent/nothing on most browsers.
+    const lines = (txn.items ?? []).map(item => `
+      <div class="item">
+        <div class="item-name">${item.product_name}</div>
+        <div class="item-row">
+          <span>${item.quantity} × ${formatRp(item.unit_price)}</span>
+          <span>${formatRp(item.subtotal)}</span>
+        </div>
+      </div>`).join('');
+
+    const receiptHtml = `<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <title>Struk - ${txn.id.slice(0,8).toUpperCase()}</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 12px;
+      color: #000;
+      background: #fff;
+      width: 80mm;
+      padding: 8px;
+    }
+    .center { text-align: center; }
+    .bold { font-weight: 700; }
+    .divider { border-top: 1px dashed #999; margin: 8px 0; }
+    .row { display: flex; justify-content: space-between; margin: 2px 0; }
+    .total-row { display: flex; justify-content: space-between; font-weight: 800; font-size: 14px; margin-top: 4px; }
+    .item { margin-bottom: 6px; }
+    .item-name { font-weight: 600; }
+    .item-row { display: flex; justify-content: space-between; font-size: 11px; color: #444; }
+    .muted { color: #555; font-size: 11px; }
+    .footer { text-align: center; margin-top: 10px; font-size: 11px; color: #555; }
+    @page { size: 80mm auto; margin: 0; }
+  </style>
+</head>
+<body>
+  <div class="center bold" style="font-size:14px;margin-bottom:4px;">MoedahPOS</div>
+  <div class="center muted">${new Date(txn.created_at).toLocaleString('id-ID', { dateStyle: 'long', timeStyle: 'short' })}</div>
+  <div class="center muted">Kasir: ${txn.cashier_name ?? '-'}</div>
+  ${txn.customer_name ? `<div class="center muted">Pelanggan: ${txn.customer_name}</div>` : ''}
+  <div class="divider"></div>
+  ${lines}
+  <div class="divider"></div>
+  <div class="row muted"><span>Subtotal</span><span>${formatRp(txn.subtotal)}</span></div>
+  ${txn.discount_amt > 0 ? `<div class="row muted"><span>Diskon</span><span>-${formatRp(txn.discount_amt)}</span></div>` : ''}
+  <div class="row muted"><span>PPN</span><span>${formatRp(txn.tax_amt)}</span></div>
+  <div class="total-row"><span>TOTAL</span><span>${formatRp(txn.total)}</span></div>
+  <div class="row muted" style="margin-top:4px;"><span>Bayar (${(txn.payment_method ?? '').toUpperCase()})</span><span>${formatRp(txn.payment_amount)}</span></div>
+  ${txn.change_amount > 0 ? `<div class="row muted"><span>Kembalian</span><span>${formatRp(txn.change_amount)}</span></div>` : ''}
+  <div class="footer">
+    <div class="divider"></div>
+    Terima kasih telah berbelanja!<br/>
+    No. Transaksi: ${txn.id.slice(0,8).toUpperCase()}
+  </div>
+</body>
+</html>`;
+
+    const pw = window.open('', '_blank', 'width=360,height=600');
+    if (!pw) return;
+    pw.document.write(receiptHtml);
+    pw.document.close();
+    // Wait for fonts/images to load then trigger print
+    pw.onload = () => {
+      pw.focus();
+      pw.print();
+      // Close the helper window after print dialog closes
+      pw.onafterprint = () => pw.close();
+    };
+    // Fallback: some browsers fire load synchronously
+    setTimeout(() => {
+      try { pw.focus(); pw.print(); } catch { /* already printed */ }
+    }, 500);
+  };
+
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-box" style={{ maxWidth: 350 }} onClick={e => e.stopPropagation()}>
@@ -93,6 +172,7 @@ function ReceiptModal({ txn, onClose }: { txn: Transaction; onClose: () => void 
           <button onClick={onClose} className="btn btn-ghost btn-sm"><X size={16} /></button>
         </div>
 
+        {/* Preview — uses CSS vars for screen display */}
         <div id="receipt-content" style={{ fontFamily: "'Courier New', monospace", fontSize: '0.82rem', lineHeight: 1.7 }}>
           <div style={{ textAlign: 'center', marginBottom: 12, borderBottom: '1px dashed var(--border-md)', paddingBottom: 10 }}>
             <div style={{ fontWeight: 800, fontSize: '1rem' }}>MoedahPOS</div>
@@ -154,6 +234,7 @@ function ReceiptModal({ txn, onClose }: { txn: Transaction; onClose: () => void 
     </div>
   );
 }
+
 
 // ── Detail Drawer ─────────────────────────────────────────────────────────────
 function DetailDrawer({ txn, onClose, onReprint }: {
