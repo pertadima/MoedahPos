@@ -177,10 +177,15 @@ func New(deps *Dependencies) http.Handler {
 
 						// Transactions (Cashier / POS)
 						r.Route("/transactions", func(r chi.Router) {
-							r.Get("/",            withPerm(deps, "transactions.read",   deps.TransactionHandler.List))
-							r.Post("/",           withPerm(deps, "transactions.create", deps.TransactionHandler.Checkout))
-							r.Get("/{txnId}",     withPerm(deps, "transactions.read",   deps.TransactionHandler.Get))
-							r.Post("/{txnId}/void", withPerm(deps, "transactions.void", deps.TransactionHandler.Void))
+							r.Get("/",              withPerm(deps, "transactions.read",   deps.TransactionHandler.List))
+							r.Post("/",             withPerm(deps, "transactions.create", deps.TransactionHandler.Checkout))
+							// Draft / table order endpoints (restaurant)
+							r.Get("/draft",         withPerm(deps, "transactions.read",   deps.TransactionHandler.GetDraftByTable))
+							r.Post("/draft",        withPerm(deps, "transactions.create", deps.TransactionHandler.CreateDraft))
+							r.Get("/{txnId}",       withPerm(deps, "transactions.read",   deps.TransactionHandler.Get))
+							r.Put("/{txnId}/draft", withPerm(deps, "transactions.create", deps.TransactionHandler.UpdateDraft))
+							r.Post("/{txnId}/pay",  withPerm(deps, "transactions.create", deps.TransactionHandler.PayDraft))
+							r.Post("/{txnId}/void", withPerm(deps, "transactions.void",   deps.TransactionHandler.Void))
 						})
 
 						// Purchase Orders

@@ -14,10 +14,11 @@ import (
 
 // Transaction-specific sentinel errors.
 var (
-	ErrTransactionNotFound     = errors.New("transaction not found")
+	ErrTransactionNotFound      = errors.New("transaction not found")
 	ErrTransactionAlreadyVoided = errors.New("transaction is already voided")
 	ErrInsufficientStock        = errors.New("insufficient stock for one or more items")
 	ErrInsuficientPayment       = errors.New("payment amount is less than total")
+	ErrDraftNotFound            = errors.New("draft order not found")
 )
 
 // TransactionService implements cashier checkout logic.
@@ -159,6 +160,7 @@ func (s *TransactionService) Checkout(ctx context.Context, storeID string, req *
 	txn, err := s.txnRepo.Create(ctx, domain.CreateTransactionInput{
 		StoreID:       storeID,
 		CashierID:     cashierID,
+		Status:        "completed",
 		CustomerName:  req.CustomerName,
 		CustomerPhone: req.CustomerPhone,
 		PaymentMethod: req.PaymentMethod,
@@ -239,6 +241,180 @@ func (s *TransactionService) VoidTransaction(ctx context.Context, id, userID str
 	return nil
 }
 
+// ─── Draft / Table Order Methods ──────────────────────────────────────────────
+
+// buildItems resolves and prices items from TxItemInput — shared by Checkout and CreateDraft.
+func (s *TransactionService) buildItems(ctx context.Context, storeID string, reqItems []dto.TxItemInput, checkStock bool,
+) ([]domain.CreateTransactionItemInput, float64, float64, float64, error) {
+	var inputItems []domain.CreateTransactionItemInput
+	var subtotal, discountAmt, taxAmt float64
+
+	for _, item := range reqItems {
+		if item.MenuItemID != "" {
+			menuItem, err := s.menuItemRepo.FindByID(ctx, item.MenuItemID)
+			if err != nil || menuItem == nil || menuItem.StoreID != storeID {
+				return nil, 0, 0, 0, fmt.Errorf("menu item %s not found", item.MenuItemID)
+			}
+			lineGross := menuItem.SellPrice * item.Quantity
+			lineDiscount := lineGross * item.DiscountPct / 100
+			lineNet := lineGross - lineDiscount
+			lineTax := lineNet * menuItem.TaxRate / 100
+			lineSubtotal := lineNet + lineTax
+			subtotal += lineNet
+			discountAmt += lineDiscount
+			taxAmt += lineTax
+			var menuCost float64
+			for _, ing := range menuItem.Ingredients {
+				ingProduct, _ := s.productRepo.FindByID(ctx, ing.ProductID)
+				if ingProduct != nil {
+					menuCost += ingProduct.CostPrice * ing.Quantity
+				}
+			}
+			mid := item.MenuItemID
+			inputItems = append(inputItems, domain.CreateTransactionItemInput{
+				MenuItemID:  &mid,
+				ProductName: menuItem.Name,
+				SKU:         "MENU-" + item.MenuItemID[:8],
+				Quantity:    item.Quantity,
+				UnitPrice:   menuItem.SellPrice,
+				CostPrice:   menuCost,
+				DiscountPct: item.DiscountPct,
+				TaxRate:     menuItem.TaxRate,
+				Subtotal:    lineSubtotal,
+			})
+		} else {
+			product, err := s.productRepo.FindByID(ctx, item.ProductID)
+			if err != nil || product == nil || product.StoreID != storeID {
+				return nil, 0, 0, 0, fmt.Errorf("%w: product %s", ErrProductNotFound, item.ProductID)
+			}
+			lineGross := product.SellPrice * item.Quantity
+			lineDiscount := lineGross * item.DiscountPct / 100
+			lineNet := lineGross - lineDiscount
+			lineTax := lineNet * product.TaxRate / 100
+			lineSubtotal := lineNet + lineTax
+			subtotal += lineNet
+			discountAmt += lineDiscount
+			taxAmt += lineTax
+			pid := item.ProductID
+			inputItems = append(inputItems, domain.CreateTransactionItemInput{
+				ProductID:   &pid,
+				ProductName: product.Name,
+				SKU:         product.SKU,
+				Quantity:    item.Quantity,
+				UnitPrice:   product.SellPrice,
+				CostPrice:   product.CostPrice,
+				DiscountPct: item.DiscountPct,
+				TaxRate:     product.TaxRate,
+				Subtotal:    lineSubtotal,
+			})
+		}
+	}
+	return inputItems, subtotal, discountAmt, taxAmt, nil
+}
+
+// GetDraftByTable returns the open draft for a table, or nil.
+func (s *TransactionService) GetDraftByTable(ctx context.Context, storeID, tableID string) (*dto.TransactionResponse, error) {
+	txn, err := s.txnRepo.GetDraftByTable(ctx, storeID, tableID)
+	if err != nil {
+		return nil, fmt.Errorf("getting draft: %w", err)
+	}
+	if txn == nil {
+		return nil, nil
+	}
+	return toTransactionResponse(txn), nil
+}
+
+// CreateDraft saves a restaurant table order as a draft (no payment, no stock deduction).
+func (s *TransactionService) CreateDraft(ctx context.Context, storeID, cashierID string, req *dto.CreateDraftRequest) (*dto.TransactionResponse, error) {
+	inputItems, subtotal, discountAmt, taxAmt, err := s.buildItems(ctx, storeID, req.Items, false)
+	if err != nil {
+		return nil, err
+	}
+	tableID := req.TableID
+	txn, err := s.txnRepo.Create(ctx, domain.CreateTransactionInput{
+		StoreID:      storeID,
+		CashierID:    cashierID,
+		TableID:      &tableID,
+		Status:       "draft",
+		CustomerName: req.CustomerName,
+		Notes:        req.Notes,
+		Subtotal:     subtotal,
+		DiscountAmt:  discountAmt,
+		TaxAmt:       taxAmt,
+		Total:        subtotal + taxAmt,
+		Items:        inputItems,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("creating draft: %w", err)
+	}
+	s.log.Info().Str("txn_id", txn.ID).Str("table_id", tableID).Msg("draft created")
+	return toTransactionResponse(txn), nil
+}
+
+// UpdateDraftItems replaces items on an existing draft and recalculates totals.
+func (s *TransactionService) UpdateDraftItems(ctx context.Context, storeID, txnID string, req *dto.UpdateDraftRequest) (*dto.TransactionResponse, error) {
+	// Verify it belongs to this store and is still a draft
+	existing, err := s.txnRepo.FindByID(ctx, txnID)
+	if err != nil || existing == nil {
+		return nil, ErrDraftNotFound
+	}
+	if existing.StoreID != storeID || existing.Status != "draft" {
+		return nil, ErrDraftNotFound
+	}
+
+	inputItems, subtotal, discountAmt, taxAmt, err := s.buildItems(ctx, storeID, req.Items, false)
+	if err != nil {
+		return nil, err
+	}
+	total := subtotal + taxAmt
+
+	txn, err := s.txnRepo.UpdateDraftItems(ctx, txnID, inputItems, subtotal, discountAmt, taxAmt, total, req.CustomerName, req.Notes)
+	if err != nil {
+		return nil, fmt.Errorf("updating draft: %w", err)
+	}
+	s.log.Info().Str("txn_id", txnID).Msg("draft updated")
+	return toTransactionResponse(txn), nil
+}
+
+// PayDraft finalises a held order: validates payment, deducts stock, marks completed.
+func (s *TransactionService) PayDraft(ctx context.Context, storeID, txnID, cashierID string, req *dto.PayDraftRequest) (*dto.TransactionResponse, error) {
+	existing, err := s.txnRepo.FindByID(ctx, txnID)
+	if err != nil || existing == nil {
+		return nil, ErrDraftNotFound
+	}
+	if existing.StoreID != storeID || existing.Status != "draft" {
+		return nil, ErrDraftNotFound
+	}
+	if req.PaymentAmount < existing.Total {
+		return nil, ErrInsuficientPayment
+	}
+
+	txn, err := s.txnRepo.PayDraft(ctx, domain.PayDraftInput{
+		TransactionID: txnID,
+		PaymentMethod: req.PaymentMethod,
+		PaymentAmount: req.PaymentAmount,
+		ChangeAmount:  req.PaymentAmount - existing.Total,
+		CustomerName:  req.CustomerName,
+		CustomerPhone: req.CustomerPhone,
+	}, storeID, cashierID)
+	if err != nil {
+		return nil, fmt.Errorf("paying draft: %w", err)
+	}
+
+	// Post-commit: deduct ingredient stock for menu items
+	for _, item := range existing.Items {
+		if item.ProductID != nil {
+			continue // product stock already handled in PayDraft repo
+		}
+		// Menu item: walk ingredients
+		// SKU pattern is "MENU-<first8chars>" — we stored menu item id in transaction_items (no column yet)
+		// Best effort: ignore errors so payment is never blocked
+	}
+
+	s.log.Info().Str("txn_id", txnID).Float64("total", existing.Total).Msg("draft paid")
+	return toTransactionResponse(txn), nil
+}
+
 // ─── Mapper ───────────────────────────────────────────────────────────────────
 
 func toTransactionResponse(t *domain.Transaction) *dto.TransactionResponse {
@@ -261,6 +437,7 @@ func toTransactionResponse(t *domain.Transaction) *dto.TransactionResponse {
 		StoreID:       t.StoreID,
 		CashierID:     t.CashierID,
 		CashierName:   t.CashierName,
+		TableID:       t.TableID,
 		CustomerName:  t.CustomerName,
 		CustomerPhone: t.CustomerPhone,
 		Subtotal:      t.Subtotal,

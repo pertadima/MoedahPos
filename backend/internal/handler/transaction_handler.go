@@ -110,3 +110,103 @@ func (h *TransactionHandler) Void(w http.ResponseWriter, r *http.Request) {
 		"success": true, "message": "Transaction voided and stock restored",
 	})
 }
+
+// ─── Draft / Table Order Handlers ─────────────────────────────────────────────
+
+// POST /stores/:storeId/transactions/draft  – hold an order for a table
+func (h *TransactionHandler) CreateDraft(w http.ResponseWriter, r *http.Request) {
+	storeID := chi.URLParam(r, "storeId")
+	var req dto.CreateDraftRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		response.Error(w, http.StatusBadRequest, "Invalid JSON body")
+		return
+	}
+	if errs := h.validator.ValidateStruct(req); errs != nil {
+		response.ValidationError(w, errs)
+		return
+	}
+	result, err := h.txnSvc.CreateDraft(r.Context(), storeID, userIDFromCtx(r), &req)
+	if err != nil {
+		h.log.Error().Err(err).Msg("create draft failed")
+		response.InternalError(w)
+		return
+	}
+	response.Created(w, result)
+}
+
+// GET /stores/:storeId/transactions/draft?table_id=...  – get open draft for a table
+func (h *TransactionHandler) GetDraftByTable(w http.ResponseWriter, r *http.Request) {
+	storeID := chi.URLParam(r, "storeId")
+	tableID := r.URL.Query().Get("table_id")
+	if tableID == "" {
+		response.Error(w, http.StatusBadRequest, "table_id is required")
+		return
+	}
+	result, err := h.txnSvc.GetDraftByTable(r.Context(), storeID, tableID)
+	if err != nil {
+		h.log.Error().Err(err).Msg("get draft by table failed")
+		response.InternalError(w)
+		return
+	}
+	if result == nil {
+		response.Success(w, nil) // 200 null = no open order
+		return
+	}
+	response.Success(w, result)
+}
+
+// PUT /stores/:storeId/transactions/:txnId/draft  – update items on an existing draft
+func (h *TransactionHandler) UpdateDraft(w http.ResponseWriter, r *http.Request) {
+	storeID := chi.URLParam(r, "storeId")
+	txnID := chi.URLParam(r, "txnId")
+	var req dto.UpdateDraftRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		response.Error(w, http.StatusBadRequest, "Invalid JSON body")
+		return
+	}
+	if errs := h.validator.ValidateStruct(req); errs != nil {
+		response.ValidationError(w, errs)
+		return
+	}
+	result, err := h.txnSvc.UpdateDraftItems(r.Context(), storeID, txnID, &req)
+	if err != nil {
+		switch {
+		case errors.Is(err, service.ErrDraftNotFound):
+			response.NotFound(w, "Draft order")
+		default:
+			h.log.Error().Err(err).Msg("update draft failed")
+			response.InternalError(w)
+		}
+		return
+	}
+	response.Success(w, result)
+}
+
+// POST /stores/:storeId/transactions/:txnId/pay  – pay a held order
+func (h *TransactionHandler) PayDraft(w http.ResponseWriter, r *http.Request) {
+	storeID := chi.URLParam(r, "storeId")
+	txnID := chi.URLParam(r, "txnId")
+	var req dto.PayDraftRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		response.Error(w, http.StatusBadRequest, "Invalid JSON body")
+		return
+	}
+	if errs := h.validator.ValidateStruct(req); errs != nil {
+		response.ValidationError(w, errs)
+		return
+	}
+	result, err := h.txnSvc.PayDraft(r.Context(), storeID, txnID, userIDFromCtx(r), &req)
+	if err != nil {
+		switch {
+		case errors.Is(err, service.ErrDraftNotFound):
+			response.NotFound(w, "Draft order")
+		case errors.Is(err, service.ErrInsuficientPayment):
+			response.Error(w, http.StatusUnprocessableEntity, "Payment amount is less than the total")
+		default:
+			h.log.Error().Err(err).Msg("pay draft failed")
+			response.InternalError(w)
+		}
+		return
+	}
+	response.Created(w, result)
+}

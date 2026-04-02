@@ -7,6 +7,7 @@ type Transaction struct {
 	ID            string    `db:"id"`
 	StoreID       string    `db:"store_id"`
 	CashierID     string    `db:"cashier_id"`
+	TableID       *string   `db:"table_id"`   // nil for retail; set for restaurant draft orders
 	CustomerName  string    `db:"customer_name"`
 	CustomerPhone string    `db:"customer_phone"`
 	Subtotal      float64   `db:"subtotal"`
@@ -46,6 +47,8 @@ type TransactionItem struct {
 type CreateTransactionInput struct {
 	StoreID       string
 	CashierID     string
+	TableID       *string // nil = retail
+	Status        string  // "draft" or "completed"
 	CustomerName  string
 	CustomerPhone string
 	PaymentMethod string
@@ -57,6 +60,16 @@ type CreateTransactionInput struct {
 	TaxAmt        float64
 	Total         float64
 	Items         []CreateTransactionItemInput
+}
+
+// PayDraftInput is what the service passes to the repo when finalizing a held order.
+type PayDraftInput struct {
+	TransactionID string
+	PaymentMethod string
+	PaymentAmount float64
+	ChangeAmount  float64
+	CustomerName  string
+	CustomerPhone string
 }
 
 // CreateTransactionItemInput is a pre-calculated item ready for DB insertion.

@@ -66,7 +66,7 @@ export interface Category {
 }
 
 // ── Restaurant ────────────────────────────────────────────────────────────────
-export type TableStatus = 'available' | 'occupied' | 'reserved';
+export type TableStatus = 'available' | 'occupied' | 'reserved' | 'unavailable';
 export interface RestaurantTable {
   id: string;
   store_id: string;
@@ -168,6 +168,7 @@ export interface Transaction {
   store_id: string;
   cashier_id: string;
   cashier_name: string;
+  table_id?: string;
   customer_name: string;
   customer_phone: string;
   subtotal: number;
@@ -177,7 +178,7 @@ export interface Transaction {
   payment_method: string;
   payment_amount: number;
   change_amount: number;
-  status: string;
+  status: string; // 'draft' | 'completed' | 'voided'
   notes: string;
   items: TransactionItem[];
   created_at: string;

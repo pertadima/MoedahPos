@@ -3,14 +3,15 @@
 import { useEffect, useReducer, useState, useCallback, useRef } from 'react';
 import {
   Search, ShoppingCart, Trash2, Printer, X, Minus, Plus, Loader2,
-  CheckCircle2, UtensilsCrossed, ShoppingBag, UserRound,
+  CheckCircle2, UtensilsCrossed, ShoppingBag, UserRound, ArrowLeft,
+  Coffee, Clock, Users,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { productsApi } from '@/lib/api/products';
-import { menuItemsApi, customersApi } from '@/lib/api/store-apis';
+import { menuItemsApi, customersApi, tablesApi } from '@/lib/api/store-apis';
 import { transactionsApi } from '@/lib/api/transactions';
 import { formatRp, productEmoji } from '@/lib/utils';
-import type { Product, Category, CartItem, Transaction, MenuItem, Customer } from '@/types';
+import type { Product, Category, CartItem, Transaction, MenuItem, Customer, RestaurantTable } from '@/types';
 import { ApiError } from '@/lib/api/client';
 
 // ── Unified cart item type ────────────────────────────────────────────────────
@@ -333,6 +334,14 @@ export default function POSPage() {
   const { selectedStore } = useAuth();
   const isRestaurant = selectedStore?.store_type === 'restaurant';
 
+  // ── Restaurant table selection state ────────────────────────────────────────
+  const [tables, setTables] = useState<RestaurantTable[]>([]);
+  const [tablesLoading, setTablesLoading] = useState(false);
+  const [tablesDraftMap, setTablesDraftMap] = useState<Record<string, Transaction | null>>({});
+  const [selectedTable, setSelectedTable] = useState<RestaurantTable | null>(null);
+  const [activeDraft, setActiveDraft] = useState<Transaction | null>(null); // open draft for selected table
+  const [holdLoading, setHoldLoading] = useState(false);
+
   // Retail state
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -349,6 +358,7 @@ export default function POSPage() {
   const [payLoading, setPayLoading] = useState(false);
   const [receipt, setReceipt] = useState<Transaction | null>(null);
   const [error, setError] = useState('');
+  const [holdError, setHoldError] = useState('');
 
   // Customer picker
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
@@ -379,25 +389,38 @@ export default function POSPage() {
     return () => document.removeEventListener('mousedown', h);
   }, []);
 
-  // Reset cart and refetch when store / mode changes
+  // Reset cart and refetch when store / mode changes; load tables for restaurant
   useEffect(() => {
     if (!storeId) return;
     dispatch({ type: 'CLEAR' });
     setActiveCat('all');
     setSearch('');
     setLoading(true);
+    setSelectedTable(null);
+    setActiveDraft(null);
 
     if (isRestaurant) {
-      menuItemsApi.list(storeId)
-        .then(res => {
-          const items: MenuItem[] = (res.data as any) ?? [];
-          setMenuItems(items);
-          // Collect unique categories
-          const cats = Array.from(new Set(items.map(i => i.category_name ?? 'Lainnya').filter(Boolean)));
-          setMenuCategories(cats);
-        })
-        .catch(console.error)
-        .finally(() => setLoading(false));
+      // Load tables + menu items in parallel
+      setTablesLoading(true);
+      Promise.all([
+        tablesApi.list(storeId),
+        menuItemsApi.list(storeId),
+      ]).then(([tRes, mRes]) => {
+        const tbls: RestaurantTable[] = (tRes.data as any) ?? [];
+        setTables(tbls.filter(t => t.is_active !== false));
+        // For each table, check if there's an open draft (so we can show the order summary badge)
+        tbls.filter(t => t.is_active !== false).forEach(async (t) => {
+          try {
+            const dr = await transactionsApi.getDraftByTable(storeId, t.id);
+            setTablesDraftMap(prev => ({ ...prev, [t.id]: dr.data as Transaction | null }));
+          } catch { /* ignore */ }
+        });
+        const items: MenuItem[] = (mRes.data as any) ?? [];
+        setMenuItems(items);
+        const cats = Array.from(new Set(items.map(i => i.category_name ?? 'Lainnya').filter(Boolean)));
+        setMenuCategories(cats);
+      }).catch(console.error)
+        .finally(() => { setLoading(false); setTablesLoading(false); });
     } else {
       Promise.all([
         productsApi.list(storeId, { per_page: 200 }),
@@ -409,6 +432,93 @@ export default function POSPage() {
         .finally(() => setLoading(false));
     }
   }, [storeId, isRestaurant]);
+
+  // When a table is selected in restaurant mode, load its draft order
+  const handleSelectTable = useCallback(async (table: RestaurantTable) => {
+    if (!storeId) return;
+    setSelectedTable(table);
+    dispatch({ type: 'CLEAR' });
+    setActiveDraft(null);
+    setHoldError('');
+    setError('');
+    try {
+      const res = await transactionsApi.getDraftByTable(storeId, table.id);
+      const draft = res.data as Transaction | null;
+      setActiveDraft(draft);
+      if (draft?.items) {
+        // Restore cart from draft items (map back to PosCartItem)
+        draft.items.forEach(item => {
+          const fakeMenuItem: MenuItem = {
+            id: item.product_id ?? item.id,
+            store_id: storeId,
+            name: item.product_name,
+            description: '',
+            sell_price: item.unit_price,
+            tax_rate: item.tax_rate,
+            is_active: true,
+            category_name: '',
+            ingredients: [],
+            created_at: '',
+            updated_at: '',
+          };
+          dispatch({ type: 'ADD_MENU', item: fakeMenuItem });
+          // Set the correct quantity
+          if (item.quantity > 1) {
+            dispatch({ type: 'SET_QTY', id: fakeMenuItem.id, qty: item.quantity });
+          }
+        });
+      }
+    } catch { /* no draft is fine */ }
+  }, [storeId]);
+
+  // Back to table selection (restaurant)
+  const handleBackToTables = useCallback(() => {
+    setSelectedTable(null);
+    setActiveDraft(null);
+    dispatch({ type: 'CLEAR' });
+    setError('');
+    setHoldError('');
+    // Re-fetch tables to refresh occupied status
+    if (!storeId) return;
+    tablesApi.list(storeId).then(res => {
+      const tbls: RestaurantTable[] = (res.data as any) ?? [];
+      setTables(tbls.filter(t => t.is_active !== false));
+      tbls.filter(t => t.is_active !== false).forEach(async (t) => {
+        try {
+          const dr = await transactionsApi.getDraftByTable(storeId, t.id);
+          setTablesDraftMap(prev => ({ ...prev, [t.id]: dr.data as Transaction | null }));
+        } catch { /* ignore */ }
+      });
+    }).catch(console.error);
+  }, [storeId]);
+
+  // Hold order (create or update draft)
+  const handleHoldOrder = useCallback(async () => {
+    if (!storeId || !selectedTable || cart.length === 0) return;
+    setHoldLoading(true);
+    setHoldError('');
+    try {
+      const items = (cart as PosCartItem[]).map(i => ({
+        product_id:   i.menuItemId ? '' : i.product.id,
+        menu_item_id: i.menuItemId ?? '',
+        quantity:     i.quantity,
+        discount_pct: 0,
+      }));
+      if (activeDraft) {
+        await transactionsApi.updateDraft(storeId, activeDraft.id, { items });
+      } else {
+        await transactionsApi.createDraft(storeId, { table_id: selectedTable.id, items });
+      }
+      // Mark table occupied in UI
+      await tablesApi.updateStatus(storeId, selectedTable.id, 'occupied');
+      handleBackToTables();
+    } catch (err) {
+      if (err instanceof ApiError) setHoldError(err.message);
+      else setHoldError('Gagal menyimpan pesanan');
+    } finally {
+      setHoldLoading(false);
+    }
+  }, [storeId, selectedTable, activeDraft, cart, handleBackToTables]);
 
   // ── Filtered lists ──────────────────────────────────────────────────────────
   const filteredProducts = products.filter(p => {
@@ -432,7 +542,7 @@ export default function POSPage() {
   const total    = subtotal + taxAmt;
   const itemCount = cart.reduce((s, i) => s + i.quantity, 0);
 
-  // ── Checkout ────────────────────────────────────────────────────────────────
+  // ── Checkout (retail + restaurant direct pay) ────────────────────────────────
   const handleConfirmPayment = useCallback(async (method: string, amount: number) => {
     if (!storeId) return;
     setPayLoading(true);
@@ -444,25 +554,45 @@ export default function POSPage() {
         quantity:     i.quantity,
         discount_pct: 0,
       }));
-      const res = await transactionsApi.checkout(storeId, {
-        payment_method: method,
-        payment_amount: amount,
-        customer_name:  selectedCustomer?.name ?? '',
-        customer_phone: selectedCustomer?.phone ?? '',
-        items,
-      });
+      let res;
+      if (isRestaurant && activeDraft) {
+        // Pay via the draft endpoint
+        res = await transactionsApi.payDraft(storeId, activeDraft.id, {
+          payment_method: method,
+          payment_amount: amount,
+          customer_name:  selectedCustomer?.name ?? '',
+          customer_phone: selectedCustomer?.phone ?? '',
+        });
+        // Table goes back to available
+        if (selectedTable) {
+          await tablesApi.updateStatus(storeId, selectedTable.id, 'available').catch(() => {});
+        }
+      } else {
+        res = await transactionsApi.checkout(storeId, {
+          payment_method: method,
+          payment_amount: amount,
+          customer_name:  selectedCustomer?.name ?? '',
+          customer_phone: selectedCustomer?.phone ?? '',
+          items,
+        });
+      }
       setReceipt(res.data as Transaction);
       dispatch({ type: 'CLEAR' });
       setSelectedCustomer(null);
       setCustSearch('');
       setShowPayment(false);
+      setActiveDraft(null);
+      if (isRestaurant) {
+        // Return to table grid after receipt is closed (receipt modal handled separately)
+        setSelectedTable(null);
+      }
     } catch (err) {
       if (err instanceof ApiError) setError(err.message);
       else setError('Gagal memproses pembayaran');
     } finally {
       setPayLoading(false);
     }
-  }, [storeId, cart, selectedCustomer]);
+  }, [storeId, cart, selectedCustomer, isRestaurant, activeDraft, selectedTable]);
 
   if (!selectedStore) {
     return (
@@ -472,13 +602,126 @@ export default function POSPage() {
     );
   }
 
-  // ── Render ──────────────────────────────────────────────────────────────────
+  // ── Restaurant: table selection screen ─────────────────────────────────────
+  if (isRestaurant && !selectedTable) {
+    return (
+      <div style={{ marginLeft: 220, padding: '24px 28px', minHeight: '100vh' }}>
+        {/* Header */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
+          <UtensilsCrossed size={22} style={{ color: 'var(--brand)' }} />
+          <div>
+            <h1 style={{ fontSize: '1.3rem', fontWeight: 800, margin: 0 }}>Pilih Meja</h1>
+            <p style={{ color: 'var(--text-2)', fontSize: '0.85rem', margin: 0 }}>{selectedStore.store_name}</p>
+          </div>
+        </div>
+
+        {tablesLoading ? (
+          <div style={{ display: 'flex', justifyContent: 'center', padding: 64 }}>
+            <Loader2 size={32} className="loading-spin" style={{ color: 'var(--brand)' }} />
+          </div>
+        ) : tables.length === 0 ? (
+          <div className="empty-state">
+            <Coffee size={40} />
+            <p>Belum ada meja. Tambahkan meja di menu Manajemen Meja.</p>
+          </div>
+        ) : (
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))',
+            gap: 16,
+          }}>
+            {tables.map(table => {
+              const draft = tablesDraftMap[table.id];
+              const hasOrder = !!draft;
+              const isOccupied = table.status === 'occupied' || hasOrder;
+              const isUnavailable = table.status === 'unavailable';
+
+              return (
+                <button
+                  key={table.id}
+                  onClick={() => !isUnavailable && handleSelectTable(table)}
+                  style={{
+                    background: isUnavailable
+                      ? 'var(--bg-elevated)'
+                      : isOccupied
+                        ? 'linear-gradient(135deg, rgba(255,167,36,0.15), rgba(255,167,36,0.05))'
+                        : 'linear-gradient(135deg, rgba(8,132,246,0.12), rgba(8,132,246,0.04))',
+                    border: isUnavailable
+                      ? '1.5px solid var(--border)'
+                      : isOccupied
+                        ? '1.5px solid rgba(255,167,36,0.5)'
+                        : '1.5px solid rgba(8,132,246,0.35)',
+                    borderRadius: 16,
+                    padding: '20px 16px',
+                    cursor: isUnavailable ? 'not-allowed' : 'pointer',
+                    opacity: isUnavailable ? 0.5 : 1,
+                    textAlign: 'center',
+                    transition: 'all 0.18s',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: 8,
+                    position: 'relative',
+                  }}
+                >
+                  {/* Status dot */}
+                  <div style={{
+                    width: 10, height: 10, borderRadius: '50%',
+                    background: isUnavailable ? 'var(--text-3)' : isOccupied ? '#FFA724' : '#22c55e',
+                    position: 'absolute', top: 12, right: 12,
+                    boxShadow: isOccupied && !isUnavailable ? '0 0 8px rgba(255,167,36,0.6)' : 'none',
+                  }} />
+
+                  <div style={{ fontSize: '2rem' }}>🪑</div>
+                  <div style={{ fontWeight: 800, fontSize: '1.05rem', color: 'var(--text-1)' }}>
+                    Meja {table.table_number}
+                  </div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-2)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <Users size={11} /> {table.capacity} kursi
+                  </div>
+
+                  {hasOrder && draft ? (
+                    <div style={{
+                      background: 'rgba(255,167,36,0.18)', borderRadius: 8,
+                      padding: '4px 8px', fontSize: '0.72rem', color: '#FFA724', fontWeight: 600,
+                      display: 'flex', alignItems: 'center', gap: 4,
+                    }}>
+                      <Clock size={10} />
+                      {draft.items.length} item · {formatRp(draft.total)}
+                    </div>
+                  ) : (
+                    <div style={{
+                      fontSize: '0.72rem', fontWeight: 600,
+                      color: isUnavailable ? 'var(--text-3)' : 'var(--brand)',
+                    }}>
+                      {isUnavailable ? 'Tidak Tersedia' : 'Tersedia'}
+                    </div>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // ── Render (Retail + Restaurant order screen) ───────────────────────────────
   return (
     <div className="pos-layout">
       {/* ── LEFT: Catalog ── */}
       <div className="pos-catalog">
-        {/* Mode badge */}
+        {/* Mode badge + table back button (restaurant only) */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+          {isRestaurant && selectedTable && (
+            <button
+              onClick={handleBackToTables}
+              className="btn btn-ghost btn-sm"
+              style={{ padding: '4px 8px', gap: 4 }}
+            >
+              <ArrowLeft size={13} /> Meja
+            </button>
+          )}
           <div style={{
             display: 'inline-flex', alignItems: 'center', gap: 5,
             padding: '4px 10px', borderRadius: 8, fontSize: '0.75rem', fontWeight: 600,
@@ -486,7 +729,10 @@ export default function POSPage() {
             color: isRestaurant ? '#fb923c' : '#10b981',
           }}>
             {isRestaurant ? <UtensilsCrossed size={13} /> : <ShoppingBag size={13} />}
-            {isRestaurant ? 'Mode Restoran — Menu' : 'Mode Retail — Produk'}
+            {isRestaurant
+              ? `Meja ${selectedTable?.table_number ?? ''} — Pesanan`
+              : 'Mode Retail — Produk'
+            }
           </div>
         </div>
 
@@ -760,14 +1006,44 @@ export default function POSPage() {
             <span>Total</span>
             <span style={{ color: 'var(--accent-em)' }}>{formatRp(total)}</span>
           </div>
-          <button
-            className="checkout-btn"
-            disabled={cart.length === 0}
-            onClick={() => setShowPayment(true)}
-          >
-            <CheckCircle2 size={18} />
-            {isRestaurant ? 'Proses Pesanan' : 'Bayar'} {cart.length > 0 ? formatRp(total) : ''}
-          </button>
+
+          {/* Hold error */}
+          {holdError && (
+            <div style={{ fontSize: '0.8rem', color: '#f87171', padding: '4px 0' }}>{holdError}</div>
+          )}
+
+          {/* Restaurant: Hold + Pay buttons */}
+          {isRestaurant && selectedTable ? (
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button
+                className="btn btn-secondary"
+                style={{ flex: 1, gap: 6 }}
+                disabled={cart.length === 0 || holdLoading}
+                onClick={handleHoldOrder}
+              >
+                {holdLoading ? <Loader2 size={14} className="loading-spin" /> : <Clock size={14} />}
+                {activeDraft ? 'Perbarui' : 'Tahan'}
+              </button>
+              <button
+                className="checkout-btn"
+                style={{ flex: 2 }}
+                disabled={cart.length === 0}
+                onClick={() => setShowPayment(true)}
+              >
+                <CheckCircle2 size={16} />
+                Bayar {cart.length > 0 ? formatRp(total) : ''}
+              </button>
+            </div>
+          ) : (
+            <button
+              className="checkout-btn"
+              disabled={cart.length === 0}
+              onClick={() => setShowPayment(true)}
+            >
+              <CheckCircle2 size={18} />
+              {isRestaurant ? 'Proses Pesanan' : 'Bayar'} {cart.length > 0 ? formatRp(total) : ''}
+            </button>
+          )}
         </div>
       </div>
 

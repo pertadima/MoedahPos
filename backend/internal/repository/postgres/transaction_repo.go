@@ -17,7 +17,8 @@ type TransactionRepo struct{ db *sqlx.DB }
 
 func NewTransactionRepo(db *sqlx.DB) *TransactionRepo { return &TransactionRepo{db: db} }
 
-// Create persists a full transaction with items and stock movements in a single DB transaction.
+// Create persists a full transaction with items and (for completed orders) stock movements.
+// Set input.Status = "draft" to hold an order without deducting stock.
 func (r *TransactionRepo) Create(ctx context.Context, input domain.CreateTransactionInput) (*domain.Transaction, error) {
 	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
@@ -25,14 +26,19 @@ func (r *TransactionRepo) Create(ctx context.Context, input domain.CreateTransac
 	}
 	defer func() { _ = tx.Rollback() }()
 
-	// 1. INSERT transaction header
+	status := input.Status
+	if status == "" {
+		status = "completed"
+	}
+
+	// 1. INSERT transaction header (table_id may be nil for retail)
 	const txnQ = `
 		INSERT INTO transactions
-		  (store_id, cashier_id, customer_name, customer_phone,
+		  (store_id, cashier_id, table_id, customer_name, customer_phone,
 		   subtotal, discount_amt, tax_amt, total,
 		   payment_method, payment_amount, change_amount, status, notes)
-		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,'completed',$12)
-		RETURNING id, store_id, cashier_id,
+		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
+		RETURNING id, store_id, cashier_id, table_id,
 		          COALESCE(customer_name,'')  AS customer_name,
 		          COALESCE(customer_phone,'') AS customer_phone,
 		          subtotal, discount_amt, tax_amt, total,
@@ -42,15 +48,16 @@ func (r *TransactionRepo) Create(ctx context.Context, input domain.CreateTransac
 
 	txn := &domain.Transaction{}
 	err = tx.QueryRowxContext(ctx, txnQ,
-		input.StoreID, input.CashierID, input.CustomerName, input.CustomerPhone,
+		input.StoreID, input.CashierID, input.TableID,
+		input.CustomerName, input.CustomerPhone,
 		input.Subtotal, input.DiscountAmt, input.TaxAmt, input.Total,
-		input.PaymentMethod, input.PaymentAmount, input.ChangeAmount, input.Notes,
+		input.PaymentMethod, input.PaymentAmount, input.ChangeAmount, status, input.Notes,
 	).StructScan(txn)
 	if err != nil {
 		return nil, fmt.Errorf("TransactionRepo.Create insert txn: %w", err)
 	}
 
-	// 2. INSERT items + stock movements per item
+	// 2. INSERT items and (if completed) stock movements
 	const itemQ = `
 		INSERT INTO transaction_items
 		  (transaction_id, product_id, product_name, sku, quantity, unit_price, cost_price, discount_pct, tax_rate, subtotal)
@@ -77,14 +84,13 @@ func (r *TransactionRepo) Create(ctx context.Context, input domain.CreateTransac
 		}
 		txn.Items = append(txn.Items, *ti)
 
-		if item.ProductID != nil {
-			// Stock movement (negative delta = stock out)
+		// Only deduct stock for completed (paid) orders
+		if status == "completed" && item.ProductID != nil {
 			if _, err := tx.ExecContext(ctx, mvQ,
 				*item.ProductID, input.StoreID, txn.ID, -item.Quantity, input.CashierID,
 			); err != nil {
 				return nil, fmt.Errorf("TransactionRepo.Create stock movement: %w", err)
 			}
-			// Upsert stock level
 			if _, err := tx.ExecContext(ctx, slQ, *item.ProductID, input.StoreID, -item.Quantity); err != nil {
 				return nil, fmt.Errorf("TransactionRepo.Create stock level: %w", err)
 			}
@@ -99,6 +105,155 @@ func (r *TransactionRepo) Create(ctx context.Context, input domain.CreateTransac
 	_ = r.db.QueryRowxContext(ctx, `SELECT name FROM users WHERE id = $1`, input.CashierID).Scan(&txn.CashierName)
 
 	return txn, nil
+}
+
+// GetDraftByTable returns the open (draft) transaction for a given table, or nil if none.
+func (r *TransactionRepo) GetDraftByTable(ctx context.Context, storeID, tableID string) (*domain.Transaction, error) {
+	const q = `
+		SELECT t.id, t.store_id, t.cashier_id, t.table_id,
+		       COALESCE(t.customer_name,'')  AS customer_name,
+		       COALESCE(t.customer_phone,'') AS customer_phone,
+		       t.subtotal, t.discount_amt, t.tax_amt, t.total,
+		       t.payment_method, t.payment_amount, t.change_amount, t.status,
+		       COALESCE(t.notes,'') AS notes,
+		       t.created_at, t.updated_at, u.name AS cashier_name
+		FROM transactions t
+		JOIN users u ON u.id = t.cashier_id
+		WHERE t.store_id = $1 AND t.table_id = $2 AND t.status = 'draft'
+		ORDER BY t.created_at DESC
+		LIMIT 1`
+
+	txn := &domain.Transaction{}
+	if err := r.db.QueryRowxContext(ctx, q, storeID, tableID).StructScan(txn); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("TransactionRepo.GetDraftByTable: %w", err)
+	}
+
+	const itemQ = `
+		SELECT id, transaction_id, product_id, product_name, sku,
+		       quantity, unit_price, cost_price, discount_pct, tax_rate, subtotal
+		FROM transaction_items WHERE transaction_id = $1`
+
+	if err := r.db.SelectContext(ctx, &txn.Items, itemQ, txn.ID); err != nil {
+		return nil, fmt.Errorf("TransactionRepo.GetDraftByTable items: %w", err)
+	}
+	return txn, nil
+}
+
+// UpdateDraftItems replaces all items on a draft transaction and recalculates totals.
+func (r *TransactionRepo) UpdateDraftItems(ctx context.Context, txnID string, items []domain.CreateTransactionItemInput,
+	subtotal, discountAmt, taxAmt, total float64, customerName, notes string) (*domain.Transaction, error) {
+
+	tx, err := r.db.BeginTxx(ctx, nil)
+	if err != nil {
+		return nil, fmt.Errorf("TransactionRepo.UpdateDraftItems begin: %w", err)
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	// Delete existing items
+	if _, err := tx.ExecContext(ctx, `DELETE FROM transaction_items WHERE transaction_id = $1`, txnID); err != nil {
+		return nil, fmt.Errorf("TransactionRepo.UpdateDraftItems delete items: %w", err)
+	}
+
+	// Update header totals + customer info
+	const updQ = `
+		UPDATE transactions
+		SET subtotal=$2, discount_amt=$3, tax_amt=$4, total=$5,
+		    customer_name=$6, notes=$7, updated_at=NOW()
+		WHERE id=$1`
+	if _, err := tx.ExecContext(ctx, updQ, txnID, subtotal, discountAmt, taxAmt, total, customerName, notes); err != nil {
+		return nil, fmt.Errorf("TransactionRepo.UpdateDraftItems update header: %w", err)
+	}
+
+	// Re-insert items
+	const itemQ = `
+		INSERT INTO transaction_items
+		  (transaction_id, product_id, product_name, sku, quantity, unit_price, cost_price, discount_pct, tax_rate, subtotal)
+		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`
+
+	for _, item := range items {
+		if _, err := tx.ExecContext(ctx, itemQ,
+			txnID, item.ProductID, item.ProductName, item.SKU,
+			item.Quantity, item.UnitPrice, item.CostPrice, item.DiscountPct, item.TaxRate, item.Subtotal,
+		); err != nil {
+			return nil, fmt.Errorf("TransactionRepo.UpdateDraftItems insert item: %w", err)
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		return nil, fmt.Errorf("TransactionRepo.UpdateDraftItems commit: %w", err)
+	}
+
+	return r.FindByID(ctx, txnID)
+}
+
+// PayDraft finalises a held order: sets payment details, completes it, and deducts stock.
+func (r *TransactionRepo) PayDraft(ctx context.Context, input domain.PayDraftInput, storeID, cashierID string) (*domain.Transaction, error) {
+	// Load items first (to deduct stock)
+	const itemQ = `SELECT product_id, quantity FROM transaction_items WHERE transaction_id = $1`
+	type itemRow struct {
+		ProductID *string `db:"product_id"`
+		Quantity  float64 `db:"quantity"`
+	}
+	var existing []itemRow
+	if err := r.db.SelectContext(ctx, &existing, itemQ, input.TransactionID); err != nil {
+		return nil, fmt.Errorf("TransactionRepo.PayDraft load items: %w", err)
+	}
+
+	tx, err := r.db.BeginTxx(ctx, nil)
+	if err != nil {
+		return nil, fmt.Errorf("TransactionRepo.PayDraft begin: %w", err)
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	// Update header: set payment info + mark completed
+	const updQ = `
+		UPDATE transactions
+		SET payment_method=$2, payment_amount=$3, change_amount=$4,
+		    customer_name=COALESCE(NULLIF($5,''), customer_name),
+		    customer_phone=COALESCE(NULLIF($6,''), customer_phone),
+		    status='completed', table_id=NULL, updated_at=NOW()
+		WHERE id=$1 AND status='draft'`
+	res, err := tx.ExecContext(ctx, updQ,
+		input.TransactionID, input.PaymentMethod, input.PaymentAmount, input.ChangeAmount,
+		input.CustomerName, input.CustomerPhone,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("TransactionRepo.PayDraft update: %w", err)
+	}
+	if n, _ := res.RowsAffected(); n == 0 {
+		return nil, fmt.Errorf("draft transaction not found or already completed")
+	}
+
+	// Deduct stock for each product item
+	const mvQ = `
+		INSERT INTO stock_movements (product_id, store_id, ref_type, ref_id, quantity_delta, notes, created_by)
+		VALUES ($1,$2,'sale',$3,$4,'Sale transaction',$5)`
+	const slQ = `
+		INSERT INTO stock_levels (product_id, store_id, quantity, updated_at)
+		VALUES ($1,$2,$3,NOW())
+		ON CONFLICT (product_id, store_id)
+		DO UPDATE SET quantity = stock_levels.quantity + $3, updated_at = NOW()`
+
+	for _, item := range existing {
+		if item.ProductID == nil {
+			continue
+		}
+		if _, err := tx.ExecContext(ctx, mvQ, *item.ProductID, storeID, input.TransactionID, -item.Quantity, cashierID); err != nil {
+			return nil, fmt.Errorf("TransactionRepo.PayDraft movement: %w", err)
+		}
+		if _, err := tx.ExecContext(ctx, slQ, *item.ProductID, storeID, -item.Quantity); err != nil {
+			return nil, fmt.Errorf("TransactionRepo.PayDraft stock level: %w", err)
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		return nil, fmt.Errorf("TransactionRepo.PayDraft commit: %w", err)
+	}
+
+	return r.FindByID(ctx, input.TransactionID)
 }
 
 // FindAll returns a paginated list of transactions.
@@ -117,13 +272,17 @@ func (r *TransactionRepo) FindAll(ctx context.Context, f dto.TransactionListFilt
 		args = append(args, f.CashierID)
 		i++
 	}
+	if f.TableID != "" {
+		conds = append(conds, fmt.Sprintf("t.table_id = $%d", i))
+		args = append(args, f.TableID)
+		i++
+	}
 	if f.DateFrom != "" {
 		conds = append(conds, fmt.Sprintf("t.created_at >= $%d::date", i))
 		args = append(args, f.DateFrom)
 		i++
 	}
 	if f.DateTo != "" {
-		// inclusive end: add 1 day so "2026-03-31" covers all timestamps on that day
 		conds = append(conds, fmt.Sprintf("t.created_at < ($%d::date + INTERVAL '1 day')", i))
 		args = append(args, f.DateTo)
 		i++
@@ -140,7 +299,7 @@ func (r *TransactionRepo) FindAll(ctx context.Context, f dto.TransactionListFilt
 
 	args = append(args, f.PerPage, f.Offset())
 	dataQ := fmt.Sprintf(`
-		SELECT t.id, t.store_id, t.cashier_id,
+		SELECT t.id, t.store_id, t.cashier_id, t.table_id,
 		       COALESCE(t.customer_name,'')  AS customer_name,
 		       COALESCE(t.customer_phone,'') AS customer_phone,
 		       t.subtotal, t.discount_amt, t.tax_amt, t.total,
@@ -163,7 +322,7 @@ func (r *TransactionRepo) FindAll(ctx context.Context, f dto.TransactionListFilt
 // FindByID returns a transaction with all its items.
 func (r *TransactionRepo) FindByID(ctx context.Context, id string) (*domain.Transaction, error) {
 	const txnQ = `
-		SELECT t.id, t.store_id, t.cashier_id,
+		SELECT t.id, t.store_id, t.cashier_id, t.table_id,
 		       COALESCE(t.customer_name,'')  AS customer_name,
 		       COALESCE(t.customer_phone,'') AS customer_phone,
 		       t.subtotal, t.discount_amt, t.tax_amt, t.total,
@@ -195,7 +354,6 @@ func (r *TransactionRepo) FindByID(ctx context.Context, id string) (*domain.Tran
 
 // Void marks a transaction voided and restores stock atomically.
 func (r *TransactionRepo) Void(ctx context.Context, txnID, userID string) error {
-	// Load items first (outside tx — read-only)
 	const itemQ = `SELECT product_id, quantity FROM transaction_items WHERE transaction_id = $1`
 
 	type itemRow struct {
@@ -207,7 +365,6 @@ func (r *TransactionRepo) Void(ctx context.Context, txnID, userID string) error 
 		return fmt.Errorf("TransactionRepo.Void load items: %w", err)
 	}
 
-	// Load store_id
 	var storeID string
 	if err := r.db.QueryRowxContext(ctx, `SELECT store_id FROM transactions WHERE id = $1`, txnID).Scan(&storeID); err != nil {
 		return fmt.Errorf("TransactionRepo.Void load store: %w", err)
@@ -219,14 +376,12 @@ func (r *TransactionRepo) Void(ctx context.Context, txnID, userID string) error 
 	}
 	defer func() { _ = tx.Rollback() }()
 
-	// Update transaction status
 	if _, err := tx.ExecContext(ctx,
 		`UPDATE transactions SET status='voided', updated_at=NOW() WHERE id=$1`, txnID,
 	); err != nil {
 		return fmt.Errorf("TransactionRepo.Void status: %w", err)
 	}
 
-	// Reverse stock for each item
 	const mvQ = `
 		INSERT INTO stock_movements (product_id, store_id, ref_type, ref_id, quantity_delta, notes, created_by)
 		VALUES ($1,$2,'void',$3,$4,'Transaction voided - stock restored',$5)`

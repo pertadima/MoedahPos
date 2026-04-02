@@ -13,9 +13,10 @@ import type { RestaurantTable, TableStatus } from '@/types';
 // ── Status helpers ─────────────────────────────────────────────────────────────
 
 const STATUS_CONFIG: Record<TableStatus, { label: string; color: string; bg: string; dot: string }> = {
-  available: { label: 'Tersedia',  color: '#10b981', bg: 'rgba(16,185,129,0.12)', dot: '#10b981' },
-  occupied:  { label: 'Terisi',    color: '#ef4444', bg: 'rgba(239,68,68,0.12)',  dot: '#ef4444' },
-  reserved:  { label: 'Reservasi', color: '#f59e0b', bg: 'rgba(245,158,11,0.12)', dot: '#f59e0b' },
+  available:   { label: 'Tersedia',       color: '#10b981', bg: 'rgba(16,185,129,0.12)', dot: '#10b981' },
+  occupied:    { label: 'Terisi',         color: '#ef4444', bg: 'rgba(239,68,68,0.12)',  dot: '#ef4444' },
+  reserved:    { label: 'Reservasi',      color: '#f59e0b', bg: 'rgba(245,158,11,0.12)', dot: '#f59e0b' },
+  unavailable: { label: 'Tidak Tersedia', color: '#6b7280', bg: 'rgba(107,114,128,0.12)', dot: '#6b7280' },
 };
 
 // ── Page ──────────────────────────────────────────────────────────────────────

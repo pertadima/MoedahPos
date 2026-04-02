@@ -90,7 +90,7 @@ type MenuItemRepository interface {
 
 // TransactionRepository handles cashier transactions with atomic stock deduction.
 type TransactionRepository interface {
-	// Create persists a new transaction with items and stock movements atomically.
+	// Create persists a new transaction with items; status field controls draft vs completed.
 	Create(ctx context.Context, input domain.CreateTransactionInput) (*domain.Transaction, error)
 	// FindAll returns a paginated list of transactions.
 	FindAll(ctx context.Context, filter dto.TransactionListFilter) ([]*domain.Transaction, int, error)
@@ -98,6 +98,13 @@ type TransactionRepository interface {
 	FindByID(ctx context.Context, id string) (*domain.Transaction, error)
 	// Void marks a transaction as voided and reverses stock movements atomically.
 	Void(ctx context.Context, txnID, userID string) error
+	// GetDraftByTable returns the open draft for a given table, or nil.
+	GetDraftByTable(ctx context.Context, storeID, tableID string) (*domain.Transaction, error)
+	// UpdateDraftItems replaces items on a draft and recalculates totals.
+	UpdateDraftItems(ctx context.Context, txnID string, items []domain.CreateTransactionItemInput,
+		subtotal, discountAmt, taxAmt, total float64, customerName, notes string) (*domain.Transaction, error)
+	// PayDraft finalises a held order with payment info and deducts stock.
+	PayDraft(ctx context.Context, input domain.PayDraftInput, storeID, cashierID string) (*domain.Transaction, error)
 }
 
 // PurchaseOrderRepository handles PO lifecycle and stock updates on receive.

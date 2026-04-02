@@ -1,14 +1,14 @@
 package dto
 
-// ─── Create Transaction ───────────────────────────────────────────────────────
+// ─── Create Transaction (Retail Checkout) ──────────────────────────────────────
 
 // CreateTransactionRequest is the input for POST /stores/:storeId/transactions.
 type CreateTransactionRequest struct {
-	CustomerName  string       `json:"customer_name"  validate:"max=100"`
-	CustomerPhone string       `json:"customer_phone" validate:"max=20"`
-	PaymentMethod string       `json:"payment_method" validate:"required,oneof=cash card qris transfer"`
-	PaymentAmount float64      `json:"payment_amount" validate:"required,min=0"`
-	Notes         string       `json:"notes"          validate:"max=500"`
+	CustomerName  string        `json:"customer_name"  validate:"max=100"`
+	CustomerPhone string        `json:"customer_phone" validate:"max=20"`
+	PaymentMethod string        `json:"payment_method" validate:"required,oneof=cash card qris transfer"`
+	PaymentAmount float64       `json:"payment_amount" validate:"required,min=0"`
+	Notes         string        `json:"notes"          validate:"max=500"`
 	Items         []TxItemInput `json:"items"          validate:"required,min=1,dive"`
 }
 
@@ -19,6 +19,31 @@ type TxItemInput struct {
 	MenuItemID  string  `json:"menu_item_id" validate:"omitempty,uuid"`
 	Quantity    float64 `json:"quantity"     validate:"required,gt=0"`
 	DiscountPct float64 `json:"discount_pct" validate:"min=0,max=100"`
+}
+
+// ─── Draft Order (Restaurant Table Orders) ────────────────────────────────────
+
+// CreateDraftRequest holds an order for a table without payment yet.
+type CreateDraftRequest struct {
+	TableID       string        `json:"table_id"       validate:"required,uuid"`
+	CustomerName  string        `json:"customer_name"  validate:"max=100"`
+	Notes         string        `json:"notes"          validate:"max=500"`
+	Items         []TxItemInput `json:"items"          validate:"required,min=1,dive"`
+}
+
+// UpdateDraftRequest replaces the items of an existing draft (idempotent).
+type UpdateDraftRequest struct {
+	CustomerName string        `json:"customer_name" validate:"max=100"`
+	Notes        string        `json:"notes"         validate:"max=500"`
+	Items        []TxItemInput `json:"items"         validate:"required,min=1,dive"`
+}
+
+// PayDraftRequest finalises a held order with payment details.
+type PayDraftRequest struct {
+	PaymentMethod string  `json:"payment_method" validate:"required,oneof=cash card qris transfer"`
+	PaymentAmount float64 `json:"payment_amount" validate:"required,min=0"`
+	CustomerName  string  `json:"customer_name"  validate:"max=100"`
+	CustomerPhone string  `json:"customer_phone" validate:"max=20"`
 }
 
 // ─── Responses ────────────────────────────────────────────────────────────────
@@ -42,6 +67,7 @@ type TransactionResponse struct {
 	StoreID       string                    `json:"store_id"`
 	CashierID     string                    `json:"cashier_id"`
 	CashierName   string                    `json:"cashier_name"`
+	TableID       *string                   `json:"table_id,omitempty"`
 	CustomerName  string                    `json:"customer_name,omitempty"`
 	CustomerPhone string                    `json:"customer_phone,omitempty"`
 	Subtotal      float64                   `json:"subtotal"`
@@ -62,6 +88,7 @@ type TransactionResponse struct {
 type TransactionListFilter struct {
 	PaginationQuery
 	StoreID   string
+	TableID   string
 	Status    string
 	CashierID string
 	DateFrom  string
