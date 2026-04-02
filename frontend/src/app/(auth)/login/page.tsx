@@ -2,7 +2,8 @@
 
 import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import { CreditCard, Mail, Lock, Eye, EyeOff, Loader2 } from 'lucide-react';
+import Image from 'next/image';
+import { Mail, Lock, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { ApiError } from '@/lib/api/client';
 
@@ -34,16 +35,23 @@ export default function LoginPage() {
     <div style={{ width: '100%', maxWidth: 400 }}>
       {/* Logo */}
       <div style={{ textAlign: 'center', marginBottom: 32 }}>
+        {/* Square icon logo with brand blue glow */}
         <div style={{
-          width: 56, height: 56, borderRadius: 16, margin: '0 auto 12px',
-          background: 'linear-gradient(135deg, var(--accent-em), #059669)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          boxShadow: '0 0 32px rgba(16,185,129,0.25)',
+          width: 72, height: 72, borderRadius: 20, margin: '0 auto 16px',
+          overflow: 'hidden',
+          boxShadow: '0 0 40px rgba(8,132,246,0.35), 0 0 80px rgba(8,132,246,0.15)',
         }}>
-          <CreditCard size={26} color="#fff" />
+          <Image
+            src="/logo-blue.svg"
+            alt="Moedah"
+            width={72}
+            height={72}
+            style={{ display: 'block', width: '100%', height: '100%' }}
+            priority
+          />
         </div>
         <h1 style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--text-1)', letterSpacing: '-0.5px' }}>
-          MoedahPOS
+          Moedah POS
         </h1>
         <p style={{ color: 'var(--text-2)', marginTop: 4, fontSize: '0.9rem' }}>
           Masuk ke akun Anda
@@ -94,7 +102,18 @@ export default function LoginPage() {
             </div>
           </div>
 
-          <button type="submit" disabled={loading} className="btn btn-primary btn-lg" style={{ marginTop: 4 }}>
+          <button
+            type="submit"
+            disabled={loading}
+            className="btn btn-lg"
+            style={{
+              marginTop: 4,
+              background: 'linear-gradient(135deg, #0884F6, #0670d4)',
+              color: '#fff',
+              boxShadow: loading ? 'none' : '0 4px 20px rgba(8,132,246,0.4)',
+              transition: 'all 0.2s',
+            }}
+          >
             {loading ? <Loader2 size={18} className="loading-spin" /> : null}
             {loading ? 'Masuk...' : 'Masuk'}
           </button>
@@ -102,7 +121,7 @@ export default function LoginPage() {
       </div>
 
       <p style={{ textAlign: 'center', color: 'var(--text-3)', fontSize: '0.78rem', marginTop: 20 }}>
-        MoedahPOS &copy; {new Date().getFullYear()} — Multi-store POS System
+        Moedah &copy; {new Date().getFullYear()} — Point of Sale System
       </p>
     </div>
   );

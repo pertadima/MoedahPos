@@ -1,11 +1,12 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard, ShoppingCart, Package, Warehouse,
   ClipboardList, BarChart3, Users, LogOut,
-  Store, CreditCard, Tag, UtensilsCrossed, Grid3x3, Receipt, History, UserRound, UserCog,
+  Store, Tag, UtensilsCrossed, Grid3x3, Receipt, History, UserRound, UserCog,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthContext';
 
@@ -189,13 +190,14 @@ export default function Sidebar() {
     <aside className="sidebar">
       {/* Logo */}
       <div className="sidebar-logo">
-        <div className="sidebar-logo-icon">
-          <CreditCard size={18} color="#fff" />
-        </div>
-        <div>
-          <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text-1)' }}>MoedahPOS</div>
-          <div style={{ fontSize: '0.7rem', color: 'var(--text-3)' }}>v3.0</div>
-        </div>
+        <Image
+          src="/logo-white.svg"
+          alt="Moedah"
+          width={130}
+          height={36}
+          style={{ objectFit: 'contain', maxHeight: 36 }}
+          priority
+        />
       </div>
 
       {/* Store Selector */}
