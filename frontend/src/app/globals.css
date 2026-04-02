@@ -35,6 +35,40 @@
   --color-foreground: var(--text-1);
 }
 
+/* ── Light Mode Overrides ────────────────────────────────────────────────── */
+[data-theme="light"] {
+  --bg-base:     #f0f4f9;
+  --bg-card:     #ffffff;
+  --bg-elevated: #e8eef6;
+  --bg-hover:    #dde6f0;
+
+  --brand:        #0884F6;
+  --brand-dk:     #0670d4;
+  --brand-lt:     #3fa3ff;
+
+  --accent-em:    #0884F6;
+  --accent-em-dk: #0670d4;
+  --accent-in:    #0884F6;
+  --accent-in-dk: #0670d4;
+  --accent-am:    #FFA724;
+  --accent-rd:    #dc2626;
+
+  --text-1: #0f172a;
+  --text-2: #475569;
+  --text-3: #94a3b8;
+
+  --border:    rgba(0,0,0,0.07);
+  --border-md: rgba(0,0,0,0.12);
+}
+
+/* Smooth theme transitions */
+html {
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+*, *::before, *::after {
+  transition: background-color 0.25s ease, border-color 0.2s ease, color 0.15s ease;
+}
+
 /* ── Base ─────────────────────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; }
 
@@ -152,7 +186,7 @@ body {
   z-index: 40; overflow-y: auto;
 }
 .sidebar-logo {
-  display: flex; align-items: center;
+  display: flex; align-items: center; gap: 10px;
   padding: 18px 16px 16px;
   border-bottom: 1px solid var(--border);
   min-height: 64px;

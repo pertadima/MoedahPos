@@ -3,8 +3,9 @@
 import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { Mail, Lock, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, Loader2, Sun, Moon } from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthContext';
+import { useTheme } from '@/lib/theme/ThemeContext';
 import { ApiError } from '@/lib/api/client';
 
 export default function LoginPage() {
@@ -14,6 +15,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const { login } = useAuth();
+  const { isDark, toggleTheme } = useTheme();
   const router = useRouter();
 
   const handleSubmit = async (e: FormEvent) => {
@@ -33,16 +35,34 @@ export default function LoginPage() {
 
   return (
     <div style={{ width: '100%', maxWidth: 400 }}>
+
+      {/* Theme toggle — top right of card area */}
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
+        <button
+          onClick={toggleTheme}
+          title={isDark ? 'Mode terang' : 'Mode gelap'}
+          style={{
+            background: 'var(--bg-elevated)', border: '1px solid var(--border-md)',
+            borderRadius: 8, padding: '6px 10px', cursor: 'pointer',
+            color: 'var(--text-2)', display: 'flex', alignItems: 'center', gap: 6,
+            fontSize: '0.78rem', fontWeight: 500,
+          }}
+        >
+          {isDark ? <Sun size={14} /> : <Moon size={14} />}
+          {isDark ? 'Terang' : 'Gelap'}
+        </button>
+      </div>
+
       {/* Logo */}
-      <div style={{ textAlign: 'center', marginBottom: 32 }}>
-        {/* Square icon logo with brand blue glow */}
+      <div style={{ textAlign: 'center', marginBottom: 28 }}>
         <div style={{
           width: 72, height: 72, borderRadius: 20, margin: '0 auto 16px',
           overflow: 'hidden',
-          boxShadow: '0 0 40px rgba(8,132,246,0.35), 0 0 80px rgba(8,132,246,0.15)',
+          boxShadow: '0 0 40px rgba(8,132,246,0.30), 0 0 80px rgba(8,132,246,0.12)',
+          background: isDark ? 'transparent' : 'white',
         }}>
           <Image
-            src="/logo-blue.svg"
+            src={isDark ? '/logo-icon-dark.svg' : '/logo-icon-light.svg'}
             alt="Moedah"
             width={72}
             height={72}
@@ -50,7 +70,7 @@ export default function LoginPage() {
             priority
           />
         </div>
-        <h1 style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--text-1)', letterSpacing: '-0.5px' }}>
+        <h1 style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--brand)', letterSpacing: '-0.5px' }}>
           Moedah POS
         </h1>
         <p style={{ color: 'var(--text-2)', marginTop: 4, fontSize: '0.9rem' }}>

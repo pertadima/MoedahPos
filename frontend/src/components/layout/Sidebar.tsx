@@ -5,10 +5,11 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard, ShoppingCart, Package, Warehouse,
-  ClipboardList, BarChart3, Users, LogOut,
+  ClipboardList, BarChart3, Users, LogOut, Sun, Moon,
   Store, Tag, UtensilsCrossed, Grid3x3, Receipt, History, UserRound, UserCog,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthContext';
+import { useTheme } from '@/lib/theme/ThemeContext';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface NavItem {
@@ -152,6 +153,7 @@ const restaurantGroup: NavGroup = {
 export default function Sidebar() {
   const pathname = usePathname();
   const { user, selectedStore, stores, selectStore, logout } = useAuth();
+  const { isDark, toggleTheme } = useTheme();
   const isRestaurant = selectedStore?.store_type === 'restaurant';
   const role = selectedStore?.role;
   const isSuperOrAdmin = role === 'superadmin' || role === 'admin';
@@ -191,13 +193,16 @@ export default function Sidebar() {
       {/* Logo */}
       <div className="sidebar-logo">
         <Image
-          src="/logo-white.svg"
+          src={isDark ? '/logo-icon-dark.svg' : '/logo-icon-light.svg'}
           alt="Moedah"
-          width={130}
+          width={32}
           height={36}
-          style={{ objectFit: 'contain', maxHeight: 36 }}
+          style={{ objectFit: 'contain', flexShrink: 0 }}
           priority
         />
+        <div style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--brand)', letterSpacing: '-0.3px' }}>
+          Moedah
+        </div>
       </div>
 
       {/* Store Selector */}
@@ -284,10 +289,21 @@ export default function Sidebar() {
             </div>
           </div>
         )}
-        <button onClick={logout} className="btn btn-ghost btn-sm"
-          style={{ width: '100%', justifyContent: 'flex-start', gap: 8 }}>
-          <LogOut size={14} /> Keluar
-        </button>
+        {/* Theme toggle + Logout row */}
+        <div style={{ display: 'flex', gap: 6 }}>
+          <button
+            onClick={toggleTheme}
+            className="btn btn-ghost btn-sm"
+            title={isDark ? 'Ganti ke mode terang' : 'Ganti ke mode gelap'}
+            style={{ padding: '6px 8px', borderRadius: 8, border: '1px solid var(--border-md)' }}
+          >
+            {isDark ? <Sun size={14} /> : <Moon size={14} />}
+          </button>
+          <button onClick={logout} className="btn btn-ghost btn-sm"
+            style={{ flex: 1, justifyContent: 'flex-start', gap: 8 }}>
+            <LogOut size={14} /> Keluar
+          </button>
+        </div>
       </div>
     </aside>
   );
