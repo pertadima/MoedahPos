@@ -162,3 +162,26 @@ type CustomerRepository interface {
 	SoftDelete(ctx context.Context, id string) error
 	SearchByPhone(ctx context.Context, storeID, phone string) ([]*domain.Customer, error)
 }
+
+// ─── FIFO Batch Inventory ──────────────────────────────────────────────────────
+
+// BatchRepository manages stock batch records for FIFO inventory tracking.
+// Each batch corresponds to one product received in a purchase order.
+type BatchRepository interface {
+	// CreateBatch inserts a new stock batch when a PO item is received.
+	CreateBatch(ctx context.Context, batch *domain.StockBatch) error
+
+	// GetBatchesByProduct returns all non-empty batches for a product, oldest first (FIFO order).
+	GetBatchesByProduct(ctx context.Context, productID, storeID string) ([]*domain.StockBatch, error)
+
+	// GetBatchesByStore returns non-empty batches for a store; optionally filtered by product_id.
+	GetBatchesByStore(ctx context.Context, filter dto.BatchListFilter) ([]*domain.StockBatch, error)
+
+	// GetStockSummary returns aggregated batch totals (total qty, batch count, avg cost) per product.
+	GetStockSummary(ctx context.Context, storeID string) ([]*domain.BatchStockSummary, error)
+
+	// DeductFIFO subtracts qty from the oldest available batches within a single DB transaction.
+	// Rows are locked with FOR UPDATE to prevent concurrent over-deductions.
+	// Returns an error immediately if total available stock is insufficient.
+	DeductFIFO(ctx context.Context, productID, storeID string, qty float64) error
+}

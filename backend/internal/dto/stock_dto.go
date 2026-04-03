@@ -54,3 +54,45 @@ type StockMovementFilter struct {
 	ProductID string
 	RefType   string
 }
+
+// ─── FIFO Batch DTOs ──────────────────────────────────────────────────────────
+
+// StockBatchResponse represents one inventory batch record.
+type StockBatchResponse struct {
+	ID                string  `json:"id"`
+	ProductID         string  `json:"product_id"`
+	ProductName       string  `json:"product_name"`
+	ProductSKU        string  `json:"product_sku"`
+	Unit              string  `json:"unit"`
+	StoreID           string  `json:"store_id"`
+	POID              *string `json:"po_id,omitempty"`
+	QuantityRemaining float64 `json:"quantity_remaining"`
+	PurchasePrice     float64 `json:"purchase_price"`
+	ReceivedAt        string  `json:"received_at"`
+	CreatedAt         string  `json:"created_at"`
+}
+
+// BatchStockSummaryResponse aggregates batch stock totals per product.
+type BatchStockSummaryResponse struct {
+	ProductID    string  `json:"product_id"`
+	ProductName  string  `json:"product_name"`
+	ProductSKU   string  `json:"product_sku"`
+	Unit         string  `json:"unit"`
+	TotalQty     float64 `json:"total_qty"`
+	BatchCount   int     `json:"batch_count"`
+	AvgCostPrice float64 `json:"avg_cost_price"`
+}
+
+// BatchListFilter holds query parameters for the batch listing endpoint.
+type BatchListFilter struct {
+	StoreID   string
+	ProductID string // optional; empty means all products
+}
+
+// POBatchItem carries the per-item data needed to create a stock batch
+// when a purchase order is received.
+type POBatchItem struct {
+	ProductID string
+	Quantity  float64
+	UnitCost  float64
+}

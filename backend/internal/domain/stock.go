@@ -44,3 +44,34 @@ type AdjustInput struct {
 	Notes     string
 	CreatedBy string
 }
+
+// ─── FIFO Batch Inventory ──────────────────────────────────────────────────────
+
+// StockBatch represents a single inventory batch created when a PO is received.
+// Batches are deducted in FIFO order (oldest received_at first) when a sale occurs.
+type StockBatch struct {
+	ID                string    `db:"id"`
+	ProductID         string    `db:"product_id"`
+	StoreID           string    `db:"store_id"`
+	POID              *string   `db:"po_id"`
+	QuantityRemaining float64   `db:"quantity_remaining"`
+	PurchasePrice     float64   `db:"purchase_price"`
+	ReceivedAt        time.Time `db:"received_at"`
+	CreatedAt         time.Time `db:"created_at"`
+
+	// Populated via JOIN with products table.
+	ProductName string `db:"product_name"`
+	ProductSKU  string `db:"product_sku"`
+	Unit        string `db:"unit"`
+}
+
+// BatchStockSummary holds aggregated batch stock across all batches for one product.
+type BatchStockSummary struct {
+	ProductID    string  `db:"product_id"`
+	ProductName  string  `db:"product_name"`
+	ProductSKU   string  `db:"product_sku"`
+	Unit         string  `db:"unit"`
+	TotalQty     float64 `db:"total_qty"`
+	BatchCount   int     `db:"batch_count"`
+	AvgCostPrice float64 `db:"avg_cost_price"`
+}

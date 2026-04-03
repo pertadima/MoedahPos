@@ -43,6 +43,9 @@ type Dependencies struct {
 	// User Admin
 	UserAdminHandler *handler.UserAdminHandler
 
+	// FIFO Batch Inventory
+	BatchStockHandler *handler.BatchStockHandler
+
 	// Shared
 	RoleStore *rbac.RoleStore
 	DB        *sqlx.DB
@@ -172,6 +175,9 @@ func New(deps *Dependencies) http.Handler { //nolint:funlen // route wiring is i
 							r.Post("/adjust", withPerm(deps, "stock.adjust", deps.StockHandler.Adjust))
 							r.Put("/min", withPerm(deps, "stock.adjust", deps.StockHandler.SetMinStock))
 							r.Get("/{productId}", withPerm(deps, "stock.read", deps.StockHandler.GetProductStock))
+							// FIFO batch endpoints
+							r.Get("/batches", withPerm(deps, "stock.read", deps.BatchStockHandler.ListBatches))
+							r.Get("/batch-summary", withPerm(deps, "stock.read", deps.BatchStockHandler.GetSummary))
 						})
 
 						// ── Phase 3 ───────────────────────────────────────────

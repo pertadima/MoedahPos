@@ -254,6 +254,12 @@ func (r *PORepo) Receive(ctx context.Context, poID, userID string) error { //nol
 	const cpQ = `
 		UPDATE products SET cost_price = $1, updated_at = NOW()
 		WHERE id = $2`
+	// FIFO batch insert: each PO item creates one batch record with received_at=NOW().
+	// received_at determines FIFO position — items received first are deducted first.
+	const batchQ = `
+		INSERT INTO stock_batches
+			(product_id, store_id, po_id, quantity_remaining, purchase_price, received_at)
+		VALUES ($1, $2, $3, $4, $5, NOW())`
 
 	for _, item := range items {
 		if _, err := tx.ExecContext(ctx, mvQ, item.ProductID, storeID, poID, item.Quantity, userID); err != nil {
@@ -265,6 +271,10 @@ func (r *PORepo) Receive(ctx context.Context, poID, userID string) error { //nol
 		// Always update cost_price to the actual purchase cost
 		if _, err := tx.ExecContext(ctx, cpQ, item.UnitCost, item.ProductID); err != nil {
 			return fmt.Errorf("PORepo.Receive cost price: %w", err)
+		}
+		// Create FIFO batch — committed atomically with the rest of the receive operation.
+		if _, err := tx.ExecContext(ctx, batchQ, item.ProductID, storeID, poID, item.Quantity, item.UnitCost); err != nil {
+			return fmt.Errorf("PORepo.Receive create batch: %w", err)
 		}
 	}
 
