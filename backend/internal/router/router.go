@@ -174,10 +174,10 @@ func New(deps *Dependencies) http.Handler { //nolint:funlen // route wiring is i
 							r.Get("/movements", withPerm(deps, "stock.read", deps.StockHandler.GetMovements))
 							r.Post("/adjust", withPerm(deps, "stock.adjust", deps.StockHandler.Adjust))
 							r.Put("/min", withPerm(deps, "stock.adjust", deps.StockHandler.SetMinStock))
-							r.Get("/{productId}", withPerm(deps, "stock.read", deps.StockHandler.GetProductStock))
-							// FIFO batch endpoints
+							// FIFO batch endpoints — registered before wildcard so static paths win
 							r.Get("/batches", withPerm(deps, "stock.read", deps.BatchStockHandler.ListBatches))
 							r.Get("/batch-summary", withPerm(deps, "stock.read", deps.BatchStockHandler.GetSummary))
+							r.Get("/{productId}", withPerm(deps, "stock.read", deps.StockHandler.GetProductStock))
 						})
 
 						// ── Phase 3 ───────────────────────────────────────────
