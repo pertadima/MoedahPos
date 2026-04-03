@@ -45,7 +45,7 @@ func NewTransactionService(
 }
 
 // Checkout processes a sale: validates stock, calculates totals, persists atomically.
-func (s *TransactionService) Checkout(ctx context.Context, storeID string, req *dto.CreateTransactionRequest, cashierID string) (*dto.TransactionResponse, error) { //nolint:gocognit,cyclop // retail+restaurant dual path
+func (s *TransactionService) Checkout(ctx context.Context, storeID string, req *dto.CreateTransactionRequest, cashierID string) (*dto.TransactionResponse, error) { //nolint:gocognit,cyclop,funlen // retail+restaurant dual path
 	var (
 		inputItems  []domain.CreateTransactionItemInput
 		subtotal    float64
@@ -380,7 +380,7 @@ func (s *TransactionService) UpdateDraftItems(ctx context.Context, storeID, txnI
 	return toTransactionResponse(txn), nil
 }
 
-// PayDraft finalises a held order: validates payment, deducts stock, marks completed.
+// PayDraft finalizes a held order: validates payment, deducts stock, marks completed.
 func (s *TransactionService) PayDraft(ctx context.Context, storeID, txnID, cashierID string, req *dto.PayDraftRequest) (*dto.TransactionResponse, error) {
 	existing, err := s.txnRepo.FindByID(ctx, txnID)
 	if err != nil || existing == nil {

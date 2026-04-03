@@ -103,7 +103,7 @@ type TransactionRepository interface {
 	// UpdateDraftItems replaces items on a draft and recalculates totals.
 	UpdateDraftItems(ctx context.Context, txnID string, items []domain.CreateTransactionItemInput,
 		subtotal, discountAmt, taxAmt, total float64, customerName, notes string) (*domain.Transaction, error)
-	// PayDraft finalises a held order with payment info and deducts stock.
+	// PayDraft finalizes a held order with payment info and deducts stock.
 	PayDraft(ctx context.Context, input domain.PayDraftInput, storeID, cashierID string) (*domain.Transaction, error)
 }
 

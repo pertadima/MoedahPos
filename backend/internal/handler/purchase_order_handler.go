@@ -160,14 +160,14 @@ func (h *PurchaseOrderHandler) Cancel(w http.ResponseWriter, r *http.Request) {
 		case errors.Is(err, service.ErrPONotFound):
 			response.NotFound(w, "Purchase Order")
 		case errors.Is(err, service.ErrPOCannotCancel):
-			response.Error(w, http.StatusConflict, "Cannot cancel a received or already cancelled PO")
+			response.Error(w, http.StatusConflict, "Cannot cancel a received or already canceled PO")
 		default:
 			response.InternalError(w)
 		}
 		return
 	}
 	response.JSON(w, http.StatusOK, map[string]interface{}{
-		"success": true, "message": "Purchase order cancelled",
+		"success": true, "message": "Purchase order canceled",
 	})
 }
 

@@ -190,7 +190,7 @@ func (r *TransactionRepo) UpdateDraftItems(ctx context.Context, txnID string, it
 	return r.FindByID(ctx, txnID)
 }
 
-// PayDraft finalises a held order: sets payment details, completes it, and deducts stock.
+// PayDraft finalizes a held order: sets payment details, completes it, and deducts stock.
 func (r *TransactionRepo) PayDraft(ctx context.Context, input domain.PayDraftInput, storeID, cashierID string) (*domain.Transaction, error) {
 	// Load items first (to deduct stock)
 	const itemQ = `SELECT product_id, quantity FROM transaction_items WHERE transaction_id = $1`

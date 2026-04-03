@@ -19,7 +19,7 @@ var (
 	ErrPONotEditable   = errors.New("purchase order cannot be edited (not in draft status)")
 	ErrPOCannotSubmit  = errors.New("purchase order cannot be submitted")
 	ErrPOCannotReceive = errors.New("purchase order cannot be received (must be in ordered status)")
-	ErrPOCannotCancel  = errors.New("purchase order cannot be cancelled")
+	ErrPOCannotCancel  = errors.New("purchase order cannot be canceled")
 )
 
 // PurchaseOrderService implements PO lifecycle business logic.

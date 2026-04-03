@@ -38,7 +38,7 @@ type UpdateDraftRequest struct {
 	Items        []TxItemInput `json:"items"         validate:"required,min=1,dive"`
 }
 
-// PayDraftRequest finalises a held order with payment details.
+// PayDraftRequest finalizes a held order with payment details.
 type PayDraftRequest struct {
 	PaymentMethod string  `json:"payment_method" validate:"required,oneof=cash card qris transfer"`
 	PaymentAmount float64 `json:"payment_amount" validate:"required,min=0"`
