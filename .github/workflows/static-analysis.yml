@@ -1,0 +1,112 @@
+name: Static Analysis
+
+on:
+  push:
+    branches: [main, "feature/**", "fix/**"]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # ── Backend: golangci-lint ──────────────────────────────────────────────────
+  backend-lint:
+    name: Backend (Go) — golangci-lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: backend/go.mod
+          cache: true
+          cache-dependency-path: backend/go.sum
+
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: latest
+          working-directory: backend
+          args: --timeout=5m --color always
+          # Cache lint results between runs
+          skip-cache: false
+
+  # ── Backend: Build check ────────────────────────────────────────────────────
+  backend-build:
+    name: Backend (Go) — Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: backend/go.mod
+          cache: true
+
+      - name: Build
+        run: cd backend && go build ./...
+
+  # ── Frontend: TypeScript ────────────────────────────────────────────────────
+  frontend-type-check:
+    name: Frontend — TypeScript
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: cd frontend && npm ci
+
+      - name: Type check
+        run: cd frontend && npm run type-check
+
+  # ── Frontend: ESLint ────────────────────────────────────────────────────────
+  frontend-lint:
+    name: Frontend — ESLint
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: cd frontend && npm ci
+
+      - name: ESLint
+        run: cd frontend && npm run lint
+
+  # ── Frontend: Prettier ──────────────────────────────────────────────────────
+  frontend-format:
+    name: Frontend — Prettier
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: cd frontend && npm ci
+
+      - name: Check formatting
+        run: cd frontend && npm run format:check
