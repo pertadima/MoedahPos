@@ -491,14 +491,14 @@ export default function CustomersPage() {
       .finally(() => setLoading(false));
   }, [storeId, page, search]);
 
-  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     load();
   }, [load]);
 
   // Debounce search — reset page when search changes
-  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPage(1);
   }, [search]);
 

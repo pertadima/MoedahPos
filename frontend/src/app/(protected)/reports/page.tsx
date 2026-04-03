@@ -101,13 +101,13 @@ export default function ReportsPage() {
       .catch(console.error);
   }, [storeId, tab, dateFrom, dateTo, groupBy]);
 
-  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     reloadProfit();
   }, [reloadProfit]);
 
-  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     load();
   }, [storeId]); // eslint-disable-line react-hooks/exhaustive-deps
 
