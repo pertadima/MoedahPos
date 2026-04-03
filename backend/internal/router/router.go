@@ -6,11 +6,12 @@ import (
 	"github.com/go-chi/chi/v5"
 	chimiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/jmoiron/sqlx"
+	"github.com/rs/zerolog"
+
 	"github.com/moedahpos/backend/internal/handler"
 	"github.com/moedahpos/backend/internal/middleware"
 	"github.com/moedahpos/backend/pkg/jwt"
 	"github.com/moedahpos/backend/pkg/rbac"
-	"github.com/rs/zerolog"
 )
 
 // Dependencies groups all injectable dependencies for the router.

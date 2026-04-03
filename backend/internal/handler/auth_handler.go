@@ -5,12 +5,13 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/rs/zerolog"
+
 	"github.com/moedahpos/backend/internal/dto"
 	"github.com/moedahpos/backend/internal/middleware"
 	"github.com/moedahpos/backend/internal/service"
 	"github.com/moedahpos/backend/internal/validator"
 	"github.com/moedahpos/backend/pkg/response"
-	"github.com/rs/zerolog"
 )
 
 // AuthHandler handles HTTP requests for the /auth routes.

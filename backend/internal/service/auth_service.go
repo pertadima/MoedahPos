@@ -5,12 +5,13 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/rs/zerolog"
+
 	"github.com/moedahpos/backend/internal/domain"
 	"github.com/moedahpos/backend/internal/dto"
 	"github.com/moedahpos/backend/internal/repository"
 	"github.com/moedahpos/backend/pkg/hash"
 	"github.com/moedahpos/backend/pkg/jwt"
-	"github.com/rs/zerolog"
 )
 
 // Sentinel errors for the auth service.

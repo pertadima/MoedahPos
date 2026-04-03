@@ -6,10 +6,11 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/rs/zerolog"
+
 	"github.com/moedahpos/backend/internal/domain"
 	"github.com/moedahpos/backend/internal/dto"
 	"github.com/moedahpos/backend/internal/repository"
-	"github.com/rs/zerolog"
 )
 
 var ErrCustomerNotFound = errors.New("customer not found")

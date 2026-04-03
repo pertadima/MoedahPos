@@ -6,10 +6,11 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/rs/zerolog"
+
 	"github.com/moedahpos/backend/internal/domain"
 	"github.com/moedahpos/backend/internal/dto"
 	"github.com/moedahpos/backend/internal/repository"
-	"github.com/rs/zerolog"
 )
 
 // Transaction-specific sentinel errors.
@@ -44,7 +45,7 @@ func NewTransactionService(
 }
 
 // Checkout processes a sale: validates stock, calculates totals, persists atomically.
-func (s *TransactionService) Checkout(ctx context.Context, storeID string, req *dto.CreateTransactionRequest, cashierID string) (*dto.TransactionResponse, error) { //nolint:gocognit // retail+restaurant dual path
+func (s *TransactionService) Checkout(ctx context.Context, storeID string, req *dto.CreateTransactionRequest, cashierID string) (*dto.TransactionResponse, error) { //nolint:gocognit,cyclop // retail+restaurant dual path
 	var (
 		inputItems  []domain.CreateTransactionItemInput
 		subtotal    float64

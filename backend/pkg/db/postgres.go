@@ -9,9 +9,10 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq" // Register postgres driver
-	"github.com/moedahpos/backend/internal/config"
 	"github.com/pressly/goose/v3"
 	"github.com/rs/zerolog"
+
+	"github.com/moedahpos/backend/internal/config"
 )
 
 // Connect establishes a PostgreSQL connection pool using sqlx.

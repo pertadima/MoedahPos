@@ -14,8 +14,9 @@ import (
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
-	"github.com/moedahpos/backend/internal/config"
 	"golang.org/x/crypto/bcrypt"
+
+	"github.com/moedahpos/backend/internal/config"
 )
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
