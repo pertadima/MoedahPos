@@ -1,0 +1,79 @@
+# golangci-lint v2 configuration
+# Built for golangci-lint v2.11.4+
+version: "2"
+
+run:
+  timeout: 5m
+  modules-download-mode: readonly
+
+# ── Linters ───────────────────────────────────────────────────────────────────
+linters:
+  default: none
+  enable:
+    # Correctness
+    - errcheck
+    - govet
+    - ineffassign
+    - staticcheck
+    # Style
+    - misspell
+    # Code quality
+    - gocognit
+    - cyclop
+    - funlen
+    - goconst
+    - noctx
+    # Error handling
+    - errorlint
+    # Security
+    - gosec
+    # Conventions
+    - revive
+
+  settings:
+    gocognit:
+      min-complexity: 20
+
+    cyclop:
+      max-complexity: 15
+
+    funlen:
+      lines: 80
+      statements: 60
+
+    gosec:
+      severity: medium
+      confidence: medium
+      excludes:
+        - G104  # Covered by errcheck
+
+    revive:
+      rules:
+        - name: indent-error-flow
+        - name: error-strings
+        - name: receiver-naming
+        - name: unused-parameter
+
+    errorlint:
+      errorf: true
+      asserts: true
+      comparison: true
+
+    misspell:
+      locale: US
+
+# ── Formatters ────────────────────────────────────────────────────────────────
+formatters:
+  enable:
+    - gofmt
+    - goimports
+
+  settings:
+    goimports:
+      local-prefixes:
+        - github.com/moedahpos/backend
+
+# ── Issues ────────────────────────────────────────────────────────────────────
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0

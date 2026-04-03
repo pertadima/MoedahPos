@@ -7,11 +7,12 @@ import (
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/rs/zerolog"
+
 	"github.com/moedahpos/backend/internal/dto"
 	"github.com/moedahpos/backend/internal/service"
 	"github.com/moedahpos/backend/internal/validator"
 	"github.com/moedahpos/backend/pkg/response"
-	"github.com/rs/zerolog"
 )
 
 // PurchaseOrderHandler handles purchase-order lifecycle endpoints.
@@ -159,14 +160,14 @@ func (h *PurchaseOrderHandler) Cancel(w http.ResponseWriter, r *http.Request) {
 		case errors.Is(err, service.ErrPONotFound):
 			response.NotFound(w, "Purchase Order")
 		case errors.Is(err, service.ErrPOCannotCancel):
-			response.Error(w, http.StatusConflict, "Cannot cancel a received or already cancelled PO")
+			response.Error(w, http.StatusConflict, "Cannot cancel a received or already canceled PO")
 		default:
 			response.InternalError(w)
 		}
 		return
 	}
 	response.JSON(w, http.StatusOK, map[string]interface{}{
-		"success": true, "message": "Purchase order cancelled",
+		"success": true, "message": "Purchase order canceled",
 	})
 }
 
@@ -185,7 +186,7 @@ func (h *PurchaseOrderHandler) PayableSummary(w http.ResponseWriter, r *http.Req
 // POST /stores/:storeId/purchase-orders/:poId/payments
 func (h *PurchaseOrderHandler) CreatePayment(w http.ResponseWriter, r *http.Request) {
 	storeID := chi.URLParam(r, "storeId")
-	poID    := chi.URLParam(r, "poId")
+	poID := chi.URLParam(r, "poId")
 	var req dto.POPaymentRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		response.Error(w, http.StatusBadRequest, "Invalid JSON body")

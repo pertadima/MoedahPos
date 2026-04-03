@@ -14,8 +14,8 @@ import (
 )
 
 var (
-	ErrAdminUserNotFound   = errors.New("user not found")
-	ErrAdminEmailConflict  = errors.New("email already in use")
+	ErrAdminUserNotFound  = errors.New("user not found")
+	ErrAdminEmailConflict = errors.New("email already in use")
 )
 
 // UserAdminService handles system-wide user management operations.
@@ -115,7 +115,7 @@ func (s *UserAdminService) UpdateUser(ctx context.Context, id string, req *dto.U
 
 	u, err := s.userRepo.Update(ctx, id, req.Name, req.Email)
 	if err != nil {
-		if err.Error() == "user not found" {
+		if errors.Is(err, ErrAdminUserNotFound) {
 			return nil, ErrAdminUserNotFound
 		}
 		return nil, fmt.Errorf("UpdateUser: %w", err)
@@ -128,7 +128,7 @@ func (s *UserAdminService) UpdateUser(ctx context.Context, id string, req *dto.U
 // DeactivateUser soft-deletes (archives) a user — they cannot log in.
 func (s *UserAdminService) DeactivateUser(ctx context.Context, id string) error {
 	if err := s.userRepo.SoftDelete(ctx, id); err != nil {
-		if err.Error() == "user not found" {
+		if errors.Is(err, ErrAdminUserNotFound) {
 			return ErrAdminUserNotFound
 		}
 		return fmt.Errorf("DeactivateUser: %w", err)
@@ -143,7 +143,7 @@ func (s *UserAdminService) ResetPassword(ctx context.Context, id string, req *dt
 		return fmt.Errorf("ResetPassword hash: %w", err)
 	}
 	if err := s.userRepo.ResetPassword(ctx, id, string(hash)); err != nil {
-		if err.Error() == "user not found" {
+		if errors.Is(err, ErrAdminUserNotFound) {
 			return ErrAdminUserNotFound
 		}
 		return fmt.Errorf("ResetPassword: %w", err)

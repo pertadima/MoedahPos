@@ -6,10 +6,11 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/rs/zerolog"
+
 	"github.com/moedahpos/backend/internal/domain"
 	"github.com/moedahpos/backend/internal/dto"
 	"github.com/moedahpos/backend/internal/repository"
-	"github.com/rs/zerolog"
 )
 
 var ErrCustomerNotFound = errors.New("customer not found")
@@ -53,10 +54,18 @@ func (s *CustomerService) Create(ctx context.Context, storeID string, req dto.Cr
 		StoreID: storeID,
 		Name:    req.Name,
 	}
-	if req.Phone != "" { c.Phone = &req.Phone }
-	if req.Email != "" { c.Email = &req.Email }
-	if req.Address != "" { c.Address = &req.Address }
-	if req.Notes != "" { c.Notes = &req.Notes }
+	if req.Phone != "" {
+		c.Phone = &req.Phone
+	}
+	if req.Email != "" {
+		c.Email = &req.Email
+	}
+	if req.Address != "" {
+		c.Address = &req.Address
+	}
+	if req.Notes != "" {
+		c.Notes = &req.Notes
+	}
 
 	out, err := s.repo.Create(ctx, c)
 	if err != nil {
@@ -75,10 +84,26 @@ func (s *CustomerService) Update(ctx context.Context, id string, req dto.UpdateC
 		return nil, ErrCustomerNotFound
 	}
 	existing.Name = req.Name
-	if req.Phone != "" { existing.Phone = &req.Phone } else { existing.Phone = nil }
-	if req.Email != "" { existing.Email = &req.Email } else { existing.Email = nil }
-	if req.Address != "" { existing.Address = &req.Address } else { existing.Address = nil }
-	if req.Notes != "" { existing.Notes = &req.Notes } else { existing.Notes = nil }
+	if req.Phone != "" {
+		existing.Phone = &req.Phone
+	} else {
+		existing.Phone = nil
+	}
+	if req.Email != "" {
+		existing.Email = &req.Email
+	} else {
+		existing.Email = nil
+	}
+	if req.Address != "" {
+		existing.Address = &req.Address
+	} else {
+		existing.Address = nil
+	}
+	if req.Notes != "" {
+		existing.Notes = &req.Notes
+	} else {
+		existing.Notes = nil
+	}
 
 	out, err := s.repo.Update(ctx, existing)
 	if err != nil {

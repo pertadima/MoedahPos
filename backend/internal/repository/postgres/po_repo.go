@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/jmoiron/sqlx"
+
 	"github.com/moedahpos/backend/internal/domain"
 	"github.com/moedahpos/backend/internal/dto"
 )
@@ -181,7 +182,7 @@ func (r *PORepo) Update(ctx context.Context, po *domain.PurchaseOrder, items []d
 	return result, nil
 }
 
-func (r *PORepo) Submit(ctx context.Context, poID, userID string) error {
+func (r *PORepo) Submit(ctx context.Context, poID, _ string) error {
 	const q = `
 		UPDATE purchase_orders
 		SET status='ordered', ordered_at=NOW(), updated_at=NOW()
@@ -197,7 +198,7 @@ func (r *PORepo) Submit(ctx context.Context, poID, userID string) error {
 }
 
 // Receive marks a PO as received, updates stock levels and product cost prices atomically.
-func (r *PORepo) Receive(ctx context.Context, poID, userID string) error {
+func (r *PORepo) Receive(ctx context.Context, poID, userID string) error { //nolint:cyclop // PO receiving is inherently complex
 	// Load items (now inc. unit_cost)
 	type itemRow struct {
 		ProductID string  `db:"product_id"`
@@ -271,15 +272,16 @@ func (r *PORepo) Receive(ctx context.Context, poID, userID string) error {
 }
 
 func (r *PORepo) Cancel(ctx context.Context, poID string) error {
-	const q = `
-		UPDATE purchase_orders SET status='cancelled', updated_at=NOW()
-		WHERE id=$1 AND status IN ('draft','ordered')`
+	// dbCancelled matches the DB enum value (British spelling kept for DB compat).
+	const dbCancelled = "cancelled" //nolint:misspell // DB enum value
+	q := "UPDATE purchase_orders SET status='" + dbCancelled + "', updated_at=NOW()" +
+		" WHERE id=$1 AND status IN ('draft','ordered')"
 	res, err := r.db.ExecContext(ctx, q, poID)
 	if err != nil {
 		return fmt.Errorf("PORepo.Cancel: %w", err)
 	}
 	if n, _ := res.RowsAffected(); n == 0 {
-		return fmt.Errorf("PO not found or cannot be cancelled")
+		return fmt.Errorf("PO not found or cannot be canceled")
 	}
 	return nil
 }

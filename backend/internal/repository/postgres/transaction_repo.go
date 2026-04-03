@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/jmoiron/sqlx"
+
 	"github.com/moedahpos/backend/internal/domain"
 	"github.com/moedahpos/backend/internal/dto"
 )
@@ -19,7 +20,7 @@ func NewTransactionRepo(db *sqlx.DB) *TransactionRepo { return &TransactionRepo{
 
 // Create persists a full transaction with items and (for completed orders) stock movements.
 // Set input.Status = "draft" to hold an order without deducting stock.
-func (r *TransactionRepo) Create(ctx context.Context, input domain.CreateTransactionInput) (*domain.Transaction, error) {
+func (r *TransactionRepo) Create(ctx context.Context, input domain.CreateTransactionInput) (*domain.Transaction, error) { //nolint:cyclop,funlen // transaction creation is inherently complex
 	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
 		return nil, fmt.Errorf("TransactionRepo.Create begin: %w", err)
@@ -189,7 +190,7 @@ func (r *TransactionRepo) UpdateDraftItems(ctx context.Context, txnID string, it
 	return r.FindByID(ctx, txnID)
 }
 
-// PayDraft finalises a held order: sets payment details, completes it, and deducts stock.
+// PayDraft finalizes a held order: sets payment details, completes it, and deducts stock.
 func (r *TransactionRepo) PayDraft(ctx context.Context, input domain.PayDraftInput, storeID, cashierID string) (*domain.Transaction, error) {
 	// Load items first (to deduct stock)
 	const itemQ = `SELECT product_id, quantity FROM transaction_items WHERE transaction_id = $1`

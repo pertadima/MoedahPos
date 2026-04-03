@@ -38,7 +38,10 @@ async function attemptRefresh(): Promise<string | null> {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ refresh_token: refreshToken }),
     });
-    if (!res.ok) { clearTokens(); return null; }
+    if (!res.ok) {
+      clearTokens();
+      return null;
+    }
     const json = await res.json();
     const newAccess = json.data?.access_token;
     const newRefresh = json.data?.refresh_token;
@@ -52,17 +55,16 @@ async function attemptRefresh(): Promise<string | null> {
 // ── Core Fetch ────────────────────────────────────────────────────────────────
 
 export class ApiError extends Error {
-  constructor(public status: number, message: string) {
+  constructor(
+    public status: number,
+    message: string
+  ) {
     super(message);
     this.name = 'ApiError';
   }
 }
 
-async function request<T>(
-  path: string,
-  options: RequestInit = {},
-  retry = true
-): Promise<T> {
+async function request<T>(path: string, options: RequestInit = {}, retry = true): Promise<T> {
   const token = getAccessToken();
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -101,8 +103,7 @@ async function request<T>(
 // ── Exported API Methods ──────────────────────────────────────────────────────
 
 export const api = {
-  get: <T>(path: string) =>
-    request<ApiResponse<T>>(path, { method: 'GET' }),
+  get: <T>(path: string) => request<ApiResponse<T>>(path, { method: 'GET' }),
 
   post: <T>(path: string, body: unknown) =>
     request<ApiResponse<T>>(path, { method: 'POST', body: JSON.stringify(body) }),
@@ -110,6 +111,5 @@ export const api = {
   put: <T>(path: string, body: unknown) =>
     request<ApiResponse<T>>(path, { method: 'PUT', body: JSON.stringify(body) }),
 
-  delete: <T>(path: string) =>
-    request<ApiResponse<T>>(path, { method: 'DELETE' }),
+  delete: <T>(path: string) => request<ApiResponse<T>>(path, { method: 'DELETE' }),
 };

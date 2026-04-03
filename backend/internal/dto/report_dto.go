@@ -82,10 +82,10 @@ type StockValuationResponse struct {
 
 // ProfitPeriodRow is aggregated profit for one day (or week/month grouping).
 type ProfitPeriodRow struct {
-	Period      string  `json:"period"       db:"period"`
-	TotalSales  float64 `json:"total_sales"  db:"total_sales"`
-	TotalCost   float64 `json:"total_cost"   db:"total_cost"`
-	GrossProfit float64 `json:"gross_profit" db:"gross_profit"`
+	Period       string  `json:"period"       db:"period"`
+	TotalSales   float64 `json:"total_sales"  db:"total_sales"`
+	TotalCost    float64 `json:"total_cost"   db:"total_cost"`
+	GrossProfit  float64 `json:"gross_profit" db:"gross_profit"`
 	ProfitMargin float64 `json:"profit_margin" db:"profit_margin"`
 }
 

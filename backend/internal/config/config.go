@@ -11,10 +11,10 @@ import (
 
 // Config holds all application configuration loaded from environment variables.
 type Config struct {
-	App      AppConfig
-	DB       DBConfig
-	JWT      JWTConfig
-	Bcrypt   BcryptConfig
+	App       AppConfig
+	DB        DBConfig
+	JWT       JWTConfig
+	Bcrypt    BcryptConfig
 	Migration MigrationConfig
 }
 

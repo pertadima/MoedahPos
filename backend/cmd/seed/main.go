@@ -14,8 +14,9 @@ import (
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
-	"github.com/moedahpos/backend/internal/config"
 	"golang.org/x/crypto/bcrypt"
+
+	"github.com/moedahpos/backend/internal/config"
 )
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -50,9 +51,9 @@ var catalogJakarta = []ProductSeed{
 	{"Kopi Cappuccino", "BEV-003", "cup", "Minuman", 10_000, 28_000, 11, 60, 5, "8991000003"},
 	{"Kopi V60", "BEV-004", "cup", "Minuman", 12_000, 32_000, 11, 40, 5, "8991000004"},
 	{"Kopi Cold Brew", "BEV-005", "cup", "Minuman", 14_000, 35_000, 11, 30, 5, "8991000005"},
-	{"Teh Hijau", "BEV-006", "cup", "Minuman", 4_000, 15_000, 11, 95, 10, "8991000006"},
-	{"Teh Tarik", "BEV-007", "cup", "Minuman", 5_000, 16_000, 11, 80, 10, "8991000007"},
-	{"Es Teh Manis", "BEV-008", "cup", "Minuman", 3_000, 12_000, 0, 120, 10, "8991000008"},
+	{"The Hijau", "BEV-006", "cup", "Minuman", 4_000, 15_000, 11, 95, 10, "8991000006"},
+	{"The Tarik", "BEV-007", "cup", "Minuman", 5_000, 16_000, 11, 80, 10, "8991000007"},
+	{"Es The Manis", "BEV-008", "cup", "Minuman", 3_000, 12_000, 0, 120, 10, "8991000008"},
 	{"Jus Jeruk Segar", "BEV-009", "cup", "Minuman", 6_000, 18_000, 11, 50, 5, "8991000009"},
 	{"Jus Alpukat", "BEV-010", "cup", "Minuman", 8_000, 22_000, 11, 40, 5, "8991000010"},
 	{"Susu Segar", "BEV-011", "cup", "Minuman", 7_000, 18_000, 11, 45, 5, "8991000011"},
@@ -89,7 +90,7 @@ var catalogBandung = []ProductSeed{
 	// ── Minuman Kemasan ────────────────────────────────
 	{"Aqua 600ml", "BDG-BEV-001", "botol", "Minuman Kemasan", 3_000, 6_000, 0, 144, 20, "8995000001"},
 	{"Aqua 1500ml", "BDG-BEV-002", "botol", "Minuman Kemasan", 5_000, 9_000, 0, 72, 10, "8995000002"},
-	{"Teh Botol Sosro 450ml", "BDG-BEV-003", "botol", "Minuman Kemasan", 4_500, 8_000, 0, 96, 15, "8995000003"},
+	{"The Botol Sosro 450ml", "BDG-BEV-003", "botol", "Minuman Kemasan", 4_500, 8_000, 0, 96, 15, "8995000003"},
 	{"Pocari Sweat 500ml", "BDG-BEV-004", "botol", "Minuman Kemasan", 7_000, 12_000, 0, 60, 10, "8995000004"},
 	{"Coca-Cola 330ml", "BDG-BEV-005", "kaleng", "Minuman Kemasan", 6_500, 11_000, 0, 48, 10, "8995000005"},
 	{"Sprite 330ml", "BDG-BEV-006", "kaleng", "Minuman Kemasan", 6_500, 11_000, 0, 48, 10, "8995000006"},
@@ -98,7 +99,7 @@ var catalogBandung = []ProductSeed{
 	{"Good Day Coffee 250ml", "BDG-BEV-009", "botol", "Minuman Kemasan", 5_500, 10_000, 0, 60, 10, "8995000009"},
 	{"Nescafe RTD 220ml", "BDG-BEV-010", "kaleng", "Minuman Kemasan", 6_000, 11_000, 0, 48, 10, "8995000010"},
 	{"Milo 200ml", "BDG-BEV-011", "kotak", "Minuman Kemasan", 5_500, 10_000, 0, 60, 10, "8995000011"},
-	{"Teh Pucuk 350ml", "BDG-BEV-012", "botol", "Minuman Kemasan", 4_000, 7_000, 0, 96, 15, "8995000012"},
+	{"The Pucuk 350ml", "BDG-BEV-012", "botol", "Minuman Kemasan", 4_000, 7_000, 0, 96, 15, "8995000012"},
 	// ── Makanan Instan ─────────────────────────────────
 	{"Indomie Goreng", "BDG-FOOD-001", "pcs", "Makanan Instan", 2_800, 5_000, 0, 200, 30, "8996000001"},
 	{"Indomie Kuah Ayam", "BDG-FOOD-002", "pcs", "Makanan Instan", 2_800, 5_000, 0, 180, 30, "8996000002"},
@@ -130,7 +131,7 @@ var catalogBandung = []ProductSeed{
 
 // ── Main ────────────────────────────────────────────────────────────────────── d
 
-func main() {
+func main() { //nolint:funlen // seeder bootstrap is inherently long
 	reset := flag.Bool("reset", false, "Truncate all demo tables before seeding")
 	flag.Parse()
 
@@ -141,7 +142,7 @@ func main() {
 
 	db, err := sqlx.Connect("postgres", cfg.DB.DSN())
 	must(err)
-	defer db.Close()
+	defer must(db.Close())
 
 	ctx := context.Background()
 
@@ -161,7 +162,7 @@ func main() {
 		must(rows.Scan(&name, &id))
 		roles[name] = id
 	}
-	rows.Close()
+	must(rows.Close())
 	if len(roles) == 0 {
 		log.Fatal("No roles found — run goose migrations first")
 	}
@@ -195,7 +196,7 @@ func main() {
 		must(rows.Scan(&email, &id))
 		userIDs[email] = id
 	}
-	rows.Close()
+	must(rows.Close())
 
 	// ── Stores ────────────────────────────────────────────────────────────────
 	type storeRow struct{ ID, Name, Address, Phone, TaxNum, StoreType string }
@@ -405,7 +406,7 @@ func seedPurchaseOrders(ctx context.Context, db *sqlx.DB, mainStoreID, branchSto
 
 // seedTransactions creates sample completed transactions for a store.
 // Returns number of transactions created.
-func seedTransactions(ctx context.Context, db *sqlx.DB, storeID, cashierID string, catalog []ProductSeed) int {
+func seedTransactions(ctx context.Context, db *sqlx.DB, storeID, cashierID string, catalog []ProductSeed) int { //nolint:funlen // bulk seed loop
 	// pick first 8 products from this store's catalog
 	picks := catalog
 	if len(picks) > 8 {
@@ -524,7 +525,7 @@ var catalogPadang = []ProductSeed{
 	{"Lontong", "PDG-032", "porsi", "Karbohidrat", 3_000, 0, 0, 80, 10, ""},
 	// ── Minuman ───────────────────────────────────────────
 	{"Es Batu", "PDG-041", "kg", "Minuman", 3_000, 0, 0, 20, 5, ""},
-	{"Teh Celup", "PDG-042", "sachet", "Minuman", 500, 0, 0, 200, 30, ""},
+	{"The Celup", "PDG-042", "sachet", "Minuman", 500, 0, 0, 200, 30, ""},
 	{"Gula Pasir", "PDG-043", "kg", "Minuman", 14_000, 0, 0, 20, 5, ""},
 	{"Jeruk Nipis", "PDG-044", "buah", "Minuman", 1_500, 0, 0, 50, 10, ""},
 }
@@ -533,7 +534,10 @@ var catalogPadang = []ProductSeed{
 type menuItemSeed struct {
 	Name, Category, Description string
 	SellPrice, TaxRate          float64
-	Ingredients                 []struct{ SKU string; Qty float64 }
+	Ingredients                 []struct {
+		SKU string
+		Qty float64
+	}
 }
 
 var menuPadang = []menuItemSeed{
@@ -541,7 +545,10 @@ var menuPadang = []menuItemSeed{
 		"Rendang Sapi", "Masakan Utama",
 		"Rendang daging sapi empuk dimasak lama dengan santan dan rempah khas Minang",
 		45_000, 11,
-		[]struct{ SKU string; Qty float64 }{
+		[]struct {
+			SKU string
+			Qty float64
+		}{
 			{"PDG-001", 0.25}, // 250g daging sapi
 			{"PDG-021", 0.2},  // 200ml santan
 			{"PDG-022", 0.05}, // 50g cabai
@@ -556,7 +563,10 @@ var menuPadang = []menuItemSeed{
 		"Gulai Ayam", "Masakan Utama",
 		"Ayam kampung dimasak gulai kuning dengan santan gurih dan rempah lengkap",
 		35_000, 11,
-		[]struct{ SKU string; Qty float64 }{
+		[]struct {
+			SKU string
+			Qty float64
+		}{
 			{"PDG-002", 0.25},
 			{"PDG-021", 0.25},
 			{"PDG-022", 0.04},
@@ -570,7 +580,10 @@ var menuPadang = []menuItemSeed{
 		"Gulai Paku (Gulai Pakis)", "Masakan Utama",
 		"Sayur pakis dimasak gulai santan khas Minang",
 		20_000, 11,
-		[]struct{ SKU string; Qty float64 }{
+		[]struct {
+			SKU string
+			Qty float64
+		}{
 			{"PDG-013", 0.15},
 			{"PDG-021", 0.15},
 			{"PDG-022", 0.03},
@@ -582,7 +595,10 @@ var menuPadang = []menuItemSeed{
 		"Sayur Nangka", "Masakan Utama",
 		"Nangka muda dimasak dengan santan dan bumbu Padang",
 		18_000, 11,
-		[]struct{ SKU string; Qty float64 }{
+		[]struct {
+			SKU string
+			Qty float64
+		}{
 			{"PDG-011", 0.2},
 			{"PDG-021", 0.15},
 			{"PDG-023", 0.02},
@@ -593,7 +609,10 @@ var menuPadang = []menuItemSeed{
 		"Telur Balado", "Lauk Pelengkap",
 		"Telur ayam goreng dibalut sambal balado merah pedas",
 		12_000, 0,
-		[]struct{ SKU string; Qty float64 }{
+		[]struct {
+			SKU string
+			Qty float64
+		}{
 			{"PDG-004", 2},
 			{"PDG-022", 0.03},
 			{"PDG-023", 0.02},
@@ -604,7 +623,10 @@ var menuPadang = []menuItemSeed{
 		"Gulai Ikan Kakap", "Masakan Utama",
 		"Ikan kakap segar dimasak gulai kuning pedas khas Minanga",
 		38_000, 11,
-		[]struct{ SKU string; Qty float64 }{
+		[]struct {
+			SKU string
+			Qty float64
+		}{
 			{"PDG-003", 0.25},
 			{"PDG-021", 0.2},
 			{"PDG-022", 0.04},
@@ -618,7 +640,10 @@ var menuPadang = []menuItemSeed{
 		"Dendeng Balado", "Masakan Utama",
 		"Irisan daging sapi tipis digoreng kering dilumuri balado",
 		42_000, 11,
-		[]struct{ SKU string; Qty float64 }{
+		[]struct {
+			SKU string
+			Qty float64
+		}{
 			{"PDG-001", 0.2},
 			{"PDG-022", 0.05},
 			{"PDG-023", 0.03},
@@ -629,7 +654,10 @@ var menuPadang = []menuItemSeed{
 		"Gulai Tunjang (Kikil)", "Masakan Utama",
 		"Kikil sapi empuk dimasak gulai santan kental",
 		30_000, 11,
-		[]struct{ SKU string; Qty float64 }{
+		[]struct {
+			SKU string
+			Qty float64
+		}{
 			{"PDG-006", 0.2},
 			{"PDG-021", 0.2},
 			{"PDG-022", 0.04},
@@ -641,15 +669,21 @@ var menuPadang = []menuItemSeed{
 		"Nasi Putih", "Nasi",
 		"Nasi putih pulen porsi dewasa",
 		5_000, 0,
-		[]struct{ SKU string; Qty float64 }{
+		[]struct {
+			SKU string
+			Qty float64
+		}{
 			{"PDG-031", 0.2},
 		},
 	},
 	{
-		"Es Teh Manis", "Minuman",
-		"Teh manis segar dengan es batu",
+		"Es The Manis", "Minuman",
+		"The manis segar dengan es batu",
 		8_000, 0,
-		[]struct{ SKU string; Qty float64 }{
+		[]struct {
+			SKU string
+			Qty float64
+		}{
 			{"PDG-042", 1},
 			{"PDG-043", 0.02},
 			{"PDG-041", 0.1},
@@ -659,17 +693,23 @@ var menuPadang = []menuItemSeed{
 		"Es Jeruk", "Minuman",
 		"Jeruk nipis peras segar dengan es batu dan gula",
 		10_000, 0,
-		[]struct{ SKU string; Qty float64 }{
+		[]struct {
+			SKU string
+			Qty float64
+		}{
 			{"PDG-044", 3},
 			{"PDG-043", 0.03},
 			{"PDG-041", 0.15},
 		},
 	},
 	{
-		"Teh Hangat", "Minuman",
-		"Teh tawar atau manis, disajikan hangat",
+		"The Hangat", "Minuman",
+		"The tawar atau manis, disajikan hangat",
 		6_000, 0,
-		[]struct{ SKU string; Qty float64 }{
+		[]struct {
+			SKU string
+			Qty float64
+		}{
 			{"PDG-042", 1},
 			{"PDG-043", 0.02},
 		},
@@ -677,9 +717,13 @@ var menuPadang = []menuItemSeed{
 }
 
 // seedRestaurantPadang seeds tables, ingredient products, and menu items.
-func seedRestaurantPadang(ctx context.Context, db *sqlx.DB, storeID, adminID string) {
+func seedRestaurantPadang(ctx context.Context, db *sqlx.DB, storeID, _ string) {
 	// ── Tables (Meja) ──────────────────────────────────────────────────────────
-	tableNames := []struct{ Number string; Capacity int; Notes string }{
+	tableNames := []struct {
+		Number   string
+		Capacity int
+		Notes    string
+	}{
 		{"1", 4, "Dekat pintu masuk"},
 		{"2", 4, ""},
 		{"3", 6, "Meja keluarga"},

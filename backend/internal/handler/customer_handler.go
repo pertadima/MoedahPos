@@ -7,11 +7,12 @@ import (
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/rs/zerolog"
+
 	"github.com/moedahpos/backend/internal/dto"
 	"github.com/moedahpos/backend/internal/service"
 	"github.com/moedahpos/backend/internal/validator"
 	"github.com/moedahpos/backend/pkg/response"
-	"github.com/rs/zerolog"
 )
 
 // CustomerHandler handles customer CRUD endpoints.
@@ -29,9 +30,9 @@ func NewCustomerHandler(svc *service.CustomerService, v *validator.Validator, lo
 func (h *CustomerHandler) List(w http.ResponseWriter, r *http.Request) {
 	storeID := chi.URLParam(r, "storeId")
 	f := dto.CustomerListFilter{StoreID: storeID}
-	f.Page, _    = strconv.Atoi(r.URL.Query().Get("page"))
+	f.Page, _ = strconv.Atoi(r.URL.Query().Get("page"))
 	f.PerPage, _ = strconv.Atoi(r.URL.Query().Get("per_page"))
-	f.Search      = r.URL.Query().Get("search")
+	f.Search = r.URL.Query().Get("search")
 
 	customers, meta, err := h.svc.List(r.Context(), f)
 	if err != nil {

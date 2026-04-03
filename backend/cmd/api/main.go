@@ -22,7 +22,7 @@ import (
 	"github.com/moedahpos/backend/pkg/rbac"
 )
 
-func main() {
+func main() { //nolint:funlen // bootstrap wiring is inherently long
 	// ── Config ────────────────────────────────────────────────────────────────
 	cfg, err := config.Load()
 	if err != nil {
@@ -39,7 +39,11 @@ func main() {
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to connect to database")
 	}
-	defer sqlxDB.Close()
+	defer func() {
+		if cerr := sqlxDB.Close(); cerr != nil {
+			log.Error().Err(cerr).Msg("error closing database")
+		}
+	}()
 
 	// ── Migrations ────────────────────────────────────────────────────────────
 	if cfg.Migration.Run {
@@ -56,74 +60,74 @@ func main() {
 	log.Info().Msg("RBAC role store loaded")
 
 	// ── Shared Utilities ──────────────────────────────────────────────────────
-	jwtMgr   := jwt.New(cfg.JWT.Secret, cfg.JWT.AccessTTL, cfg.JWT.RefreshTTL)
+	jwtMgr := jwt.New(cfg.JWT.Secret, cfg.JWT.AccessTTL, cfg.JWT.RefreshTTL)
 	validate := validator.New()
 
 	// ── Repositories ──────────────────────────────────────────────────────────
-	userRepo         := postgres.NewUserRepo(sqlxDB)
+	userRepo := postgres.NewUserRepo(sqlxDB)
 	refreshTokenRepo := postgres.NewRefreshTokenRepo(sqlxDB)
-	storeRepo        := postgres.NewStoreRepo(sqlxDB)
-	categoryRepo     := postgres.NewCategoryRepo(sqlxDB)
-	productRepo      := postgres.NewProductRepo(sqlxDB)
-	stockRepo        := postgres.NewStockRepo(sqlxDB)
-	transactionRepo  := postgres.NewTransactionRepo(sqlxDB)
-	poRepo           := postgres.NewPORepo(sqlxDB)
-	supplierRepo     := postgres.NewSupplierRepo(sqlxDB)
-	reportRepo        := postgres.NewReportRepo(sqlxDB)
-	tableRepo         := postgres.NewTableRepo(sqlxDB)
-	menuItemRepo      := postgres.NewMenuItemRepo(sqlxDB)
-	priceHistoryRepo  := postgres.NewPriceHistoryRepo(sqlxDB)
-	poPaymentRepo     := postgres.NewPOPaymentRepo(sqlxDB)
-	customerRepo      := postgres.NewCustomerRepo(sqlxDB)
-	roleRepo          := postgres.NewRoleRepo(sqlxDB)
+	storeRepo := postgres.NewStoreRepo(sqlxDB)
+	categoryRepo := postgres.NewCategoryRepo(sqlxDB)
+	productRepo := postgres.NewProductRepo(sqlxDB)
+	stockRepo := postgres.NewStockRepo(sqlxDB)
+	transactionRepo := postgres.NewTransactionRepo(sqlxDB)
+	poRepo := postgres.NewPORepo(sqlxDB)
+	supplierRepo := postgres.NewSupplierRepo(sqlxDB)
+	reportRepo := postgres.NewReportRepo(sqlxDB)
+	tableRepo := postgres.NewTableRepo(sqlxDB)
+	menuItemRepo := postgres.NewMenuItemRepo(sqlxDB)
+	priceHistoryRepo := postgres.NewPriceHistoryRepo(sqlxDB)
+	poPaymentRepo := postgres.NewPOPaymentRepo(sqlxDB)
+	customerRepo := postgres.NewCustomerRepo(sqlxDB)
+	roleRepo := postgres.NewRoleRepo(sqlxDB)
 
 	// ── Services ──────────────────────────────────────────────────────────────
-	authSvc          := service.NewAuthService(userRepo, refreshTokenRepo, jwtMgr, cfg.Bcrypt.Cost, log)
-	storeSvc         := service.NewStoreService(storeRepo, userRepo, log)
-	priceHistorySvc  := service.NewPriceHistoryService(priceHistoryRepo, log)
-	productSvc       := service.NewProductService(productRepo, categoryRepo, stockRepo, priceHistorySvc, log)
-	stockSvc         := service.NewStockService(stockRepo, productRepo, log)
-	transactionSvc   := service.NewTransactionService(transactionRepo, productRepo, stockRepo, menuItemRepo, log)
-	poSvc            := service.NewPurchaseOrderService(poRepo, productRepo, poPaymentRepo, priceHistorySvc, log)
-	supplierSvc      := service.NewSupplierService(supplierRepo, log)
-	reportSvc        := service.NewReportService(reportRepo, log)
-	tableSvc         := service.NewTableService(tableRepo, log)
-	menuItemSvc      := service.NewMenuItemService(menuItemRepo, log)
-	customerSvc      := service.NewCustomerService(customerRepo, log)
-	userAdminSvc     := service.NewUserAdminService(userRepo, roleRepo, cfg.Bcrypt.Cost, log)
+	authSvc := service.NewAuthService(userRepo, refreshTokenRepo, jwtMgr, cfg.Bcrypt.Cost, log)
+	storeSvc := service.NewStoreService(storeRepo, userRepo, log)
+	priceHistorySvc := service.NewPriceHistoryService(priceHistoryRepo, log)
+	productSvc := service.NewProductService(productRepo, categoryRepo, stockRepo, priceHistorySvc, log)
+	stockSvc := service.NewStockService(stockRepo, productRepo, log)
+	transactionSvc := service.NewTransactionService(transactionRepo, productRepo, stockRepo, menuItemRepo, log)
+	poSvc := service.NewPurchaseOrderService(poRepo, productRepo, poPaymentRepo, priceHistorySvc, log)
+	supplierSvc := service.NewSupplierService(supplierRepo, log)
+	reportSvc := service.NewReportService(reportRepo, log)
+	tableSvc := service.NewTableService(tableRepo, log)
+	menuItemSvc := service.NewMenuItemService(menuItemRepo, log)
+	customerSvc := service.NewCustomerService(customerRepo, log)
+	userAdminSvc := service.NewUserAdminService(userRepo, roleRepo, cfg.Bcrypt.Cost, log)
 
 	// ── Handlers ──────────────────────────────────────────────────────────────
-	authHandler          := handler.NewAuthHandler(authSvc, validate, log)
-	storeHandler         := handler.NewStoreHandler(storeSvc, validate, log)
-	productHandler       := handler.NewProductHandler(productSvc, validate, log)
-	stockHandler         := handler.NewStockHandler(stockSvc, validate, log)
-	transactionHandler   := handler.NewTransactionHandler(transactionSvc, validate, log)
-	poHandler            := handler.NewPurchaseOrderHandler(poSvc, validate, log)
-	supplierHandler      := handler.NewSupplierHandler(supplierSvc, validate, log)
-	reportHandler        := handler.NewReportHandler(reportSvc, log)
-	restaurantHandler    := handler.NewRestaurantHandler(tableSvc, menuItemSvc, validate, log)
-	priceHistoryHandler  := handler.NewPriceHistoryHandler(priceHistorySvc, log)
-	customerHandler      := handler.NewCustomerHandler(customerSvc, validate, log)
-	userAdminHandler     := handler.NewUserAdminHandler(userAdminSvc, validate, log)
+	authHandler := handler.NewAuthHandler(authSvc, validate, log)
+	storeHandler := handler.NewStoreHandler(storeSvc, validate, log)
+	productHandler := handler.NewProductHandler(productSvc, validate, log)
+	stockHandler := handler.NewStockHandler(stockSvc, validate, log)
+	transactionHandler := handler.NewTransactionHandler(transactionSvc, validate, log)
+	poHandler := handler.NewPurchaseOrderHandler(poSvc, validate, log)
+	supplierHandler := handler.NewSupplierHandler(supplierSvc, validate, log)
+	reportHandler := handler.NewReportHandler(reportSvc, log)
+	restaurantHandler := handler.NewRestaurantHandler(tableSvc, menuItemSvc, validate, log)
+	priceHistoryHandler := handler.NewPriceHistoryHandler(priceHistorySvc, log)
+	customerHandler := handler.NewCustomerHandler(customerSvc, validate, log)
+	userAdminHandler := handler.NewUserAdminHandler(userAdminSvc, validate, log)
 
 	// ── Router ────────────────────────────────────────────────────────────────
 	r := router.New(&router.Dependencies{
-		AuthHandler:           authHandler,
-		JWTManager:            jwtMgr,
-		StoreHandler:          storeHandler,
-		ProductHandler:        productHandler,
-		StockHandler:          stockHandler,
-		TransactionHandler:    transactionHandler,
-		PurchaseOrderHandler:  poHandler,
-		SupplierHandler:       supplierHandler,
-		ReportHandler:         reportHandler,
-		RestaurantHandler:     restaurantHandler,
-		PriceHistoryHandler:   priceHistoryHandler,
-		CustomerHandler:       customerHandler,
-		UserAdminHandler:      userAdminHandler,
-		RoleStore:             roleStore,
-		DB:                    sqlxDB,
-		Log:                   log,
+		AuthHandler:          authHandler,
+		JWTManager:           jwtMgr,
+		StoreHandler:         storeHandler,
+		ProductHandler:       productHandler,
+		StockHandler:         stockHandler,
+		TransactionHandler:   transactionHandler,
+		PurchaseOrderHandler: poHandler,
+		SupplierHandler:      supplierHandler,
+		ReportHandler:        reportHandler,
+		RestaurantHandler:    restaurantHandler,
+		PriceHistoryHandler:  priceHistoryHandler,
+		CustomerHandler:      customerHandler,
+		UserAdminHandler:     userAdminHandler,
+		RoleStore:            roleStore,
+		DB:                   sqlxDB,
+		Log:                  log,
 	})
 
 	// ── HTTP Server ───────────────────────────────────────────────────────────

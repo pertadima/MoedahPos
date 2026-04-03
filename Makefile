@@ -1,5 +1,11 @@
 # ─── MoedahPOS Makefile ───────────────────────────────────────────────────────
-.PHONY: help seed seed-reset dev-backend dev-frontend dev migrate lint build
+.PHONY: help seed seed-reset dev-backend dev-frontend dev migrate \
+        lint lint-backend lint-frontend \
+        fmt fmt-backend fmt-frontend \
+        analyze analyze-backend analyze-frontend \
+        type-check build build-backend build-frontend test \
+        db-up db-down db-logs db-shell compose-up compose-down compose-logs
+
 
 help: ## Show available commands
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
@@ -60,10 +66,45 @@ build-frontend: ## Build Next.js production bundle
 
 build: build-backend build-frontend ## Build both backend and frontend
 
-# ─── Code Quality ─────────────────────────────────────────────────────────────
-lint: ## Run Go vet + staticcheck
-	cd backend && go vet ./...
-	@echo "✓ Go vet passed"
+# ─── Static Analysis ──────────────────────────────────────────────────────────
+lint-backend: ## Run golangci-lint on the Go backend
+	@echo "▶ golangci-lint (backend)..."
+	cd backend && golangci-lint run ./... --color always
+	@echo "✓ Backend lint passed"
+
+lint-frontend: ## Run ESLint on the frontend
+	@echo "▶ ESLint (frontend)..."
+	cd frontend && npm run lint
+	@echo "✓ Frontend lint passed"
+
+lint: lint-backend lint-frontend ## Run linters for both backend and frontend
+
+fmt-backend: ## Format Go code in-place (gofmt)
+	cd backend && gofmt -l -w .
+	@echo "✓ Go formatting done"
+
+fmt-frontend: ## Format frontend code in-place (prettier + eslint fix)
+	cd frontend && npm run format && npm run lint:fix
+	@echo "✓ Frontend formatting done"
+
+fmt: fmt-backend fmt-frontend ## Format all code
+
+analyze-backend: ## Full backend analysis (golangci-lint)
+	@echo "▶ Backend analysis..."
+	cd backend && golangci-lint run ./... --color always
+	@echo "✅ Backend analysis complete"
+
+analyze-frontend: ## Full frontend analysis (type-check + lint + prettier check)
+	@echo "▶ Frontend analysis (tsc + eslint + prettier)..."
+	cd frontend && npm run analyze
+	@echo "✅ Frontend analysis complete"
+
+analyze: analyze-backend analyze-frontend ## Run complete static analysis for both projects
+	@echo ""
+	@echo "🎉 All static analysis passed!"
+
+type-check: ## TypeScript type check (frontend only)
+	cd frontend && npm run type-check
 
 test: ## Run Go tests
 	cd backend && go test ./... -cover

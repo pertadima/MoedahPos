@@ -29,7 +29,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const restore = async () => {
       const token = getAccessToken();
-      if (!token) { setIsLoading(false); return; }
+      if (!token) {
+        setIsLoading(false);
+        return;
+      }
       try {
         const res = await authApi.me();
         const u = res.data;
@@ -74,7 +77,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const rt = getRefreshToken();
       if (rt) await authApi.logout(rt);
-    } catch { /* best effort */ }
+    } catch {
+      /* best effort */
+    }
     clearTokens();
     localStorage.removeItem('selected_store_id');
     setUser(null);
@@ -82,21 +87,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     window.location.href = '/login';
   }, []);
 
-  const selectStore = useCallback((storeId: string) => {
-    const found = stores.find(s => s.store_id === storeId);
-    if (found) {
-      setSelectedStore(found);
-      localStorage.setItem('selected_store_id', storeId);
-    }
-  }, [stores]);
+  const selectStore = useCallback(
+    (storeId: string) => {
+      const found = stores.find(s => s.store_id === storeId);
+      if (found) {
+        setSelectedStore(found);
+        localStorage.setItem('selected_store_id', storeId);
+      }
+    },
+    [stores]
+  );
 
   return (
-    <AuthContext.Provider value={{
-      user, isLoading,
-      isAuthenticated: !!user,
-      selectedStore, stores,
-      login, logout, selectStore,
-    }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        isLoading,
+        isAuthenticated: !!user,
+        selectedStore,
+        stores,
+        login,
+        logout,
+        selectStore,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

@@ -4,22 +4,22 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"math/rand"
 	"time"
+
+	"github.com/rs/zerolog"
 
 	"github.com/moedahpos/backend/internal/domain"
 	"github.com/moedahpos/backend/internal/dto"
 	"github.com/moedahpos/backend/internal/repository"
-	"github.com/rs/zerolog"
 )
 
 // Purchase Order sentinel errors.
 var (
-	ErrPONotFound          = errors.New("purchase order not found")
-	ErrPONotEditable       = errors.New("purchase order cannot be edited (not in draft status)")
-	ErrPOCannotSubmit      = errors.New("purchase order cannot be submitted")
-	ErrPOCannotReceive     = errors.New("purchase order cannot be received (must be in ordered status)")
-	ErrPOCannotCancel      = errors.New("purchase order cannot be cancelled")
+	ErrPONotFound      = errors.New("purchase order not found")
+	ErrPONotEditable   = errors.New("purchase order cannot be edited (not in draft status)")
+	ErrPOCannotSubmit  = errors.New("purchase order cannot be submitted")
+	ErrPOCannotReceive = errors.New("purchase order cannot be received (must be in ordered status)")
+	ErrPOCannotCancel  = errors.New("purchase order cannot be canceled")
 )
 
 // PurchaseOrderService implements PO lifecycle business logic.
@@ -79,7 +79,7 @@ func (s *PurchaseOrderService) CreatePO(ctx context.Context, storeID string, req
 		return nil, err
 	}
 
-	poNumber := fmt.Sprintf("PO-%s-%04d", time.Now().Format("20060102"), rand.Intn(9000)+1000)
+	poNumber := fmt.Sprintf("PO-%s-%04d", time.Now().Format("20060102"), time.Now().UnixNano()%9000+1000)
 	po, err := s.poRepo.Create(ctx, &domain.PurchaseOrder{
 		StoreID:     storeID,
 		SupplierID:  req.SupplierID,
@@ -186,7 +186,7 @@ func (s *PurchaseOrderService) ReceivePO(ctx context.Context, id, userID string)
 	return nil
 }
 
-// CancelPO cancels a PO (soft — sets status to 'cancelled').
+// CancelPO cancels a PO (soft — sets status to 'canceled' in the DB).
 func (s *PurchaseOrderService) CancelPO(ctx context.Context, id string) error {
 	po, err := s.poRepo.FindByID(ctx, id)
 	if err != nil {
@@ -195,7 +195,8 @@ func (s *PurchaseOrderService) CancelPO(ctx context.Context, id string) error {
 	if po == nil {
 		return ErrPONotFound
 	}
-	if po.Status == "received" || po.Status == "cancelled" {
+	const dbCancelled = "cancelled" //nolint:misspell // matches DB enum value
+	if po.Status == "received" || po.Status == dbCancelled {
 		return ErrPOCannotCancel
 	}
 	return s.poRepo.Cancel(ctx, id)

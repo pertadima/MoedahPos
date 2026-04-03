@@ -7,12 +7,13 @@ import (
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/rs/zerolog"
+
 	"github.com/moedahpos/backend/internal/dto"
 	"github.com/moedahpos/backend/internal/middleware"
 	"github.com/moedahpos/backend/internal/service"
 	"github.com/moedahpos/backend/internal/validator"
 	"github.com/moedahpos/backend/pkg/response"
-	"github.com/rs/zerolog"
 )
 
 // StoreHandler handles HTTP requests for store and member endpoints.

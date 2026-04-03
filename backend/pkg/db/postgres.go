@@ -1,15 +1,18 @@
+// Package db provides PostgreSQL connection and migration utilities.
 package db
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"time"
 
 	"github.com/jmoiron/sqlx"
-	_ "github.com/lib/pq"
-	"github.com/moedahpos/backend/internal/config"
+	_ "github.com/lib/pq" // Register postgres driver
 	"github.com/pressly/goose/v3"
 	"github.com/rs/zerolog"
+
+	"github.com/moedahpos/backend/internal/config"
 )
 
 // Connect establishes a PostgreSQL connection pool using sqlx.
@@ -53,8 +56,9 @@ func RunMigrations(db *sqlx.DB, dir string, log zerolog.Logger) error {
 }
 
 func pingWithRetry(db *sql.DB, attempts int, delay time.Duration, log zerolog.Logger) error {
+	ctx := context.Background()
 	for i := 1; i <= attempts; i++ {
-		if err := db.Ping(); err == nil {
+		if err := db.PingContext(ctx); err == nil {
 			return nil
 		}
 		log.Warn().Int("attempt", i).Int("max", attempts).Msg("waiting for database...")

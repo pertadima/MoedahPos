@@ -4,9 +4,24 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import {
-  LayoutDashboard, ShoppingCart, Package, Warehouse,
-  ClipboardList, BarChart3, Users, LogOut, Sun, Moon,
-  Store, Tag, UtensilsCrossed, Grid3x3, Receipt, History, UserRound, UserCog,
+  LayoutDashboard,
+  ShoppingCart,
+  Package,
+  Warehouse,
+  ClipboardList,
+  BarChart3,
+  Users,
+  LogOut,
+  Sun,
+  Moon,
+  Store,
+  Tag,
+  UtensilsCrossed,
+  Grid3x3,
+  Receipt,
+  History,
+  UserRound,
+  UserCog,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { useTheme } from '@/lib/theme/ThemeContext';
@@ -37,49 +52,72 @@ interface NavGroup {
 //   - If the seed changes, update this map too.
 //
 type Permission =
-  | 'products.read'  | 'products.create' | 'products.update' | 'products.delete'
-  | 'stock.read'     | 'stock.update'
+  | 'products.read'
+  | 'products.create'
+  | 'products.update'
+  | 'products.delete'
+  | 'stock.read'
+  | 'stock.update'
   | 'reports.read'
-  | 'suppliers.read' | 'suppliers.create'
-  | 'sales.create'   | 'sales.read'
-  | 'users.read'     | 'users.create'    | 'users.update'    | 'users.delete';
+  | 'suppliers.read'
+  | 'suppliers.create'
+  | 'sales.create'
+  | 'sales.read'
+  | 'users.read'
+  | 'users.create'
+  | 'users.update'
+  | 'users.delete';
 
 type RoleName = 'superadmin' | 'admin' | 'manager' | 'cashier' | 'staff';
 
 const ROLE_PERMISSIONS: Record<RoleName, Set<Permission>> = {
   superadmin: new Set<Permission>([
-    'products.read', 'products.create', 'products.update', 'products.delete',
-    'stock.read', 'stock.update',
-    'reports.read',
-    'suppliers.read', 'suppliers.create',
-    'sales.create', 'sales.read',
-    'users.read', 'users.create', 'users.update', 'users.delete',
-  ]),
-  admin: new Set<Permission>([
-    'products.read', 'products.create', 'products.update', 'products.delete',
-    'stock.read', 'stock.update',
-    'reports.read',
-    'suppliers.read', 'suppliers.create',
-    'sales.create', 'sales.read',
-    'users.read', 'users.create', 'users.update', 'users.delete',
-  ]),
-  manager: new Set<Permission>([
-    'products.read', 'products.create', 'products.update',
-    'stock.read', 'stock.update',
+    'products.read',
+    'products.create',
+    'products.update',
+    'products.delete',
+    'stock.read',
+    'stock.update',
     'reports.read',
     'suppliers.read',
-    'sales.create', 'sales.read',
+    'suppliers.create',
+    'sales.create',
+    'sales.read',
+    'users.read',
+    'users.create',
+    'users.update',
+    'users.delete',
   ]),
-  cashier: new Set<Permission>([
+  admin: new Set<Permission>([
     'products.read',
+    'products.create',
+    'products.update',
+    'products.delete',
     'stock.read',
-    'sales.create', 'sales.read',
+    'stock.update',
+    'reports.read',
+    'suppliers.read',
+    'suppliers.create',
+    'sales.create',
+    'sales.read',
+    'users.read',
+    'users.create',
+    'users.update',
+    'users.delete',
   ]),
-  staff: new Set<Permission>([
+  manager: new Set<Permission>([
     'products.read',
+    'products.create',
+    'products.update',
     'stock.read',
+    'stock.update',
+    'reports.read',
+    'suppliers.read',
+    'sales.create',
     'sales.read',
   ]),
+  cashier: new Set<Permission>(['products.read', 'stock.read', 'sales.create', 'sales.read']),
+  staff: new Set<Permission>(['products.read', 'stock.read', 'sales.read']),
 };
 
 function hasPermission(role: string | undefined, perm: string): boolean {
@@ -93,49 +131,60 @@ function hasPermission(role: string | undefined, perm: string): boolean {
 const baseGroups: NavGroup[] = [
   {
     label: 'Umum',
-    items: [
-      { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-    ],
+    items: [{ href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' }],
   },
   {
     label: 'Penjualan',
     permission: 'sales.create',
     items: [
-      { href: '/pos',          icon: ShoppingCart, label: 'Kasir / POS',       permission: 'sales.create' },
-      { href: '/transactions', icon: Receipt,      label: 'Riwayat Transaksi', permission: 'sales.read'   },
-      { href: '/customers',    icon: UserRound,    label: 'Customer',           permission: 'sales.read'   },
+      { href: '/pos', icon: ShoppingCart, label: 'Kasir / POS', permission: 'sales.create' },
+      {
+        href: '/transactions',
+        icon: Receipt,
+        label: 'Riwayat Transaksi',
+        permission: 'sales.read',
+      },
+      { href: '/customers', icon: UserRound, label: 'Customer', permission: 'sales.read' },
     ],
   },
   {
     label: 'Inventori',
     permission: 'products.read',
     items: [
-      { href: '/products',      icon: Package,   label: 'Produk',        permission: 'products.read' },
-      { href: '/categories',    icon: Tag,        label: 'Kategori',      permission: 'products.read' },
-      { href: '/price-history', icon: History,    label: 'Riwayat Harga', permission: 'products.read' },
-      { href: '/stock',         icon: Warehouse,  label: 'Stok',          permission: 'stock.read'    },
+      { href: '/products', icon: Package, label: 'Produk', permission: 'products.read' },
+      { href: '/categories', icon: Tag, label: 'Kategori', permission: 'products.read' },
+      {
+        href: '/price-history',
+        icon: History,
+        label: 'Riwayat Harga',
+        permission: 'products.read',
+      },
+      { href: '/stock', icon: Warehouse, label: 'Stok', permission: 'stock.read' },
     ],
   },
   {
     label: 'Pembelian',
     permission: 'suppliers.read',
     items: [
-      { href: '/purchase-orders', icon: ClipboardList, label: 'Purchase Order', permission: 'suppliers.read'   },
-      { href: '/suppliers',       icon: Users,         label: 'Supplier',       permission: 'suppliers.read'   },
+      {
+        href: '/purchase-orders',
+        icon: ClipboardList,
+        label: 'Purchase Order',
+        permission: 'suppliers.read',
+      },
+      { href: '/suppliers', icon: Users, label: 'Supplier', permission: 'suppliers.read' },
     ],
   },
   {
     label: 'Analitik',
     permission: 'reports.read',
-    items: [
-      { href: '/reports', icon: BarChart3, label: 'Laporan', permission: 'reports.read' },
-    ],
+    items: [{ href: '/reports', icon: BarChart3, label: 'Laporan', permission: 'reports.read' }],
   },
   {
     label: 'Pengaturan',
     items: [
-      { href: '/stores', icon: Store,   label: 'Toko',      adminOnly: true },
-      { href: '/users',  icon: UserCog, label: 'Pengguna',  adminOnly: true },
+      { href: '/stores', icon: Store, label: 'Toko', adminOnly: true },
+      { href: '/users', icon: UserCog, label: 'Pengguna', adminOnly: true },
     ],
   },
 ];
@@ -144,7 +193,7 @@ const restaurantGroup: NavGroup = {
   label: 'Restoran',
   permission: 'products.read',
   items: [
-    { href: '/tables',     icon: Grid3x3,         label: 'Meja', permission: 'products.read' },
+    { href: '/tables', icon: Grid3x3, label: 'Meja', permission: 'products.read' },
     { href: '/menu-items', icon: UtensilsCrossed, label: 'Menu', permission: 'products.read' },
   ],
 };
@@ -160,12 +209,7 @@ export default function Sidebar() {
 
   // Inject restaurant group after "Penjualan" when in restaurant mode
   const allGroups: NavGroup[] = isRestaurant
-    ? [
-        baseGroups[0],
-        baseGroups[1],
-        restaurantGroup,
-        ...baseGroups.slice(2),
-      ]
+    ? [baseGroups[0], baseGroups[1], restaurantGroup, ...baseGroups.slice(2)]
     : baseGroups;
 
   // Build the final visible groups based on the current store role
@@ -200,7 +244,14 @@ export default function Sidebar() {
           style={{ objectFit: 'contain', flexShrink: 0 }}
           priority
         />
-        <div style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--brand)', letterSpacing: '-0.3px' }}>
+        <div
+          style={{
+            fontWeight: 800,
+            fontSize: '1rem',
+            color: 'var(--brand)',
+            letterSpacing: '-0.3px',
+          }}
+        >
           Moedah
         </div>
       </div>
@@ -208,31 +259,54 @@ export default function Sidebar() {
       {/* Store Selector */}
       {stores.length > 0 && (
         <div style={{ padding: '10px 12px 8px', borderBottom: '1px solid var(--border)' }}>
-          <div style={{ fontSize: '0.68rem', color: 'var(--text-3)', marginBottom: 5, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+          <div
+            style={{
+              fontSize: '0.68rem',
+              color: 'var(--text-3)',
+              marginBottom: 5,
+              textTransform: 'uppercase',
+              letterSpacing: '0.06em',
+            }}
+          >
             Toko Aktif
           </div>
           <select
             value={selectedStore?.store_id ?? ''}
             onChange={e => selectStore(e.target.value)}
             style={{
-              width: '100%', background: 'var(--bg-elevated)', border: '1px solid var(--border-md)',
-              borderRadius: 7, padding: '6px 10px', color: 'var(--text-1)', fontSize: '0.8rem',
-              cursor: 'pointer', outline: 'none',
+              width: '100%',
+              background: 'var(--bg-elevated)',
+              border: '1px solid var(--border-md)',
+              borderRadius: 7,
+              padding: '6px 10px',
+              color: 'var(--text-1)',
+              fontSize: '0.8rem',
+              cursor: 'pointer',
+              outline: 'none',
             }}
           >
             {!selectedStore && <option value="">— Pilih Toko —</option>}
             {stores.map(s => (
-              <option key={s.store_id} value={s.store_id}>{s.store_name}</option>
+              <option key={s.store_id} value={s.store_id}>
+                {s.store_name}
+              </option>
             ))}
           </select>
           {selectedStore && (
             <div style={{ display: 'flex', gap: 6, marginTop: 5, alignItems: 'center' }}>
-              <div style={{ fontSize: '0.7rem', color: 'var(--accent-em)' }}>{selectedStore.role}</div>
-              <div style={{
-                fontSize: '0.62rem', padding: '1px 5px', borderRadius: 4, fontWeight: 600,
-                background: isRestaurant ? 'rgba(251,146,60,0.15)' : 'rgba(16,185,129,0.12)',
-                color: isRestaurant ? '#fb923c' : 'var(--accent-em)',
-              }}>
+              <div style={{ fontSize: '0.7rem', color: 'var(--accent-em)' }}>
+                {selectedStore.role}
+              </div>
+              <div
+                style={{
+                  fontSize: '0.62rem',
+                  padding: '1px 5px',
+                  borderRadius: 4,
+                  fontWeight: 600,
+                  background: isRestaurant ? 'rgba(251,146,60,0.15)' : 'rgba(16,185,129,0.12)',
+                  color: isRestaurant ? '#fb923c' : 'var(--accent-em)',
+                }}
+              >
                 {isRestaurant ? '🍽️ Restaurant' : '🏪 Retail'}
               </div>
             </div>
@@ -245,17 +319,23 @@ export default function Sidebar() {
         {finalGroups.map(group => (
           <div key={group.label} style={{ marginBottom: 4 }}>
             {/* Group label */}
-            <div style={{
-              fontSize: '0.62rem', fontWeight: 700, letterSpacing: '0.09em',
-              textTransform: 'uppercase', color: 'var(--text-3)',
-              padding: '10px 14px 4px',
-            }}>
+            <div
+              style={{
+                fontSize: '0.62rem',
+                fontWeight: 700,
+                letterSpacing: '0.09em',
+                textTransform: 'uppercase',
+                color: 'var(--text-3)',
+                padding: '10px 14px 4px',
+              }}
+            >
               {group.label}
             </div>
 
             {/* Group items */}
             {group.items.map(({ href, icon: Icon, label }) => {
-              const active = pathname === href || (href !== '/dashboard' && pathname.startsWith(href));
+              const active =
+                pathname === href || (href !== '/dashboard' && pathname.startsWith(href));
               return (
                 <Link key={href} href={href} className={`nav-item ${active ? 'active' : ''}`}>
                   <Icon size={15} />
@@ -271,19 +351,45 @@ export default function Sidebar() {
       <div style={{ padding: '12px', borderTop: '1px solid var(--border)' }}>
         {user && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-            <div style={{
-              width: 32, height: 32, borderRadius: '50%', flexShrink: 0,
-              background: 'linear-gradient(135deg, var(--accent-in), var(--accent-em))',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '0.8rem', fontWeight: 700, color: '#fff',
-            }}>
+            <div
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: '50%',
+                flexShrink: 0,
+                background: 'linear-gradient(135deg, var(--accent-in), var(--accent-em))',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '0.8rem',
+                fontWeight: 700,
+                color: '#fff',
+              }}
+            >
               {user.name.charAt(0).toUpperCase()}
             </div>
             <div style={{ overflow: 'hidden' }}>
-              <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-1)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              <div
+                style={{
+                  fontSize: '0.8rem',
+                  fontWeight: 600,
+                  color: 'var(--text-1)',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                }}
+              >
                 {user.name}
               </div>
-              <div style={{ fontSize: '0.7rem', color: 'var(--text-3)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              <div
+                style={{
+                  fontSize: '0.7rem',
+                  color: 'var(--text-3)',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                }}
+              >
                 {user.email}
               </div>
             </div>
@@ -299,8 +405,11 @@ export default function Sidebar() {
           >
             {isDark ? <Sun size={14} /> : <Moon size={14} />}
           </button>
-          <button onClick={logout} className="btn btn-ghost btn-sm"
-            style={{ flex: 1, justifyContent: 'flex-start', gap: 8 }}>
+          <button
+            onClick={logout}
+            className="btn btn-ghost btn-sm"
+            style={{ flex: 1, justifyContent: 'flex-start', gap: 8 }}
+          >
             <LogOut size={14} /> Keluar
           </button>
         </div>

@@ -6,15 +6,16 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/rs/zerolog"
+
 	"github.com/moedahpos/backend/internal/domain"
 	"github.com/moedahpos/backend/internal/dto"
 	"github.com/moedahpos/backend/internal/repository"
-	"github.com/rs/zerolog"
 )
 
 // Stock-specific sentinel errors.
 var (
-	ErrProductNotInStore = errors.New("product does not belong to this store")
+	ErrProductNotInStore  = errors.New("product does not belong to this store")
 	ErrStockLevelNotFound = errors.New("stock level not found for this product")
 )
 

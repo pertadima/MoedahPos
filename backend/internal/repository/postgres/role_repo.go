@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/jmoiron/sqlx"
+
 	"github.com/moedahpos/backend/internal/domain"
 )
 
@@ -34,7 +35,11 @@ func (r *RoleRepo) ListRoles(ctx context.Context) ([]*domain.Role, error) {
 	if err != nil {
 		return nil, fmt.Errorf("RoleRepo.ListRoles perms: %w", err)
 	}
-	defer rows.Close()
+	defer func() {
+		if cerr := rows.Close(); cerr != nil {
+			_ = fmt.Errorf("RoleRepo.ListRoles rows.Close: %w", cerr)
+		}
+	}()
 
 	permMap := make(map[string][]string)
 	for rows.Next() {

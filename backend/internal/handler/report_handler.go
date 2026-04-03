@@ -5,10 +5,11 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/rs/zerolog"
+
 	"github.com/moedahpos/backend/internal/dto"
 	"github.com/moedahpos/backend/internal/service"
 	"github.com/moedahpos/backend/pkg/response"
-	"github.com/rs/zerolog"
 )
 
 // ReportHandler handles analytics and reporting endpoints.
