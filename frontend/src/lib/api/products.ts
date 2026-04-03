@@ -2,7 +2,10 @@ import { api } from './client';
 import type { Product, Category, PaginatedData } from '@/types';
 
 export const productsApi = {
-  list: (storeId: string, params?: { page?: number; per_page?: number; search?: string; category_id?: string }) => {
+  list: (
+    storeId: string,
+    params?: { page?: number; per_page?: number; search?: string; category_id?: string }
+  ) => {
     const q = new URLSearchParams();
     if (params?.page) q.set('page', String(params.page));
     if (params?.per_page) q.set('per_page', String(params.per_page));
@@ -22,8 +25,7 @@ export const productsApi = {
     api.get<Product>(`/stores/${storeId}/products/barcode/${barcode}`),
 
   // Categories
-  listCategories: (storeId: string) =>
-    api.get<Category[]>(`/stores/${storeId}/categories`),
+  listCategories: (storeId: string) => api.get<Category[]>(`/stores/${storeId}/categories`),
   createCategory: (storeId: string, payload: { name: string; parent_id?: string }) =>
     api.post<Category>(`/stores/${storeId}/categories`, payload),
   updateCategory: (storeId: string, catId: string, payload: { name: string; parent_id?: string }) =>

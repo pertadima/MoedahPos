@@ -10,7 +10,16 @@ export type TxItemInput = {
 
 export const transactionsApi = {
   // ── Existing (retail + restaurant direct checkout) ─────────────────────────
-  list: (storeId: string, params?: { page?: number; per_page?: number; status?: string; date_from?: string; date_to?: string }) => {
+  list: (
+    storeId: string,
+    params?: {
+      page?: number;
+      per_page?: number;
+      status?: string;
+      date_from?: string;
+      date_to?: string;
+    }
+  ) => {
     const q = new URLSearchParams();
     if (params?.page) q.set('page', String(params.page));
     if (params?.per_page) q.set('per_page', String(params.per_page));
@@ -23,14 +32,17 @@ export const transactionsApi = {
   get: (storeId: string, txnId: string) =>
     api.get<Transaction>(`/stores/${storeId}/transactions/${txnId}`),
 
-  checkout: (storeId: string, payload: {
-    customer_name?: string;
-    customer_phone?: string;
-    payment_method: string;
-    payment_amount: number;
-    notes?: string;
-    items: TxItemInput[];
-  }) => api.post<Transaction>(`/stores/${storeId}/transactions`, payload),
+  checkout: (
+    storeId: string,
+    payload: {
+      customer_name?: string;
+      customer_phone?: string;
+      payment_method: string;
+      payment_amount: number;
+      notes?: string;
+      items: TxItemInput[];
+    }
+  ) => api.post<Transaction>(`/stores/${storeId}/transactions`, payload),
 
   void: (storeId: string, txnId: string) =>
     api.post(`/stores/${storeId}/transactions/${txnId}/void`, {}),
@@ -42,25 +54,36 @@ export const transactionsApi = {
     api.get<Transaction | null>(`/stores/${storeId}/transactions/draft?table_id=${tableId}`),
 
   /** Create a draft order for a table (hold without payment). */
-  createDraft: (storeId: string, payload: {
-    table_id: string;
-    customer_name?: string;
-    notes?: string;
-    items: TxItemInput[];
-  }) => api.post<Transaction>(`/stores/${storeId}/transactions/draft`, payload),
+  createDraft: (
+    storeId: string,
+    payload: {
+      table_id: string;
+      customer_name?: string;
+      notes?: string;
+      items: TxItemInput[];
+    }
+  ) => api.post<Transaction>(`/stores/${storeId}/transactions/draft`, payload),
 
   /** Replace items on an existing draft. */
-  updateDraft: (storeId: string, txnId: string, payload: {
-    customer_name?: string;
-    notes?: string;
-    items: TxItemInput[];
-  }) => api.put<Transaction>(`/stores/${storeId}/transactions/${txnId}/draft`, payload),
+  updateDraft: (
+    storeId: string,
+    txnId: string,
+    payload: {
+      customer_name?: string;
+      notes?: string;
+      items: TxItemInput[];
+    }
+  ) => api.put<Transaction>(`/stores/${storeId}/transactions/${txnId}/draft`, payload),
 
   /** Pay a held draft order. */
-  payDraft: (storeId: string, txnId: string, payload: {
-    payment_method: string;
-    payment_amount: number;
-    customer_name?: string;
-    customer_phone?: string;
-  }) => api.post<Transaction>(`/stores/${storeId}/transactions/${txnId}/pay`, payload),
+  payDraft: (
+    storeId: string,
+    txnId: string,
+    payload: {
+      payment_method: string;
+      payment_amount: number;
+      customer_name?: string;
+      customer_phone?: string;
+    }
+  ) => api.post<Transaction>(`/stores/${storeId}/transactions/${txnId}/pay`, payload),
 };

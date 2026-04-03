@@ -9,52 +9,91 @@
 import { useAuth } from '@/lib/auth/AuthContext';
 
 type Permission =
-  | 'products.read'  | 'products.create' | 'products.update' | 'products.delete'
-  | 'stock.read'     | 'stock.update'
+  | 'products.read'
+  | 'products.create'
+  | 'products.update'
+  | 'products.delete'
+  | 'stock.read'
+  | 'stock.update'
   | 'reports.read'
-  | 'suppliers.read' | 'suppliers.create'| 'suppliers.update'| 'suppliers.delete'
-  | 'sales.create'   | 'sales.read'
-  | 'users.read'     | 'users.create'    | 'users.update'    | 'users.delete'
-  | 'stores.read'    | 'stores.create'   | 'stores.update'   | 'stores.delete';
+  | 'suppliers.read'
+  | 'suppliers.create'
+  | 'suppliers.update'
+  | 'suppliers.delete'
+  | 'sales.create'
+  | 'sales.read'
+  | 'users.read'
+  | 'users.create'
+  | 'users.update'
+  | 'users.delete'
+  | 'stores.read'
+  | 'stores.create'
+  | 'stores.update'
+  | 'stores.delete';
 
 type RoleName = 'superadmin' | 'admin' | 'manager' | 'cashier' | 'staff';
 
 const ROLE_PERMISSIONS: Record<RoleName, Permission[]> = {
   superadmin: [
-    'products.read', 'products.create', 'products.update', 'products.delete',
-    'stock.read', 'stock.update',
+    'products.read',
+    'products.create',
+    'products.update',
+    'products.delete',
+    'stock.read',
+    'stock.update',
     'reports.read',
-    'suppliers.read', 'suppliers.create', 'suppliers.update', 'suppliers.delete',
-    'sales.create', 'sales.read',
-    'users.read', 'users.create', 'users.update', 'users.delete',
-    'stores.read', 'stores.create', 'stores.update', 'stores.delete',
+    'suppliers.read',
+    'suppliers.create',
+    'suppliers.update',
+    'suppliers.delete',
+    'sales.create',
+    'sales.read',
+    'users.read',
+    'users.create',
+    'users.update',
+    'users.delete',
+    'stores.read',
+    'stores.create',
+    'stores.update',
+    'stores.delete',
   ],
   admin: [
-    'products.read', 'products.create', 'products.update', 'products.delete',
-    'stock.read', 'stock.update',
+    'products.read',
+    'products.create',
+    'products.update',
+    'products.delete',
+    'stock.read',
+    'stock.update',
     'reports.read',
-    'suppliers.read', 'suppliers.create', 'suppliers.update', 'suppliers.delete',
-    'sales.create', 'sales.read',
-    'users.read', 'users.create', 'users.update', 'users.delete',
-    'stores.read', 'stores.create', 'stores.update', 'stores.delete',
+    'suppliers.read',
+    'suppliers.create',
+    'suppliers.update',
+    'suppliers.delete',
+    'sales.create',
+    'sales.read',
+    'users.read',
+    'users.create',
+    'users.update',
+    'users.delete',
+    'stores.read',
+    'stores.create',
+    'stores.update',
+    'stores.delete',
   ],
   manager: [
-    'products.read', 'products.create', 'products.update',
-    'stock.read', 'stock.update',
-    'reports.read',
-    'suppliers.read', 'suppliers.create',
-    'sales.create', 'sales.read',
-  ],
-  cashier: [
-    'products.read', 'products.update',
-    'stock.read',
-    'sales.create', 'sales.read',
-  ],
-  staff: [
     'products.read',
+    'products.create',
+    'products.update',
     'stock.read',
+    'stock.update',
+    'reports.read',
+    'suppliers.read',
+    'suppliers.create',
+    'sales.create',
     'sales.read',
   ],
+  cashier: ['products.read', 'products.update', 'stock.read', 'sales.create', 'sales.read'],
+  staff: ['products.read', 'stock.read', 'sales.read'],
 };
 
 const PERMISSION_SET: Record<RoleName, Set<Permission>> = Object.fromEntries(

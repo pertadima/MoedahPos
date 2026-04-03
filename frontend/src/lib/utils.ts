@@ -18,14 +18,19 @@ export function formatRp(amount: number): string {
 /** Format a datetime string to readable local format */
 export function formatDate(iso: string): string {
   return new Intl.DateTimeFormat('id-ID', {
-    day: '2-digit', month: 'short', year: 'numeric',
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
   }).format(new Date(iso));
 }
 
 export function formatDateTime(iso: string): string {
   return new Intl.DateTimeFormat('id-ID', {
-    day: '2-digit', month: 'short', year: 'numeric',
-    hour: '2-digit', minute: '2-digit',
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
   }).format(new Date(iso));
 }
 
@@ -49,7 +54,13 @@ export function shortId(id: string): string {
 /** Get emoji icon for product based on name heuristic */
 export function productEmoji(name: string): string {
   const n = name.toLowerCase();
-  if (n.includes('coffee') || n.includes('kopi') || n.includes('americano') || n.includes('espresso')) return '☕';
+  if (
+    n.includes('coffee') ||
+    n.includes('kopi') ||
+    n.includes('americano') ||
+    n.includes('espresso')
+  )
+    return '☕';
   if (n.includes('tea') || n.includes('teh')) return '🍵';
   if (n.includes('juice') || n.includes('jus')) return '🧃';
   if (n.includes('water') || n.includes('air')) return '💧';

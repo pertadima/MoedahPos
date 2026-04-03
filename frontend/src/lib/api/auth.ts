@@ -8,11 +8,9 @@ export const authApi = {
   register: (payload: { name: string; email: string; password: string }) =>
     api.post('/auth/register', payload),
 
-  refresh: (refreshToken: string) =>
-    api.post('/auth/refresh', { refresh_token: refreshToken }),
+  refresh: (refreshToken: string) => api.post('/auth/refresh', { refresh_token: refreshToken }),
 
-  logout: (refreshToken: string) =>
-    api.post('/auth/logout', { refresh_token: refreshToken }),
+  logout: (refreshToken: string) => api.post('/auth/logout', { refresh_token: refreshToken }),
 
   me: () => api.get<User>('/auth/me'),
 };

@@ -1,5 +1,5 @@
 # golangci-lint v2 configuration
-# Docs: https://golangci-lint.run/usage/configuration/
+# Built for golangci-lint v2.11.4+
 version: "2"
 
 run:
@@ -10,100 +10,70 @@ run:
 linters:
   default: none
   enable:
-    # ── Correctness ─────────────────────────────────────────────────
-    - errcheck        # Unchecked errors
-    - govet           # go vet shadow, printf, structtag, etc.
-    - ineffassign     # Assignments never used before being overwritten
-    - staticcheck     # Large suite: SA*, S*, QF*, ST*
-    - unused          # Unused code (exported + unexported)
+    # Correctness
+    - errcheck
+    - govet
+    - ineffassign
+    - staticcheck
+    # Style
+    - misspell
+    # Code quality
+    - gocognit
+    - cyclop
+    - funlen
+    - goconst
+    - noctx
+    # Error handling
+    - errorlint
+    # Security
+    - gosec
+    # Conventions
+    - revive
 
-    # ── Style ───────────────────────────────────────────────────────────
-    - misspell        # Spelling mistakes in comments & strings
+  settings:
+    gocognit:
+      min-complexity: 20
 
-    # ── Code quality ──────────────────────────────────────────────────────
-    - gocognit        # Cognitive complexity
-    - cyclop          # Cyclomatic complexity
-    - funlen          # Function length
-    - goconst         # Repeated string literals → constants
-    - noctx           # HTTP requests without context
+    cyclop:
+      max-complexity: 15
 
-    # ── Error handling ─────────────────────────────────────────────────
-    - errorlint       # Correct use of fmt.Errorf %w, errors.Is/As
+    funlen:
+      lines: 80
+      statements: 60
 
-    # ── Security ───────────────────────────────────────────────────────
-    - gosec           # OWASP-inspired security checks
+    gosec:
+      severity: medium
+      confidence: medium
+      excludes:
+        - G104  # Covered by errcheck
 
-    # ── Naming / conventions ─────────────────────────────────────────────
-    - revive          # Configurable linter (supersedes golint)
+    revive:
+      rules:
+        - name: indent-error-flow
+        - name: error-strings
+        - name: receiver-naming
+        - name: unused-parameter
 
-# ── Formatters (v2: separate from linters) ────────────────────────────────
+    errorlint:
+      errorf: true
+      asserts: true
+      comparison: true
+
+    misspell:
+      locale: US
+
+# ── Formatters ────────────────────────────────────────────────────────────────
 formatters:
   enable:
     - gofmt
     - goimports
 
-# ── Linter-specific settings ──────────────────────────────────────────────────────
-lintersSettings:
-  gocognit:
-    min-complexity: 20
-
-  cyclop:
-    max-complexity: 15
-    skip-tests: true
-
-  funlen:
-    lines: 80
-    statements: 60
-
-  gosec:
-    severity: medium
-    confidence: medium
-    excludes:
-      - G104  # Covered by errcheck
-
-  revive:
-    rules:
-      - name: indent-error-flow
-      - name: error-strings
-      - name: receiver-naming
-      - name: unused-parameter
-
-  errorlint:
-    errorf: true
-    asserts: true
-    comparison: true
-
-  misspell:
-    locale: US
-
-# ── Formatter-specific settings ───────────────────────────────────────────────
-formattersSettings:
-  goimports:
-    local-prefixes:
-      - github.com/moedahpos/backend
+  settings:
+    goimports:
+      local-prefixes:
+        - github.com/moedahpos/backend
 
 # ── Issues ────────────────────────────────────────────────────────────────────
 issues:
   max-issues-per-linter: 0
   max-same-issues: 0
-
-  exclude-rules:
-    # Relax complexity + length rules for tests
-    - path: "_test\\.go"
-      linters: [funlen, cyclop, gocognit, gosec]
-
-    # Godoc not required inside internal packages
-    - path: "internal/"
-      linters: [godot]
-
-    # Migrations are SQL files — skip Go analysis there
-    - path: "migrations/"
-      linters: [all]
-
-    # Seeds — skip complexity
-    - path: "seeds/"
-      linters: [funlen, cyclop]
-
-  # Suppress noisy but harmless patterns
-  exclude:
-    - "Error return value of .*(Close|Log|Write|Flush).* is not checked"

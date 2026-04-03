@@ -35,17 +35,23 @@ export default function LoginPage() {
 
   return (
     <div style={{ width: '100%', maxWidth: 400 }}>
-
       {/* Theme toggle — top right of card area */}
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
         <button
           onClick={toggleTheme}
           title={isDark ? 'Mode terang' : 'Mode gelap'}
           style={{
-            background: 'var(--bg-elevated)', border: '1px solid var(--border-md)',
-            borderRadius: 8, padding: '6px 10px', cursor: 'pointer',
-            color: 'var(--text-2)', display: 'flex', alignItems: 'center', gap: 6,
-            fontSize: '0.78rem', fontWeight: 500,
+            background: 'var(--bg-elevated)',
+            border: '1px solid var(--border-md)',
+            borderRadius: 8,
+            padding: '6px 10px',
+            cursor: 'pointer',
+            color: 'var(--text-2)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            fontSize: '0.78rem',
+            fontWeight: 500,
           }}
         >
           {isDark ? <Sun size={14} /> : <Moon size={14} />}
@@ -55,12 +61,17 @@ export default function LoginPage() {
 
       {/* Logo */}
       <div style={{ textAlign: 'center', marginBottom: 28 }}>
-        <div style={{
-          width: 72, height: 72, borderRadius: 20, margin: '0 auto 16px',
-          overflow: 'hidden',
-          boxShadow: '0 0 40px rgba(8,132,246,0.30), 0 0 80px rgba(8,132,246,0.12)',
-          background: isDark ? 'transparent' : 'white',
-        }}>
+        <div
+          style={{
+            width: 72,
+            height: 72,
+            borderRadius: 20,
+            margin: '0 auto 16px',
+            overflow: 'hidden',
+            boxShadow: '0 0 40px rgba(8,132,246,0.30), 0 0 80px rgba(8,132,246,0.12)',
+            background: isDark ? 'transparent' : 'white',
+          }}
+        >
           <Image
             src={isDark ? '/logo-icon-dark.svg' : '/logo-icon-light.svg'}
             alt="Moedah"
@@ -70,7 +81,14 @@ export default function LoginPage() {
             priority
           />
         </div>
-        <h1 style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--brand)', letterSpacing: '-0.5px' }}>
+        <h1
+          style={{
+            fontSize: '1.6rem',
+            fontWeight: 800,
+            color: 'var(--brand)',
+            letterSpacing: '-0.5px',
+          }}
+        >
           Moedah POS
         </h1>
         <p style={{ color: 'var(--text-2)', marginTop: 4, fontSize: '0.9rem' }}>
@@ -81,11 +99,17 @@ export default function LoginPage() {
       {/* Card */}
       <div className="card" style={{ padding: '28px 28px 24px' }}>
         {error && (
-          <div style={{
-            background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)',
-            borderRadius: 8, padding: '10px 14px', marginBottom: 18,
-            color: '#f87171', fontSize: '0.85rem',
-          }}>
+          <div
+            style={{
+              background: 'rgba(239,68,68,0.12)',
+              border: '1px solid rgba(239,68,68,0.3)',
+              borderRadius: 8,
+              padding: '10px 14px',
+              marginBottom: 18,
+              color: '#f87171',
+              fontSize: '0.85rem',
+            }}
+          >
             {error}
           </div>
         )}
@@ -95,11 +119,24 @@ export default function LoginPage() {
           <div className="input-group">
             <label className="input-label">Email</label>
             <div style={{ position: 'relative' }}>
-              <Mail size={15} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-3)' }} />
+              <Mail
+                size={15}
+                style={{
+                  position: 'absolute',
+                  left: 12,
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  color: 'var(--text-3)',
+                }}
+              />
               <input
-                type="email" required value={email} onChange={e => setEmail(e.target.value)}
+                type="email"
+                required
+                value={email}
+                onChange={e => setEmail(e.target.value)}
                 placeholder="nama@email.com"
-                className="input" style={{ paddingLeft: 36 }}
+                className="input"
+                style={{ paddingLeft: 36 }}
               />
             </div>
           </div>
@@ -108,15 +145,40 @@ export default function LoginPage() {
           <div className="input-group">
             <label className="input-label">Password</label>
             <div style={{ position: 'relative' }}>
-              <Lock size={15} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-3)' }} />
+              <Lock
+                size={15}
+                style={{
+                  position: 'absolute',
+                  left: 12,
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  color: 'var(--text-3)',
+                }}
+              />
               <input
-                type={showPw ? 'text' : 'password'} required value={password}
+                type={showPw ? 'text' : 'password'}
+                required
+                value={password}
                 onChange={e => setPassword(e.target.value)}
                 placeholder="Password Anda"
-                className="input" style={{ paddingLeft: 36, paddingRight: 40 }}
+                className="input"
+                style={{ paddingLeft: 36, paddingRight: 40 }}
               />
-              <button type="button" onClick={() => setShowPw(!showPw)}
-                style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-3)', padding: 2 }}>
+              <button
+                type="button"
+                onClick={() => setShowPw(!showPw)}
+                style={{
+                  position: 'absolute',
+                  right: 10,
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  color: 'var(--text-3)',
+                  padding: 2,
+                }}
+              >
                 {showPw ? <EyeOff size={15} /> : <Eye size={15} />}
               </button>
             </div>
@@ -140,7 +202,9 @@ export default function LoginPage() {
         </form>
       </div>
 
-      <p style={{ textAlign: 'center', color: 'var(--text-3)', fontSize: '0.78rem', marginTop: 20 }}>
+      <p
+        style={{ textAlign: 'center', color: 'var(--text-3)', fontSize: '0.78rem', marginTop: 20 }}
+      >
         Moedah &copy; {new Date().getFullYear()} — Point of Sale System
       </p>
     </div>

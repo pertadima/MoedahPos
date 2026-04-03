@@ -1,29 +1,48 @@
 import { api } from './client';
-import type { Category, Store, RestaurantTable, MenuItem, StockLevel, StockMovement, PaginatedData } from '@/types';
+import type {
+  Category,
+  Store,
+  RestaurantTable,
+  MenuItem,
+  StockLevel,
+  StockMovement,
+  PaginatedData,
+} from '@/types';
 
 export const storesApi = {
   list: (params?: { page?: number; per_page?: number; search?: string }) => {
     const q = new URLSearchParams();
-    if (params?.page)     q.set('page',     String(params.page));
+    if (params?.page) q.set('page', String(params.page));
     if (params?.per_page) q.set('per_page', String(params.per_page));
-    if (params?.search)   q.set('search',   params.search);
+    if (params?.search) q.set('search', params.search);
     return api.get<PaginatedData<Store>>(`/stores?${q}`);
   },
-  get:    (id: string) =>
-    api.get<Store>(`/stores/${id}`),
-  create: (payload: { name: string; address?: string; phone?: string; tax_number?: string; currency?: string; store_type: string }) =>
-    api.post<Store>('/stores', payload),
-  update: (id: string, payload: { name: string; address?: string; phone?: string; tax_number?: string; currency?: string; store_type: string; is_active?: boolean }) =>
-    api.put<Store>(`/stores/${id}`, payload),
-  softDelete: (id: string) =>
-    api.delete(`/stores/${id}`),
+  get: (id: string) => api.get<Store>(`/stores/${id}`),
+  create: (payload: {
+    name: string;
+    address?: string;
+    phone?: string;
+    tax_number?: string;
+    currency?: string;
+    store_type: string;
+  }) => api.post<Store>('/stores', payload),
+  update: (
+    id: string,
+    payload: {
+      name: string;
+      address?: string;
+      phone?: string;
+      tax_number?: string;
+      currency?: string;
+      store_type: string;
+      is_active?: boolean;
+    }
+  ) => api.put<Store>(`/stores/${id}`, payload),
+  softDelete: (id: string) => api.delete(`/stores/${id}`),
 };
 
-
-
 export const categoriesApi = {
-  list: (storeId: string) =>
-    api.get<Category[]>(`/stores/${storeId}/categories`),
+  list: (storeId: string) => api.get<Category[]>(`/stores/${storeId}/categories`),
   create: (storeId: string, payload: { name: string; parent_id?: string }) =>
     api.post<Category>(`/stores/${storeId}/categories`, payload),
   update: (storeId: string, categoryId: string, payload: { name: string; parent_id?: string }) =>
@@ -33,21 +52,21 @@ export const categoriesApi = {
 };
 
 export const tablesApi = {
-  list: (storeId: string) =>
-    api.get<RestaurantTable[]>(`/stores/${storeId}/tables`),
+  list: (storeId: string) => api.get<RestaurantTable[]>(`/stores/${storeId}/tables`),
   create: (storeId: string, payload: { table_number: string; capacity: number; notes?: string }) =>
     api.post<RestaurantTable>(`/stores/${storeId}/tables`, payload),
-  update: (storeId: string, tableId: string, payload: { table_number: string; capacity: number; notes?: string; is_active?: boolean }) =>
-    api.put<RestaurantTable>(`/stores/${storeId}/tables/${tableId}`, payload),
+  update: (
+    storeId: string,
+    tableId: string,
+    payload: { table_number: string; capacity: number; notes?: string; is_active?: boolean }
+  ) => api.put<RestaurantTable>(`/stores/${storeId}/tables/${tableId}`, payload),
   updateStatus: (storeId: string, tableId: string, status: string) =>
     api.put(`/stores/${storeId}/tables/${tableId}/status`, { status }),
-  delete: (storeId: string, tableId: string) =>
-    api.delete(`/stores/${storeId}/tables/${tableId}`),
+  delete: (storeId: string, tableId: string) => api.delete(`/stores/${storeId}/tables/${tableId}`),
 };
 
 export const menuItemsApi = {
-  list: (storeId: string) =>
-    api.get<MenuItem[]>(`/stores/${storeId}/menu-items`),
+  list: (storeId: string) => api.get<MenuItem[]>(`/stores/${storeId}/menu-items`),
   create: (storeId: string, payload: object) =>
     api.post<MenuItem>(`/stores/${storeId}/menu-items`, payload),
   update: (storeId: string, menuItemId: string, payload: object) =>
@@ -55,7 +74,6 @@ export const menuItemsApi = {
   delete: (storeId: string, menuItemId: string) =>
     api.delete(`/stores/${storeId}/menu-items/${menuItemId}`),
 };
-
 
 export const stockApi = {
   levels: (storeId: string, lowStockOnly = false) =>
@@ -66,8 +84,10 @@ export const stockApi = {
     if (params?.per_page) q.set('per_page', String(params.per_page));
     return api.get<PaginatedData<StockMovement>>(`/stores/${storeId}/stock/movements?${q}`);
   },
-  adjust: (storeId: string, payload: { product_id: string; quantity_delta: number; notes: string }) =>
-    api.post(`/stores/${storeId}/stock/adjust`, payload),
+  adjust: (
+    storeId: string,
+    payload: { product_id: string; quantity_delta: number; notes: string }
+  ) => api.post(`/stores/${storeId}/stock/adjust`, payload),
   setMin: (storeId: string, payload: { product_id: string; min_quantity: number }) =>
     api.put(`/stores/${storeId}/stock/min`, payload),
 };
@@ -93,8 +113,7 @@ export const purchaseOrdersApi = {
   cancel: (storeId: string, poId: string) =>
     api.delete(`/stores/${storeId}/purchase-orders/${poId}`),
   // Accounts Payable
-  payableSummary: (storeId: string) =>
-    api.get<any>(`/stores/${storeId}/purchase-orders/payables`),
+  payableSummary: (storeId: string) => api.get<any>(`/stores/${storeId}/purchase-orders/payables`),
   listPayments: (storeId: string, poId: string) =>
     api.get<any>(`/stores/${storeId}/purchase-orders/${poId}/payments`),
   createPayment: (storeId: string, poId: string, body: { amount: number; note?: string }) =>
@@ -134,9 +153,13 @@ export const reportsApi = {
     if (dateTo) q.set('date_to', dateTo);
     return api.get<any>(`/stores/${storeId}/reports/sales/by-cashier?${q}`);
   },
-  stockValuation: (storeId: string) =>
-    api.get<any>(`/stores/${storeId}/reports/stock-valuation`),
-  profit: (storeId: string, dateFrom?: string, dateTo?: string, groupBy: 'day' | 'week' | 'month' = 'day') => {
+  stockValuation: (storeId: string) => api.get<any>(`/stores/${storeId}/reports/stock-valuation`),
+  profit: (
+    storeId: string,
+    dateFrom?: string,
+    dateTo?: string,
+    groupBy: 'day' | 'week' | 'month' = 'day'
+  ) => {
     const q = new URLSearchParams({ group_by: groupBy });
     if (dateFrom) q.set('date_from', dateFrom);
     if (dateTo) q.set('date_to', dateTo);
@@ -145,17 +168,24 @@ export const reportsApi = {
 };
 
 export const priceHistoryApi = {
-  listByStore: (storeId: string, params?: { product_id?: string; source?: string; page?: number; per_page?: number }) => {
+  listByStore: (
+    storeId: string,
+    params?: { product_id?: string; source?: string; page?: number; per_page?: number }
+  ) => {
     const q = new URLSearchParams();
     if (params?.product_id) q.set('product_id', params.product_id);
-    if (params?.source)     q.set('source', params.source);
-    if (params?.page)       q.set('page', String(params.page));
-    if (params?.per_page)   q.set('per_page', String(params.per_page));
+    if (params?.source) q.set('source', params.source);
+    if (params?.page) q.set('page', String(params.page));
+    if (params?.per_page) q.set('per_page', String(params.per_page));
     return api.get<any>(`/stores/${storeId}/price-history?${q}`);
   },
-  listByProduct: (storeId: string, productId: string, params?: { page?: number; per_page?: number }) => {
+  listByProduct: (
+    storeId: string,
+    productId: string,
+    params?: { page?: number; per_page?: number }
+  ) => {
     const q = new URLSearchParams();
-    if (params?.page)     q.set('page', String(params.page));
+    if (params?.page) q.set('page', String(params.page));
     if (params?.per_page) q.set('per_page', String(params.per_page));
     return api.get<any>(`/stores/${storeId}/products/${productId}/price-history?${q}`);
   },
@@ -164,34 +194,41 @@ export const priceHistoryApi = {
 export const customersApi = {
   list: (storeId: string, params?: { page?: number; per_page?: number; search?: string }) => {
     const q = new URLSearchParams();
-    if (params?.page)     q.set('page', String(params.page));
+    if (params?.page) q.set('page', String(params.page));
     if (params?.per_page) q.set('per_page', String(params.per_page));
-    if (params?.search)   q.set('search', params.search);
+    if (params?.search) q.set('search', params.search);
     return api.get<any>(`/stores/${storeId}/customers?${q}`);
   },
   search: (storeId: string, query: string) =>
     api.get<any>(`/stores/${storeId}/customers/search?q=${encodeURIComponent(query)}`),
-  get:    (storeId: string, id: string) => api.get<any>(`/stores/${storeId}/customers/${id}`),
+  get: (storeId: string, id: string) => api.get<any>(`/stores/${storeId}/customers/${id}`),
   create: (storeId: string, body: object) => api.post<any>(`/stores/${storeId}/customers`, body),
-  update: (storeId: string, id: string, body: object) => api.put<any>(`/stores/${storeId}/customers/${id}`, body),
+  update: (storeId: string, id: string, body: object) =>
+    api.put<any>(`/stores/${storeId}/customers/${id}`, body),
   delete: (storeId: string, id: string) => api.delete<any>(`/stores/${storeId}/customers/${id}`),
 };
 
 export const usersAdminApi = {
-  list:          (params?: { search?: string; include_inactive?: boolean; page?: number; per_page?: number }) => {
+  list: (params?: {
+    search?: string;
+    include_inactive?: boolean;
+    page?: number;
+    per_page?: number;
+  }) => {
     const q = new URLSearchParams();
-    if (params?.search)           q.set('search', params.search);
+    if (params?.search) q.set('search', params.search);
     if (params?.include_inactive) q.set('include_inactive', 'true');
-    if (params?.page)             q.set('page', String(params.page));
-    if (params?.per_page)         q.set('per_page', String(params.per_page));
+    if (params?.page) q.set('page', String(params.page));
+    if (params?.per_page) q.set('per_page', String(params.per_page));
     return api.get<any>(`/admin/users?${q}`);
   },
-  get:           (id: string) => api.get<any>(`/admin/users/${id}`),
-  create:        (body: object) => api.post<any>('/admin/users', body),
-  update:        (id: string, body: object) => api.put<any>(`/admin/users/${id}`, body),
-  deactivate:    (id: string) => api.post<any>(`/admin/users/${id}/deactivate`, {}),
-  resetPassword: (id: string, body: { password: string }) => api.post<any>(`/admin/users/${id}/reset-password`, body),
-  setStores:     (id: string, stores: { store_id: string; role_id: string }[]) =>
+  get: (id: string) => api.get<any>(`/admin/users/${id}`),
+  create: (body: object) => api.post<any>('/admin/users', body),
+  update: (id: string, body: object) => api.put<any>(`/admin/users/${id}`, body),
+  deactivate: (id: string) => api.post<any>(`/admin/users/${id}/deactivate`, {}),
+  resetPassword: (id: string, body: { password: string }) =>
+    api.post<any>(`/admin/users/${id}/reset-password`, body),
+  setStores: (id: string, stores: { store_id: string; role_id: string }[]) =>
     api.put<any>(`/admin/users/${id}/stores`, { stores }),
 };
 

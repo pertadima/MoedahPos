@@ -25,10 +25,9 @@ jobs:
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v6
         with:
-          version: latest
+          version: v2.11.4
           working-directory: backend
-          args: --timeout=5m --color always
-          # Cache lint results between runs
+          args: --timeout=5m
           skip-cache: false
 
   # ── Backend: Build check ────────────────────────────────────────────────────
