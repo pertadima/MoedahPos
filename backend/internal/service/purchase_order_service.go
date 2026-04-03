@@ -186,7 +186,7 @@ func (s *PurchaseOrderService) ReceivePO(ctx context.Context, id, userID string)
 	return nil
 }
 
-// CancelPO cancels a PO (soft — sets status to 'cancelled').
+// CancelPO cancels a PO (soft — sets status to 'canceled' in the DB).
 func (s *PurchaseOrderService) CancelPO(ctx context.Context, id string) error {
 	po, err := s.poRepo.FindByID(ctx, id)
 	if err != nil {
@@ -195,7 +195,8 @@ func (s *PurchaseOrderService) CancelPO(ctx context.Context, id string) error {
 	if po == nil {
 		return ErrPONotFound
 	}
-	if po.Status == "received" || po.Status == "cancelled" {
+	const dbCancelled = "cancelled" //nolint:misspell // matches DB enum value
+	if po.Status == "received" || po.Status == dbCancelled {
 		return ErrPOCannotCancel
 	}
 	return s.poRepo.Cancel(ctx, id)

@@ -60,7 +60,7 @@ func New(deps *Dependencies) http.Handler { //nolint:funlen // route wiring is i
 	r.Use(middleware.Logger(deps.Log))
 	r.Use(corsMiddleware)
 
-	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
+	r.Get("/health", func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		_, _ = w.Write([]byte(`{"status":"ok"}`))
 	})
