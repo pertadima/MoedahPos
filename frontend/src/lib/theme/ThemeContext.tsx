@@ -16,22 +16,24 @@ const ThemeContext = createContext<ThemeContextValue>({
   isDark: true,
 });
 
-export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setTheme] = useState<Theme>('dark');
+function getInitialTheme(): Theme {
+  if (typeof window === 'undefined') return 'dark';
+  return (localStorage.getItem('moedah-theme') as Theme) ?? 'dark';
+}
 
-  // Hydrate from localStorage on mount
+export function ThemeProvider({ children }: { children: ReactNode }) {
+  // Initialize directly from localStorage to avoid setState-in-effect
+  const [theme, setTheme] = useState<Theme>(getInitialTheme);
+
+  // Sync the data-theme attribute whenever theme changes
   useEffect(() => {
-    const saved = localStorage.getItem('moedah-theme') as Theme | null;
-    const initial = saved ?? 'dark';
-    setTheme(initial);
-    document.documentElement.setAttribute('data-theme', initial);
-  }, []);
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [theme]);
 
   const toggleTheme = () => {
     setTheme(prev => {
       const next: Theme = prev === 'dark' ? 'light' : 'dark';
       localStorage.setItem('moedah-theme', next);
-      document.documentElement.setAttribute('data-theme', next);
       return next;
     });
   };

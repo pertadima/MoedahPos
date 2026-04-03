@@ -7,7 +7,7 @@ type Transaction struct {
 	ID            string    `db:"id"`
 	StoreID       string    `db:"store_id"`
 	CashierID     string    `db:"cashier_id"`
-	TableID       *string   `db:"table_id"`   // nil for retail; set for restaurant draft orders
+	TableID       *string   `db:"table_id"` // nil for retail; set for restaurant draft orders
 	CustomerName  string    `db:"customer_name"`
 	CustomerPhone string    `db:"customer_phone"`
 	Subtotal      float64   `db:"subtotal"`
@@ -33,10 +33,10 @@ type TransactionItem struct {
 	TransactionID string  `db:"transaction_id"`
 	ProductID     *string `db:"product_id"`
 	ProductName   string  `db:"product_name"` // snapshot
-	SKU           string  `db:"sku"`           // snapshot
+	SKU           string  `db:"sku"`          // snapshot
 	Quantity      float64 `db:"quantity"`
 	UnitPrice     float64 `db:"unit_price"`
-	CostPrice     float64 `db:"cost_price"`    // snapshot of cost at time of sale
+	CostPrice     float64 `db:"cost_price"` // snapshot of cost at time of sale
 	DiscountPct   float64 `db:"discount_pct"`
 	TaxRate       float64 `db:"tax_rate"`
 	Subtotal      float64 `db:"subtotal"`

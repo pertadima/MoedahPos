@@ -21,6 +21,9 @@ var (
 	ErrDraftNotFound            = errors.New("draft order not found")
 )
 
+// statusDraft is the transaction status for held (unpaid) orders.
+const statusDraft = "draft"
+
 // TransactionService implements cashier checkout logic.
 type TransactionService struct {
 	txnRepo      repository.TransactionRepository
@@ -41,7 +44,7 @@ func NewTransactionService(
 }
 
 // Checkout processes a sale: validates stock, calculates totals, persists atomically.
-func (s *TransactionService) Checkout(ctx context.Context, storeID string, req *dto.CreateTransactionRequest, cashierID string) (*dto.TransactionResponse, error) {
+func (s *TransactionService) Checkout(ctx context.Context, storeID string, req *dto.CreateTransactionRequest, cashierID string) (*dto.TransactionResponse, error) { //nolint:gocognit // retail+restaurant dual path
 	var (
 		inputItems  []domain.CreateTransactionItemInput
 		subtotal    float64
@@ -244,7 +247,7 @@ func (s *TransactionService) VoidTransaction(ctx context.Context, id, userID str
 // ─── Draft / Table Order Methods ──────────────────────────────────────────────
 
 // buildItems resolves and prices items from TxItemInput — shared by Checkout and CreateDraft.
-func (s *TransactionService) buildItems(ctx context.Context, storeID string, reqItems []dto.TxItemInput, checkStock bool,
+func (s *TransactionService) buildItems(ctx context.Context, storeID string, reqItems []dto.TxItemInput, _ bool,
 ) ([]domain.CreateTransactionItemInput, float64, float64, float64, error) {
 	var inputItems []domain.CreateTransactionItemInput
 	var subtotal, discountAmt, taxAmt float64
@@ -335,7 +338,7 @@ func (s *TransactionService) CreateDraft(ctx context.Context, storeID, cashierID
 		StoreID:      storeID,
 		CashierID:    cashierID,
 		TableID:      &tableID,
-		Status:       "draft",
+		Status:       statusDraft,
 		CustomerName: req.CustomerName,
 		Notes:        req.Notes,
 		Subtotal:     subtotal,
@@ -358,7 +361,7 @@ func (s *TransactionService) UpdateDraftItems(ctx context.Context, storeID, txnI
 	if err != nil || existing == nil {
 		return nil, ErrDraftNotFound
 	}
-	if existing.StoreID != storeID || existing.Status != "draft" {
+	if existing.StoreID != storeID || existing.Status != statusDraft {
 		return nil, ErrDraftNotFound
 	}
 
@@ -382,7 +385,7 @@ func (s *TransactionService) PayDraft(ctx context.Context, storeID, txnID, cashi
 	if err != nil || existing == nil {
 		return nil, ErrDraftNotFound
 	}
-	if existing.StoreID != storeID || existing.Status != "draft" {
+	if existing.StoreID != storeID || existing.Status != statusDraft {
 		return nil, ErrDraftNotFound
 	}
 	if req.PaymentAmount < existing.Total {

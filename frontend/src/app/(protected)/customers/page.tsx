@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
   Users, Plus, Loader2, X, Search, Phone, Mail, MapPin,
-  FileText, Edit3, Archive, User, ChevronRight,
+  FileText, Edit3, Archive, ChevronRight,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { usePermission } from '@/hooks/usePermission';
@@ -13,7 +13,7 @@ import type { Customer } from '@/types';
 import { ApiError } from '@/lib/api/client';
 
 // ── Empty form ────────────────────────────────────────────────────────────────
-const EMPTY = { name: '', phone: '', email: '', address: '', notes: '' };
+
 
 // ── Customer Form Modal ───────────────────────────────────────────────────────
 interface FormModalProps {
@@ -256,9 +256,11 @@ export default function CustomersPage() {
       .finally(() => setLoading(false));
   }, [storeId, page, search]);
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { load(); }, [load]);
 
-  // Debounce search
+  // Debounce search — reset page when search changes
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { setPage(1); }, [search]);
 
   const onSuccess = () => {

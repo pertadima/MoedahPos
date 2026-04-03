@@ -30,31 +30,31 @@ type CategoryResponse struct {
 
 // CreateProductRequest is the input for POST /stores/:storeId/products.
 type CreateProductRequest struct {
-	CategoryID  *string  `json:"category_id"  validate:"omitempty,uuid"`
-	SKU         string   `json:"sku"          validate:"required,min=1,max=100"`
-	Name        string   `json:"name"         validate:"required,min=1,max=200"`
-	Description string   `json:"description"`
-	Barcode     *string  `json:"barcode"      validate:"omitempty,max=100"`
-	Unit        string   `json:"unit"         validate:"required,max=20"`
-	CostPrice   float64  `json:"cost_price"   validate:"min=0"`
-	SellPrice   float64  `json:"sell_price"   validate:"min=0"`
-	TaxRate     float64  `json:"tax_rate"     validate:"min=0,max=100"`
-	ImageURL    *string  `json:"image_url"`
-	InitialQty  float64  `json:"initial_qty"` // sets stock level on creation
+	CategoryID  *string `json:"category_id"  validate:"omitempty,uuid"`
+	SKU         string  `json:"sku"          validate:"required,min=1,max=100"`
+	Name        string  `json:"name"         validate:"required,min=1,max=200"`
+	Description string  `json:"description"`
+	Barcode     *string `json:"barcode"      validate:"omitempty,max=100"`
+	Unit        string  `json:"unit"         validate:"required,max=20"`
+	CostPrice   float64 `json:"cost_price"   validate:"min=0"`
+	SellPrice   float64 `json:"sell_price"   validate:"min=0"`
+	TaxRate     float64 `json:"tax_rate"     validate:"min=0,max=100"`
+	ImageURL    *string `json:"image_url"`
+	InitialQty  float64 `json:"initial_qty"` // sets stock level on creation
 }
 
 // UpdateProductRequest is the input for PUT /stores/:storeId/products/:id.
 type UpdateProductRequest struct {
-	CategoryID  *string  `json:"category_id"  validate:"omitempty,uuid"`
-	Name        string   `json:"name"         validate:"required,min=1,max=200"`
-	Description string   `json:"description"`
-	Barcode     *string  `json:"barcode"      validate:"omitempty,max=100"`
-	Unit        string   `json:"unit"         validate:"required,max=20"`
-	CostPrice   float64  `json:"cost_price"   validate:"min=0"`
-	SellPrice   float64  `json:"sell_price"   validate:"min=0"`
-	TaxRate     float64  `json:"tax_rate"     validate:"min=0,max=100"`
-	ImageURL    *string  `json:"image_url"`
-	IsActive    *bool    `json:"is_active"`
+	CategoryID  *string `json:"category_id"  validate:"omitempty,uuid"`
+	Name        string  `json:"name"         validate:"required,min=1,max=200"`
+	Description string  `json:"description"`
+	Barcode     *string `json:"barcode"      validate:"omitempty,max=100"`
+	Unit        string  `json:"unit"         validate:"required,max=20"`
+	CostPrice   float64 `json:"cost_price"   validate:"min=0"`
+	SellPrice   float64 `json:"sell_price"   validate:"min=0"`
+	TaxRate     float64 `json:"tax_rate"     validate:"min=0,max=100"`
+	ImageURL    *string `json:"image_url"`
+	IsActive    *bool   `json:"is_active"`
 }
 
 // ProductResponse is a single product in responses.
@@ -83,8 +83,8 @@ type ProductResponse struct {
 type ProductListFilter struct {
 	PaginationQuery
 	StoreID    string
-	Search     string  // searches name and SKU
+	Search     string // searches name and SKU
 	CategoryID string
-	IsActive   *bool   // nil = active only by default
-	WithStock  bool    // join stock_levels
+	IsActive   *bool // nil = active only by default
+	WithStock  bool  // join stock_levels
 }

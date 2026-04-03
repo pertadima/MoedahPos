@@ -29,9 +29,9 @@ func NewCustomerHandler(svc *service.CustomerService, v *validator.Validator, lo
 func (h *CustomerHandler) List(w http.ResponseWriter, r *http.Request) {
 	storeID := chi.URLParam(r, "storeId")
 	f := dto.CustomerListFilter{StoreID: storeID}
-	f.Page, _    = strconv.Atoi(r.URL.Query().Get("page"))
+	f.Page, _ = strconv.Atoi(r.URL.Query().Get("page"))
 	f.PerPage, _ = strconv.Atoi(r.URL.Query().Get("per_page"))
-	f.Search      = r.URL.Query().Get("search")
+	f.Search = r.URL.Query().Get("search")
 
 	customers, meta, err := h.svc.List(r.Context(), f)
 	if err != nil {

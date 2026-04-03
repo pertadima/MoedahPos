@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import {
   ClipboardList, Plus, Loader2, X, ChevronRight,
-  Package, User, Calendar, FileText, Hash, TrendingUp,
+  Package, User, Calendar, Hash,
   AlertTriangle, CheckCircle2, Printer, Wallet, CreditCard,
   AlertCircle, BadgeCheck, Clock,
 } from 'lucide-react';
@@ -267,7 +267,7 @@ interface PODetailDrawerProps {
   onClose: () => void; onInvoice: () => void;
   onAction: (action: ActionType) => void; onPay: () => void;
 }
-function PODetailDrawer({ po, storeId, payments, onClose, onInvoice, onAction, onPay }: PODetailDrawerProps) {
+function PODetailDrawer({ po, storeId: _storeId, payments, onClose, onInvoice, onAction, onPay }: PODetailDrawerProps) {
   const payStatus  = (po as any).payment_status ?? 'unpaid';
   const amountPaid = (po as any).amount_paid ?? 0;
   const amountDue  = (po as any).amount_due  ?? (po.total_amount - amountPaid);

@@ -9,7 +9,7 @@ import {
 import { useAuth } from '@/lib/auth/AuthContext';
 import { transactionsApi } from '@/lib/api/transactions';
 import { formatRp } from '@/lib/utils';
-import type { Transaction, PaginatedData } from '@/types';
+import type { Transaction } from '@/types';
 import { ApiError } from '@/lib/api/client';
 
 // ── Date helpers ──────────────────────────────────────────────────────────────

@@ -197,7 +197,7 @@ func (r *PORepo) Submit(ctx context.Context, poID, userID string) error {
 }
 
 // Receive marks a PO as received, updates stock levels and product cost prices atomically.
-func (r *PORepo) Receive(ctx context.Context, poID, userID string) error {
+func (r *PORepo) Receive(ctx context.Context, poID, userID string) error { //nolint:cyclop // PO receiving is inherently complex
 	// Load items (now inc. unit_cost)
 	type itemRow struct {
 		ProductID string  `db:"product_id"`

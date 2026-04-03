@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -21,6 +22,7 @@ type UserAdminHandler struct {
 	log       zerolog.Logger
 }
 
+// NewUserAdminHandler constructs a UserAdminHandler.
 func NewUserAdminHandler(svc *service.UserAdminService, v *validator.Validator, log zerolog.Logger) *UserAdminHandler {
 	return &UserAdminHandler{svc: svc, validator: v, log: log}
 }
@@ -54,7 +56,7 @@ func (h *UserAdminHandler) Get(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "userId")
 	u, err := h.svc.GetUser(r.Context(), id)
 	if err != nil {
-		if err == service.ErrAdminUserNotFound {
+		if errors.Is(err, service.ErrAdminUserNotFound) {
 			response.Error(w, http.StatusNotFound, "User not found")
 			return
 		}
@@ -78,7 +80,7 @@ func (h *UserAdminHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 	u, err := h.svc.CreateUser(r.Context(), &req)
 	if err != nil {
-		if err == service.ErrAdminEmailConflict {
+		if errors.Is(err, service.ErrAdminEmailConflict) {
 			response.Error(w, http.StatusConflict, "Email already in use")
 			return
 		}
@@ -103,10 +105,10 @@ func (h *UserAdminHandler) Update(w http.ResponseWriter, r *http.Request) {
 
 	u, err := h.svc.UpdateUser(r.Context(), id, &req)
 	if err != nil {
-		switch err {
-		case service.ErrAdminUserNotFound:
+		switch {
+		case errors.Is(err, service.ErrAdminUserNotFound):
 			response.Error(w, http.StatusNotFound, "User not found")
-		case service.ErrAdminEmailConflict:
+		case errors.Is(err, service.ErrAdminEmailConflict):
 			response.Error(w, http.StatusConflict, "Email already in use")
 		default:
 			response.Error(w, http.StatusInternalServerError, "Failed to update user")
@@ -116,11 +118,11 @@ func (h *UserAdminHandler) Update(w http.ResponseWriter, r *http.Request) {
 	response.JSON(w, http.StatusOK, u)
 }
 
-// Deactivate godoc — POST /admin/users/:userId/deactivate  (soft-delete)
+// Deactivate godoc — POST /admin/users/:userId/deactivate (soft-delete)
 func (h *UserAdminHandler) Deactivate(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "userId")
 	if err := h.svc.DeactivateUser(r.Context(), id); err != nil {
-		if err == service.ErrAdminUserNotFound {
+		if errors.Is(err, service.ErrAdminUserNotFound) {
 			response.Error(w, http.StatusNotFound, "User not found")
 			return
 		}
@@ -143,7 +145,7 @@ func (h *UserAdminHandler) ResetPassword(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	if err := h.svc.ResetPassword(r.Context(), id, &req); err != nil {
-		if err == service.ErrAdminUserNotFound {
+		if errors.Is(err, service.ErrAdminUserNotFound) {
 			response.Error(w, http.StatusNotFound, "User not found")
 			return
 		}
@@ -164,7 +166,7 @@ func (h *UserAdminHandler) SetStores(w http.ResponseWriter, r *http.Request) {
 
 	u, err := h.svc.SetUserStores(r.Context(), id, &req)
 	if err != nil {
-		if err == service.ErrAdminUserNotFound {
+		if errors.Is(err, service.ErrAdminUserNotFound) {
 			response.Error(w, http.StatusNotFound, "User not found")
 			return
 		}

@@ -5,7 +5,7 @@ import { Search, Plus, Package, Pencil, Trash2, Loader2, X, ChevronLeft, Chevron
 import { useAuth } from '@/lib/auth/AuthContext';
 import { usePermission } from '@/hooks/usePermission';
 import { productsApi } from '@/lib/api/products';
-import { formatRp, formatDate } from '@/lib/utils';
+import { formatRp } from '@/lib/utils';
 import type { Product, Category } from '@/types';
 import { ApiError } from '@/lib/api/client';
 

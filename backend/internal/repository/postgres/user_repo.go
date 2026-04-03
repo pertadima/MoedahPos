@@ -207,7 +207,7 @@ func (r *UserRepo) SetStores(ctx context.Context, userID string, assignments []d
 	if err != nil {
 		return fmt.Errorf("UserRepo.SetStores begin: %w", err)
 	}
-	defer tx.Rollback()
+	defer func() { _ = tx.Rollback() }() // intentional: no-op after commit
 
 	// Deactivate all existing
 	if _, err = tx.ExecContext(ctx, `UPDATE user_stores SET is_active=false WHERE user_id=$1`, userID); err != nil {

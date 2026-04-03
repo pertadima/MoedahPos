@@ -1,14 +1,14 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { BarChart3, Loader2, TrendingUp, Package, TrendingDown, Activity } from 'lucide-react';
+import { useEffect, useState, useCallback } from 'react';
+import { BarChart3, Loader2, TrendingUp, TrendingDown, Activity } from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { reportsApi } from '@/lib/api/store-apis';
 import { formatRp, todayStr, thirtyDaysAgoStr } from '@/lib/utils';
 import type { SalesSummaryResponse, SalesByProductRow } from '@/types';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
-  ComposedChart, Line, Area, AreaChart,
+  ComposedChart, Line, Area,
 } from 'recharts';
 
 type Tab = 'sales' | 'products' | 'profit' | 'valuation';
@@ -73,15 +73,18 @@ export default function ReportsPage() {
   };
 
   // Reload profit when groupBy changes while on the profit tab
-  useEffect(() => {
-    if (!storeId) return;
-    if (tab !== 'profit') return;
+  const reloadProfit = useCallback(() => {
+    if (!storeId || tab !== 'profit') return;
     reportsApi.profit(storeId, dateFrom, dateTo, groupBy)
       .then(r => setProfit(r.data))
       .catch(console.error);
-  }, [groupBy]);
+  }, [storeId, tab, dateFrom, dateTo, groupBy]);
 
-  useEffect(() => { load(); }, [storeId]);
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => { reloadProfit(); }, [reloadProfit]);
+
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => { load(); }, [storeId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const chartData = (summary?.rows ?? []).slice().reverse().map(r => ({
     date: r.date.slice(5),

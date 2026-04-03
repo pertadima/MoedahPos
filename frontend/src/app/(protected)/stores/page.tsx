@@ -224,7 +224,7 @@ export default function StoresPage() {
             {search ? 'Tidak ditemukan' : 'Belum ada toko'}
           </p>
           <p style={{ fontSize: '0.85rem' }}>
-            {search ? `Tidak ada toko dengan nama "${search}"` : 'Klik "Tambah Toko" untuk membuat toko pertama.'}
+            {search ? `Tidak ada toko dengan nama "${search}"` : 'Klik &ldquo;Tambah Toko" untuk membuat toko pertama.'}
           </p>
         </div>
       ) : (
@@ -514,7 +514,7 @@ export default function StoresPage() {
             </div>
             <div style={{ fontWeight: 700, fontSize: '1rem', marginBottom: 8 }}>Hapus Toko?</div>
             <div style={{ fontSize: '0.85rem', color: 'var(--text-2)', lineHeight: 1.7, marginBottom: 6 }}>
-              Toko <strong style={{ color: 'var(--text-1)' }}>"{deleteConfirm.store.name}"</strong> akan dihapus secara <em>soft-delete</em>.
+              Toko <strong style={{ color: 'var(--text-1)' }}>&ldquo;{deleteConfirm.store.name}&rdquo;</strong> akan dihapus secara <em>soft-delete</em>.
             </div>
             <div style={{
               fontSize: '0.78rem', color: 'var(--text-3)',

@@ -5,7 +5,7 @@ package dto
 // AdjustStockRequest is the input for POST /stores/:storeId/stock/adjust.
 type AdjustStockRequest struct {
 	ProductID string  `json:"product_id" validate:"required,uuid"`
-	Delta     float64 `json:"delta"      validate:"required"`  // positive = in, negative = out
+	Delta     float64 `json:"delta"      validate:"required"` // positive = in, negative = out
 	Notes     string  `json:"notes"      validate:"max=500"`
 }
 

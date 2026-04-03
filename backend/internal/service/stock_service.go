@@ -14,7 +14,7 @@ import (
 
 // Stock-specific sentinel errors.
 var (
-	ErrProductNotInStore = errors.New("product does not belong to this store")
+	ErrProductNotInStore  = errors.New("product does not belong to this store")
 	ErrStockLevelNotFound = errors.New("stock level not found for this product")
 )
 

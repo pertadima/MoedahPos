@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import {
   Grid3x3, Plus, Pencil, Trash2, Check, X, Loader2,
-  Users, AlertTriangle, Clock,
+  Users, AlertTriangle,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { usePermission } from '@/hooks/usePermission';
@@ -131,7 +131,7 @@ export default function TablesPage() {
       <div className="empty-state card" style={{ padding: 48 }}>
         <Grid3x3 size={40} style={{ color: 'var(--text-3)' }} />
         <p style={{ fontWeight: 600, color: 'var(--text-2)' }}>Manajemen Meja hanya tersedia untuk tipe Restoran</p>
-        <p style={{ fontSize: '0.82rem' }}>Ubah tipe toko ke "Restaurant" di pengaturan toko.</p>
+        <p style={{ fontSize: '0.82rem' }}>Ubah tipe toko ke &ldquo;Restaurant&rdquo; di pengaturan toko.</p>
       </div>
     </div>
   );
@@ -192,7 +192,7 @@ export default function TablesPage() {
         <div className="empty-state card" style={{ padding: 60 }}>
           <Grid3x3 size={48} style={{ color: 'var(--text-3)' }} />
           <p style={{ fontWeight: 600, color: 'var(--text-2)' }}>Belum ada meja</p>
-          <p style={{ fontSize: '0.85rem' }}>Klik "Tambah Meja" untuk menambahkan meja pertama.</p>
+          <p style={{ fontSize: '0.85rem' }}>Klik &ldquo;Tambah Meja&rdquo; untuk menambahkan meja pertama.</p>
         </div>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 14 }}>
@@ -336,7 +336,7 @@ export default function TablesPage() {
             </div>
             <div style={{ fontWeight: 700, fontSize: '1rem', marginBottom: 8 }}>Hapus Meja?</div>
             <div style={{ fontSize: '0.85rem', color: 'var(--text-2)', marginBottom: 20, lineHeight: 1.6 }}>
-              Meja <strong>"{deleteConfirm.table.table_number}"</strong> akan dihapus secara permanen.
+              Meja <strong>&ldquo;{deleteConfirm.table.table_number}&rdquo;</strong> akan dihapus secara permanen.
             </div>
             <div style={{ display: 'flex', gap: 10 }}>
               <button className="btn btn-ghost" onClick={() => setDeleteConfirm({ open: false })} style={{ flex: 1 }}>Batal</button>

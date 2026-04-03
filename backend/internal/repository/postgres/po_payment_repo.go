@@ -105,8 +105,8 @@ func (r *POPaymentRepo) PopulatePOPayments(ctx context.Context, pos []*domain.Pu
 		ids[i] = po.ID
 	}
 	type agg struct {
-		POID   string    `db:"po_id"`
-		Amount float64   `db:"amount_paid"`
+		POID   string  `db:"po_id"`
+		Amount float64 `db:"amount_paid"`
 	}
 	query, args, _ := sqlx.In(`SELECT po_id, COALESCE(SUM(amount),0) AS amount_paid FROM po_payments WHERE po_id IN (?) GROUP BY po_id`, ids)
 	query = r.db.Rebind(query)

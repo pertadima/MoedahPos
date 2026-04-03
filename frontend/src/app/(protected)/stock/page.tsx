@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { Warehouse, AlertTriangle, Loader2, TrendingUp, TrendingDown, ArrowUpDown } from 'lucide-react';
+import { useEffect, useState, useCallback } from 'react';
+import { Warehouse, AlertTriangle, Loader2, TrendingUp, TrendingDown } from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { stockApi } from '@/lib/api/store-apis';
 import { formatDateTime } from '@/lib/utils';
@@ -16,7 +16,7 @@ export default function StockPage() {
 
   const storeId = selectedStore?.store_id;
 
-  useEffect(() => {
+  const loadData = useCallback(() => {
     if (!storeId) return;
     setLoading(true);
     Promise.all([
@@ -27,6 +27,9 @@ export default function StockPage() {
       setMovements(((m.data as any).data ?? []) as StockMovement[]);
     }).catch(console.error).finally(() => setLoading(false));
   }, [storeId]);
+
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => { loadData(); }, [loadData]);
 
   const lowCount = levels.filter(l => l.is_low_stock).length;
 

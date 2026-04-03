@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import {
   History, Loader2, TrendingUp, TrendingDown, Search,
-  ArrowUp, ArrowDown, Minus, Filter,
+  Filter,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { priceHistoryApi } from '@/lib/api/store-apis';

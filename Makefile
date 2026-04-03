@@ -91,7 +91,7 @@ fmt: fmt-backend fmt-frontend ## Format all code
 
 analyze-backend: ## Full backend analysis (golangci-lint)
 	@echo "▶ Backend analysis..."
-	cd backend && golangci-lint run ./... --out-format colored-line-number
+	cd backend && golangci-lint run ./... --color always
 	@echo "✅ Backend analysis complete"
 
 analyze-frontend: ## Full frontend analysis (type-check + lint + prettier check)

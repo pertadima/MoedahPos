@@ -15,20 +15,20 @@ import (
 
 // Sentinel errors for the auth service.
 var (
-	ErrEmailTaken       = errors.New("email already taken")
+	ErrEmailTaken         = errors.New("email already taken")
 	ErrInvalidCredentials = errors.New("invalid email or password")
-	ErrInvalidToken     = errors.New("invalid or expired token")
-	ErrUserNotFound     = errors.New("user not found")
-	ErrUserInactive     = errors.New("user account is inactive")
+	ErrInvalidToken       = errors.New("invalid or expired token")
+	ErrUserNotFound       = errors.New("user not found")
+	ErrUserInactive       = errors.New("user account is inactive")
 )
 
 // AuthService implements authentication business logic.
 type AuthService struct {
-	userRepo    repository.UserRepository
-	tokenRepo   repository.RefreshTokenRepository
-	jwtMgr      *jwt.Manager
-	bcryptCost  int
-	log         zerolog.Logger
+	userRepo   repository.UserRepository
+	tokenRepo  repository.RefreshTokenRepository
+	jwtMgr     *jwt.Manager
+	bcryptCost int
+	log        zerolog.Logger
 }
 
 // NewAuthService creates a new AuthService.

@@ -1,6 +1,8 @@
+// Package validator provides request validation utilities for the MoedahPOS API.
 package validator
 
 import (
+	"errors"
 	"reflect"
 	"strings"
 
@@ -32,8 +34,12 @@ func New() *Validator {
 // ValidateStruct validates a struct and returns a slice of FieldError, or nil.
 func (vl *Validator) ValidateStruct(s interface{}) []dto.FieldError {
 	if err := vl.v.Struct(s); err != nil {
+		var validationErrs validator.ValidationErrors
+		if !errors.As(err, &validationErrs) {
+			return []dto.FieldError{{Field: "_", Message: "invalid request"}}
+		}
 		var errs []dto.FieldError
-		for _, e := range err.(validator.ValidationErrors) {
+		for _, e := range validationErrs {
 			errs = append(errs, dto.FieldError{
 				Field:   e.Field(),
 				Message: humanizeTag(e),

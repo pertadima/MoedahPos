@@ -22,11 +22,11 @@ var (
 
 // ProductService implements business logic for products and categories.
 type ProductService struct {
-	productRepo      repository.ProductRepository
-	categoryRepo     repository.CategoryRepository
-	stockRepo        repository.StockRepository
-	priceHistorySvc  *PriceHistoryService
-	log              zerolog.Logger
+	productRepo     repository.ProductRepository
+	categoryRepo    repository.CategoryRepository
+	stockRepo       repository.StockRepository
+	priceHistorySvc *PriceHistoryService
+	log             zerolog.Logger
 }
 
 func NewProductService(
@@ -236,13 +236,13 @@ func (s *ProductService) DeleteProduct(ctx context.Context, id string) error {
 
 func toCategoryResponse(c *domain.Category) *dto.CategoryResponse {
 	r := &dto.CategoryResponse{
-		ID:        c.ID,
-		StoreID:   c.StoreID,
-		Name:      c.Name,
-		ParentID:  c.ParentID,
+		ID:         c.ID,
+		StoreID:    c.StoreID,
+		Name:       c.Name,
+		ParentID:   c.ParentID,
 		ParentName: c.ParentName,
-		CreatedAt: c.CreatedAt.Format(time.RFC3339),
-		UpdatedAt: c.UpdatedAt.Format(time.RFC3339),
+		CreatedAt:  c.CreatedAt.Format(time.RFC3339),
+		UpdatedAt:  c.UpdatedAt.Format(time.RFC3339),
 	}
 	if c.DeletedAt != nil {
 		t := c.DeletedAt.Format(time.RFC3339)

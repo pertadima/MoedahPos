@@ -25,10 +25,10 @@ type TxItemInput struct {
 
 // CreateDraftRequest holds an order for a table without payment yet.
 type CreateDraftRequest struct {
-	TableID       string        `json:"table_id"       validate:"required,uuid"`
-	CustomerName  string        `json:"customer_name"  validate:"max=100"`
-	Notes         string        `json:"notes"          validate:"max=500"`
-	Items         []TxItemInput `json:"items"          validate:"required,min=1,dive"`
+	TableID      string        `json:"table_id"       validate:"required,uuid"`
+	CustomerName string        `json:"customer_name"  validate:"max=100"`
+	Notes        string        `json:"notes"          validate:"max=500"`
+	Items        []TxItemInput `json:"items"          validate:"required,min=1,dive"`
 }
 
 // UpdateDraftRequest replaces the items of an existing draft (idempotent).

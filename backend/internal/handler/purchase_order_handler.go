@@ -185,7 +185,7 @@ func (h *PurchaseOrderHandler) PayableSummary(w http.ResponseWriter, r *http.Req
 // POST /stores/:storeId/purchase-orders/:poId/payments
 func (h *PurchaseOrderHandler) CreatePayment(w http.ResponseWriter, r *http.Request) {
 	storeID := chi.URLParam(r, "storeId")
-	poID    := chi.URLParam(r, "poId")
+	poID := chi.URLParam(r, "poId")
 	var req dto.POPaymentRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		response.Error(w, http.StatusBadRequest, "Invalid JSON body")

@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"math/rand"
 	"time"
 
 	"github.com/moedahpos/backend/internal/domain"
@@ -15,11 +14,11 @@ import (
 
 // Purchase Order sentinel errors.
 var (
-	ErrPONotFound          = errors.New("purchase order not found")
-	ErrPONotEditable       = errors.New("purchase order cannot be edited (not in draft status)")
-	ErrPOCannotSubmit      = errors.New("purchase order cannot be submitted")
-	ErrPOCannotReceive     = errors.New("purchase order cannot be received (must be in ordered status)")
-	ErrPOCannotCancel      = errors.New("purchase order cannot be cancelled")
+	ErrPONotFound      = errors.New("purchase order not found")
+	ErrPONotEditable   = errors.New("purchase order cannot be edited (not in draft status)")
+	ErrPOCannotSubmit  = errors.New("purchase order cannot be submitted")
+	ErrPOCannotReceive = errors.New("purchase order cannot be received (must be in ordered status)")
+	ErrPOCannotCancel  = errors.New("purchase order cannot be cancelled")
 )
 
 // PurchaseOrderService implements PO lifecycle business logic.
@@ -79,7 +78,7 @@ func (s *PurchaseOrderService) CreatePO(ctx context.Context, storeID string, req
 		return nil, err
 	}
 
-	poNumber := fmt.Sprintf("PO-%s-%04d", time.Now().Format("20060102"), rand.Intn(9000)+1000)
+	poNumber := fmt.Sprintf("PO-%s-%04d", time.Now().Format("20060102"), time.Now().UnixNano()%9000+1000)
 	po, err := s.poRepo.Create(ctx, &domain.PurchaseOrder{
 		StoreID:     storeID,
 		SupplierID:  req.SupplierID,

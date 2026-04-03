@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { TrendingUp, ShoppingBag, Package, AlertTriangle, ArrowUpRight, Loader2 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { reportsApi, stockApi } from '@/lib/api/store-apis';
@@ -16,7 +16,7 @@ export default function DashboardPage() {
   const [lowStock, setLowStock] = useState<StockLevel[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const loadData = useCallback(() => {
     if (!selectedStore) return;
     const sid = selectedStore.store_id;
     setLoading(true);
@@ -31,6 +31,9 @@ export default function DashboardPage() {
     }).catch(console.error)
       .finally(() => setLoading(false));
   }, [selectedStore]);
+
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => { loadData(); }, [loadData]);
 
   if (!selectedStore) {
     return (

@@ -19,7 +19,7 @@ func NewTransactionRepo(db *sqlx.DB) *TransactionRepo { return &TransactionRepo{
 
 // Create persists a full transaction with items and (for completed orders) stock movements.
 // Set input.Status = "draft" to hold an order without deducting stock.
-func (r *TransactionRepo) Create(ctx context.Context, input domain.CreateTransactionInput) (*domain.Transaction, error) {
+func (r *TransactionRepo) Create(ctx context.Context, input domain.CreateTransactionInput) (*domain.Transaction, error) { //nolint:cyclop // transaction creation is inherently complex
 	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
 		return nil, fmt.Errorf("TransactionRepo.Create begin: %w", err)

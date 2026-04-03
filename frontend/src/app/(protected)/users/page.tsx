@@ -7,8 +7,7 @@ import {
   KeyRound, Eye, EyeOff, CheckCircle2, XCircle,
 } from 'lucide-react';
 import { usePermission } from '@/hooks/usePermission';
-import { usersAdminApi, rolesApi } from '@/lib/api/store-apis';
-import { storesApi } from '@/lib/api/store-apis';
+import { usersAdminApi, rolesApi, storesApi } from '@/lib/api/store-apis';
 import { ApiError } from '@/lib/api/client';
 import type { UserAdmin, Role, UserStoreAssignment } from '@/types';
 
@@ -316,7 +315,7 @@ function DeactivateConfirm({ user, onSuccess, onClose }: { user: UserAdmin; onSu
 }
 
 // ── Detail Drawer ─────────────────────────────────────────────────────────────
-function DetailDrawer({ user, roles, stores, onClose, onEdit, onDeactivate, onResetPw }: {
+function DetailDrawer({ user, roles: _roles, stores: _stores, onClose, onEdit, onDeactivate, onResetPw }: {
   user: UserAdmin; roles: Role[]; stores: { id: string; name: string }[];
   onClose: () => void; onEdit: () => void; onDeactivate: () => void; onResetPw: () => void;
 }) {

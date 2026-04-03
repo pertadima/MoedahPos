@@ -28,18 +28,18 @@ type RestaurantTable struct {
 // MenuItem is a composed dish (recipe) sold as one unit in a restaurant.
 // Its stock impact is defined by MenuItemIngredients.
 type MenuItem struct {
-	ID           string     `db:"id"`
-	StoreID      string     `db:"store_id"`
-	CategoryID   *string    `db:"category_id"`
-	Name         string     `db:"name"`
-	Description  *string    `db:"description"`
-	SellPrice    float64    `db:"sell_price"`
-	TaxRate      float64    `db:"tax_rate"`
-	ImageURL     *string    `db:"image_url"`
-	IsActive     bool       `db:"is_active"`
-	CreatedAt    time.Time  `db:"created_at"`
-	UpdatedAt    time.Time  `db:"updated_at"`
-	DeletedAt    *time.Time `db:"deleted_at"`
+	ID          string     `db:"id"`
+	StoreID     string     `db:"store_id"`
+	CategoryID  *string    `db:"category_id"`
+	Name        string     `db:"name"`
+	Description *string    `db:"description"`
+	SellPrice   float64    `db:"sell_price"`
+	TaxRate     float64    `db:"tax_rate"`
+	ImageURL    *string    `db:"image_url"`
+	IsActive    bool       `db:"is_active"`
+	CreatedAt   time.Time  `db:"created_at"`
+	UpdatedAt   time.Time  `db:"updated_at"`
+	DeletedAt   *time.Time `db:"deleted_at"`
 
 	// Populated via JOIN
 	CategoryName *string              `db:"category_name"`
@@ -48,13 +48,13 @@ type MenuItem struct {
 
 // MenuItemIngredient is one ingredient in a menu item's recipe.
 type MenuItemIngredient struct {
-	ID          string  `db:"id"`
-	MenuItemID  string  `db:"menu_item_id"`
-	ProductID   string  `db:"product_id"`
-	Quantity    float64 `db:"quantity"`
+	ID         string  `db:"id"`
+	MenuItemID string  `db:"menu_item_id"`
+	ProductID  string  `db:"product_id"`
+	Quantity   float64 `db:"quantity"`
 
 	// Populated via JOIN
-	ProductName string  `db:"product_name"`
-	ProductSKU  string  `db:"product_sku"`
-	Unit        string  `db:"unit"`
+	ProductName string `db:"product_name"`
+	ProductSKU  string `db:"product_sku"`
+	Unit        string `db:"unit"`
 }

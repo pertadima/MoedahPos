@@ -230,7 +230,7 @@ export default function MenuItemsPage() {
         <div className="empty-state card" style={{ padding: 60 }}>
           <UtensilsCrossed size={48} style={{ color: 'var(--text-3)' }} />
           <p style={{ fontWeight: 600, color: 'var(--text-2)' }}>Belum ada menu</p>
-          <p style={{ fontSize: '0.85rem' }}>Klik "Tambah Menu" untuk membuat menu pertama.</p>
+          <p style={{ fontSize: '0.85rem' }}>Klik &ldquo;Tambah Menu&rdquo; untuk membuat menu pertama.</p>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -456,7 +456,7 @@ export default function MenuItemsPage() {
             </div>
             <div style={{ fontWeight: 700, fontSize: '1rem', marginBottom: 8 }}>Hapus Menu?</div>
             <div style={{ fontSize: '0.85rem', color: 'var(--text-2)', marginBottom: 20, lineHeight: 1.6 }}>
-              Menu <strong>"{deleteConfirm.item.name}"</strong> akan dihapus (soft-delete).
+              Menu <strong>&ldquo;{deleteConfirm.item.name}&rdquo;</strong> akan dihapus (soft-delete).
             </div>
             <div style={{ display: 'flex', gap: 10 }}>
               <button className="btn btn-ghost" onClick={() => setDeleteConfirm({ open: false })} style={{ flex: 1 }}>Batal</button>

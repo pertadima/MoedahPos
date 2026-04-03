@@ -4,15 +4,15 @@ package dto
 
 // CreatePORequest is the input for POST /stores/:storeId/purchase-orders.
 type CreatePORequest struct {
-	SupplierID *string      `json:"supplier_id" validate:"omitempty,uuid"`
-	Notes      string       `json:"notes"       validate:"max=500"`
+	SupplierID *string       `json:"supplier_id" validate:"omitempty,uuid"`
+	Notes      string        `json:"notes"       validate:"max=500"`
 	Items      []POItemInput `json:"items"       validate:"required,min=1,dive"`
 }
 
 // UpdatePORequest replaces all items of a draft PO.
 type UpdatePORequest struct {
-	SupplierID *string      `json:"supplier_id" validate:"omitempty,uuid"`
-	Notes      string       `json:"notes"       validate:"max=500"`
+	SupplierID *string       `json:"supplier_id" validate:"omitempty,uuid"`
+	Notes      string        `json:"notes"       validate:"max=500"`
 	Items      []POItemInput `json:"items"       validate:"required,min=1,dive"`
 }
 
@@ -88,10 +88,9 @@ type POPaymentResponse struct {
 
 // PayableSummary aggregates outstanding debt per store.
 type PayableSummary struct {
-	TotalDebt      float64 `json:"total_debt"`
-	TotalPaid      float64 `json:"total_paid"`
+	TotalDebt        float64 `json:"total_debt"`
+	TotalPaid        float64 `json:"total_paid"`
 	TotalOutstanding float64 `json:"total_outstanding"`
-	UnpaidCount    int     `json:"unpaid_count"`
-	PartialCount   int     `json:"partial_count"`
+	UnpaidCount      int     `json:"unpaid_count"`
+	PartialCount     int     `json:"partial_count"`
 }
-

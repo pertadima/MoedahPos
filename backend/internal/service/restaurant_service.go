@@ -137,12 +137,12 @@ func (s *MenuItemService) List(ctx context.Context, storeID string) ([]*dto.Menu
 func (s *MenuItemService) Create(ctx context.Context, storeID string, req *dto.CreateMenuItemRequest) (*dto.MenuItemResponse, error) {
 	desc := req.Description
 	item := &domain.MenuItem{
-		StoreID:    storeID,
-		CategoryID: req.CategoryID,
-		Name:       req.Name,
+		StoreID:     storeID,
+		CategoryID:  req.CategoryID,
+		Name:        req.Name,
 		Description: &desc,
-		SellPrice:  req.SellPrice,
-		TaxRate:    req.TaxRate,
+		SellPrice:   req.SellPrice,
+		TaxRate:     req.TaxRate,
 	}
 	created, err := s.repo.Create(ctx, item)
 	if err != nil {

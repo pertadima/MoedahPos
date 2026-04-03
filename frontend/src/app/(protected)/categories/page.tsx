@@ -195,7 +195,7 @@ export default function CategoriesPage() {
         <div className="empty-state card" style={{ padding: 60 }}>
           <FolderOpen size={48} style={{ color: 'var(--text-3)' }} />
           <p style={{ fontWeight: 600, color: 'var(--text-2)' }}>Belum ada kategori</p>
-          <p style={{ fontSize: '0.85rem' }}>Klik "Tambah Kategori" untuk membuat kategori pertama.</p>
+          <p style={{ fontSize: '0.85rem' }}>Klik &ldquo;Tambah Kategori&rdquo; untuk membuat kategori pertama.</p>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -355,7 +355,7 @@ export default function CategoriesPage() {
                 Hapus Kategori?
               </div>
               <div style={{ fontSize: '0.85rem', color: 'var(--text-2)', lineHeight: 1.6 }}>
-                Kategori <strong style={{ color: 'var(--text-1)' }}>"{deleteConfirm.category.name}"</strong> akan 
+                Kategori <strong style={{ color: 'var(--text-1)' }}>&ldquo;{deleteConfirm.category.name}&rdquo;</strong> akan 
                 dihapus secara <em>soft-delete</em> (data tetap tersimpan di database). 
                 Produk dalam kategori ini tidak akan terhapus.
               </div>

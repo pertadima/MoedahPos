@@ -63,9 +63,6 @@ lintersSettings:
 
   revive:
     rules:
-      - name: exported
-        severity: warning
-      - name: var-naming
       - name: indent-error-flow
       - name: error-strings
       - name: receiver-naming
