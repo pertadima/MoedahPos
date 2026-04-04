@@ -53,7 +53,8 @@ export default function DashboardPage() {
     else if (cashierFilter === '7days') dFrom = sevenDaysAgoStr();
     else dFrom = thirtyDaysAgoStr();
 
-    reportsApi.byCashier(sid, dFrom, todayStr())
+    reportsApi
+      .byCashier(sid, dFrom, todayStr())
       .then(res => setCashierRevenue(res.data || []))
       .catch(console.error);
   }, [selectedStore, cashierFilter]);
@@ -70,7 +71,8 @@ export default function DashboardPage() {
     else if (productFilter === '7days') dFrom = sevenDaysAgoStr();
     else dFrom = thirtyDaysAgoStr();
 
-    reportsApi.byProduct(sid, dFrom, todayStr())
+    reportsApi
+      .byProduct(sid, dFrom, todayStr())
       .then(res => setProductData(res.data || []))
       .catch(console.error);
   }, [selectedStore, productFilter]);
@@ -145,7 +147,10 @@ export default function DashboardPage() {
 
   const sortedProducts = [...productData].sort((a, b) => b.total_quantity - a.total_quantity);
   const topProducts = sortedProducts.slice(0, 3);
-  const bottomProducts = sortedProducts.filter(p => p.total_quantity > 0).reverse().slice(0, 3);
+  const bottomProducts = sortedProducts
+    .filter(p => p.total_quantity > 0)
+    .reverse()
+    .slice(0, 3);
 
   const statCards = [
     {
@@ -279,10 +284,19 @@ export default function DashboardPage() {
 
           {/* Cashier Revenue Chart */}
           <div className="card" style={{ padding: '20px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'flex-start',
+                marginBottom: 16,
+              }}
+            >
               <div>
                 <div style={{ fontWeight: 700, fontSize: '0.95rem' }}>Pendapatan per Kasir</div>
-                <div className="text-3" style={{ fontSize: '0.8rem' }}>Berdasarkan Transaksi Selesai</div>
+                <div className="text-3" style={{ fontSize: '0.8rem' }}>
+                  Berdasarkan Transaksi Selesai
+                </div>
               </div>
               <select
                 className="input"
@@ -297,8 +311,15 @@ export default function DashboardPage() {
             </div>
             {cashierRevenue.length > 0 ? (
               <ResponsiveContainer width="100%" height={260}>
-                <BarChart data={cashierRevenue} margin={{ left: -20, right: 10, top: 10, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                <BarChart
+                  data={cashierRevenue}
+                  margin={{ left: -20, right: 10, top: 10, bottom: 0 }}
+                >
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    stroke="rgba(255,255,255,0.05)"
+                    vertical={false}
+                  />
                   <XAxis
                     dataKey="cashier_name"
                     tick={{ fill: 'var(--text-3)', fontSize: 11 }}
@@ -324,12 +345,19 @@ export default function DashboardPage() {
                     }}
                     formatter={(v: any, name: any, props: any) => [
                       formatRp(Number(v)),
-                      `Pendapatan (${props.payload.transaction_count} Trx)`
+                      `Pendapatan (${props.payload.transaction_count} Trx)`,
                     ]}
                   />
                   <Bar dataKey="total_sales" radius={[4, 4, 0, 0]} maxBarSize={60}>
                     {cashierRevenue.map((_, index) => {
-                      const colors = ['#10b981', '#3b82f6', '#f43f5e', '#f59e0b', '#8b5cf6', '#06b6d4'];
+                      const colors = [
+                        '#10b981',
+                        '#3b82f6',
+                        '#f43f5e',
+                        '#f59e0b',
+                        '#8b5cf6',
+                        '#06b6d4',
+                      ];
                       return <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />;
                     })}
                   </Bar>
@@ -345,10 +373,19 @@ export default function DashboardPage() {
 
           {/* Most & Least Selling Products */}
           <div className="card" style={{ padding: '20px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'flex-start',
+                marginBottom: 16,
+              }}
+            >
               <div>
                 <div style={{ fontWeight: 700, fontSize: '0.95rem' }}>Performa Produk</div>
-                <div className="text-3" style={{ fontSize: '0.8rem' }}>Produk paling laku & kurang laku</div>
+                <div className="text-3" style={{ fontSize: '0.8rem' }}>
+                  Produk paling laku & kurang laku
+                </div>
               </div>
               <select
                 className="input"
@@ -370,18 +407,41 @@ export default function DashboardPage() {
                   <span style={{ fontWeight: 600, fontSize: '0.85rem' }}>Top 3 Terlaris</span>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  {topProducts.length > 0 ? topProducts.map(p => (
-                    <div key={p.product_id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid var(--border)' }}>
-                      <div>
-                        <div style={{ fontSize: '0.8rem', fontWeight: 600 }}>{p.product_name}</div>
-                        <div className="text-3" style={{ fontSize: '0.72rem' }}>{p.total_quantity} terjual</div>
+                  {topProducts.length > 0 ? (
+                    topProducts.map(p => (
+                      <div
+                        key={p.product_id}
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          padding: '8px 0',
+                          borderBottom: '1px solid var(--border)',
+                        }}
+                      >
+                        <div>
+                          <div style={{ fontSize: '0.8rem', fontWeight: 600 }}>
+                            {p.product_name}
+                          </div>
+                          <div className="text-3" style={{ fontSize: '0.72rem' }}>
+                            {p.total_quantity} terjual
+                          </div>
+                        </div>
+                        <div
+                          style={{
+                            fontSize: '0.82rem',
+                            fontWeight: 700,
+                            color: 'var(--accent-em)',
+                          }}
+                        >
+                          {formatRp(p.total_revenue)}
+                        </div>
                       </div>
-                      <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--accent-em)' }}>
-                        {formatRp(p.total_revenue)}
-                      </div>
+                    ))
+                  ) : (
+                    <div className="text-3" style={{ fontSize: '0.8rem', fontStyle: 'italic' }}>
+                      Belum ada data...
                     </div>
-                  )) : (
-                    <div className="text-3" style={{ fontSize: '0.8rem', fontStyle: 'italic' }}>Belum ada data...</div>
                   )}
                 </div>
               </div>
@@ -393,18 +453,35 @@ export default function DashboardPage() {
                   <span style={{ fontWeight: 600, fontSize: '0.85rem' }}>Top 3 Kurang Laku</span>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  {bottomProducts.length > 0 ? bottomProducts.map(p => (
-                    <div key={p.product_id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid var(--border)' }}>
-                      <div>
-                        <div style={{ fontSize: '0.8rem', fontWeight: 600 }}>{p.product_name}</div>
-                        <div className="text-3" style={{ fontSize: '0.72rem' }}>{p.total_quantity} terjual</div>
+                  {bottomProducts.length > 0 ? (
+                    bottomProducts.map(p => (
+                      <div
+                        key={p.product_id}
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          padding: '8px 0',
+                          borderBottom: '1px solid var(--border)',
+                        }}
+                      >
+                        <div>
+                          <div style={{ fontSize: '0.8rem', fontWeight: 600 }}>
+                            {p.product_name}
+                          </div>
+                          <div className="text-3" style={{ fontSize: '0.72rem' }}>
+                            {p.total_quantity} terjual
+                          </div>
+                        </div>
+                        <div style={{ fontSize: '0.82rem', fontWeight: 700 }}>
+                          {formatRp(p.total_revenue)}
+                        </div>
                       </div>
-                      <div style={{ fontSize: '0.82rem', fontWeight: 700 }}>
-                        {formatRp(p.total_revenue)}
-                      </div>
+                    ))
+                  ) : (
+                    <div className="text-3" style={{ fontSize: '0.8rem', fontStyle: 'italic' }}>
+                      Belum ada data...
                     </div>
-                  )) : (
-                    <div className="text-3" style={{ fontSize: '0.8rem', fontStyle: 'italic' }}>Belum ada data...</div>
                   )}
                 </div>
               </div>
@@ -470,7 +547,9 @@ export default function DashboardPage() {
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem' }}>
                 <span style={{ color: 'var(--text-2)' }}>Akan Datang</span>
-                <span className="badge badge-gray" style={{ color: 'var(--text-2)' }}>{formatRp(payables?.future_debt || 0)}</span>
+                <span className="badge badge-gray" style={{ color: 'var(--text-2)' }}>
+                  {formatRp(payables?.future_debt || 0)}
+                </span>
               </div>
             </div>
           </div>
