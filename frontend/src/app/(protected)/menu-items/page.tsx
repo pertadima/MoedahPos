@@ -74,6 +74,11 @@ export default function MenuItemsPage() {
 
   const storeId = selectedStore?.store_id ?? '';
 
+  const showToast = useCallback((msg: string, type: 'success' | 'error') => {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 3500);
+  }, []);
+
   const fetchAll = useCallback(async () => {
     if (!storeId) return;
     setLoading(true);
@@ -83,10 +88,13 @@ export default function MenuItemsPage() {
         categoriesApi.list(storeId),
         productsApi.list(storeId, { page: 1, per_page: 200 }),
       ]);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       setItems((menuRes.data as any).data ?? menuRes.data ?? []);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       setCategories((catRes.data as any).data ?? catRes.data ?? []);
-      
+
       // prodRes.data is PaginatedData<Product>, so its array is prodRes.data.data
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const paginatedProducts = prodRes.data as any;
       setProducts(paginatedProducts.data ?? []);
     } catch {
@@ -94,16 +102,11 @@ export default function MenuItemsPage() {
     } finally {
       setLoading(false);
     }
-  }, [storeId]);
+  }, [storeId, showToast]);
 
   useEffect(() => {
     fetchAll();
   }, [fetchAll]);
-
-  const showToast = (msg: string, type: 'success' | 'error') => {
-    setToast({ msg, type });
-    setTimeout(() => setToast(null), 3500);
-  };
 
   // ── Modal ──────────────────────────────────────────────────────────────────
 
@@ -777,31 +780,78 @@ export default function MenuItemsPage() {
                   )}
                 </div>
 
-                {form.ingredients.length > 0 && typeof products !== 'undefined' && (
+                {form.ingredients.length > 0 &&
+                  typeof products !== 'undefined' &&
                   (() => {
                     const totalHpp = form.ingredients.reduce((acc, ing) => {
                       const p = products.find(x => x.id === ing.productId);
-                      return acc + ((p?.cost_price || 0) * ing.quantity);
+                      return acc + (p?.cost_price || 0) * ing.quantity;
                     }, 0);
-                    const suggestedPriceMin = totalHpp * 1.30;
+                    const suggestedPriceMin = totalHpp * 1.3;
                     const suggestedPriceMax = totalHpp * 1.45;
                     return (
-                      <div style={{ marginTop: 12, padding: 12, background: 'var(--bg-elevated)', borderRadius: 8, border: '1px solid var(--border-md)' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, fontSize: '0.85rem' }}>
+                      <div
+                        style={{
+                          marginTop: 12,
+                          padding: 12,
+                          background: 'var(--bg-elevated)',
+                          borderRadius: 8,
+                          border: '1px solid var(--border-md)',
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            marginBottom: 6,
+                            fontSize: '0.85rem',
+                          }}
+                        >
                           <span style={{ color: 'var(--text-2)' }}>Total Harga Pokok (HPP)</span>
-                          <span style={{ fontWeight: 700, color: 'var(--text-1)' }}>{formatRp(totalHpp)}</span>
+                          <span style={{ fontWeight: 700, color: 'var(--text-1)' }}>
+                            {formatRp(totalHpp)}
+                          </span>
                         </div>
                         {totalHpp > 0 && (
                           <>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10, fontSize: '0.8rem' }}>
-                              <span style={{ color: 'var(--text-3)' }}>Saran Harga Jual (Profit 30% - 45%)</span>
-                              <span style={{ color: 'var(--brand)', fontWeight: 600 }}>{formatRp(suggestedPriceMin)} - {formatRp(suggestedPriceMax)}</span>
+                            <div
+                              style={{
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                marginBottom: 10,
+                                fontSize: '0.8rem',
+                              }}
+                            >
+                              <span style={{ color: 'var(--text-3)' }}>
+                                Saran Harga Jual (Profit 30% - 45%)
+                              </span>
+                              <span style={{ color: 'var(--brand)', fontWeight: 600 }}>
+                                {formatRp(suggestedPriceMin)} - {formatRp(suggestedPriceMax)}
+                              </span>
                             </div>
                             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-                              <button type="button" className="btn btn-ghost btn-sm" onClick={() => setForm(f => ({ ...f, sell_price: String(Math.round(suggestedPriceMin)) }))}>
+                              <button
+                                type="button"
+                                className="btn btn-ghost btn-sm"
+                                onClick={() =>
+                                  setForm(f => ({
+                                    ...f,
+                                    sell_price: String(Math.round(suggestedPriceMin)),
+                                  }))
+                                }
+                              >
                                 Tetapkan Margin 30%
                               </button>
-                              <button type="button" className="btn btn-primary btn-sm" onClick={() => setForm(f => ({ ...f, sell_price: String(Math.round(suggestedPriceMax)) }))}>
+                              <button
+                                type="button"
+                                className="btn btn-primary btn-sm"
+                                onClick={() =>
+                                  setForm(f => ({
+                                    ...f,
+                                    sell_price: String(Math.round(suggestedPriceMax)),
+                                  }))
+                                }
+                              >
                                 Tetapkan Margin 45%
                               </button>
                             </div>
@@ -809,9 +859,7 @@ export default function MenuItemsPage() {
                         )}
                       </div>
                     );
-                  })()
-                )}
-
+                  })()}
               </div>
 
               {formError && (
