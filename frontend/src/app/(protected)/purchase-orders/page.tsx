@@ -26,6 +26,13 @@ import { productsApi } from '@/lib/api/products';
 import { formatRp, formatDate } from '@/lib/utils';
 import type { PurchaseOrder, Product, Supplier, Store } from '@/types';
 import { ApiError } from '@/lib/api/client';
+import {
+  listTermins,
+  createTerminSchedule,
+  recordPayment,
+  type Termin,
+  type RecordPaymentRequest,
+} from '@/lib/api/termins';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 const STATUS_BADGE: Record<string, string> = {
@@ -90,6 +97,725 @@ function PayStatusBadge({ status }: { status: string }) {
     >
       <Icon size={11} /> {cfg.label}
     </span>
+  );
+}
+
+// ── Termin helpers ───────────────────────────────────────────────────────────
+
+function terminStatusCfg(t: Termin) {
+  if (t.status === 'paid') return { label: 'Lunas', bg: '#dcfce7', color: '#16a34a' };
+  if (t.status === 'overdue' || t.is_overdue)
+    return { label: 'Jatuh Tempo', bg: '#fee2e2', color: '#dc2626' };
+  if (t.status === 'partial') return { label: 'Sebagian', bg: '#fef3c7', color: '#d97706' };
+  return { label: 'Belum Bayar', bg: '#f3f4f6', color: '#6b7280' };
+}
+
+function formatIDR(n: number) {
+  return new Intl.NumberFormat('id-ID', {
+    style: 'currency',
+    currency: 'IDR',
+    maximumFractionDigits: 0,
+  }).format(n);
+}
+
+// ── TerminPanel ───────────────────────────────────────────────────────────────
+
+interface TerminPanelProps {
+  po: PurchaseOrder;
+  storeId: string;
+  onOpenDoc: (type: 'invoice' | 'receipt' | 'termin_agreement') => void;
+}
+
+function TerminPanel({ po, storeId, onOpenDoc }: TerminPanelProps) {
+  const [termins, setTermins] = useState<Termin[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [payTarget, setPayTarget] = useState<Termin | null>(null);
+  const [expandedPayments, setExpandedPayments] = useState<Set<string>>(new Set());
+
+  const load = useCallback(() => {
+    setLoading(true);
+    listTermins(storeId, po.id)
+      .then(setTermins)
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, [storeId, po.id]);
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    load();
+  }, [storeId, po.id]);
+
+  const togglePay = (id: string) =>
+    setExpandedPayments(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+
+  return (
+    <div style={{ padding: '12px 16px 16px', background: 'rgba(255,255,255,0.03)' }}>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: 12,
+        }}
+      >
+        <span style={{ fontWeight: 600, fontSize: '0.82rem', color: 'var(--text-2)' }}>
+          Jadwal Termin
+        </span>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          {(['invoice', 'receipt', 'termin_agreement'] as const).map(type => (
+            <button
+              key={type}
+              id={`doc-${type}-${po.id}`}
+              onClick={() => onOpenDoc(type)}
+              style={{
+                padding: '4px 10px',
+                borderRadius: 6,
+                border: '1px solid var(--border)',
+                background: 'transparent',
+                color: 'var(--text-2)',
+                fontSize: '0.75rem',
+                cursor: 'pointer',
+              }}
+            >
+              {type === 'invoice'
+                ? '📄 Invoice'
+                : type === 'receipt'
+                  ? '🧾 Kwitansi'
+                  : '📋 Perjanjian'}
+            </button>
+          ))}
+          {po.status === 'received' && (
+            <button
+              id={`add-termin-${po.id}`}
+              onClick={() => setShowAddModal(true)}
+              style={{
+                padding: '4px 12px',
+                borderRadius: 6,
+                border: 'none',
+                background: 'var(--accent-em)',
+                color: '#fff',
+                fontSize: '0.75rem',
+                cursor: 'pointer',
+                fontWeight: 600,
+              }}
+            >
+              + Termin
+            </button>
+          )}
+        </div>
+      </div>
+
+      {loading ? (
+        <div style={{ textAlign: 'center', padding: 20, color: 'var(--text-3)' }}>Memuat…</div>
+      ) : termins.length === 0 ? (
+        <div
+          style={{ textAlign: 'center', padding: 20, color: 'var(--text-3)', fontSize: '0.82rem' }}
+        >
+          {po.status === 'received'
+            ? 'Belum ada termin. Tambahkan jadwal pembayaran.'
+            : 'PO harus diterima sebelum termin dapat dibuat.'}
+        </div>
+      ) : (
+        <table className="tbl" style={{ fontSize: '0.82rem' }}>
+          <thead>
+            <tr>
+              <th>No.</th>
+              <th>Jatuh Tempo</th>
+              <th>Jumlah</th>
+              <th>Dibayar</th>
+              <th>Sisa</th>
+              <th>Status</th>
+              <th>Aksi</th>
+            </tr>
+          </thead>
+          <tbody>
+            {termins.map(t => {
+              const cfg = terminStatusCfg(t);
+              return (
+                <>
+                  <tr key={t.id}>
+                    <td style={{ fontWeight: 600 }}>Termin {t.termin_number}</td>
+                    <td style={{ color: t.is_overdue ? '#dc2626' : 'inherit' }}>
+                      {formatDate(t.due_date)}
+                    </td>
+                    <td>{formatIDR(t.amount)}</td>
+                    <td style={{ color: '#16a34a', fontWeight: 600 }}>
+                      {formatIDR(t.amount_paid)}
+                    </td>
+                    <td
+                      style={{ color: t.amount_due > 0 ? '#dc2626' : '#16a34a', fontWeight: 600 }}
+                    >
+                      {formatIDR(t.amount_due)}
+                    </td>
+                    <td>
+                      <span
+                        style={{
+                          background: cfg.bg,
+                          color: cfg.color,
+                          borderRadius: 5,
+                          padding: '2px 8px',
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                        }}
+                      >
+                        {cfg.label}
+                      </span>
+                    </td>
+                    <td>
+                      <div style={{ display: 'flex', gap: 6 }}>
+                        {t.status !== 'paid' && (
+                          <button
+                            id={`pay-termin-${t.id}`}
+                            onClick={() => setPayTarget(t)}
+                            style={{
+                              padding: '3px 10px',
+                              borderRadius: 5,
+                              border: 'none',
+                              background: 'var(--accent-em)',
+                              color: '#fff',
+                              fontSize: '0.75rem',
+                              cursor: 'pointer',
+                            }}
+                          >
+                            Bayar
+                          </button>
+                        )}
+                        {t.payments.length > 0 && (
+                          <button
+                            id={`hist-${t.id}`}
+                            onClick={() => togglePay(t.id)}
+                            style={{
+                              padding: '3px 10px',
+                              borderRadius: 5,
+                              border: '1px solid var(--border)',
+                              background: 'transparent',
+                              color: 'var(--text-2)',
+                              fontSize: '0.75rem',
+                              cursor: 'pointer',
+                            }}
+                          >
+                            {expandedPayments.has(t.id) ? '▲' : '▼'} {t.payments.length}
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                  {expandedPayments.has(t.id) &&
+                    t.payments.map(p => (
+                      <tr
+                        key={p.id}
+                        style={{ background: 'rgba(59,130,246,0.04)', fontSize: '0.78rem' }}
+                      >
+                        <td colSpan={2} style={{ paddingLeft: 28, color: 'var(--text-3)' }}>
+                          {formatDate(p.payment_date)} · {p.payment_method}
+                        </td>
+                        <td colSpan={2} style={{ color: '#16a34a', fontWeight: 600 }}>
+                          +{formatIDR(p.amount_paid)}
+                        </td>
+                        <td colSpan={2} style={{ color: 'var(--text-3)' }}>
+                          {p.notes || '—'}
+                        </td>
+                        <td style={{ color: 'var(--text-3)' }}>{p.recorded_by_name}</td>
+                      </tr>
+                    ))}
+                </>
+              );
+            })}
+          </tbody>
+        </table>
+      )}
+      {showAddModal && (
+        <TerminModal
+          po={po}
+          storeId={storeId}
+          onSuccess={() => {
+            setShowAddModal(false);
+            load();
+          }}
+          onCancel={() => setShowAddModal(false)}
+        />
+      )}
+      {payTarget && (
+        <PayTerminModal
+          termin={payTarget}
+          storeId={storeId}
+          poId={po.id}
+          onSuccess={() => {
+            setPayTarget(null);
+            load();
+          }}
+          onCancel={() => setPayTarget(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+// ── TerminModal ───────────────────────────────────────────────────────────────
+
+interface TerminModalProps {
+  po: PurchaseOrder;
+  storeId: string;
+  onSuccess: () => void;
+  onCancel: () => void;
+}
+
+function TerminModal({ po, storeId, onSuccess, onCancel }: TerminModalProps) {
+  const today = new Date().toISOString().slice(0, 10);
+  const [rows, setRows] = useState([
+    { termin_number: 1, amount: po.total_amount, due_date: today, notes: '' },
+  ]);
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState('');
+  const updateRow = (i: number, field: string, value: string | number) =>
+    setRows(prev => prev.map((r, idx) => (idx === i ? { ...r, [field]: value } : r)));
+  const addRow = () =>
+    setRows(prev => [
+      ...prev,
+      { termin_number: prev.length + 1, amount: 0, due_date: today, notes: '' },
+    ]);
+  const removeRow = (i: number) =>
+    setRows(prev =>
+      prev.filter((_, idx) => idx !== i).map((r, idx) => ({ ...r, termin_number: idx + 1 }))
+    );
+  const totalTermin = rows.reduce((s, r) => s + Number(r.amount), 0);
+  const handleSave = async () => {
+    setSaving(true);
+    setErr('');
+    try {
+      await createTerminSchedule(storeId, po.id, {
+        termins: rows.map(r => ({ ...r, amount: Number(r.amount) })),
+      });
+      onSuccess();
+    } catch (e: unknown) {
+      setErr(e instanceof Error ? e.message : 'Gagal');
+    } finally {
+      setSaving(false);
+    }
+  };
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        background: 'rgba(0,0,0,0.55)',
+        zIndex: 200,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      <div
+        style={{
+          background: 'var(--bg-card)',
+          borderRadius: 14,
+          padding: 28,
+          width: 620,
+          maxHeight: '85vh',
+          overflowY: 'auto',
+        }}
+      >
+        <div style={{ fontWeight: 700, fontSize: '1rem', marginBottom: 12 }}>
+          Buat Jadwal Termin — {po.po_number}
+        </div>
+        <div style={{ fontSize: '0.82rem', color: 'var(--text-2)', marginBottom: 14 }}>
+          Total PO: <strong>{formatIDR(po.total_amount)}</strong> · Total termin:{' '}
+          <strong
+            style={{
+              color: Math.abs(totalTermin - po.total_amount) < 0.01 ? '#16a34a' : '#d97706',
+            }}
+          >
+            {formatIDR(totalTermin)}
+          </strong>
+        </div>
+        {rows.map((row, i) => (
+          <div
+            key={i}
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '50px 1fr 1.2fr 1fr 34px',
+              gap: 8,
+              marginBottom: 8,
+              alignItems: 'end',
+            }}
+          >
+            <div>
+              <label
+                style={{
+                  fontSize: '0.72rem',
+                  color: 'var(--text-3)',
+                  display: 'block',
+                  marginBottom: 2,
+                }}
+              >
+                No.
+              </label>
+              <input
+                type="number"
+                value={row.termin_number}
+                disabled
+                style={{
+                  width: '100%',
+                  padding: '6px 7px',
+                  borderRadius: 7,
+                  border: '1px solid var(--border)',
+                  background: 'var(--bg-hover)',
+                  color: 'var(--text-3)',
+                }}
+              />
+            </div>
+            <div>
+              <label
+                style={{
+                  fontSize: '0.72rem',
+                  color: 'var(--text-3)',
+                  display: 'block',
+                  marginBottom: 2,
+                }}
+              >
+                Jumlah (Rp)
+              </label>
+              <input
+                id={`ta-${i}`}
+                type="number"
+                value={row.amount}
+                onChange={e => updateRow(i, 'amount', e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '6px 7px',
+                  borderRadius: 7,
+                  border: '1px solid var(--border)',
+                  background: 'var(--bg-card)',
+                  color: 'var(--text-1)',
+                }}
+              />
+            </div>
+            <div>
+              <label
+                style={{
+                  fontSize: '0.72rem',
+                  color: 'var(--text-3)',
+                  display: 'block',
+                  marginBottom: 2,
+                }}
+              >
+                Jatuh Tempo
+              </label>
+              <input
+                id={`td-${i}`}
+                type="date"
+                value={row.due_date}
+                onChange={e => updateRow(i, 'due_date', e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '6px 7px',
+                  borderRadius: 7,
+                  border: '1px solid var(--border)',
+                  background: 'var(--bg-card)',
+                  color: 'var(--text-1)',
+                }}
+              />
+            </div>
+            <div>
+              <label
+                style={{
+                  fontSize: '0.72rem',
+                  color: 'var(--text-3)',
+                  display: 'block',
+                  marginBottom: 2,
+                }}
+              >
+                Catatan
+              </label>
+              <input
+                type="text"
+                value={row.notes}
+                onChange={e => updateRow(i, 'notes', e.target.value)}
+                placeholder="opsional"
+                style={{
+                  width: '100%',
+                  padding: '6px 7px',
+                  borderRadius: 7,
+                  border: '1px solid var(--border)',
+                  background: 'var(--bg-card)',
+                  color: 'var(--text-1)',
+                }}
+              />
+            </div>
+            <button
+              onClick={() => removeRow(i)}
+              disabled={rows.length === 1}
+              style={{
+                padding: '6px 7px',
+                borderRadius: 7,
+                border: 'none',
+                background: '#fee2e2',
+                color: '#dc2626',
+                cursor: 'pointer',
+              }}
+            >
+              ✕
+            </button>
+          </div>
+        ))}
+        <button
+          id="add-row-btn"
+          onClick={addRow}
+          style={{
+            marginBottom: 14,
+            padding: '5px 14px',
+            borderRadius: 7,
+            border: '1px dashed var(--border)',
+            background: 'transparent',
+            color: 'var(--text-2)',
+            cursor: 'pointer',
+            fontSize: '0.82rem',
+          }}
+        >
+          + Tambah Termin
+        </button>
+        {err && (
+          <div style={{ color: '#dc2626', fontSize: '0.82rem', marginBottom: 10 }}>{err}</div>
+        )}
+        <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+          <button
+            onClick={onCancel}
+            style={{
+              padding: '8px 18px',
+              borderRadius: 8,
+              border: '1px solid var(--border)',
+              background: 'transparent',
+              color: 'var(--text-2)',
+              cursor: 'pointer',
+            }}
+          >
+            Batal
+          </button>
+          <button
+            id="save-schedule-btn"
+            onClick={handleSave}
+            disabled={saving}
+            style={{
+              padding: '8px 18px',
+              borderRadius: 8,
+              border: 'none',
+              background: 'var(--accent-em)',
+              color: '#fff',
+              cursor: 'pointer',
+              fontWeight: 600,
+            }}
+          >
+            {saving ? '…' : 'Simpan Jadwal'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── PayTerminModal ────────────────────────────────────────────────────────────
+
+interface PayTerminModalProps {
+  termin: Termin;
+  storeId: string;
+  poId: string;
+  onSuccess: () => void;
+  onCancel: () => void;
+}
+
+function PayTerminModal({ termin, storeId, poId, onSuccess, onCancel }: PayTerminModalProps) {
+  const today = new Date().toISOString().slice(0, 10);
+  const [amount, setAmount] = useState(String(termin.amount_due.toFixed(0)));
+  const [date, setDate] = useState(today);
+  const [method, setMethod] = useState<RecordPaymentRequest['payment_method']>('cash');
+  const [notes, setNotes] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState('');
+  const handleSave = async () => {
+    const n = parseFloat(amount);
+    if (isNaN(n) || n <= 0) {
+      setErr('Jumlah harus > 0');
+      return;
+    }
+    if (n > termin.amount_due) {
+      setErr(`Melebihi sisa termin (${formatIDR(termin.amount_due)})`);
+      return;
+    }
+    setSaving(true);
+    setErr('');
+    try {
+      await recordPayment(storeId, poId, termin.id, {
+        amount_paid: n,
+        payment_date: date,
+        payment_method: method,
+        notes,
+      });
+      onSuccess();
+    } catch (e: unknown) {
+      setErr(e instanceof Error ? e.message : 'Gagal');
+    } finally {
+      setSaving(false);
+    }
+  };
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        background: 'rgba(0,0,0,0.55)',
+        zIndex: 210,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      <div style={{ background: 'var(--bg-card)', borderRadius: 14, padding: 28, width: 420 }}>
+        <div style={{ fontWeight: 700, fontSize: '1rem', marginBottom: 4 }}>
+          Catat Pembayaran — Termin {termin.termin_number}
+        </div>
+        <div style={{ fontSize: '0.82rem', color: 'var(--text-2)', marginBottom: 18 }}>
+          Sisa: <strong style={{ color: '#dc2626' }}>{formatIDR(termin.amount_due)}</strong>
+        </div>
+        {[
+          {
+            label: 'Jumlah Bayar (Rp)',
+            el: (
+              <input
+                id="pay-amt"
+                type="number"
+                value={amount}
+                onChange={e => setAmount(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '8px 12px',
+                  borderRadius: 8,
+                  border: '1px solid var(--border)',
+                  background: 'var(--bg-card)',
+                  color: 'var(--text-1)',
+                }}
+              />
+            ),
+          },
+          {
+            label: 'Tanggal Bayar',
+            el: (
+              <input
+                id="pay-dt"
+                type="date"
+                value={date}
+                onChange={e => setDate(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '8px 12px',
+                  borderRadius: 8,
+                  border: '1px solid var(--border)',
+                  background: 'var(--bg-card)',
+                  color: 'var(--text-1)',
+                }}
+              />
+            ),
+          },
+          {
+            label: 'Metode',
+            el: (
+              <select
+                id="pay-mth"
+                value={method}
+                onChange={e => setMethod(e.target.value as typeof method)}
+                style={{
+                  width: '100%',
+                  padding: '8px 12px',
+                  borderRadius: 8,
+                  border: '1px solid var(--border)',
+                  background: 'var(--bg-card)',
+                  color: 'var(--text-1)',
+                }}
+              >
+                {['cash', 'transfer', 'check', 'other'].map(m => (
+                  <option key={m} value={m}>
+                    {m[0].toUpperCase() + m.slice(1)}
+                  </option>
+                ))}
+              </select>
+            ),
+          },
+          {
+            label: 'Catatan',
+            el: (
+              <input
+                id="pay-nt"
+                type="text"
+                value={notes}
+                onChange={e => setNotes(e.target.value)}
+                placeholder="opsional"
+                style={{
+                  width: '100%',
+                  padding: '8px 12px',
+                  borderRadius: 8,
+                  border: '1px solid var(--border)',
+                  background: 'var(--bg-card)',
+                  color: 'var(--text-1)',
+                }}
+              />
+            ),
+          },
+        ].map(({ label, el }) => (
+          <div key={label} style={{ marginBottom: 12 }}>
+            <label
+              style={{
+                fontSize: '0.78rem',
+                color: 'var(--text-2)',
+                display: 'block',
+                marginBottom: 4,
+              }}
+            >
+              {label}
+            </label>
+            {el}
+          </div>
+        ))}
+        {err && (
+          <div style={{ color: '#dc2626', fontSize: '0.82rem', marginBottom: 10 }}>{err}</div>
+        )}
+        <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 8 }}>
+          <button
+            onClick={onCancel}
+            style={{
+              padding: '8px 18px',
+              borderRadius: 8,
+              border: '1px solid var(--border)',
+              background: 'transparent',
+              color: 'var(--text-2)',
+              cursor: 'pointer',
+            }}
+          >
+            Batal
+          </button>
+          <button
+            id="save-pay-btn"
+            onClick={handleSave}
+            disabled={saving}
+            style={{
+              padding: '8px 18px',
+              borderRadius: 8,
+              border: 'none',
+              background: 'var(--accent-em)',
+              color: '#fff',
+              cursor: 'pointer',
+              fontWeight: 600,
+            }}
+          >
+            {saving ? '…' : 'Catat Pembayaran'}
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -587,15 +1313,17 @@ interface PODetailDrawerProps {
   onInvoice: () => void;
   onAction: (action: ActionType) => void;
   onPay: () => void;
+  onOpenDoc: (type: 'invoice' | 'receipt' | 'termin_agreement') => void;
 }
 function PODetailDrawer({
   po,
-  storeId: _storeId,
+  storeId,
   payments,
   onClose,
   onInvoice,
   onAction,
   onPay,
+  onOpenDoc,
 }: PODetailDrawerProps) {
   const payStatus = (po as any).payment_status ?? 'unpaid';
   const amountPaid = (po as any).amount_paid ?? 0;
@@ -806,6 +1534,11 @@ function PODetailDrawer({
               )}
             </div>
           )}
+
+          {/* Termin Schedule */}
+          <div style={{ borderTop: '1px solid var(--border)', paddingTop: 14 }}>
+            <TerminPanel po={po} storeId={storeId} onOpenDoc={onOpenDoc} />
+          </div>
 
           {/* Action buttons */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -1257,6 +1990,9 @@ export default function PurchaseOrdersPage() {
           onInvoice={() => openInvoice(detailPO)}
           onAction={a => setConfirm({ po: detailPO, action: a })}
           onPay={() => setPayingPO(detailPO)}
+          onOpenDoc={type =>
+            window.open(`/purchase-orders/${detailPO.id}/document?type=${type}`, '_blank')
+          }
         />
       )}
       {invoicePO && (

@@ -46,6 +46,9 @@ type Dependencies struct {
 	// FIFO Batch Inventory
 	BatchStockHandler *handler.BatchStockHandler
 
+	// Termin (installment payment)
+	TerminHandler *handler.TerminHandler
+
 	// Shared
 	RoleStore *rbac.RoleStore
 	DB        *sqlx.DB
@@ -207,6 +210,12 @@ func New(deps *Dependencies) http.Handler { //nolint:funlen // route wiring is i
 							r.Delete("/{poId}", withPerm(deps, "purchases.delete", deps.PurchaseOrderHandler.Cancel))
 							r.Get("/{poId}/payments", withPerm(deps, "purchases.read", deps.PurchaseOrderHandler.ListPayments))
 							r.Post("/{poId}/payments", withPerm(deps, "purchases.update", deps.PurchaseOrderHandler.CreatePayment))
+							// Termin (installment) routes
+							r.Get("/{poId}/termins", withPerm(deps, "purchases.read", deps.TerminHandler.ListTermins))
+							r.Post("/{poId}/termins", withPerm(deps, "purchases.update", deps.TerminHandler.CreateSchedule))
+							r.Post("/{poId}/termins/{terminId}/payments", withPerm(deps, "purchases.update", deps.TerminHandler.RecordPayment))
+							r.Get("/{poId}/debt", withPerm(deps, "purchases.read", deps.TerminHandler.GetDebtSummary))
+							r.Get("/{poId}/document", withPerm(deps, "purchases.read", deps.TerminHandler.GetDocument))
 						})
 
 						// Reports

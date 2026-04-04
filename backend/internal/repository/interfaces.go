@@ -185,3 +185,32 @@ type BatchRepository interface {
 	// Returns an error immediately if total available stock is insufficient.
 	DeductFIFO(ctx context.Context, productID, storeID string, qty float64) error
 }
+
+// ─── Termin (Installment) Repositories ───────────────────────────────────────
+
+// TerminRepository manages installment schedules for purchase orders.
+type TerminRepository interface {
+	// CreateSchedule atomically deletes existing termins for a PO and inserts the new schedule.
+	CreateSchedule(ctx context.Context, poID string, termins []domain.POTermin) error
+
+	// FindByPO returns all termins for a PO with their payment aggregation, ordered by termin_number.
+	FindByPO(ctx context.Context, poID string) ([]*domain.POTermin, error)
+
+	// FindByID returns a single termin with its payment aggregation.
+	FindByID(ctx context.Context, terminID string) (*domain.POTermin, error)
+
+	// UpdateStatus recalculates and persists the termin status (unpaid/partial/paid/overdue).
+	UpdateStatus(ctx context.Context, terminID string) error
+
+	// DebtSummary aggregates payment totals across all termins for a PO.
+	DebtSummary(ctx context.Context, poID string, totalAmount float64) (*domain.PODebtSummary, error)
+}
+
+// PaymentRecordRepository manages individual payment transactions against termins.
+type PaymentRecordRepository interface {
+	// Create inserts one payment record and returns the persisted row.
+	Create(ctx context.Context, record domain.PaymentRecord) (*domain.PaymentRecord, error)
+
+	// FindByTermin returns all payment records for a termin, newest first.
+	FindByTermin(ctx context.Context, terminID string) ([]*domain.PaymentRecord, error)
+}
