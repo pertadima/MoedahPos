@@ -668,9 +668,20 @@ export default function MenuItemsPage() {
                         }}
                       >
                         <Package size={13} style={{ color: '#fb923c', flexShrink: 0 }} />
-                        <span style={{ flex: 1, fontSize: '0.82rem', color: 'var(--text-1)' }}>
-                          {ing.productName}
-                        </span>
+                        <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                          <span style={{ fontSize: '0.82rem', color: 'var(--text-1)' }}>
+                            {ing.productName}
+                          </span>
+                          {(() => {
+                            const p = products.find(x => x.id === ing.productId);
+                            const cost = (p?.cost_price || 0) * ing.quantity;
+                            return (
+                              <span style={{ fontSize: '0.7rem', color: 'var(--text-3)' }}>
+                                {formatRp(p?.cost_price || 0)}/{ing.unit} = {formatRp(cost)}
+                              </span>
+                            );
+                          })()}
+                        </div>
                         <input
                           type="number"
                           min={0.01}
@@ -765,6 +776,42 @@ export default function MenuItemsPage() {
                     </div>
                   )}
                 </div>
+
+                {form.ingredients.length > 0 && typeof products !== 'undefined' && (
+                  (() => {
+                    const totalHpp = form.ingredients.reduce((acc, ing) => {
+                      const p = products.find(x => x.id === ing.productId);
+                      return acc + ((p?.cost_price || 0) * ing.quantity);
+                    }, 0);
+                    const suggestedPriceMin = totalHpp * 1.30;
+                    const suggestedPriceMax = totalHpp * 1.45;
+                    return (
+                      <div style={{ marginTop: 12, padding: 12, background: 'var(--bg-elevated)', borderRadius: 8, border: '1px solid var(--border-md)' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, fontSize: '0.85rem' }}>
+                          <span style={{ color: 'var(--text-2)' }}>Total Harga Pokok (HPP)</span>
+                          <span style={{ fontWeight: 700, color: 'var(--text-1)' }}>{formatRp(totalHpp)}</span>
+                        </div>
+                        {totalHpp > 0 && (
+                          <>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10, fontSize: '0.8rem' }}>
+                              <span style={{ color: 'var(--text-3)' }}>Saran Harga Jual (Profit 30% - 45%)</span>
+                              <span style={{ color: 'var(--brand)', fontWeight: 600 }}>{formatRp(suggestedPriceMin)} - {formatRp(suggestedPriceMax)}</span>
+                            </div>
+                            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                              <button type="button" className="btn btn-ghost btn-sm" onClick={() => setForm(f => ({ ...f, sell_price: String(Math.round(suggestedPriceMin)) }))}>
+                                Tetapkan Margin 30%
+                              </button>
+                              <button type="button" className="btn btn-primary btn-sm" onClick={() => setForm(f => ({ ...f, sell_price: String(Math.round(suggestedPriceMax)) }))}>
+                                Tetapkan Margin 45%
+                              </button>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    );
+                  })()
+                )}
+
               </div>
 
               {formError && (
