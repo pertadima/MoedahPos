@@ -23,7 +23,7 @@ import {
 import { useAuth } from '@/lib/auth/AuthContext';
 import { purchaseOrdersApi, suppliersApi, storesApi } from '@/lib/api/store-apis';
 import { productsApi } from '@/lib/api/products';
-import { formatRp, formatDate } from '@/lib/utils';
+import { formatRp, formatDate, formatNumberInput, parseNumberInput } from '@/lib/utils';
 import type { PurchaseOrder, Product, Supplier, Store } from '@/types';
 import { ApiError } from '@/lib/api/client';
 import {
@@ -58,6 +58,8 @@ const EMPTY_FORM = {
   items: [{ product_id: '', quantity: 1, unit_cost: 0 }],
 };
 type ItemRow = { product_id: string; quantity: number; unit_cost: number };
+
+
 type ActionType = 'submit' | 'receive' | 'cancel';
 
 interface PayableSummary {
@@ -485,9 +487,9 @@ function TerminModal({ po, storeId, onSuccess, onCancel }: TerminModalProps) {
               </label>
               <input
                 id={`ta-${i}`}
-                type="number"
-                value={row.amount}
-                onChange={e => updateRow(i, 'amount', e.target.value)}
+                type="text"
+                value={formatNumberInput(row.amount)}
+                onChange={e => updateRow(i, 'amount', parseNumberInput(e.target.value))}
                 style={{
                   width: '100%',
                   padding: '6px 7px',
@@ -690,9 +692,9 @@ function PayTerminModal({ termin, storeId, poId, onSuccess, onCancel }: PayTermi
             el: (
               <input
                 id="pay-amt"
-                type="number"
-                value={amount}
-                onChange={e => setAmount(e.target.value)}
+                type="text"
+                value={formatNumberInput(amount)}
+                onChange={e => setAmount(String(parseNumberInput(e.target.value)))}
                 style={{
                   width: '100%',
                   padding: '8px 12px',
@@ -1701,16 +1703,16 @@ export default function PurchaseOrdersPage() {
     setForm(f => ({ ...f, items: [...f.items, { product_id: '', quantity: 1, unit_cost: 0 }] }));
   const removeItem = (i: number) =>
     setForm(f => ({ ...f, items: f.items.filter((_, idx) => idx !== i) }));
-  const updateItem = (i: number, k: keyof ItemRow, v: string) => {
+  const updateItem = (i: number, k: keyof ItemRow, v: string | number) => {
     setForm(f => ({
       ...f,
       items: f.items.map((item, idx) => {
         if (idx !== i) return item;
         if (k === 'product_id') {
-          const p = products.find(p => p.id === v);
-          return { ...item, product_id: v, unit_cost: p?.cost_price ?? item.unit_cost };
+          const p = products.find(p => p.id === String(v));
+          return { ...item, product_id: String(v), unit_cost: p?.cost_price ?? item.unit_cost };
         }
-        return { ...item, [k]: +v };
+        return { ...item, [k]: Number(v) };
       }),
     }));
   };
@@ -1886,7 +1888,7 @@ export default function PurchaseOrdersPage() {
                           color: 'var(--text-2)',
                         }}
                       >
-                        {po.items?.length ?? 0} item
+                        {po.total_items ?? po.items?.length ?? 0} item
                       </span>
                     </td>
                     <td
@@ -2145,12 +2147,13 @@ export default function PurchaseOrdersPage() {
                           onChange={e => updateItem(i, 'quantity', e.target.value)}
                         />
                         <input
-                          type="number"
+                          type="text"
                           className="input"
                           placeholder="Harga beli"
-                          min={0}
-                          value={item.unit_cost}
-                          onChange={e => updateItem(i, 'unit_cost', e.target.value)}
+                          value={formatNumberInput(item.unit_cost)}
+                          onChange={e =>
+                            updateItem(i, 'unit_cost', parseNumberInput(e.target.value))
+                          }
                         />
                         <button
                           className="btn btn-ghost btn-sm"
