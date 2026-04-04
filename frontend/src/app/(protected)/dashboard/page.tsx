@@ -9,6 +9,8 @@ import {
   ArrowUpRight,
   Loader2,
   Users,
+  ArrowUp,
+  ArrowDown,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { reportsApi, stockApi, purchaseOrdersApi } from '@/lib/api/store-apis';
@@ -40,6 +42,9 @@ export default function DashboardPage() {
   const [cashierFilter, setCashierFilter] = useState<TimeFilter>('30days');
   const [cashierRevenue, setCashierRevenue] = useState<any[]>([]);
 
+  const [productFilter, setProductFilter] = useState<TimeFilter>('30days');
+  const [productData, setProductData] = useState<any[]>([]);
+
   const loadCashierData = useCallback(() => {
     if (!selectedStore) return;
     const sid = selectedStore.store_id;
@@ -56,6 +61,23 @@ export default function DashboardPage() {
   useEffect(() => {
     loadCashierData();
   }, [loadCashierData]);
+
+  const loadProductData = useCallback(() => {
+    if (!selectedStore) return;
+    const sid = selectedStore.store_id;
+    let dFrom;
+    if (productFilter === 'today') dFrom = todayStr();
+    else if (productFilter === '7days') dFrom = sevenDaysAgoStr();
+    else dFrom = thirtyDaysAgoStr();
+    
+    reportsApi.byProduct(sid, dFrom, todayStr())
+      .then(res => setProductData(res.data || []))
+      .catch(console.error);
+  }, [selectedStore, productFilter]);
+
+  useEffect(() => {
+    loadProductData();
+  }, [loadProductData]);
 
   const loadData = useCallback(() => {
     if (!selectedStore) return;
@@ -120,6 +142,10 @@ export default function DashboardPage() {
       sales: r.total_sales,
       transactions: r.transaction_count,
     }));
+
+  const sortedProducts = [...productData].sort((a, b) => b.total_quantity - a.total_quantity);
+  const topProducts = sortedProducts.slice(0, 3);
+  const bottomProducts = sortedProducts.filter(p => p.total_quantity > 0).reverse().slice(0, 3);
 
   const statCards = [
     {
@@ -296,7 +322,7 @@ export default function DashboardPage() {
                     color: 'var(--text-1)',
                     fontSize: 12,
                   }}
-                  formatter={(v: unknown, name: string, props: any) => [
+                  formatter={(v: any, name: any, props: any) => [
                     formatRp(Number(v)), 
                     `Pendapatan (${props.payload.transaction_count} Trx)`
                   ]}
@@ -315,6 +341,74 @@ export default function DashboardPage() {
               <p>Belum ada data kasir untuk periode ini</p>
             </div>
           )}
+        </div>
+
+        {/* Most & Least Selling Products */}
+        <div className="card" style={{ padding: '20px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
+            <div>
+              <div style={{ fontWeight: 700, fontSize: '0.95rem' }}>Performa Produk</div>
+              <div className="text-3" style={{ fontSize: '0.8rem' }}>Produk paling laku & kurang laku</div>
+            </div>
+            <select
+              className="input"
+              style={{ width: 'auto', padding: '4px 8px', fontSize: '0.8rem' }}
+              value={productFilter}
+              onChange={e => setProductFilter(e.target.value as TimeFilter)}
+            >
+              <option value="today">Hari Ini</option>
+              <option value="7days">7 Hari Terakhir</option>
+              <option value="30days">30 Hari Terakhir</option>
+            </select>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+            {/* Top Products */}
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
+                <ArrowUp size={16} style={{ color: 'var(--accent-em)' }} />
+                <span style={{ fontWeight: 600, fontSize: '0.85rem' }}>Top 3 Terlaris</span>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {topProducts.length > 0 ? topProducts.map(p => (
+                  <div key={p.product_id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid var(--border)' }}>
+                    <div>
+                      <div style={{ fontSize: '0.8rem', fontWeight: 600 }}>{p.product_name}</div>
+                      <div className="text-3" style={{ fontSize: '0.72rem' }}>{p.total_quantity} terjual</div>
+                    </div>
+                    <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--accent-em)' }}>
+                      {formatRp(p.total_revenue)}
+                    </div>
+                  </div>
+                )) : (
+                  <div className="text-3" style={{ fontSize: '0.8rem', fontStyle: 'italic' }}>Belum ada data...</div>
+                )}
+              </div>
+            </div>
+
+            {/* Bottom Products */}
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
+                <ArrowDown size={16} style={{ color: '#f43f5e' }} />
+                <span style={{ fontWeight: 600, fontSize: '0.85rem' }}>Top 3 Kurang Laku</span>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {bottomProducts.length > 0 ? bottomProducts.map(p => (
+                  <div key={p.product_id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid var(--border)' }}>
+                    <div>
+                      <div style={{ fontSize: '0.8rem', fontWeight: 600 }}>{p.product_name}</div>
+                      <div className="text-3" style={{ fontSize: '0.72rem' }}>{p.total_quantity} terjual</div>
+                    </div>
+                    <div style={{ fontSize: '0.82rem', fontWeight: 700 }}>
+                      {formatRp(p.total_revenue)}
+                    </div>
+                  </div>
+                )) : (
+                  <div className="text-3" style={{ fontSize: '0.8rem', fontStyle: 'italic' }}>Belum ada data...</div>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
