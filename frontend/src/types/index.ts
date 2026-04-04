@@ -171,6 +171,7 @@ export interface Transaction {
   cashier_id: string;
   cashier_name: string;
   table_id?: string;
+  table_number?: string;
   customer_name: string;
   customer_phone: string;
   subtotal: number;

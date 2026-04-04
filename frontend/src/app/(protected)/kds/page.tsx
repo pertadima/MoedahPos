@@ -136,36 +136,36 @@ export default function KDSPage() {
 
             return (
               <div key={ticket.id} style={{
-                flex: '0 0 300px',
+                flex: '0 0 280px',
                 background: 'var(--bg-elevated)',
-                borderRadius: 12,
-                border: `1.5px solid ${isAllDone ? '#10b981' : isLate ? '#ef4444' : 'var(--border-md)'}`,
-                boxShadow: isLate ? '0 4px 16px rgba(239,68,68,0.1)' : '0 4px 12px rgba(0,0,0,0.05)',
+                borderRadius: 8,
+                border: `1px solid ${isAllDone ? '#10b981' : isLate ? '#ef4444' : 'var(--border)'}`,
+                boxShadow: isLate ? '0 2px 8px rgba(239,68,68,0.1)' : '0 1px 4px rgba(0,0,0,0.03)',
                 overflow: 'hidden',
                 display: 'flex',
                 flexDirection: 'column',
               }}>
                 {/* Ticket Header */}
                 <div style={{
-                  background: isAllDone ? '#10b981' : isTakeAway ? '#fb923c' : '#0884f6',
-                  color: '#fff',
-                  padding: '12px 16px',
+                  background: isAllDone ? 'rgba(16,185,129,0.1)' : 'var(--bg-elevated)',
+                  color: 'var(--text-1)',
+                  padding: '12px 14px',
                   display: 'flex',
                   justifyContent: 'space-between',
-                  alignItems: 'center'
+                  alignItems: 'flex-start',
+                  borderBottom: '1px solid var(--border)'
                 }}>
                   <div>
-                    <div style={{ fontSize: '1.1rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: 6 }}>
-                      {isTakeAway ? <ShoppingBag size={16} /> : <UtensilsCrossed size={16} />}
-                      {isTakeAway ? 'Take Away' : `Meja ${ticket.table_id?.substring(0,4)}`} {/* Quick hack for UI display until API passes table NO */}
+                    <div style={{ fontSize: '0.9rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6, color: isAllDone ? '#10b981' : 'var(--text-1)' }}>
+                      {isTakeAway ? <ShoppingBag size={14} style={{ color: '#fb923c' }} /> : <UtensilsCrossed size={14} style={{ color: 'var(--brand)' }} />}
+                      {isTakeAway ? 'Take Away' : `Meja ${ticket.table_number || ticket.table_id?.substring(0,4)}`}
                     </div>
-                    <div style={{ fontSize: '0.75rem', opacity: 0.8, marginTop: 2 }}>
+                    <div style={{ fontSize: '0.7rem', color: 'var(--text-3)', marginTop: 4 }}>
                       #{ticket.id.substring(0,6).toUpperCase()} • {ticket.cashier_name}
                     </div>
                   </div>
-                  <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontSize: '1rem', fontWeight: 800 }}>{completedCount}/{totalCount}</div>
-                    <div style={{ fontSize: '0.7rem', opacity: 0.8 }}>Item Selesai</div>
+                  <div style={{ textAlign: 'right', background: 'var(--bg-base)', padding: '2px 8px', borderRadius: 4, border: '1px solid var(--border-md)' }}>
+                    <div style={{ fontSize: '0.85rem', fontWeight: 700, color: isAllDone ? '#10b981' : 'var(--text-1)' }}>{completedCount}/{totalCount}</div>
                   </div>
                 </div>
 
@@ -173,13 +173,13 @@ export default function KDSPage() {
                 <div style={{
                   padding: '6px 16px',
                   background: isLate ? '#ef4444' : 'var(--bg-base)',
-                  color: isLate ? '#fff' : 'var(--text-2)',
-                  fontSize: '0.75rem',
+                  color: isLate ? '#fff' : 'var(--text-3)',
+                  fontSize: '0.7rem',
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
-                  fontWeight: isLate ? 600 : 500,
-                  borderBottom: '1px solid var(--border-md)'
+                  fontWeight: 500,
+                  borderBottom: '1px solid var(--border)'
                 }}>
                   <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                     <Clock size={12} /> {new Date(ticket.created_at).toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' })}
@@ -203,19 +203,20 @@ export default function KDSPage() {
                           gap: 12,
                           padding: '12px 14px',
                           background: isDone ? 'rgba(16,185,129,0.06)' : 'var(--bg-base)',
-                          border: `1px solid ${isDone ? '#10b981' : 'var(--border-md)'}`,
-                          borderRadius: 8,
+                          border: `1px solid ${isDone ? '#10b981' : 'transparent'}`,
+                          borderBottom: isDone ? '1px solid #10b981' : '1px solid var(--border-md)',
+                          borderRadius: 6,
                           cursor: 'pointer',
                           transition: 'all 0.2s'
                         }}
                       >
-                        <div style={{ color: isDone ? '#10b981' : 'var(--text-3)', marginTop: 2 }}>
-                          {isDone ? <CheckSquare size={20} /> : <Square size={20} />}
+                        <div style={{ color: isDone ? '#10b981' : 'var(--text-3)' }}>
+                          {isDone ? <CheckSquare size={16} /> : <Square size={16} />}
                         </div>
                         <div style={{ flex: 1 }}>
                           <div style={{
-                            fontSize: '0.95rem',
-                            fontWeight: 700,
+                            fontSize: '0.85rem',
+                            fontWeight: 600,
                             color: isDone ? 'var(--text-3)' : 'var(--text-1)',
                             textDecoration: isDone ? 'line-through' : 'none'
                           }}>
@@ -242,9 +243,10 @@ export default function KDSPage() {
                       background: isAllDone ? '#10b981' : 'var(--accent-em)',
                       color: '#fff',
                       border: 'none',
-                      padding: '12px',
-                      borderRadius: 8,
-                      fontWeight: 700,
+                      padding: '10px 12px',
+                      borderRadius: 6,
+                      fontSize: '0.8rem',
+                      fontWeight: 600,
                       cursor: isAllDone ? 'not-allowed' : 'pointer',
                       opacity: isAllDone ? 0.7 : 1,
                       display: 'flex',
