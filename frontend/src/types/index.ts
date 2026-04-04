@@ -205,6 +205,7 @@ export interface PurchaseOrder {
   po_number: string;
   status: 'draft' | 'ordered' | 'received' | 'cancelled';
   total_amount: number;
+  total_items?: number;
   ordered_by_name: string;
   received_by_name?: string;
   ordered_at?: string;

@@ -100,7 +100,8 @@ func (r *PORepo) FindAll(ctx context.Context, f dto.POListFilter) ([]*domain.Pur
 		       po.created_at, po.updated_at,
 		       s.name AS supplier_name,
 		       u.name AS ordered_by_name,
-		       ru.name AS received_by_name
+		       ru.name AS received_by_name,
+		       (SELECT COUNT(*) FROM purchase_order_items WHERE po_id=po.id) AS total_items
 		FROM purchase_orders po
 		JOIN users u ON u.id = po.ordered_by
 		LEFT JOIN suppliers s  ON s.id  = po.supplier_id
@@ -119,7 +120,8 @@ func (r *PORepo) FindByID(ctx context.Context, id string) (*domain.PurchaseOrder
 		SELECT po.id, po.store_id, po.supplier_id, po.po_number, po.status, po.total_amount,
 		       po.ordered_by, po.received_by, po.ordered_at, po.received_at, po.notes,
 		       po.created_at, po.updated_at,
-		       s.name AS supplier_name, u.name AS ordered_by_name, ru.name AS received_by_name
+		       s.name AS supplier_name, u.name AS ordered_by_name, ru.name AS received_by_name,
+		       (SELECT COUNT(*) FROM purchase_order_items WHERE po_id=po.id) AS total_items
 		FROM purchase_orders po
 		JOIN users u ON u.id = po.ordered_by
 		LEFT JOIN suppliers s  ON s.id  = po.supplier_id
@@ -254,6 +256,12 @@ func (r *PORepo) Receive(ctx context.Context, poID, userID string) error { //nol
 	const cpQ = `
 		UPDATE products SET cost_price = $1, updated_at = NOW()
 		WHERE id = $2`
+	// FIFO batch insert: each PO item creates one batch record with received_at=NOW().
+	// received_at determines FIFO position — items received first are deducted first.
+	const batchQ = `
+		INSERT INTO stock_batches
+			(product_id, store_id, po_id, quantity_remaining, purchase_price, received_at)
+		VALUES ($1, $2, $3, $4, $5, NOW())`
 
 	for _, item := range items {
 		if _, err := tx.ExecContext(ctx, mvQ, item.ProductID, storeID, poID, item.Quantity, userID); err != nil {
@@ -265,6 +273,10 @@ func (r *PORepo) Receive(ctx context.Context, poID, userID string) error { //nol
 		// Always update cost_price to the actual purchase cost
 		if _, err := tx.ExecContext(ctx, cpQ, item.UnitCost, item.ProductID); err != nil {
 			return fmt.Errorf("PORepo.Receive cost price: %w", err)
+		}
+		// Create FIFO batch — committed atomically with the rest of the receive operation.
+		if _, err := tx.ExecContext(ctx, batchQ, item.ProductID, storeID, poID, item.Quantity, item.UnitCost); err != nil {
+			return fmt.Errorf("PORepo.Receive create batch: %w", err)
 		}
 	}
 

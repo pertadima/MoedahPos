@@ -31,6 +31,7 @@ type TransactionService struct {
 	productRepo  repository.ProductRepository
 	stockRepo    repository.StockRepository
 	menuItemRepo repository.MenuItemRepository
+	batchSvc     *BatchStockService // FIFO batch deduction
 	log          zerolog.Logger
 }
 
@@ -39,9 +40,10 @@ func NewTransactionService(
 	productRepo repository.ProductRepository,
 	stockRepo repository.StockRepository,
 	menuItemRepo repository.MenuItemRepository,
+	batchSvc *BatchStockService,
 	log zerolog.Logger,
 ) *TransactionService {
-	return &TransactionService{txnRepo: txnRepo, productRepo: productRepo, stockRepo: stockRepo, menuItemRepo: menuItemRepo, log: log}
+	return &TransactionService{txnRepo: txnRepo, productRepo: productRepo, stockRepo: stockRepo, menuItemRepo: menuItemRepo, batchSvc: batchSvc, log: log}
 }
 
 // Checkout processes a sale: validates stock, calculates totals, persists atomically.
@@ -193,6 +195,25 @@ func (s *TransactionService) Checkout(ctx context.Context, storeID string, req *
 		for _, ing := range menuItem.Ingredients {
 			needed := ing.Quantity * item.Quantity
 			_ = s.stockRepo.DeductStock(ctx, ing.ProductID, storeID, needed, txn.ID, cashierID)
+			// FIFO: deduct ingredient from oldest batch first (best-effort).
+			if err := s.batchSvc.DeductStockFIFO(ctx, ing.ProductID, storeID, needed); err != nil {
+				s.log.Warn().Err(err).Str("product_id", ing.ProductID).Msg("FIFO ingredient deduct failed")
+			}
+		}
+	}
+
+	// ── Post-commit: FIFO batch deduction for retail items ────────────────────
+	// Deducts from oldest batch first. Best-effort: stock_levels is the
+	// canonical availability constraint validated before the sale.
+	for _, item := range req.Items {
+		if item.MenuItemID != "" {
+			continue // menu items already handled above via ingredients
+		}
+		if err := s.batchSvc.DeductStockFIFO(ctx, item.ProductID, storeID, item.Quantity); err != nil {
+			s.log.Warn().Err(err).
+				Str("product_id", item.ProductID).
+				Float64("qty", item.Quantity).
+				Msg("FIFO retail batch deduct failed")
 		}
 	}
 

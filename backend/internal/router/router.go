@@ -43,6 +43,12 @@ type Dependencies struct {
 	// User Admin
 	UserAdminHandler *handler.UserAdminHandler
 
+	// FIFO Batch Inventory
+	BatchStockHandler *handler.BatchStockHandler
+
+	// Termin (installment payment)
+	TerminHandler *handler.TerminHandler
+
 	// Shared
 	RoleStore *rbac.RoleStore
 	DB        *sqlx.DB
@@ -171,6 +177,9 @@ func New(deps *Dependencies) http.Handler { //nolint:funlen // route wiring is i
 							r.Get("/movements", withPerm(deps, "stock.read", deps.StockHandler.GetMovements))
 							r.Post("/adjust", withPerm(deps, "stock.adjust", deps.StockHandler.Adjust))
 							r.Put("/min", withPerm(deps, "stock.adjust", deps.StockHandler.SetMinStock))
+							// FIFO batch endpoints — registered before wildcard so static paths win
+							r.Get("/batches", withPerm(deps, "stock.read", deps.BatchStockHandler.ListBatches))
+							r.Get("/batch-summary", withPerm(deps, "stock.read", deps.BatchStockHandler.GetSummary))
 							r.Get("/{productId}", withPerm(deps, "stock.read", deps.StockHandler.GetProductStock))
 						})
 
@@ -201,6 +210,12 @@ func New(deps *Dependencies) http.Handler { //nolint:funlen // route wiring is i
 							r.Delete("/{poId}", withPerm(deps, "purchases.delete", deps.PurchaseOrderHandler.Cancel))
 							r.Get("/{poId}/payments", withPerm(deps, "purchases.read", deps.PurchaseOrderHandler.ListPayments))
 							r.Post("/{poId}/payments", withPerm(deps, "purchases.update", deps.PurchaseOrderHandler.CreatePayment))
+							// Termin (installment) routes
+							r.Get("/{poId}/termins", withPerm(deps, "purchases.read", deps.TerminHandler.ListTermins))
+							r.Post("/{poId}/termins", withPerm(deps, "purchases.update", deps.TerminHandler.CreateSchedule))
+							r.Post("/{poId}/termins/{terminId}/payments", withPerm(deps, "purchases.update", deps.TerminHandler.RecordPayment))
+							r.Get("/{poId}/debt", withPerm(deps, "purchases.read", deps.TerminHandler.GetDebtSummary))
+							r.Get("/{poId}/document", withPerm(deps, "purchases.read", deps.TerminHandler.GetDocument))
 						})
 
 						// Reports

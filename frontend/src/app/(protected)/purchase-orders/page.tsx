@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, Fragment, useRef } from 'react';
 import {
   ClipboardList,
   Plus,
@@ -23,9 +23,16 @@ import {
 import { useAuth } from '@/lib/auth/AuthContext';
 import { purchaseOrdersApi, suppliersApi, storesApi } from '@/lib/api/store-apis';
 import { productsApi } from '@/lib/api/products';
-import { formatRp, formatDate } from '@/lib/utils';
+import { formatRp, formatDate, formatNumberInput, parseNumberInput } from '@/lib/utils';
 import type { PurchaseOrder, Product, Supplier, Store } from '@/types';
 import { ApiError } from '@/lib/api/client';
+import {
+  listTermins,
+  createTerminSchedule,
+  recordPayment,
+  type Termin,
+  type RecordPaymentRequest,
+} from '@/lib/api/termins';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 const STATUS_BADGE: Record<string, string> = {
@@ -51,6 +58,158 @@ const EMPTY_FORM = {
   items: [{ product_id: '', quantity: 1, unit_cost: 0 }],
 };
 type ItemRow = { product_id: string; quantity: number; unit_cost: number };
+
+function SearchableSelect({
+  options,
+  value,
+  onChange,
+  placeholder = 'Pilih...',
+  className = 'input',
+}: {
+  options: { value: string; label: string }[];
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  className?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const wrapperRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const selectedOption = options.find(o => o.value === value);
+  const filteredOptions = options.filter(o => o.label.toLowerCase().includes(search.toLowerCase()));
+
+  return (
+    <div ref={wrapperRef} style={{ position: 'relative', width: '100%' }}>
+      <div
+        className={className}
+        style={{
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          minHeight: 38,
+        }}
+        onClick={() => {
+          setOpen(!open);
+          setSearch('');
+        }}
+      >
+        <span
+          style={{
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+            color: selectedOption ? 'inherit' : 'var(--text-3)',
+          }}
+        >
+          {selectedOption ? selectedOption.label : placeholder}
+        </span>
+        <ChevronRight size={14} style={{ transform: open ? 'rotate(90deg)' : 'rotate(0)' }} />
+      </div>
+
+      {open && (
+        <div
+          style={{
+            position: 'absolute',
+            top: '100%',
+            left: 0,
+            right: 0,
+            zIndex: 3000,
+            background: 'var(--bg-card)',
+            border: '1px solid var(--border)',
+            borderRadius: 8,
+            marginTop: 4,
+            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+            maxHeight: 280,
+            display: 'flex',
+            flexDirection: 'column',
+          }}
+        >
+          <div style={{ padding: 8, borderBottom: '1px solid var(--border)' }}>
+            <input
+              autoFocus
+              className="input"
+              placeholder="Cari..."
+              style={{ width: '100%', height: 32, fontSize: '0.82rem' }}
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+            />
+          </div>
+          <div style={{ overflowY: 'auto', flex: 1, padding: 4 }}>
+            {!value ? null : (
+              <div
+                style={{
+                  padding: '8px 12px',
+                  cursor: 'pointer',
+                  fontSize: '0.82rem',
+                  borderRadius: 6,
+                  color: 'var(--text-3)',
+                }}
+                onClick={() => {
+                  onChange('');
+                  setOpen(false);
+                }}
+                onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-hover)')}
+                onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+              >
+                Tanpa Pilihan / Reset
+              </div>
+            )}
+            {filteredOptions.length === 0 ? (
+              <div
+                style={{
+                  padding: '8px 12px',
+                  fontSize: '0.82rem',
+                  color: 'var(--text-3)',
+                  textAlign: 'center',
+                }}
+              >
+                Tidak ditemukan
+              </div>
+            ) : (
+              filteredOptions.map(o => (
+                <div
+                  key={o.value}
+                  style={{
+                    padding: '8px 12px',
+                    cursor: 'pointer',
+                    fontSize: '0.82rem',
+                    borderRadius: 6,
+                    background: o.value === value ? 'var(--bg-active)' : 'transparent',
+                  }}
+                  onClick={() => {
+                    onChange(o.value);
+                    setOpen(false);
+                  }}
+                  onMouseEnter={e => {
+                    if (o.value !== value) e.currentTarget.style.background = 'var(--bg-hover)';
+                  }}
+                  onMouseLeave={e => {
+                    if (o.value !== value) e.currentTarget.style.background = 'transparent';
+                  }}
+                >
+                  {o.label}
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 type ActionType = 'submit' | 'receive' | 'cancel';
 
 interface PayableSummary {
@@ -90,6 +249,747 @@ function PayStatusBadge({ status }: { status: string }) {
     >
       <Icon size={11} /> {cfg.label}
     </span>
+  );
+}
+
+// ── Termin helpers ───────────────────────────────────────────────────────────
+
+function terminStatusCfg(t: Termin) {
+  if (t.status === 'paid') return { label: 'Lunas', bg: '#dcfce7', color: '#16a34a' };
+  if (t.status === 'overdue' || t.is_overdue)
+    return { label: 'Jatuh Tempo', bg: '#fee2e2', color: '#dc2626' };
+  if (t.status === 'partial') return { label: 'Sebagian', bg: '#fef3c7', color: '#d97706' };
+  return { label: 'Belum Bayar', bg: '#f3f4f6', color: '#6b7280' };
+}
+
+function formatIDR(n: number) {
+  return new Intl.NumberFormat('id-ID', {
+    style: 'currency',
+    currency: 'IDR',
+    maximumFractionDigits: 0,
+  }).format(n);
+}
+
+// ── TerminPanel ───────────────────────────────────────────────────────────────
+
+interface TerminPanelProps {
+  po: PurchaseOrder;
+  storeId: string;
+  onOpenDoc: (type: 'invoice' | 'receipt' | 'termin_agreement') => void;
+}
+
+function TerminPanel({ po, storeId, onOpenDoc }: TerminPanelProps) {
+  const [termins, setTermins] = useState<Termin[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [payTarget, setPayTarget] = useState<Termin | null>(null);
+  const [expandedPayments, setExpandedPayments] = useState<Set<string>>(new Set());
+
+  const load = useCallback(() => {
+    setLoading(true);
+    listTermins(storeId, po.id)
+      .then(setTermins)
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, [storeId, po.id]);
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    load();
+  }, [storeId, po.id]);
+
+  const togglePay = (id: string) =>
+    setExpandedPayments(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+
+  return (
+    <div style={{ padding: '12px 16px 16px', background: 'rgba(255,255,255,0.03)' }}>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: 12,
+        }}
+      >
+        <span style={{ fontWeight: 600, fontSize: '0.82rem', color: 'var(--text-2)' }}>
+          Jadwal Termin
+        </span>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          {(['invoice', 'receipt', 'termin_agreement'] as const).map(type => (
+            <button
+              key={type}
+              id={`doc-${type}-${po.id}`}
+              onClick={() => onOpenDoc(type)}
+              style={{
+                padding: '4px 10px',
+                borderRadius: 6,
+                border: '1px solid var(--border)',
+                background: 'transparent',
+                color: 'var(--text-2)',
+                fontSize: '0.75rem',
+                cursor: 'pointer',
+              }}
+            >
+              {type === 'invoice'
+                ? '📄 Invoice'
+                : type === 'receipt'
+                  ? '🧾 Kwitansi'
+                  : '📋 Perjanjian'}
+            </button>
+          ))}
+          {po.status === 'received' && (
+            <button
+              id={`add-termin-${po.id}`}
+              onClick={() => setShowAddModal(true)}
+              style={{
+                padding: '4px 12px',
+                borderRadius: 6,
+                border: 'none',
+                background: 'var(--accent-em)',
+                color: '#fff',
+                fontSize: '0.75rem',
+                cursor: 'pointer',
+                fontWeight: 600,
+              }}
+            >
+              + Termin
+            </button>
+          )}
+        </div>
+      </div>
+
+      {loading ? (
+        <div style={{ textAlign: 'center', padding: 20, color: 'var(--text-3)' }}>Memuat…</div>
+      ) : termins.length === 0 ? (
+        <div
+          style={{ textAlign: 'center', padding: 20, color: 'var(--text-3)', fontSize: '0.82rem' }}
+        >
+          {po.status === 'received'
+            ? 'Belum ada termin. Tambahkan jadwal pembayaran.'
+            : 'PO harus diterima sebelum termin dapat dibuat.'}
+        </div>
+      ) : (
+        <div style={{ overflowX: 'auto' }}>
+          <table className="tbl" style={{ fontSize: '0.82rem' }}>
+            <thead>
+              <tr>
+                <th>No.</th>
+                <th>Jatuh Tempo</th>
+                <th>Jumlah</th>
+                <th>Dibayar</th>
+                <th>Sisa</th>
+                <th>Status</th>
+                <th>Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+              {termins.map(t => {
+                const cfg = terminStatusCfg(t);
+                return (
+                  <Fragment key={t.id}>
+                    <tr>
+                      <td style={{ fontWeight: 600 }}>Termin {t.termin_number}</td>
+                      <td style={{ color: t.is_overdue ? '#dc2626' : 'inherit' }}>
+                        {formatDate(t.due_date)}
+                      </td>
+                      <td>{formatIDR(t.amount)}</td>
+                      <td style={{ color: '#16a34a', fontWeight: 600 }}>
+                        {formatIDR(t.amount_paid)}
+                      </td>
+                      <td
+                        style={{ color: t.amount_due > 0 ? '#dc2626' : '#16a34a', fontWeight: 600 }}
+                      >
+                        {formatIDR(t.amount_due)}
+                      </td>
+                      <td>
+                        <span
+                          style={{
+                            background: cfg.bg,
+                            color: cfg.color,
+                            borderRadius: 5,
+                            padding: '2px 8px',
+                            fontSize: '0.75rem',
+                            fontWeight: 600,
+                          }}
+                        >
+                          {cfg.label}
+                        </span>
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', gap: 6 }}>
+                          {t.status !== 'paid' && (
+                            <button
+                              id={`pay-termin-${t.id}`}
+                              onClick={() => setPayTarget(t)}
+                              style={{
+                                padding: '3px 10px',
+                                borderRadius: 5,
+                                border: 'none',
+                                background: 'var(--accent-em)',
+                                color: '#fff',
+                                fontSize: '0.75rem',
+                                cursor: 'pointer',
+                              }}
+                            >
+                              Bayar
+                            </button>
+                          )}
+                          {t.payments.length > 0 && (
+                            <button
+                              id={`hist-${t.id}`}
+                              onClick={() => togglePay(t.id)}
+                              style={{
+                                padding: '3px 10px',
+                                borderRadius: 5,
+                                border: '1px solid var(--border)',
+                                background: 'transparent',
+                                color: 'var(--text-2)',
+                                fontSize: '0.75rem',
+                                cursor: 'pointer',
+                              }}
+                            >
+                              {expandedPayments.has(t.id) ? '▲' : '▼'} {t.payments.length}
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                    {expandedPayments.has(t.id) &&
+                      t.payments.map(p => (
+                        <tr
+                          key={p.id}
+                          style={{ background: 'rgba(59,130,246,0.04)', fontSize: '0.78rem' }}
+                        >
+                          <td colSpan={2} style={{ paddingLeft: 28, color: 'var(--text-3)' }}>
+                            {formatDate(p.payment_date)} · {p.payment_method}
+                          </td>
+                          <td colSpan={2} style={{ color: '#16a34a', fontWeight: 600 }}>
+                            +{formatIDR(p.amount_paid)}
+                          </td>
+                          <td colSpan={2} style={{ color: 'var(--text-3)' }}>
+                            {p.notes || '—'}
+                          </td>
+                          <td style={{ color: 'var(--text-3)' }}>{p.recorded_by_name}</td>
+                        </tr>
+                      ))}
+                  </Fragment>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+      {showAddModal && (
+        <TerminModal
+          po={po}
+          storeId={storeId}
+          onSuccess={() => {
+            setShowAddModal(false);
+            load();
+          }}
+          onCancel={() => setShowAddModal(false)}
+        />
+      )}
+      {payTarget && (
+        <PayTerminModal
+          termin={payTarget}
+          storeId={storeId}
+          poId={po.id}
+          onSuccess={() => {
+            setPayTarget(null);
+            load();
+          }}
+          onCancel={() => setPayTarget(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+// ── TerminModal ───────────────────────────────────────────────────────────────
+
+interface TerminModalProps {
+  po: PurchaseOrder;
+  storeId: string;
+  onSuccess: () => void;
+  onCancel: () => void;
+}
+
+function TerminModal({ po, storeId, onSuccess, onCancel }: TerminModalProps) {
+  const today = new Date().toISOString().slice(0, 10);
+  const [rows, setRows] = useState([
+    { termin_number: 1, amount: po.total_amount, due_date: today, notes: '' },
+  ]);
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState('');
+  const updateRow = (i: number, field: string, value: string | number) =>
+    setRows(prev => prev.map((r, idx) => (idx === i ? { ...r, [field]: value } : r)));
+  const recalculate = (currentRows: typeof rows) => {
+    const count = currentRows.length;
+    if (count <= 0) return currentRows;
+
+    const splitAmount = Math.floor(po.total_amount / count);
+    const remainder = po.total_amount - splitAmount * count;
+    const baseDateStr = currentRows[0]?.due_date || today;
+
+    return currentRows.map((r, i) => {
+      const d = new Date(baseDateStr);
+      d.setDate(d.getDate() + i);
+      let amt = splitAmount;
+      if (i === count - 1) amt += remainder;
+      return { ...r, termin_number: i + 1, amount: amt, due_date: d.toISOString().slice(0, 10) };
+    });
+  };
+
+  const addRow = () => {
+    setRows(prev =>
+      recalculate([
+        ...prev,
+        { termin_number: prev.length + 1, amount: 0, due_date: today, notes: '' },
+      ])
+    );
+  };
+
+  const removeRow = (i: number) => {
+    setRows(prev => recalculate(prev.filter((_, idx) => idx !== i)));
+  };
+  const totalTermin = rows.reduce((s, r) => s + Number(r.amount), 0);
+  const handleSave = async () => {
+    setSaving(true);
+    setErr('');
+    try {
+      await createTerminSchedule(storeId, po.id, {
+        termins: rows.map(r => ({ ...r, amount: Number(r.amount) })),
+      });
+      onSuccess();
+    } catch (e: unknown) {
+      setErr(e instanceof Error ? e.message : 'Gagal');
+    } finally {
+      setSaving(false);
+    }
+  };
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        background: 'rgba(0,0,0,0.55)',
+        zIndex: 200,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      <div
+        style={{
+          background: 'var(--bg-card)',
+          borderRadius: 14,
+          padding: 28,
+          width: 620,
+          maxHeight: '85vh',
+          overflowY: 'auto',
+        }}
+      >
+        <div style={{ fontWeight: 700, fontSize: '1rem', marginBottom: 12 }}>
+          Buat Jadwal Termin — {po.po_number}
+        </div>
+        <div style={{ fontSize: '0.82rem', color: 'var(--text-2)', marginBottom: 14 }}>
+          Total PO: <strong>{formatIDR(po.total_amount)}</strong> · Total termin:{' '}
+          <strong
+            style={{
+              color: Math.abs(totalTermin - po.total_amount) < 0.01 ? '#16a34a' : '#d97706',
+            }}
+          >
+            {formatIDR(totalTermin)}
+          </strong>
+        </div>
+        {rows.map((row, i) => (
+          <div
+            key={i}
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '50px 1fr 1.2fr 1fr 34px',
+              gap: 8,
+              marginBottom: 8,
+              alignItems: 'end',
+            }}
+          >
+            <div>
+              <label
+                style={{
+                  fontSize: '0.72rem',
+                  color: 'var(--text-3)',
+                  display: 'block',
+                  marginBottom: 2,
+                }}
+              >
+                No.
+              </label>
+              <input
+                type="number"
+                value={row.termin_number}
+                disabled
+                style={{
+                  width: '100%',
+                  padding: '6px 7px',
+                  borderRadius: 7,
+                  border: '1px solid var(--border)',
+                  background: 'var(--bg-hover)',
+                  color: 'var(--text-3)',
+                }}
+              />
+            </div>
+            <div>
+              <label
+                style={{
+                  fontSize: '0.72rem',
+                  color: 'var(--text-3)',
+                  display: 'block',
+                  marginBottom: 2,
+                }}
+              >
+                Jumlah (Rp)
+              </label>
+              <input
+                id={`ta-${i}`}
+                type="text"
+                value={formatNumberInput(row.amount)}
+                onChange={e => updateRow(i, 'amount', parseNumberInput(e.target.value))}
+                style={{
+                  width: '100%',
+                  padding: '6px 7px',
+                  borderRadius: 7,
+                  border: '1px solid var(--border)',
+                  background: 'var(--bg-card)',
+                  color: 'var(--text-1)',
+                }}
+              />
+            </div>
+            <div>
+              <label
+                style={{
+                  fontSize: '0.72rem',
+                  color: 'var(--text-3)',
+                  display: 'block',
+                  marginBottom: 2,
+                }}
+              >
+                Jatuh Tempo
+              </label>
+              <input
+                id={`td-${i}`}
+                type="date"
+                value={row.due_date}
+                onChange={e => updateRow(i, 'due_date', e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '6px 7px',
+                  borderRadius: 7,
+                  border: '1px solid var(--border)',
+                  background: 'var(--bg-card)',
+                  color: 'var(--text-1)',
+                }}
+              />
+            </div>
+            <div>
+              <label
+                style={{
+                  fontSize: '0.72rem',
+                  color: 'var(--text-3)',
+                  display: 'block',
+                  marginBottom: 2,
+                }}
+              >
+                Catatan
+              </label>
+              <input
+                type="text"
+                value={row.notes}
+                onChange={e => updateRow(i, 'notes', e.target.value)}
+                placeholder="opsional"
+                style={{
+                  width: '100%',
+                  padding: '6px 7px',
+                  borderRadius: 7,
+                  border: '1px solid var(--border)',
+                  background: 'var(--bg-card)',
+                  color: 'var(--text-1)',
+                }}
+              />
+            </div>
+            <button
+              onClick={() => removeRow(i)}
+              disabled={rows.length === 1}
+              style={{
+                padding: '6px 7px',
+                borderRadius: 7,
+                border: 'none',
+                background: '#fee2e2',
+                color: '#dc2626',
+                cursor: 'pointer',
+              }}
+            >
+              ✕
+            </button>
+          </div>
+        ))}
+        <button
+          id="add-row-btn"
+          onClick={addRow}
+          style={{
+            marginBottom: 14,
+            padding: '5px 14px',
+            borderRadius: 7,
+            border: '1px dashed var(--border)',
+            background: 'transparent',
+            color: 'var(--text-2)',
+            cursor: 'pointer',
+            fontSize: '0.82rem',
+          }}
+        >
+          + Tambah Termin
+        </button>
+        {err && (
+          <div style={{ color: '#dc2626', fontSize: '0.82rem', marginBottom: 10 }}>{err}</div>
+        )}
+        <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+          <button
+            onClick={onCancel}
+            style={{
+              padding: '8px 18px',
+              borderRadius: 8,
+              border: '1px solid var(--border)',
+              background: 'transparent',
+              color: 'var(--text-2)',
+              cursor: 'pointer',
+            }}
+          >
+            Batal
+          </button>
+          <button
+            id="save-schedule-btn"
+            onClick={handleSave}
+            disabled={saving}
+            style={{
+              padding: '8px 18px',
+              borderRadius: 8,
+              border: 'none',
+              background: 'var(--accent-em)',
+              color: '#fff',
+              cursor: 'pointer',
+              fontWeight: 600,
+            }}
+          >
+            {saving ? '…' : 'Simpan Jadwal'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── PayTerminModal ────────────────────────────────────────────────────────────
+
+interface PayTerminModalProps {
+  termin: Termin;
+  storeId: string;
+  poId: string;
+  onSuccess: () => void;
+  onCancel: () => void;
+}
+
+function PayTerminModal({ termin, storeId, poId, onSuccess, onCancel }: PayTerminModalProps) {
+  const today = new Date().toISOString().slice(0, 10);
+  const [amount, setAmount] = useState(String(termin.amount_due.toFixed(0)));
+  const [date, setDate] = useState(today);
+  const [method, setMethod] = useState<RecordPaymentRequest['payment_method']>('cash');
+  const [notes, setNotes] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState('');
+  const handleSave = async () => {
+    const n = parseFloat(amount);
+    if (isNaN(n) || n <= 0) {
+      setErr('Jumlah harus > 0');
+      return;
+    }
+    if (n > termin.amount_due) {
+      setErr(`Melebihi sisa termin (${formatIDR(termin.amount_due)})`);
+      return;
+    }
+    setSaving(true);
+    setErr('');
+    try {
+      await recordPayment(storeId, poId, termin.id, {
+        amount_paid: n,
+        payment_date: date,
+        payment_method: method,
+        notes,
+      });
+      onSuccess();
+    } catch (e: unknown) {
+      setErr(e instanceof Error ? e.message : 'Gagal');
+    } finally {
+      setSaving(false);
+    }
+  };
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        background: 'rgba(0,0,0,0.55)',
+        zIndex: 210,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      <div style={{ background: 'var(--bg-card)', borderRadius: 14, padding: 28, width: 420 }}>
+        <div style={{ fontWeight: 700, fontSize: '1rem', marginBottom: 4 }}>
+          Catat Pembayaran — Termin {termin.termin_number}
+        </div>
+        <div style={{ fontSize: '0.82rem', color: 'var(--text-2)', marginBottom: 18 }}>
+          Sisa: <strong style={{ color: '#dc2626' }}>{formatIDR(termin.amount_due)}</strong>
+        </div>
+        {[
+          {
+            label: 'Jumlah Bayar (Rp)',
+            el: (
+              <input
+                id="pay-amt"
+                type="text"
+                value={formatNumberInput(amount)}
+                onChange={e => setAmount(String(parseNumberInput(e.target.value)))}
+                style={{
+                  width: '100%',
+                  padding: '8px 12px',
+                  borderRadius: 8,
+                  border: '1px solid var(--border)',
+                  background: 'var(--bg-card)',
+                  color: 'var(--text-1)',
+                }}
+              />
+            ),
+          },
+          {
+            label: 'Tanggal Bayar',
+            el: (
+              <input
+                id="pay-dt"
+                type="date"
+                value={date}
+                onChange={e => setDate(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '8px 12px',
+                  borderRadius: 8,
+                  border: '1px solid var(--border)',
+                  background: 'var(--bg-card)',
+                  color: 'var(--text-1)',
+                }}
+              />
+            ),
+          },
+          {
+            label: 'Metode',
+            el: (
+              <select
+                id="pay-mth"
+                value={method}
+                onChange={e => setMethod(e.target.value as typeof method)}
+                style={{
+                  width: '100%',
+                  padding: '8px 12px',
+                  borderRadius: 8,
+                  border: '1px solid var(--border)',
+                  background: 'var(--bg-card)',
+                  color: 'var(--text-1)',
+                }}
+              >
+                {['cash', 'transfer', 'check', 'other'].map(m => (
+                  <option key={m} value={m}>
+                    {m[0].toUpperCase() + m.slice(1)}
+                  </option>
+                ))}
+              </select>
+            ),
+          },
+          {
+            label: 'Catatan',
+            el: (
+              <input
+                id="pay-nt"
+                type="text"
+                value={notes}
+                onChange={e => setNotes(e.target.value)}
+                placeholder="opsional"
+                style={{
+                  width: '100%',
+                  padding: '8px 12px',
+                  borderRadius: 8,
+                  border: '1px solid var(--border)',
+                  background: 'var(--bg-card)',
+                  color: 'var(--text-1)',
+                }}
+              />
+            ),
+          },
+        ].map(({ label, el }) => (
+          <div key={label} style={{ marginBottom: 12 }}>
+            <label
+              style={{
+                fontSize: '0.78rem',
+                color: 'var(--text-2)',
+                display: 'block',
+                marginBottom: 4,
+              }}
+            >
+              {label}
+            </label>
+            {el}
+          </div>
+        ))}
+        {err && (
+          <div style={{ color: '#dc2626', fontSize: '0.82rem', marginBottom: 10 }}>{err}</div>
+        )}
+        <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 8 }}>
+          <button
+            onClick={onCancel}
+            style={{
+              padding: '8px 18px',
+              borderRadius: 8,
+              border: '1px solid var(--border)',
+              background: 'transparent',
+              color: 'var(--text-2)',
+              cursor: 'pointer',
+            }}
+          >
+            Batal
+          </button>
+          <button
+            id="save-pay-btn"
+            onClick={handleSave}
+            disabled={saving}
+            style={{
+              padding: '8px 18px',
+              borderRadius: 8,
+              border: 'none',
+              background: 'var(--accent-em)',
+              color: '#fff',
+              cursor: 'pointer',
+              fontWeight: 600,
+            }}
+          >
+            {saving ? '…' : 'Catat Pembayaran'}
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -587,15 +1487,17 @@ interface PODetailDrawerProps {
   onInvoice: () => void;
   onAction: (action: ActionType) => void;
   onPay: () => void;
+  onOpenDoc: (type: 'invoice' | 'receipt' | 'termin_agreement') => void;
 }
 function PODetailDrawer({
   po,
-  storeId: _storeId,
+  storeId,
   payments,
   onClose,
   onInvoice,
   onAction,
   onPay,
+  onOpenDoc,
 }: PODetailDrawerProps) {
   const payStatus = (po as any).payment_status ?? 'unpaid';
   const amountPaid = (po as any).amount_paid ?? 0;
@@ -619,7 +1521,7 @@ function PODetailDrawer({
           top: 0,
           right: 0,
           bottom: 0,
-          width: 520,
+          width: 'min(720px, 100vw)',
           background: 'var(--bg-card)',
           borderLeft: '1px solid var(--border)',
           zIndex: 201,
@@ -807,6 +1709,11 @@ function PODetailDrawer({
             </div>
           )}
 
+          {/* Termin Schedule */}
+          <div style={{ borderTop: '1px solid var(--border)', paddingTop: 14 }}>
+            <TerminPanel po={po} storeId={storeId} onOpenDoc={onOpenDoc} />
+          </div>
+
           {/* Action buttons */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {po.status === 'received' && payStatus !== 'paid' && (
@@ -966,16 +1873,16 @@ export default function PurchaseOrdersPage() {
     setForm(f => ({ ...f, items: [...f.items, { product_id: '', quantity: 1, unit_cost: 0 }] }));
   const removeItem = (i: number) =>
     setForm(f => ({ ...f, items: f.items.filter((_, idx) => idx !== i) }));
-  const updateItem = (i: number, k: keyof ItemRow, v: string) => {
+  const updateItem = (i: number, k: keyof ItemRow, v: string | number) => {
     setForm(f => ({
       ...f,
       items: f.items.map((item, idx) => {
         if (idx !== i) return item;
         if (k === 'product_id') {
-          const p = products.find(p => p.id === v);
-          return { ...item, product_id: v, unit_cost: p?.cost_price ?? item.unit_cost };
+          const p = products.find(p => p.id === String(v));
+          return { ...item, product_id: String(v), unit_cost: p?.cost_price ?? item.unit_cost };
         }
-        return { ...item, [k]: +v };
+        return { ...item, [k]: Number(v) };
       }),
     }));
   };
@@ -1151,7 +2058,7 @@ export default function PurchaseOrdersPage() {
                           color: 'var(--text-2)',
                         }}
                       >
-                        {po.items?.length ?? 0} item
+                        {po.total_items ?? po.items?.length ?? 0} item
                       </span>
                     </td>
                     <td
@@ -1257,6 +2164,9 @@ export default function PurchaseOrdersPage() {
           onInvoice={() => openInvoice(detailPO)}
           onAction={a => setConfirm({ po: detailPO, action: a })}
           onPay={() => setPayingPO(detailPO)}
+          onOpenDoc={type =>
+            window.open(`/purchase-orders/${detailPO.id}/document?type=${type}`, '_blank')
+          }
         />
       )}
       {invoicePO && (
@@ -1319,18 +2229,12 @@ export default function PurchaseOrdersPage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div className="input-group">
                 <label className="input-label">Supplier (opsional)</label>
-                <select
-                  className="input"
+                <SearchableSelect
                   value={form.supplier_id}
-                  onChange={e => setForm(f => ({ ...f, supplier_id: e.target.value }))}
-                >
-                  <option value="">Tanpa Supplier</option>
-                  {suppliers.map(s => (
-                    <option key={s.id} value={s.id}>
-                      {s.name}
-                    </option>
-                  ))}
-                </select>
+                  onChange={v => setForm(f => ({ ...f, supplier_id: v }))}
+                  placeholder="Tanpa Supplier"
+                  options={suppliers.map(s => ({ value: s.id, label: s.name }))}
+                />
               </div>
               <div className="input-group">
                 <label className="input-label">Catatan (opsional)</label>
@@ -1386,18 +2290,12 @@ export default function PurchaseOrdersPage() {
                           gap: 6,
                         }}
                       >
-                        <select
-                          className="input"
+                        <SearchableSelect
                           value={item.product_id}
-                          onChange={e => updateItem(i, 'product_id', e.target.value)}
-                        >
-                          <option value="">Pilih produk...</option>
-                          {products.map(p => (
-                            <option key={p.id} value={p.id}>
-                              {p.name}
-                            </option>
-                          ))}
-                        </select>
+                          onChange={v => updateItem(i, 'product_id', v)}
+                          placeholder="Pilih produk..."
+                          options={products.map(p => ({ value: p.id, label: p.name }))}
+                        />
                         <input
                           type="number"
                           className="input"
@@ -1407,12 +2305,13 @@ export default function PurchaseOrdersPage() {
                           onChange={e => updateItem(i, 'quantity', e.target.value)}
                         />
                         <input
-                          type="number"
+                          type="text"
                           className="input"
                           placeholder="Harga beli"
-                          min={0}
-                          value={item.unit_cost}
-                          onChange={e => updateItem(i, 'unit_cost', e.target.value)}
+                          value={formatNumberInput(item.unit_cost)}
+                          onChange={e =>
+                            updateItem(i, 'unit_cost', parseNumberInput(e.target.value))
+                          }
                         />
                         <button
                           className="btn btn-ghost btn-sm"

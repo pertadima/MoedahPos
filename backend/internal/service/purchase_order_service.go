@@ -157,6 +157,22 @@ func (s *PurchaseOrderService) ReceivePO(ctx context.Context, id, userID string)
 	if po.Status != "ordered" {
 		return ErrPOCannotReceive
 	}
+	// Fetch old product prices BEFORE they are updated in `Receive`
+	type oldProductData struct {
+		CostPrice float64
+		SellPrice float64
+	}
+	oldPrices := make(map[string]oldProductData)
+	for _, item := range po.Items {
+		product, err := s.productRepo.FindByID(ctx, item.ProductID)
+		if err == nil && product != nil {
+			oldPrices[item.ProductID] = oldProductData{
+				CostPrice: product.CostPrice,
+				SellPrice: product.SellPrice,
+			}
+		}
+	}
+
 	if err := s.poRepo.Receive(ctx, id, userID); err != nil {
 		return fmt.Errorf("receiving PO: %w", err)
 	}
@@ -165,18 +181,18 @@ func (s *PurchaseOrderService) ReceivePO(ctx context.Context, id, userID string)
 	if s.priceHistorySvc != nil {
 		poID := id
 		for _, item := range po.Items {
-			product, err := s.productRepo.FindByID(ctx, item.ProductID)
-			if err != nil || product == nil {
+			oldP, exists := oldPrices[item.ProductID]
+			if !exists {
 				continue
 			}
-			if product.CostPrice == item.UnitCost {
+			if oldP.CostPrice == item.UnitCost {
 				continue // no cost change
 			}
-			notes := fmt.Sprintf("PO %s received — qty %.2f @ %.2f", po.PONumber, item.ReceivedQty, item.UnitCost)
+			notes := fmt.Sprintf("PO %s received — qty %.2f @ %.2f", po.PONumber, item.Quantity, item.UnitCost)
 			_ = s.priceHistorySvc.RecordChange(ctx,
 				item.ProductID, po.StoreID, userID,
-				product.CostPrice, item.UnitCost,
-				product.SellPrice, product.SellPrice, // sell price unchanged
+				oldP.CostPrice, item.UnitCost,
+				oldP.SellPrice, oldP.SellPrice, // sell price unchanged
 				"purchase_order", &poID, &notes,
 			)
 		}
@@ -237,6 +253,7 @@ func toPOResponse(po *domain.PurchaseOrder) *dto.POResponse {
 		SupplierName:   po.SupplierName,
 		PONumber:       po.PONumber,
 		Status:         po.Status,
+		TotalItems:     po.TotalItems,
 		TotalAmount:    po.TotalAmount,
 		AmountPaid:     po.AmountPaid,
 		AmountDue:      po.TotalAmount - po.AmountPaid,

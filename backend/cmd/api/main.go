@@ -80,6 +80,9 @@ func main() { //nolint:funlen // bootstrap wiring is inherently long
 	poPaymentRepo := postgres.NewPOPaymentRepo(sqlxDB)
 	customerRepo := postgres.NewCustomerRepo(sqlxDB)
 	roleRepo := postgres.NewRoleRepo(sqlxDB)
+	batchRepo := postgres.NewBatchRepo(sqlxDB)                 // FIFO batch inventory
+	terminRepo := postgres.NewTerminRepo(sqlxDB)               // PO installment schedule
+	paymentRecordRepo := postgres.NewPaymentRecordRepo(sqlxDB) // PO payment records
 
 	// ── Services ──────────────────────────────────────────────────────────────
 	authSvc := service.NewAuthService(userRepo, refreshTokenRepo, jwtMgr, cfg.Bcrypt.Cost, log)
@@ -87,7 +90,8 @@ func main() { //nolint:funlen // bootstrap wiring is inherently long
 	priceHistorySvc := service.NewPriceHistoryService(priceHistoryRepo, log)
 	productSvc := service.NewProductService(productRepo, categoryRepo, stockRepo, priceHistorySvc, log)
 	stockSvc := service.NewStockService(stockRepo, productRepo, log)
-	transactionSvc := service.NewTransactionService(transactionRepo, productRepo, stockRepo, menuItemRepo, log)
+	batchSvc := service.NewBatchStockService(batchRepo, log) // FIFO batch inventory
+	transactionSvc := service.NewTransactionService(transactionRepo, productRepo, stockRepo, menuItemRepo, batchSvc, log)
 	poSvc := service.NewPurchaseOrderService(poRepo, productRepo, poPaymentRepo, priceHistorySvc, log)
 	supplierSvc := service.NewSupplierService(supplierRepo, log)
 	reportSvc := service.NewReportService(reportRepo, log)
@@ -95,6 +99,7 @@ func main() { //nolint:funlen // bootstrap wiring is inherently long
 	menuItemSvc := service.NewMenuItemService(menuItemRepo, log)
 	customerSvc := service.NewCustomerService(customerRepo, log)
 	userAdminSvc := service.NewUserAdminService(userRepo, roleRepo, cfg.Bcrypt.Cost, log)
+	terminSvc := service.NewTerminService(terminRepo, paymentRecordRepo, poRepo, storeRepo, log)
 
 	// ── Handlers ──────────────────────────────────────────────────────────────
 	authHandler := handler.NewAuthHandler(authSvc, validate, log)
@@ -109,6 +114,8 @@ func main() { //nolint:funlen // bootstrap wiring is inherently long
 	priceHistoryHandler := handler.NewPriceHistoryHandler(priceHistorySvc, log)
 	customerHandler := handler.NewCustomerHandler(customerSvc, validate, log)
 	userAdminHandler := handler.NewUserAdminHandler(userAdminSvc, validate, log)
+	batchStockHandler := handler.NewBatchStockHandler(batchSvc, log) // FIFO batch inventory
+	terminHandler := handler.NewTerminHandler(terminSvc, validate, log)
 
 	// ── Router ────────────────────────────────────────────────────────────────
 	r := router.New(&router.Dependencies{
@@ -125,6 +132,8 @@ func main() { //nolint:funlen // bootstrap wiring is inherently long
 		PriceHistoryHandler:  priceHistoryHandler,
 		CustomerHandler:      customerHandler,
 		UserAdminHandler:     userAdminHandler,
+		BatchStockHandler:    batchStockHandler,
+		TerminHandler:        terminHandler,
 		RoleStore:            roleStore,
 		DB:                   sqlxDB,
 		Log:                  log,

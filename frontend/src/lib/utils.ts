@@ -72,3 +72,18 @@ export function productEmoji(name: string): string {
   if (n.includes('snack') || n.includes('chips')) return '🍟';
   return '📦';
 }
+
+/** Formats a number input field text value with thousands separators (dot localized per id-ID). Uses empty string logic for clean emptying */
+export function formatNumberInput(value: number | string): string {
+  if (value === 0 || value === '0') return '0';
+  const numString = String(value).replace(/\D/g, '');
+  if (!numString) return '';
+  return new Intl.NumberFormat('id-ID').format(Number(numString));
+}
+
+/** Reverses a specifically formatted id-ID thousands separated number string back to an integer primitive */
+export function parseNumberInput(value: string): number {
+  const numString = value.replace(/\D/g, '');
+  if (!numString) return 0;
+  return Number(numString);
+}
