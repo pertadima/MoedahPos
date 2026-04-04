@@ -210,6 +210,10 @@ export interface PurchaseOrder {
   received_by_name?: string;
   ordered_at?: string;
   received_at?: string;
+  next_deadline?: string;
+  amount_paid?: number;
+  amount_due?: number;
+  payment_status?: string;
   notes: string;
   items: POItem[];
   created_at: string;

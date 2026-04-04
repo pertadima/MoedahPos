@@ -95,18 +95,35 @@ func (r *PORepo) FindAll(ctx context.Context, f dto.POListFilter) ([]*domain.Pur
 
 	args = append(args, f.PerPage, f.Offset())
 	dataQ := fmt.Sprintf(`
+		WITH termin_agg AS (
+			SELECT t.po_id,
+			       min(t.due_date) FILTER (WHERE t.status != 'paid') AS next_deadline,
+			       SUM(t.amount - COALESCE(pr.amount_paid, 0)) AS amount_due,
+			       SUM(COALESCE(pr.amount_paid, 0)) AS amount_paid
+			FROM purchase_order_termins t
+			LEFT JOIN (
+				SELECT termin_id, SUM(amount_paid) AS amount_paid
+				FROM payment_records
+				GROUP BY termin_id
+			) pr ON pr.termin_id = t.id
+			GROUP BY t.po_id
+		)
 		SELECT po.id, po.store_id, po.supplier_id, po.po_number, po.status, po.total_amount,
 		       po.ordered_by, po.received_by, po.ordered_at, po.received_at, po.notes,
 		       po.created_at, po.updated_at,
 		       s.name AS supplier_name,
 		       u.name AS ordered_by_name,
 		       ru.name AS received_by_name,
+		       ta.next_deadline AS next_deadline,
+		       COALESCE(ta.amount_due, po.total_amount) AS amount_due,
+		       COALESCE(ta.amount_paid, 0) AS amount_paid,
 		       (SELECT COUNT(*) FROM purchase_order_items WHERE po_id=po.id) AS total_items
 		FROM purchase_orders po
 		JOIN users u ON u.id = po.ordered_by
 		LEFT JOIN suppliers s  ON s.id  = po.supplier_id
 		LEFT JOIN users     ru ON ru.id = po.received_by
-		%s ORDER BY po.created_at DESC LIMIT $%d OFFSET $%d`, where, i, i+1)
+		LEFT JOIN termin_agg ta ON ta.po_id = po.id
+		%s ORDER BY ta.next_deadline ASC NULLS LAST, po.created_at DESC LIMIT $%d OFFSET $%d`, where, i, i+1)
 
 	var pos []*domain.PurchaseOrder
 	if err := r.db.SelectContext(ctx, &pos, dataQ, args...); err != nil {

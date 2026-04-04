@@ -275,6 +275,10 @@ func toPOResponse(po *domain.PurchaseOrder) *dto.POResponse {
 		t := po.ReceivedAt.Format(time.RFC3339)
 		resp.ReceivedAt = &t
 	}
+	if po.NextDeadline != nil {
+		d := po.NextDeadline.Format(time.RFC3339)
+		resp.NextDeadline = &d
+	}
 	for _, item := range po.Items {
 		resp.Items = append(resp.Items, dto.POItemResponse{
 			ID:          item.ID,

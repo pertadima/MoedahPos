@@ -55,6 +55,7 @@ type POResponse struct {
 	ReceivedByName *string          `json:"received_by_name,omitempty"`
 	OrderedAt      *string          `json:"ordered_at,omitempty"`
 	ReceivedAt     *string          `json:"received_at,omitempty"`
+	NextDeadline   *string          `json:"next_deadline,omitempty"`
 	Notes          string           `json:"notes,omitempty"`
 	Items          []POItemResponse `json:"items"`
 	CreatedAt      string           `json:"created_at"`

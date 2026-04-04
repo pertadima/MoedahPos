@@ -26,8 +26,10 @@ type PurchaseOrder struct {
 	Items          []POItem `db:"-"`
 
 	// Payment aggregation (loaded separately)
-	AmountPaid    float64 `db:"amount_paid"`
-	PaymentStatus string  `db:"payment_status"` // unpaid | partial | paid
+	AmountPaid    float64    `db:"amount_paid"`
+	AmountDue     float64    `db:"amount_due"`
+	NextDeadline  *time.Time `db:"next_deadline"`
+	PaymentStatus string     `db:"payment_status"` // unpaid | partial | paid
 }
 
 // POItem is a single line in a purchase order.
