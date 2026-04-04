@@ -24,10 +24,10 @@ function formatDate(s: string) {
 }
 
 function statusLabel(t: Termin) {
-  if (t.status === 'paid') return { label: 'Lunas', color: '#16a34a' };
-  if (t.status === 'overdue' || t.is_overdue) return { label: 'Jatuh Tempo', color: '#dc2626' };
-  if (t.status === 'partial') return { label: 'Sebagian', color: '#d97706' };
-  return { label: 'Belum Bayar', color: '#6b7280' };
+  if (t.status === 'paid') return { label: 'Lunas', color: '#000' };
+  if (t.status === 'overdue' || t.is_overdue) return { label: 'Jatuh Tempo', color: '#000' };
+  if (t.status === 'partial') return { label: 'Sebagian', color: '#000' };
+  return { label: 'Belum Bayar', color: '#000' };
 }
 
 const DOC_TITLES: Record<string, string> = {
@@ -84,12 +84,12 @@ export default function PODocumentPage() {
           .no-print { display: none !important; }
           body { background: white; }
         }
-        body { margin: 0; font-family: 'Segoe UI', Arial, sans-serif; background: #f3f4f6; }
+        body { margin: 0; font-family: 'Segoe UI', Arial, sans-serif; background: #f3f4f6; color: #000; }
         .page { max-width: 800px; margin: 0 auto; background: white; padding: 48px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); }
         table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 8px 12px; text-align: left; border-bottom: 1px solid #e5e7eb; font-size: 13px; }
-        th { background: #f9fafb; font-weight: 600; color: #374151; }
-        .badge { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+        th, td { padding: 8px 12px; text-align: left; border-bottom: 1px solid #e5e7eb; font-size: 13px; color: #000; }
+        th { background: #f9fafb; font-weight: 600; color: #000; border-top: 2px solid #000; border-bottom: 2px solid #000; }
+        .badge { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; border: 1px solid #ccc; background: #f9fafb; }
       `}</style>
 
       {/* Print button — hidden when printing */}
@@ -146,27 +146,27 @@ export default function PODocumentPage() {
               style={{
                 fontSize: 22,
                 fontWeight: 800,
-                color: '#1e3a8a',
+                color: '#000',
                 letterSpacing: '-0.5px',
                 marginBottom: 4,
               }}
             >
               {docTitle}
             </div>
-            <div style={{ color: '#6b7280', fontSize: 13 }}>
+            <div style={{ color: '#000', fontSize: 13 }}>
               Digenerate: {formatDate(data.generated_at)}
             </div>
           </div>
           <div style={{ textAlign: 'right' }}>
-            <div style={{ fontWeight: 700, fontSize: 15 }}>No. PO: {po.po_number}</div>
-            <div style={{ color: '#6b7280', fontSize: 13, marginTop: 2 }}>
+            <div style={{ fontWeight: 700, fontSize: 15, color: '#000' }}>No. PO: {po.po_number}</div>
+            <div style={{ color: '#000', fontSize: 13, marginTop: 2 }}>
               Tanggal: {formatDate(po.created_at)}
             </div>
           </div>
         </div>
 
         {/* Divider */}
-        <div style={{ borderTop: '3px solid #1e3a8a', marginBottom: 24 }} />
+        <div style={{ borderTop: '3px solid #000', marginBottom: 24 }} />
 
         {/* PO + Supplier Info */}
         <div
@@ -175,10 +175,11 @@ export default function PODocumentPage() {
             gridTemplateColumns: '1fr 1fr',
             gap: 24,
             marginBottom: 28,
+            color: '#000',
           }}
         >
           <div>
-            <div style={{ fontSize: 11, color: '#9ca3af', fontWeight: 600, marginBottom: 4 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, marginBottom: 4 }}>
               SUPPLIER
             </div>
             <div style={{ fontWeight: 700, fontSize: 15 }}>
@@ -186,7 +187,7 @@ export default function PODocumentPage() {
             </div>
           </div>
           <div>
-            <div style={{ fontSize: 11, color: '#9ca3af', fontWeight: 600, marginBottom: 4 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, marginBottom: 4 }}>
               TOKO
             </div>
             <div style={{ fontWeight: 700, fontSize: 15 }}>{data.store_name || '—'}</div>
@@ -196,14 +197,15 @@ export default function PODocumentPage() {
         {/* Debt Summary */}
         <div
           style={{
-            background: '#f0f9ff',
-            border: '1px solid #bae6fd',
-            borderRadius: 10,
+            background: '#fff',
+            border: '2px solid #000',
+            borderRadius: 6,
             padding: '16px 20px',
             marginBottom: 28,
             display: 'grid',
             gridTemplateColumns: 'repeat(4, 1fr)',
             gap: 12,
+            color: '#000'
           }}
         >
           {[
@@ -213,15 +215,15 @@ export default function PODocumentPage() {
             ['Sisa Hutang', formatIDR(debt_summary.remaining_debt)],
           ].map(([label, value]) => (
             <div key={label}>
-              <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 2 }}>{label}</div>
-              <div style={{ fontWeight: 700, fontSize: 15, color: '#0c4a6e' }}>{value}</div>
+              <div style={{ fontSize: 11, fontWeight: 700, marginBottom: 2 }}>{label}</div>
+              <div style={{ fontWeight: 700, fontSize: 15 }}>{value}</div>
             </div>
           ))}
         </div>
 
         {/* Termin Table */}
         <div style={{ marginBottom: 32 }}>
-          <div style={{ fontWeight: 700, fontSize: 14, color: '#1e3a8a', marginBottom: 10 }}>
+          <div style={{ fontWeight: 700, fontSize: 14, color: '#000', marginBottom: 10 }}>
             Jadwal Termin Pembayaran
           </div>
           <table>
@@ -244,29 +246,29 @@ export default function PODocumentPage() {
                     <td style={{ fontWeight: 600 }}>Termin {t.termin_number}</td>
                     <td>{formatDate(t.due_date)}</td>
                     <td style={{ textAlign: 'right' }}>{formatIDR(t.amount)}</td>
-                    <td style={{ textAlign: 'right', color: '#16a34a' }}>
+                    <td style={{ textAlign: 'right' }}>
                       {formatIDR(t.amount_paid)}
                     </td>
-                    <td style={{ textAlign: 'right', color: '#dc2626', fontWeight: 600 }}>
+                    <td style={{ textAlign: 'right', fontWeight: 600 }}>
                       {formatIDR(t.amount_due)}
                     </td>
                     <td>
-                      <span className="badge" style={{ background: color + '1a', color }}>
+                      <span className="badge">
                         {label}
                       </span>
                     </td>
-                    <td style={{ color: '#6b7280', fontSize: 12 }}>{t.notes || '—'}</td>
+                    <td style={{ fontSize: 12 }}>{t.notes || '—'}</td>
                   </tr>
                 );
               })}
               {/* Total row */}
-              <tr style={{ background: '#f8fafc', fontWeight: 700 }}>
+              <tr style={{ background: '#f9fafb', fontWeight: 700 }}>
                 <td colSpan={2}>Total</td>
                 <td style={{ textAlign: 'right' }}>{formatIDR(debt_summary.total_termin)}</td>
-                <td style={{ textAlign: 'right', color: '#16a34a' }}>
+                <td style={{ textAlign: 'right' }}>
                   {formatIDR(debt_summary.total_paid)}
                 </td>
-                <td style={{ textAlign: 'right', color: '#dc2626' }}>
+                <td style={{ textAlign: 'right' }}>
                   {formatIDR(debt_summary.remaining_debt)}
                 </td>
                 <td colSpan={2} />
@@ -278,7 +280,7 @@ export default function PODocumentPage() {
         {/* Payment History (receipt & invoice) */}
         {docType !== 'termin_agreement' && termins.some(t => t.payments.length > 0) && (
           <div style={{ marginBottom: 32 }}>
-            <div style={{ fontWeight: 700, fontSize: 14, color: '#1e3a8a', marginBottom: 10 }}>
+            <div style={{ fontWeight: 700, fontSize: 14, color: '#000', marginBottom: 10 }}>
               Riwayat Pembayaran
             </div>
             <table>
@@ -299,11 +301,11 @@ export default function PODocumentPage() {
                       <td>Termin {t.termin_number}</td>
                       <td>{formatDate(p.payment_date)}</td>
                       <td style={{ textTransform: 'capitalize' }}>{p.payment_method}</td>
-                      <td style={{ textAlign: 'right', color: '#16a34a', fontWeight: 600 }}>
+                      <td style={{ textAlign: 'right', fontWeight: 600 }}>
                         {formatIDR(p.amount_paid)}
                       </td>
-                      <td style={{ color: '#6b7280', fontSize: 12 }}>{p.notes || '—'}</td>
-                      <td style={{ color: '#6b7280', fontSize: 12 }}>{p.recorded_by_name}</td>
+                      <td style={{ fontSize: 12 }}>{p.notes || '—'}</td>
+                      <td style={{ fontSize: 12 }}>{p.recorded_by_name}</td>
                     </tr>
                   ))
                 )}
@@ -320,18 +322,18 @@ export default function PODocumentPage() {
             gap: 32,
             marginTop: 40,
             paddingTop: 24,
-            borderTop: '1px solid #e5e7eb',
+            borderTop: '2px solid #000',
+            color: '#000',
           }}
         >
           {['Pihak Supplier', 'Pihak Pembeli'].map(label => (
             <div key={label} style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 64 }}>{label}</div>
+              <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 64 }}>{label}</div>
               <div
                 style={{
-                  borderTop: '1px solid #374151',
+                  borderTop: '1px solid #000',
                   paddingTop: 6,
                   fontSize: 12,
-                  color: '#374151',
                 }}
               >
                 Tanda Tangan &amp; Nama
@@ -346,7 +348,7 @@ export default function PODocumentPage() {
             marginTop: 32,
             textAlign: 'center',
             fontSize: 11,
-            color: '#9ca3af',
+            color: '#000',
           }}
         >
           Dokumen ini dibuat secara otomatis oleh sistem MoedahPOS · {po.po_number}
