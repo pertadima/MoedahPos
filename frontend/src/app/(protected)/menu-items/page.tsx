@@ -85,7 +85,10 @@ export default function MenuItemsPage() {
       ]);
       setItems((menuRes.data as any).data ?? menuRes.data ?? []);
       setCategories((catRes.data as any).data ?? catRes.data ?? []);
-      setProducts((prodRes.data as any).data?.data ?? []);
+      
+      // prodRes.data is PaginatedData<Product>, so its array is prodRes.data.data
+      const paginatedProducts = prodRes.data as any;
+      setProducts(paginatedProducts.data ?? []);
     } catch {
       showToast('Gagal memuat data', 'error');
     } finally {
