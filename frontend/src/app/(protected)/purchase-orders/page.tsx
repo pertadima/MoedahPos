@@ -379,15 +379,30 @@ function TerminModal({ po, storeId, onSuccess, onCancel }: TerminModalProps) {
   const [err, setErr] = useState('');
   const updateRow = (i: number, field: string, value: string | number) =>
     setRows(prev => prev.map((r, idx) => (idx === i ? { ...r, [field]: value } : r)));
-  const addRow = () =>
-    setRows(prev => [
-      ...prev,
-      { termin_number: prev.length + 1, amount: 0, due_date: today, notes: '' },
-    ]);
-  const removeRow = (i: number) =>
-    setRows(prev =>
-      prev.filter((_, idx) => idx !== i).map((r, idx) => ({ ...r, termin_number: idx + 1 }))
-    );
+  const recalculate = (currentRows: typeof rows) => {
+    const count = currentRows.length;
+    if (count <= 0) return currentRows;
+    
+    const splitAmount = Math.floor(po.total_amount / count);
+    const remainder = po.total_amount - (splitAmount * count);
+    const baseDateStr = currentRows[0]?.due_date || today;
+    
+    return currentRows.map((r, i) => {
+      const d = new Date(baseDateStr);
+      d.setDate(d.getDate() + i);
+      let amt = splitAmount;
+      if (i === count - 1) amt += remainder;
+      return { ...r, termin_number: i + 1, amount: amt, due_date: d.toISOString().slice(0, 10) };
+    });
+  };
+
+  const addRow = () => {
+    setRows(prev => recalculate([...prev, { termin_number: prev.length + 1, amount: 0, due_date: today, notes: '' }]));
+  };
+
+  const removeRow = (i: number) => {
+    setRows(prev => recalculate(prev.filter((_, idx) => idx !== i)));
+  };
   const totalTermin = rows.reduce((s, r) => s + Number(r.amount), 0);
   const handleSave = async () => {
     setSaving(true);
