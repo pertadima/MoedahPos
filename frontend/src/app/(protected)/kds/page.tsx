@@ -86,7 +86,7 @@ export default function KDSPage() {
   }
 
   return (
-    <div style={{ marginLeft: 220, padding: '24px 28px', minHeight: '100vh', background: 'var(--bg-base)' }}>
+    <div style={{ marginLeft: 0, padding: '24px 28px', minHeight: '100vh', background: 'var(--bg-base)' }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24, paddingBottom: 16, borderBottom: '1px solid var(--border)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>

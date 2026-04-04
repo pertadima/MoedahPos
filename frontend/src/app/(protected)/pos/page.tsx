@@ -889,7 +889,7 @@ export default function POSPage() {
   // ── Restaurant: table selection screen ─────────────────────────────────────
   if (isRestaurant && !selectedTable && !isTakeAway) {
     return (
-      <div style={{ marginLeft: 220, padding: '24px 28px', minHeight: '100vh' }}>
+      <div style={{ marginLeft: 0, padding: '24px 28px', minHeight: '100vh' }}>
         {/* Header */}
         <div
           style={{

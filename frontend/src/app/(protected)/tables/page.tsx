@@ -181,7 +181,7 @@ export default function TablesPage() {
   const occupied = tables.filter(t => t.status === 'occupied').length;
 
   return (
-    <div style={{ padding: 24, maxWidth: 1100, margin: '0 auto' }}>
+    <div style={{ padding: 24, maxWidth: '100%', margin: '0 auto' }}>
       {/* Toast */}
       {toast && (
         <div

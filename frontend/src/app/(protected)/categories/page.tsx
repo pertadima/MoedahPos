@@ -165,7 +165,7 @@ export default function CategoriesPage() {
   // ── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <div style={{ padding: 24, maxWidth: 900, margin: '0 auto' }}>
+    <div style={{ padding: 24, maxWidth: '100%', margin: '0 auto' }}>
       {/* Toast */}
       {toast && (
         <div
