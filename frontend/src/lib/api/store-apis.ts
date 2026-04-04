@@ -77,7 +77,7 @@ export const menuItemsApi = {
 
 export const stockApi = {
   levels: (storeId: string, lowStockOnly = false) =>
-    api.get<StockLevel[]>(`/stores/${storeId}/stock${lowStockOnly ? '?low_stock=true' : ''}`),
+    api.get<StockLevel[]>(`/stores/${storeId}/stock${lowStockOnly ? '/low' : ''}`),
   movements: (storeId: string, params?: { page?: number; per_page?: number }) => {
     const q = new URLSearchParams();
     if (params?.page) q.set('page', String(params.page));
