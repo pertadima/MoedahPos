@@ -277,9 +277,10 @@ interface TerminPanelProps {
   po: PurchaseOrder;
   storeId: string;
   onOpenDoc: (type: 'invoice' | 'receipt' | 'termin_agreement') => void;
+  onUpdate?: () => void;
 }
 
-function TerminPanel({ po, storeId, onOpenDoc }: TerminPanelProps) {
+function TerminPanel({ po, storeId, onOpenDoc, onUpdate }: TerminPanelProps) {
   const [termins, setTermins] = useState<Termin[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -492,6 +493,7 @@ function TerminPanel({ po, storeId, onOpenDoc }: TerminPanelProps) {
           onSuccess={() => {
             setShowAddModal(false);
             load();
+            onUpdate?.();
           }}
           onCancel={() => setShowAddModal(false)}
         />
@@ -504,6 +506,7 @@ function TerminPanel({ po, storeId, onOpenDoc }: TerminPanelProps) {
           onSuccess={() => {
             setPayTarget(null);
             load();
+            onUpdate?.();
           }}
           onCancel={() => setPayTarget(null)}
         />
@@ -1489,6 +1492,7 @@ interface PODetailDrawerProps {
   onAction: (action: ActionType) => void;
   onPay: () => void;
   onOpenDoc: (type: 'invoice' | 'receipt' | 'termin_agreement') => void;
+  onUpdate?: () => void;
 }
 function PODetailDrawer({
   po,
@@ -1499,6 +1503,7 @@ function PODetailDrawer({
   onAction,
   onPay,
   onOpenDoc,
+  onUpdate,
 }: PODetailDrawerProps) {
   const payStatus = (po as any).payment_status ?? 'unpaid';
   const amountPaid = (po as any).amount_paid ?? 0;
@@ -1712,7 +1717,7 @@ function PODetailDrawer({
 
           {/* Termin Schedule */}
           <div style={{ borderTop: '1px solid var(--border)', paddingTop: 14 }}>
-            <TerminPanel po={po} storeId={storeId} onOpenDoc={onOpenDoc} />
+            <TerminPanel po={po} storeId={storeId} onOpenDoc={onOpenDoc} onUpdate={onUpdate} />
           </div>
 
           {/* Action buttons */}
@@ -2196,6 +2201,7 @@ export default function PurchaseOrdersPage() {
                                   '_blank'
                                 )
                               }
+                              onUpdate={load}
                             />
                           </div>
                         </td>
@@ -2222,6 +2228,10 @@ export default function PurchaseOrdersPage() {
           onOpenDoc={type =>
             window.open(`/purchase-orders/${detailPO.id}/document?type=${type}`, '_blank')
           }
+          onUpdate={() => {
+            load();
+            openDetail(detailPO);
+          }}
         />
       )}
       {invoicePO && (
