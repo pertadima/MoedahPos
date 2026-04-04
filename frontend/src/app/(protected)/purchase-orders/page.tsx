@@ -222,113 +222,115 @@ function TerminPanel({ po, storeId, onOpenDoc }: TerminPanelProps) {
             : 'PO harus diterima sebelum termin dapat dibuat.'}
         </div>
       ) : (
-        <table className="tbl" style={{ fontSize: '0.82rem' }}>
-          <thead>
-            <tr>
-              <th>No.</th>
-              <th>Jatuh Tempo</th>
-              <th>Jumlah</th>
-              <th>Dibayar</th>
-              <th>Sisa</th>
-              <th>Status</th>
-              <th>Aksi</th>
-            </tr>
-          </thead>
-          <tbody>
-            {termins.map(t => {
-              const cfg = terminStatusCfg(t);
-              return (
-                <Fragment key={t.id}>
-                  <tr>
-                    <td style={{ fontWeight: 600 }}>Termin {t.termin_number}</td>
-                    <td style={{ color: t.is_overdue ? '#dc2626' : 'inherit' }}>
-                      {formatDate(t.due_date)}
-                    </td>
-                    <td>{formatIDR(t.amount)}</td>
-                    <td style={{ color: '#16a34a', fontWeight: 600 }}>
-                      {formatIDR(t.amount_paid)}
-                    </td>
-                    <td
-                      style={{ color: t.amount_due > 0 ? '#dc2626' : '#16a34a', fontWeight: 600 }}
-                    >
-                      {formatIDR(t.amount_due)}
-                    </td>
-                    <td>
-                      <span
-                        style={{
-                          background: cfg.bg,
-                          color: cfg.color,
-                          borderRadius: 5,
-                          padding: '2px 8px',
-                          fontSize: '0.75rem',
-                          fontWeight: 600,
-                        }}
+        <div style={{ overflowX: 'auto' }}>
+          <table className="tbl" style={{ fontSize: '0.82rem' }}>
+            <thead>
+              <tr>
+                <th>No.</th>
+                <th>Jatuh Tempo</th>
+                <th>Jumlah</th>
+                <th>Dibayar</th>
+                <th>Sisa</th>
+                <th>Status</th>
+                <th>Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+              {termins.map(t => {
+                const cfg = terminStatusCfg(t);
+                return (
+                  <Fragment key={t.id}>
+                    <tr>
+                      <td style={{ fontWeight: 600 }}>Termin {t.termin_number}</td>
+                      <td style={{ color: t.is_overdue ? '#dc2626' : 'inherit' }}>
+                        {formatDate(t.due_date)}
+                      </td>
+                      <td>{formatIDR(t.amount)}</td>
+                      <td style={{ color: '#16a34a', fontWeight: 600 }}>
+                        {formatIDR(t.amount_paid)}
+                      </td>
+                      <td
+                        style={{ color: t.amount_due > 0 ? '#dc2626' : '#16a34a', fontWeight: 600 }}
                       >
-                        {cfg.label}
-                      </span>
-                    </td>
-                    <td>
-                      <div style={{ display: 'flex', gap: 6 }}>
-                        {t.status !== 'paid' && (
-                          <button
-                            id={`pay-termin-${t.id}`}
-                            onClick={() => setPayTarget(t)}
-                            style={{
-                              padding: '3px 10px',
-                              borderRadius: 5,
-                              border: 'none',
-                              background: 'var(--accent-em)',
-                              color: '#fff',
-                              fontSize: '0.75rem',
-                              cursor: 'pointer',
-                            }}
-                          >
-                            Bayar
-                          </button>
-                        )}
-                        {t.payments.length > 0 && (
-                          <button
-                            id={`hist-${t.id}`}
-                            onClick={() => togglePay(t.id)}
-                            style={{
-                              padding: '3px 10px',
-                              borderRadius: 5,
-                              border: '1px solid var(--border)',
-                              background: 'transparent',
-                              color: 'var(--text-2)',
-                              fontSize: '0.75rem',
-                              cursor: 'pointer',
-                            }}
-                          >
-                            {expandedPayments.has(t.id) ? '▲' : '▼'} {t.payments.length}
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                  {expandedPayments.has(t.id) &&
-                    t.payments.map(p => (
-                      <tr
-                        key={p.id}
-                        style={{ background: 'rgba(59,130,246,0.04)', fontSize: '0.78rem' }}
-                      >
-                        <td colSpan={2} style={{ paddingLeft: 28, color: 'var(--text-3)' }}>
-                          {formatDate(p.payment_date)} · {p.payment_method}
-                        </td>
-                        <td colSpan={2} style={{ color: '#16a34a', fontWeight: 600 }}>
-                          +{formatIDR(p.amount_paid)}
-                        </td>
-                        <td colSpan={2} style={{ color: 'var(--text-3)' }}>
-                          {p.notes || '—'}
-                        </td>
-                        <td style={{ color: 'var(--text-3)' }}>{p.recorded_by_name}</td>
-                      </tr>
-                    ))}
-                </Fragment>
-              );
-            })}
-          </tbody>
-        </table>
+                        {formatIDR(t.amount_due)}
+                      </td>
+                      <td>
+                        <span
+                          style={{
+                            background: cfg.bg,
+                            color: cfg.color,
+                            borderRadius: 5,
+                            padding: '2px 8px',
+                            fontSize: '0.75rem',
+                            fontWeight: 600,
+                          }}
+                        >
+                          {cfg.label}
+                        </span>
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', gap: 6 }}>
+                          {t.status !== 'paid' && (
+                            <button
+                              id={`pay-termin-${t.id}`}
+                              onClick={() => setPayTarget(t)}
+                              style={{
+                                padding: '3px 10px',
+                                borderRadius: 5,
+                                border: 'none',
+                                background: 'var(--accent-em)',
+                                color: '#fff',
+                                fontSize: '0.75rem',
+                                cursor: 'pointer',
+                              }}
+                            >
+                              Bayar
+                            </button>
+                          )}
+                          {t.payments.length > 0 && (
+                            <button
+                              id={`hist-${t.id}`}
+                              onClick={() => togglePay(t.id)}
+                              style={{
+                                padding: '3px 10px',
+                                borderRadius: 5,
+                                border: '1px solid var(--border)',
+                                background: 'transparent',
+                                color: 'var(--text-2)',
+                                fontSize: '0.75rem',
+                                cursor: 'pointer',
+                              }}
+                            >
+                              {expandedPayments.has(t.id) ? '▲' : '▼'} {t.payments.length}
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                    {expandedPayments.has(t.id) &&
+                      t.payments.map(p => (
+                        <tr
+                          key={p.id}
+                          style={{ background: 'rgba(59,130,246,0.04)', fontSize: '0.78rem' }}
+                        >
+                          <td colSpan={2} style={{ paddingLeft: 28, color: 'var(--text-3)' }}>
+                            {formatDate(p.payment_date)} · {p.payment_method}
+                          </td>
+                          <td colSpan={2} style={{ color: '#16a34a', fontWeight: 600 }}>
+                            +{formatIDR(p.amount_paid)}
+                          </td>
+                          <td colSpan={2} style={{ color: 'var(--text-3)' }}>
+                            {p.notes || '—'}
+                          </td>
+                          <td style={{ color: 'var(--text-3)' }}>{p.recorded_by_name}</td>
+                        </tr>
+                      ))}
+                  </Fragment>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       )}
       {showAddModal && (
         <TerminModal
@@ -1347,7 +1349,7 @@ function PODetailDrawer({
           top: 0,
           right: 0,
           bottom: 0,
-          width: 520,
+          width: 'min(720px, 100vw)',
           background: 'var(--bg-card)',
           borderLeft: '1px solid var(--border)',
           zIndex: 201,
