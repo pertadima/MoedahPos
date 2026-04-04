@@ -46,6 +46,7 @@ type POResponse struct {
 	SupplierName   *string          `json:"supplier_name,omitempty"`
 	PONumber       string           `json:"po_number"`
 	Status         string           `json:"status"`
+	TotalItems     int              `json:"total_items"`
 	TotalAmount    float64          `json:"total_amount"`
 	AmountPaid     float64          `json:"amount_paid"`
 	AmountDue      float64          `json:"amount_due"`

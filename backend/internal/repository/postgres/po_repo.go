@@ -100,7 +100,8 @@ func (r *PORepo) FindAll(ctx context.Context, f dto.POListFilter) ([]*domain.Pur
 		       po.created_at, po.updated_at,
 		       s.name AS supplier_name,
 		       u.name AS ordered_by_name,
-		       ru.name AS received_by_name
+		       ru.name AS received_by_name,
+		       (SELECT COUNT(*) FROM purchase_order_items WHERE po_id=po.id) AS total_items
 		FROM purchase_orders po
 		JOIN users u ON u.id = po.ordered_by
 		LEFT JOIN suppliers s  ON s.id  = po.supplier_id
@@ -119,7 +120,8 @@ func (r *PORepo) FindByID(ctx context.Context, id string) (*domain.PurchaseOrder
 		SELECT po.id, po.store_id, po.supplier_id, po.po_number, po.status, po.total_amount,
 		       po.ordered_by, po.received_by, po.ordered_at, po.received_at, po.notes,
 		       po.created_at, po.updated_at,
-		       s.name AS supplier_name, u.name AS ordered_by_name, ru.name AS received_by_name
+		       s.name AS supplier_name, u.name AS ordered_by_name, ru.name AS received_by_name,
+		       (SELECT COUNT(*) FROM purchase_order_items WHERE po_id=po.id) AS total_items
 		FROM purchase_orders po
 		JOIN users u ON u.id = po.ordered_by
 		LEFT JOIN suppliers s  ON s.id  = po.supplier_id

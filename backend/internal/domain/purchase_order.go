@@ -22,6 +22,7 @@ type PurchaseOrder struct {
 	SupplierName   *string  `db:"supplier_name"`
 	OrderedByName  string   `db:"ordered_by_name"`
 	ReceivedByName *string  `db:"received_by_name"`
+	TotalItems     int      `db:"total_items"`
 	Items          []POItem `db:"-"`
 
 	// Payment aggregation (loaded separately)
