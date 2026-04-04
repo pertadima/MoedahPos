@@ -410,7 +410,7 @@ export default function DashboardPage() {
                   {topProducts.length > 0 ? (
                     topProducts.map(p => (
                       <div
-                        key={p.product_id}
+                        key={`${p.product_id}-${Math.random()}`}
                         style={{
                           display: 'flex',
                           justifyContent: 'space-between',
@@ -456,7 +456,7 @@ export default function DashboardPage() {
                   {bottomProducts.length > 0 ? (
                     bottomProducts.map(p => (
                       <div
-                        key={p.product_id}
+                        key={`${p.product_id}-${Math.random()}`}
                         style={{
                           display: 'flex',
                           justifyContent: 'space-between',
