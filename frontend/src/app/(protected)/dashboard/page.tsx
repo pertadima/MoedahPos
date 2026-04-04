@@ -8,11 +8,12 @@ import {
   AlertTriangle,
   ArrowUpRight,
   Loader2,
+  Users,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { reportsApi, stockApi, purchaseOrdersApi } from '@/lib/api/store-apis';
 import { transactionsApi } from '@/lib/api/transactions';
-import { formatRp, formatDateTime, thirtyDaysAgoStr, todayStr } from '@/lib/utils';
+import { formatRp, formatDateTime, thirtyDaysAgoStr, sevenDaysAgoStr, todayStr } from '@/lib/utils';
 import type { SalesSummaryResponse, Transaction, StockLevel } from '@/types';
 import {
   LineChart,
@@ -22,6 +23,9 @@ import {
   Tooltip,
   ResponsiveContainer,
   CartesianGrid,
+  BarChart,
+  Bar,
+  Cell,
 } from 'recharts';
 
 export default function DashboardPage() {
@@ -31,6 +35,27 @@ export default function DashboardPage() {
   const [lowStock, setLowStock] = useState<StockLevel[]>([]);
   const [payables, setPayables] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+
+  type TimeFilter = 'today' | '7days' | '30days';
+  const [cashierFilter, setCashierFilter] = useState<TimeFilter>('30days');
+  const [cashierRevenue, setCashierRevenue] = useState<any[]>([]);
+
+  const loadCashierData = useCallback(() => {
+    if (!selectedStore) return;
+    const sid = selectedStore.store_id;
+    let dFrom;
+    if (cashierFilter === 'today') dFrom = todayStr();
+    else if (cashierFilter === '7days') dFrom = sevenDaysAgoStr();
+    else dFrom = thirtyDaysAgoStr();
+    
+    reportsApi.byCashier(sid, dFrom, todayStr())
+      .then(res => setCashierRevenue(res.data || []))
+      .catch(console.error);
+  }, [selectedStore, cashierFilter]);
+
+  useEffect(() => {
+    loadCashierData();
+  }, [loadCashierData]);
 
   const loadData = useCallback(() => {
     if (!selectedStore) return;
@@ -170,8 +195,10 @@ export default function DashboardPage() {
 
       {/* Charts + Tables */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 16 }}>
-        {/* Sales Chart */}
-        <div className="card" style={{ padding: '20px' }}>
+        {/* Left column */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {/* Sales Chart */}
+          <div className="card" style={{ padding: '20px' }}>
           <div style={{ marginBottom: 16 }}>
             <div style={{ fontWeight: 700, fontSize: '0.95rem' }}>Tren Penjualan (30 hari)</div>
             <div className="text-3" style={{ fontSize: '0.8rem' }}>
@@ -224,7 +251,74 @@ export default function DashboardPage() {
           )}
         </div>
 
-        {/* Right column */}
+        {/* Cashier Revenue Chart */}
+        <div className="card" style={{ padding: '20px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
+            <div>
+              <div style={{ fontWeight: 700, fontSize: '0.95rem' }}>Pendapatan per Kasir</div>
+              <div className="text-3" style={{ fontSize: '0.8rem' }}>Berdasarkan Transaksi Selesai</div>
+            </div>
+            <select
+              className="input"
+              style={{ width: 'auto', padding: '4px 8px', fontSize: '0.8rem' }}
+              value={cashierFilter}
+              onChange={e => setCashierFilter(e.target.value as TimeFilter)}
+            >
+              <option value="today">Hari Ini</option>
+              <option value="7days">7 Hari Terakhir</option>
+              <option value="30days">30 Hari Terakhir</option>
+            </select>
+          </div>
+          {cashierRevenue.length > 0 ? (
+            <ResponsiveContainer width="100%" height={260}>
+              <BarChart data={cashierRevenue} margin={{ left: -20, right: 10, top: 10, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                <XAxis 
+                  dataKey="cashier_name" 
+                  tick={{ fill: 'var(--text-3)', fontSize: 11 }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <YAxis 
+                  tick={{ fill: 'var(--text-3)', fontSize: 11 }}
+                  axisLine={false}
+                  tickLine={false}
+                  tickFormatter={v =>
+                    v >= 1000000 ? `${(v / 1000000).toFixed(1)}M` : `${(v / 1000).toFixed(0)}K`
+                  }
+                />
+                <Tooltip
+                  cursor={{ fill: 'rgba(255,255,255,0.05)' }}
+                  contentStyle={{
+                    background: 'var(--bg-elevated)',
+                    border: '1px solid var(--border-md)',
+                    borderRadius: 8,
+                    color: 'var(--text-1)',
+                    fontSize: 12,
+                  }}
+                  formatter={(v: unknown, name: string, props: any) => [
+                    formatRp(Number(v)), 
+                    `Pendapatan (${props.payload.transaction_count} Trx)`
+                  ]}
+                />
+                <Bar dataKey="total_sales" radius={[4, 4, 0, 0]} maxBarSize={60}>
+                  {cashierRevenue.map((_, index) => {
+                    const colors = ['#10b981', '#3b82f6', '#f43f5e', '#f59e0b', '#8b5cf6', '#06b6d4'];
+                    return <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />;
+                  })}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="empty-state" style={{ height: 260 }}>
+              <Users size={32} style={{ color: 'var(--text-3)' }} />
+              <p>Belum ada data kasir untuk periode ini</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Right column */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           {/* Low Stock Alert */}
           {lowStock.length > 0 && (

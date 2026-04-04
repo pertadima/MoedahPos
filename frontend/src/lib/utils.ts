@@ -39,6 +39,13 @@ export function todayStr(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
+/** 7 days ago as YYYY-MM-DD */
+export function sevenDaysAgoStr(): string {
+  const d = new Date();
+  d.setDate(d.getDate() - 7);
+  return d.toISOString().slice(0, 10);
+}
+
 /** 30 days ago as YYYY-MM-DD */
 export function thirtyDaysAgoStr(): string {
   const d = new Date();
