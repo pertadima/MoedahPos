@@ -82,13 +82,28 @@ func (r *POPaymentRepo) PayableSummary(ctx context.Context, storeID string) (*dt
 			SELECT po_id, SUM(amount) AS amount_paid FROM po_payments GROUP BY po_id
 			UNION ALL
 			SELECT t.po_id, SUM(pr.amount_paid) AS amount_paid FROM payment_records pr JOIN purchase_order_termins t ON t.id = pr.termin_id GROUP BY t.po_id
+		),
+		termin_debt AS (
+			SELECT
+			  t.id,
+			  t.due_date,
+			  t.amount - COALESCE(SUM(pr.amount_paid), 0) AS remaining
+			FROM purchase_order_termins t
+			JOIN purchase_orders po ON po.id = t.po_id
+			LEFT JOIN payment_records pr ON pr.termin_id = t.id
+			WHERE po.store_id = $1 AND po.status = 'received'
+			GROUP BY t.id
+			HAVING (t.amount - COALESCE(SUM(pr.amount_paid), 0)) > 0
 		)
 		SELECT
 			COALESCE(SUM(po.total_amount), 0)                    AS total_debt,
 			COALESCE(SUM(pp.amount_paid), 0)                     AS total_paid,
 			COALESCE(SUM(po.total_amount - pp.amount_paid), 0)   AS total_outstanding,
 			COUNT(*) FILTER (WHERE COALESCE(pp.amount_paid,0) = 0) AS unpaid_count,
-			COUNT(*) FILTER (WHERE COALESCE(pp.amount_paid,0) > 0 AND COALESCE(pp.amount_paid,0) < po.total_amount) AS partial_count
+			COUNT(*) FILTER (WHERE COALESCE(pp.amount_paid,0) > 0 AND COALESCE(pp.amount_paid,0) < po.total_amount) AS partial_count,
+			(SELECT COALESCE(SUM(remaining),0) FROM termin_debt WHERE due_date < CURRENT_DATE) AS overdue_debt,
+			(SELECT COALESCE(SUM(remaining),0) FROM termin_debt WHERE due_date >= CURRENT_DATE AND due_date <= CURRENT_DATE + 7) AS due_soon_debt,
+			(SELECT COALESCE(SUM(remaining),0) FROM termin_debt WHERE due_date > CURRENT_DATE + 7) AS future_debt
 		FROM purchase_orders po
 		LEFT JOIN (
 			SELECT po_id, SUM(amount_paid) AS amount_paid FROM combined_payments GROUP BY po_id
@@ -97,6 +112,7 @@ func (r *POPaymentRepo) PayableSummary(ctx context.Context, storeID string) (*dt
 	var s dto.PayableSummary
 	if err := r.db.QueryRowxContext(ctx, q, storeID).Scan(
 		&s.TotalDebt, &s.TotalPaid, &s.TotalOutstanding, &s.UnpaidCount, &s.PartialCount,
+		&s.OverdueDebt, &s.DueSoonDebt, &s.FutureDebt,
 	); err != nil {
 		return nil, fmt.Errorf("POPaymentRepo.PayableSummary: %w", err)
 	}

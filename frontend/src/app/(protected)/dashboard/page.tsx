@@ -10,7 +10,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthContext';
-import { reportsApi, stockApi } from '@/lib/api/store-apis';
+import { reportsApi, stockApi, purchaseOrdersApi } from '@/lib/api/store-apis';
 import { transactionsApi } from '@/lib/api/transactions';
 import { formatRp, formatDateTime, thirtyDaysAgoStr, todayStr } from '@/lib/utils';
 import type { SalesSummaryResponse, Transaction, StockLevel } from '@/types';
@@ -29,6 +29,7 @@ export default function DashboardPage() {
   const [summary, setSummary] = useState<SalesSummaryResponse | null>(null);
   const [recentTxns, setRecentTxns] = useState<Transaction[]>([]);
   const [lowStock, setLowStock] = useState<StockLevel[]>([]);
+  const [payables, setPayables] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   const loadData = useCallback(() => {
@@ -39,11 +40,13 @@ export default function DashboardPage() {
       reportsApi.salesSummary(sid, thirtyDaysAgoStr(), todayStr()),
       transactionsApi.list(sid, { per_page: 5 }),
       stockApi.levels(sid, true),
+      purchaseOrdersApi.payableSummary(sid),
     ])
-      .then(([s, t, st]) => {
+      .then(([s, t, st, p]) => {
         setSummary(s.data as SalesSummaryResponse);
         setRecentTxns((t.data as any).data ?? []);
         setLowStock(st.data as StockLevel[]);
+        setPayables(p.data);
       })
       .catch(console.error)
       .finally(() => setLoading(false));
@@ -262,6 +265,27 @@ export default function DashboardPage() {
               </div>
             </div>
           )}
+
+          {/* PO Debt summary */}
+          <div className="card" style={{ padding: 16 }}>
+            <div style={{ fontWeight: 700, fontSize: '0.85rem', marginBottom: 12 }}>
+              Hutang Purchase Order
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem' }}>
+                <span style={{ color: 'var(--text-2)' }}>Jatuh Tempo (Lewat)</span>
+                <span className="badge badge-red">{formatRp(payables?.overdue_debt || 0)}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem' }}>
+                <span style={{ color: 'var(--text-2)' }}>Segera Tempo (7 Hari)</span>
+                <span className="badge badge-amber">{formatRp(payables?.due_soon_debt || 0)}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem' }}>
+                <span style={{ color: 'var(--text-2)' }}>Akan Datang</span>
+                <span className="badge badge-gray" style={{ color: 'var(--text-2)' }}>{formatRp(payables?.future_debt || 0)}</span>
+              </div>
+            </div>
+          </div>
 
           {/* Recent Transactions */}
           <div className="card" style={{ padding: 16, flex: 1 }}>
