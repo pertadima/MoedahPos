@@ -162,6 +162,8 @@ export interface TransactionItem {
   discount_pct: number;
   tax_rate: number;
   subtotal: number;
+  status: 'pending' | 'completed';
+  completed_at?: string;
 }
 export interface Transaction {
   id: string;

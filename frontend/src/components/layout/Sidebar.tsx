@@ -22,6 +22,7 @@ import {
   History,
   UserRound,
   UserCog,
+  ChefHat,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { useTheme } from '@/lib/theme/ThemeContext';
@@ -193,6 +194,7 @@ const restaurantGroup: NavGroup = {
   label: 'Restoran',
   permission: 'products.read',
   items: [
+    { href: '/kds', icon: ChefHat, label: 'Kitchen Display', permission: 'products.read' },
     { href: '/tables', icon: Grid3x3, label: 'Meja', permission: 'products.read' },
     { href: '/menu-items', icon: UtensilsCrossed, label: 'Menu', permission: 'products.read' },
   ],

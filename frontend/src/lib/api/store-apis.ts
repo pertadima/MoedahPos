@@ -208,6 +208,14 @@ export const customersApi = {
   delete: (storeId: string, id: string) => api.delete<any>(`/stores/${storeId}/customers/${id}`),
 };
 
+export const kdsApi = {
+  getTickets: (storeId: string) => api.get<any>(`/stores/${storeId}/kds/tickets`),
+  markItemAsDone: (storeId: string, itemId: string) =>
+    api.put(`/stores/${storeId}/kds/items/${itemId}`, { status: 'completed' }),
+  markItemAsPending: (storeId: string, itemId: string) =>
+    api.put(`/stores/${storeId}/kds/items/${itemId}`, { status: 'pending' }),
+};
+
 export const usersAdminApi = {
   list: (params?: {
     search?: string;
