@@ -848,14 +848,14 @@ export default function POSPage() {
           });
         }
         setReceipt(res.data as Transaction);
-        dispatch({ type: 'CLEAR' });
         setSelectedCustomer(null);
         setCustSearch('');
         setShowPayment(false);
-        setActiveDraft(null);
         if (isRestaurant) {
-          // Return to table grid after receipt is closed (receipt modal handled separately)
-          setSelectedTable(null);
+          handleBackToTables();
+        } else {
+          dispatch({ type: 'CLEAR' });
+          setActiveDraft(null);
         }
       } catch (err) {
         if (err instanceof ApiError) setError(err.message);
@@ -864,7 +864,7 @@ export default function POSPage() {
         setPayLoading(false);
       }
     },
-    [storeId, cart, selectedCustomer, isRestaurant, activeDraft, selectedTable]
+    [storeId, cart, selectedCustomer, isRestaurant, activeDraft, selectedTable, handleBackToTables]
   );
 
   if (!selectedStore) {
