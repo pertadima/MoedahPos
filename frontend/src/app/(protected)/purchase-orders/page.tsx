@@ -86,10 +86,8 @@ function SearchableSelect({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const selectedOption = options.find((o) => o.value === value);
-  const filteredOptions = options.filter((o) =>
-    o.label.toLowerCase().includes(search.toLowerCase())
-  );
+  const selectedOption = options.find(o => o.value === value);
+  const filteredOptions = options.filter(o => o.label.toLowerCase().includes(search.toLowerCase()));
 
   return (
     <div ref={wrapperRef} style={{ position: 'relative', width: '100%' }}>
@@ -145,7 +143,7 @@ function SearchableSelect({
               placeholder="Cari..."
               style={{ width: '100%', height: 32, fontSize: '0.82rem' }}
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={e => setSearch(e.target.value)}
             />
           </div>
           <div style={{ overflowY: 'auto', flex: 1, padding: 4 }}>
@@ -162,8 +160,8 @@ function SearchableSelect({
                   onChange('');
                   setOpen(false);
                 }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg-hover)')}
-                onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-hover)')}
+                onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
               >
                 Tanpa Pilihan / Reset
               </div>
@@ -180,7 +178,7 @@ function SearchableSelect({
                 Tidak ditemukan
               </div>
             ) : (
-              filteredOptions.map((o) => (
+              filteredOptions.map(o => (
                 <div
                   key={o.value}
                   style={{
@@ -194,10 +192,10 @@ function SearchableSelect({
                     onChange(o.value);
                     setOpen(false);
                   }}
-                  onMouseEnter={(e) => {
+                  onMouseEnter={e => {
                     if (o.value !== value) e.currentTarget.style.background = 'var(--bg-hover)';
                   }}
-                  onMouseLeave={(e) => {
+                  onMouseLeave={e => {
                     if (o.value !== value) e.currentTarget.style.background = 'transparent';
                   }}
                 >
@@ -211,7 +209,6 @@ function SearchableSelect({
     </div>
   );
 }
-
 
 type ActionType = 'submit' | 'receive' | 'cancel';
 
@@ -535,11 +532,11 @@ function TerminModal({ po, storeId, onSuccess, onCancel }: TerminModalProps) {
   const recalculate = (currentRows: typeof rows) => {
     const count = currentRows.length;
     if (count <= 0) return currentRows;
-    
+
     const splitAmount = Math.floor(po.total_amount / count);
-    const remainder = po.total_amount - (splitAmount * count);
+    const remainder = po.total_amount - splitAmount * count;
     const baseDateStr = currentRows[0]?.due_date || today;
-    
+
     return currentRows.map((r, i) => {
       const d = new Date(baseDateStr);
       d.setDate(d.getDate() + i);
@@ -550,7 +547,12 @@ function TerminModal({ po, storeId, onSuccess, onCancel }: TerminModalProps) {
   };
 
   const addRow = () => {
-    setRows(prev => recalculate([...prev, { termin_number: prev.length + 1, amount: 0, due_date: today, notes: '' }]));
+    setRows(prev =>
+      recalculate([
+        ...prev,
+        { termin_number: prev.length + 1, amount: 0, due_date: today, notes: '' },
+      ])
+    );
   };
 
   const removeRow = (i: number) => {

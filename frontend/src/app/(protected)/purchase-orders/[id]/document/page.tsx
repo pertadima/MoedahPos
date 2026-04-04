@@ -158,7 +158,9 @@ export default function PODocumentPage() {
             </div>
           </div>
           <div style={{ textAlign: 'right' }}>
-            <div style={{ fontWeight: 700, fontSize: 15, color: '#000' }}>No. PO: {po.po_number}</div>
+            <div style={{ fontWeight: 700, fontSize: 15, color: '#000' }}>
+              No. PO: {po.po_number}
+            </div>
             <div style={{ color: '#000', fontSize: 13, marginTop: 2 }}>
               Tanggal: {formatDate(po.created_at)}
             </div>
@@ -179,17 +181,13 @@ export default function PODocumentPage() {
           }}
         >
           <div>
-            <div style={{ fontSize: 11, fontWeight: 700, marginBottom: 4 }}>
-              SUPPLIER
-            </div>
+            <div style={{ fontSize: 11, fontWeight: 700, marginBottom: 4 }}>SUPPLIER</div>
             <div style={{ fontWeight: 700, fontSize: 15 }}>
               {supplier_name || '— (tidak ada supplier)'}
             </div>
           </div>
           <div>
-            <div style={{ fontSize: 11, fontWeight: 700, marginBottom: 4 }}>
-              TOKO
-            </div>
+            <div style={{ fontSize: 11, fontWeight: 700, marginBottom: 4 }}>TOKO</div>
             <div style={{ fontWeight: 700, fontSize: 15 }}>{data.store_name || '—'}</div>
           </div>
         </div>
@@ -205,7 +203,7 @@ export default function PODocumentPage() {
             display: 'grid',
             gridTemplateColumns: 'repeat(4, 1fr)',
             gap: 12,
-            color: '#000'
+            color: '#000',
           }}
         >
           {[
@@ -240,22 +238,18 @@ export default function PODocumentPage() {
             </thead>
             <tbody>
               {termins.map(t => {
-                const { label, color } = statusLabel(t);
+                const { label } = statusLabel(t);
                 return (
                   <tr key={t.id}>
                     <td style={{ fontWeight: 600 }}>Termin {t.termin_number}</td>
                     <td>{formatDate(t.due_date)}</td>
                     <td style={{ textAlign: 'right' }}>{formatIDR(t.amount)}</td>
-                    <td style={{ textAlign: 'right' }}>
-                      {formatIDR(t.amount_paid)}
-                    </td>
+                    <td style={{ textAlign: 'right' }}>{formatIDR(t.amount_paid)}</td>
                     <td style={{ textAlign: 'right', fontWeight: 600 }}>
                       {formatIDR(t.amount_due)}
                     </td>
                     <td>
-                      <span className="badge">
-                        {label}
-                      </span>
+                      <span className="badge">{label}</span>
                     </td>
                     <td style={{ fontSize: 12 }}>{t.notes || '—'}</td>
                   </tr>
@@ -265,12 +259,8 @@ export default function PODocumentPage() {
               <tr style={{ background: '#f9fafb', fontWeight: 700 }}>
                 <td colSpan={2}>Total</td>
                 <td style={{ textAlign: 'right' }}>{formatIDR(debt_summary.total_termin)}</td>
-                <td style={{ textAlign: 'right' }}>
-                  {formatIDR(debt_summary.total_paid)}
-                </td>
-                <td style={{ textAlign: 'right' }}>
-                  {formatIDR(debt_summary.remaining_debt)}
-                </td>
+                <td style={{ textAlign: 'right' }}>{formatIDR(debt_summary.total_paid)}</td>
+                <td style={{ textAlign: 'right' }}>{formatIDR(debt_summary.remaining_debt)}</td>
                 <td colSpan={2} />
               </tr>
             </tbody>
