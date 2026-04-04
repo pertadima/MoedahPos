@@ -94,6 +94,11 @@ type PayableSummary struct {
 	TotalOutstanding float64 `json:"total_outstanding"`
 	UnpaidCount      int     `json:"unpaid_count"`
 	PartialCount     int     `json:"partial_count"`
+
+	// Termin-based debt aging
+	OverdueDebt float64 `json:"overdue_debt"`
+	DueSoonDebt float64 `json:"due_soon_debt"`
+	FutureDebt  float64 `json:"future_debt"`
 }
 
 // ─── Termin (Installment) DTOs ────────────────────────────────────────────────

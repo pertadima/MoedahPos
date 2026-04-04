@@ -8,11 +8,14 @@ import {
   AlertTriangle,
   ArrowUpRight,
   Loader2,
+  Users,
+  ArrowUp,
+  ArrowDown,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthContext';
-import { reportsApi, stockApi } from '@/lib/api/store-apis';
+import { reportsApi, stockApi, purchaseOrdersApi } from '@/lib/api/store-apis';
 import { transactionsApi } from '@/lib/api/transactions';
-import { formatRp, formatDateTime, thirtyDaysAgoStr, todayStr } from '@/lib/utils';
+import { formatRp, formatDateTime, thirtyDaysAgoStr, sevenDaysAgoStr, todayStr } from '@/lib/utils';
 import type { SalesSummaryResponse, Transaction, StockLevel } from '@/types';
 import {
   LineChart,
@@ -22,6 +25,9 @@ import {
   Tooltip,
   ResponsiveContainer,
   CartesianGrid,
+  BarChart,
+  Bar,
+  Cell,
 } from 'recharts';
 
 export default function DashboardPage() {
@@ -29,7 +35,49 @@ export default function DashboardPage() {
   const [summary, setSummary] = useState<SalesSummaryResponse | null>(null);
   const [recentTxns, setRecentTxns] = useState<Transaction[]>([]);
   const [lowStock, setLowStock] = useState<StockLevel[]>([]);
+  const [payables, setPayables] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+
+  type TimeFilter = 'today' | '7days' | '30days';
+  const [cashierFilter, setCashierFilter] = useState<TimeFilter>('30days');
+  const [cashierRevenue, setCashierRevenue] = useState<any[]>([]);
+
+  const [productFilter, setProductFilter] = useState<TimeFilter>('30days');
+  const [productData, setProductData] = useState<any[]>([]);
+
+  const loadCashierData = useCallback(() => {
+    if (!selectedStore) return;
+    const sid = selectedStore.store_id;
+    let dFrom;
+    if (cashierFilter === 'today') dFrom = todayStr();
+    else if (cashierFilter === '7days') dFrom = sevenDaysAgoStr();
+    else dFrom = thirtyDaysAgoStr();
+
+    reportsApi.byCashier(sid, dFrom, todayStr())
+      .then(res => setCashierRevenue(res.data || []))
+      .catch(console.error);
+  }, [selectedStore, cashierFilter]);
+
+  useEffect(() => {
+    loadCashierData();
+  }, [loadCashierData]);
+
+  const loadProductData = useCallback(() => {
+    if (!selectedStore) return;
+    const sid = selectedStore.store_id;
+    let dFrom;
+    if (productFilter === 'today') dFrom = todayStr();
+    else if (productFilter === '7days') dFrom = sevenDaysAgoStr();
+    else dFrom = thirtyDaysAgoStr();
+
+    reportsApi.byProduct(sid, dFrom, todayStr())
+      .then(res => setProductData(res.data || []))
+      .catch(console.error);
+  }, [selectedStore, productFilter]);
+
+  useEffect(() => {
+    loadProductData();
+  }, [loadProductData]);
 
   const loadData = useCallback(() => {
     if (!selectedStore) return;
@@ -39,11 +87,13 @@ export default function DashboardPage() {
       reportsApi.salesSummary(sid, thirtyDaysAgoStr(), todayStr()),
       transactionsApi.list(sid, { per_page: 5 }),
       stockApi.levels(sid, true),
+      purchaseOrdersApi.payableSummary(sid),
     ])
-      .then(([s, t, st]) => {
+      .then(([s, t, st, p]) => {
         setSummary(s.data as SalesSummaryResponse);
         setRecentTxns((t.data as any).data ?? []);
         setLowStock(st.data as StockLevel[]);
+        setPayables(p.data);
       })
       .catch(console.error)
       .finally(() => setLoading(false));
@@ -92,6 +142,10 @@ export default function DashboardPage() {
       sales: r.total_sales,
       transactions: r.transaction_count,
     }));
+
+  const sortedProducts = [...productData].sort((a, b) => b.total_quantity - a.total_quantity);
+  const topProducts = sortedProducts.slice(0, 3);
+  const bottomProducts = sortedProducts.filter(p => p.total_quantity > 0).reverse().slice(0, 3);
 
   const statCards = [
     {
@@ -167,58 +221,195 @@ export default function DashboardPage() {
 
       {/* Charts + Tables */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 16 }}>
-        {/* Sales Chart */}
-        <div className="card" style={{ padding: '20px' }}>
-          <div style={{ marginBottom: 16 }}>
-            <div style={{ fontWeight: 700, fontSize: '0.95rem' }}>Tren Penjualan (30 hari)</div>
-            <div className="text-3" style={{ fontSize: '0.8rem' }}>
-              Total dalam Rupiah
+        {/* Left column */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {/* Sales Chart */}
+          <div className="card" style={{ padding: '20px' }}>
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ fontWeight: 700, fontSize: '0.95rem' }}>Tren Penjualan (30 hari)</div>
+              <div className="text-3" style={{ fontSize: '0.8rem' }}>
+                Total dalam Rupiah
+              </div>
+            </div>
+            {chartData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={220}>
+                <LineChart data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                  <XAxis
+                    dataKey="date"
+                    tick={{ fill: 'var(--text-3)', fontSize: 11 }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <YAxis
+                    tick={{ fill: 'var(--text-3)', fontSize: 11 }}
+                    axisLine={false}
+                    tickLine={false}
+                    tickFormatter={v =>
+                      v >= 1000000 ? `${(v / 1000000).toFixed(1)}M` : `${(v / 1000).toFixed(0)}K`
+                    }
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      background: 'var(--bg-elevated)',
+                      border: '1px solid var(--border-md)',
+                      borderRadius: 8,
+                      color: 'var(--text-1)',
+                      fontSize: 12,
+                    }}
+                    formatter={(v: unknown) => [formatRp(Number(v)), 'Penjualan']}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="sales"
+                    stroke="#10b981"
+                    strokeWidth={2}
+                    dot={false}
+                    activeDot={{ r: 4 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="empty-state" style={{ height: 220 }}>
+                <TrendingUp size={32} />
+                <p>Belum ada data penjualan</p>
+              </div>
+            )}
+          </div>
+
+          {/* Cashier Revenue Chart */}
+          <div className="card" style={{ padding: '20px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
+              <div>
+                <div style={{ fontWeight: 700, fontSize: '0.95rem' }}>Pendapatan per Kasir</div>
+                <div className="text-3" style={{ fontSize: '0.8rem' }}>Berdasarkan Transaksi Selesai</div>
+              </div>
+              <select
+                className="input"
+                style={{ width: 'auto', padding: '4px 8px', fontSize: '0.8rem' }}
+                value={cashierFilter}
+                onChange={e => setCashierFilter(e.target.value as TimeFilter)}
+              >
+                <option value="today">Hari Ini</option>
+                <option value="7days">7 Hari Terakhir</option>
+                <option value="30days">30 Hari Terakhir</option>
+              </select>
+            </div>
+            {cashierRevenue.length > 0 ? (
+              <ResponsiveContainer width="100%" height={260}>
+                <BarChart data={cashierRevenue} margin={{ left: -20, right: 10, top: 10, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                  <XAxis
+                    dataKey="cashier_name"
+                    tick={{ fill: 'var(--text-3)', fontSize: 11 }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <YAxis
+                    tick={{ fill: 'var(--text-3)', fontSize: 11 }}
+                    axisLine={false}
+                    tickLine={false}
+                    tickFormatter={v =>
+                      v >= 1000000 ? `${(v / 1000000).toFixed(1)}M` : `${(v / 1000).toFixed(0)}K`
+                    }
+                  />
+                  <Tooltip
+                    cursor={{ fill: 'rgba(255,255,255,0.05)' }}
+                    contentStyle={{
+                      background: 'var(--bg-elevated)',
+                      border: '1px solid var(--border-md)',
+                      borderRadius: 8,
+                      color: 'var(--text-1)',
+                      fontSize: 12,
+                    }}
+                    formatter={(v: any, name: any, props: any) => [
+                      formatRp(Number(v)),
+                      `Pendapatan (${props.payload.transaction_count} Trx)`
+                    ]}
+                  />
+                  <Bar dataKey="total_sales" radius={[4, 4, 0, 0]} maxBarSize={60}>
+                    {cashierRevenue.map((_, index) => {
+                      const colors = ['#10b981', '#3b82f6', '#f43f5e', '#f59e0b', '#8b5cf6', '#06b6d4'];
+                      return <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />;
+                    })}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="empty-state" style={{ height: 260 }}>
+                <Users size={32} style={{ color: 'var(--text-3)' }} />
+                <p>Belum ada data kasir untuk periode ini</p>
+              </div>
+            )}
+          </div>
+
+          {/* Most & Least Selling Products */}
+          <div className="card" style={{ padding: '20px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
+              <div>
+                <div style={{ fontWeight: 700, fontSize: '0.95rem' }}>Performa Produk</div>
+                <div className="text-3" style={{ fontSize: '0.8rem' }}>Produk paling laku & kurang laku</div>
+              </div>
+              <select
+                className="input"
+                style={{ width: 'auto', padding: '4px 8px', fontSize: '0.8rem' }}
+                value={productFilter}
+                onChange={e => setProductFilter(e.target.value as TimeFilter)}
+              >
+                <option value="today">Hari Ini</option>
+                <option value="7days">7 Hari Terakhir</option>
+                <option value="30days">30 Hari Terakhir</option>
+              </select>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+              {/* Top Products */}
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
+                  <ArrowUp size={16} style={{ color: 'var(--accent-em)' }} />
+                  <span style={{ fontWeight: 600, fontSize: '0.85rem' }}>Top 3 Terlaris</span>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {topProducts.length > 0 ? topProducts.map(p => (
+                    <div key={p.product_id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid var(--border)' }}>
+                      <div>
+                        <div style={{ fontSize: '0.8rem', fontWeight: 600 }}>{p.product_name}</div>
+                        <div className="text-3" style={{ fontSize: '0.72rem' }}>{p.total_quantity} terjual</div>
+                      </div>
+                      <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--accent-em)' }}>
+                        {formatRp(p.total_revenue)}
+                      </div>
+                    </div>
+                  )) : (
+                    <div className="text-3" style={{ fontSize: '0.8rem', fontStyle: 'italic' }}>Belum ada data...</div>
+                  )}
+                </div>
+              </div>
+
+              {/* Bottom Products */}
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
+                  <ArrowDown size={16} style={{ color: '#f43f5e' }} />
+                  <span style={{ fontWeight: 600, fontSize: '0.85rem' }}>Top 3 Kurang Laku</span>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {bottomProducts.length > 0 ? bottomProducts.map(p => (
+                    <div key={p.product_id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid var(--border)' }}>
+                      <div>
+                        <div style={{ fontSize: '0.8rem', fontWeight: 600 }}>{p.product_name}</div>
+                        <div className="text-3" style={{ fontSize: '0.72rem' }}>{p.total_quantity} terjual</div>
+                      </div>
+                      <div style={{ fontSize: '0.82rem', fontWeight: 700 }}>
+                        {formatRp(p.total_revenue)}
+                      </div>
+                    </div>
+                  )) : (
+                    <div className="text-3" style={{ fontSize: '0.8rem', fontStyle: 'italic' }}>Belum ada data...</div>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
-          {chartData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={220}>
-              <LineChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                <XAxis
-                  dataKey="date"
-                  tick={{ fill: 'var(--text-3)', fontSize: 11 }}
-                  axisLine={false}
-                  tickLine={false}
-                />
-                <YAxis
-                  tick={{ fill: 'var(--text-3)', fontSize: 11 }}
-                  axisLine={false}
-                  tickLine={false}
-                  tickFormatter={v =>
-                    v >= 1000000 ? `${(v / 1000000).toFixed(1)}M` : `${(v / 1000).toFixed(0)}K`
-                  }
-                />
-                <Tooltip
-                  contentStyle={{
-                    background: 'var(--bg-elevated)',
-                    border: '1px solid var(--border-md)',
-                    borderRadius: 8,
-                    color: 'var(--text-1)',
-                    fontSize: 12,
-                  }}
-                  formatter={(v: unknown) => [formatRp(Number(v)), 'Penjualan']}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="sales"
-                  stroke="#10b981"
-                  strokeWidth={2}
-                  dot={false}
-                  activeDot={{ r: 4 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          ) : (
-            <div className="empty-state" style={{ height: 220 }}>
-              <TrendingUp size={32} />
-              <p>Belum ada data penjualan</p>
-            </div>
-          )}
         </div>
 
         {/* Right column */}
@@ -262,6 +453,27 @@ export default function DashboardPage() {
               </div>
             </div>
           )}
+
+          {/* PO Debt summary */}
+          <div className="card" style={{ padding: 16 }}>
+            <div style={{ fontWeight: 700, fontSize: '0.85rem', marginBottom: 12 }}>
+              Hutang Purchase Order
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem' }}>
+                <span style={{ color: 'var(--text-2)' }}>Jatuh Tempo (Lewat)</span>
+                <span className="badge badge-red">{formatRp(payables?.overdue_debt || 0)}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem' }}>
+                <span style={{ color: 'var(--text-2)' }}>Segera Tempo (7 Hari)</span>
+                <span className="badge badge-amber">{formatRp(payables?.due_soon_debt || 0)}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem' }}>
+                <span style={{ color: 'var(--text-2)' }}>Akan Datang</span>
+                <span className="badge badge-gray" style={{ color: 'var(--text-2)' }}>{formatRp(payables?.future_debt || 0)}</span>
+              </div>
+            </div>
+          </div>
 
           {/* Recent Transactions */}
           <div className="card" style={{ padding: 16, flex: 1 }}>
