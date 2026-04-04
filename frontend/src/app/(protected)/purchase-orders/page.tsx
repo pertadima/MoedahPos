@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback, Fragment } from 'react';
+import { useEffect, useState, useCallback, Fragment, useRef } from 'react';
 import {
   ClipboardList,
   Plus,
@@ -58,6 +58,159 @@ const EMPTY_FORM = {
   items: [{ product_id: '', quantity: 1, unit_cost: 0 }],
 };
 type ItemRow = { product_id: string; quantity: number; unit_cost: number };
+
+function SearchableSelect({
+  options,
+  value,
+  onChange,
+  placeholder = 'Pilih...',
+  className = 'input',
+}: {
+  options: { value: string; label: string }[];
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  className?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const wrapperRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const selectedOption = options.find((o) => o.value === value);
+  const filteredOptions = options.filter((o) =>
+    o.label.toLowerCase().includes(search.toLowerCase())
+  );
+
+  return (
+    <div ref={wrapperRef} style={{ position: 'relative', width: '100%' }}>
+      <div
+        className={className}
+        style={{
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          minHeight: 38,
+        }}
+        onClick={() => {
+          setOpen(!open);
+          setSearch('');
+        }}
+      >
+        <span
+          style={{
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+            color: selectedOption ? 'inherit' : 'var(--text-3)',
+          }}
+        >
+          {selectedOption ? selectedOption.label : placeholder}
+        </span>
+        <ChevronRight size={14} style={{ transform: open ? 'rotate(90deg)' : 'rotate(0)' }} />
+      </div>
+
+      {open && (
+        <div
+          style={{
+            position: 'absolute',
+            top: '100%',
+            left: 0,
+            right: 0,
+            zIndex: 3000,
+            background: 'var(--bg-card)',
+            border: '1px solid var(--border)',
+            borderRadius: 8,
+            marginTop: 4,
+            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+            maxHeight: 280,
+            display: 'flex',
+            flexDirection: 'column',
+          }}
+        >
+          <div style={{ padding: 8, borderBottom: '1px solid var(--border)' }}>
+            <input
+              autoFocus
+              className="input"
+              placeholder="Cari..."
+              style={{ width: '100%', height: 32, fontSize: '0.82rem' }}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+          <div style={{ overflowY: 'auto', flex: 1, padding: 4 }}>
+            {!value ? null : (
+              <div
+                style={{
+                  padding: '8px 12px',
+                  cursor: 'pointer',
+                  fontSize: '0.82rem',
+                  borderRadius: 6,
+                  color: 'var(--text-3)',
+                }}
+                onClick={() => {
+                  onChange('');
+                  setOpen(false);
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg-hover)')}
+                onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+              >
+                Tanpa Pilihan / Reset
+              </div>
+            )}
+            {filteredOptions.length === 0 ? (
+              <div
+                style={{
+                  padding: '8px 12px',
+                  fontSize: '0.82rem',
+                  color: 'var(--text-3)',
+                  textAlign: 'center',
+                }}
+              >
+                Tidak ditemukan
+              </div>
+            ) : (
+              filteredOptions.map((o) => (
+                <div
+                  key={o.value}
+                  style={{
+                    padding: '8px 12px',
+                    cursor: 'pointer',
+                    fontSize: '0.82rem',
+                    borderRadius: 6,
+                    background: o.value === value ? 'var(--bg-active)' : 'transparent',
+                  }}
+                  onClick={() => {
+                    onChange(o.value);
+                    setOpen(false);
+                  }}
+                  onMouseEnter={(e) => {
+                    if (o.value !== value) e.currentTarget.style.background = 'var(--bg-hover)';
+                  }}
+                  onMouseLeave={(e) => {
+                    if (o.value !== value) e.currentTarget.style.background = 'transparent';
+                  }}
+                >
+                  {o.label}
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 
 type ActionType = 'submit' | 'receive' | 'cancel';
@@ -2074,18 +2227,12 @@ export default function PurchaseOrdersPage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div className="input-group">
                 <label className="input-label">Supplier (opsional)</label>
-                <select
-                  className="input"
+                <SearchableSelect
                   value={form.supplier_id}
-                  onChange={e => setForm(f => ({ ...f, supplier_id: e.target.value }))}
-                >
-                  <option value="">Tanpa Supplier</option>
-                  {suppliers.map(s => (
-                    <option key={s.id} value={s.id}>
-                      {s.name}
-                    </option>
-                  ))}
-                </select>
+                  onChange={v => setForm(f => ({ ...f, supplier_id: v }))}
+                  placeholder="Tanpa Supplier"
+                  options={suppliers.map(s => ({ value: s.id, label: s.name }))}
+                />
               </div>
               <div className="input-group">
                 <label className="input-label">Catatan (opsional)</label>
@@ -2141,18 +2288,12 @@ export default function PurchaseOrdersPage() {
                           gap: 6,
                         }}
                       >
-                        <select
-                          className="input"
+                        <SearchableSelect
                           value={item.product_id}
-                          onChange={e => updateItem(i, 'product_id', e.target.value)}
-                        >
-                          <option value="">Pilih produk...</option>
-                          {products.map(p => (
-                            <option key={p.id} value={p.id}>
-                              {p.name}
-                            </option>
-                          ))}
-                        </select>
+                          onChange={v => updateItem(i, 'product_id', v)}
+                          placeholder="Pilih produk..."
+                          options={products.map(p => ({ value: p.id, label: p.name }))}
+                        />
                         <input
                           type="number"
                           className="input"
