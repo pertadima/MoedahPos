@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, Fragment } from 'react';
 import {
   ClipboardList,
   Plus,
@@ -238,8 +238,8 @@ function TerminPanel({ po, storeId, onOpenDoc }: TerminPanelProps) {
             {termins.map(t => {
               const cfg = terminStatusCfg(t);
               return (
-                <>
-                  <tr key={t.id}>
+                <Fragment key={t.id}>
+                  <tr>
                     <td style={{ fontWeight: 600 }}>Termin {t.termin_number}</td>
                     <td style={{ color: t.is_overdue ? '#dc2626' : 'inherit' }}>
                       {formatDate(t.due_date)}
@@ -324,7 +324,7 @@ function TerminPanel({ po, storeId, onOpenDoc }: TerminPanelProps) {
                         <td style={{ color: 'var(--text-3)' }}>{p.recorded_by_name}</td>
                       </tr>
                     ))}
-                </>
+                </Fragment>
               );
             })}
           </tbody>
