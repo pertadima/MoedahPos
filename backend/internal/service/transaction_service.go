@@ -471,6 +471,7 @@ func toTransactionResponse(t *domain.Transaction) *dto.TransactionResponse {
 		items = append(items, dto.TransactionItemResponse{
 			ID:          ti.ID,
 			ProductID:   ti.ProductID,
+			MenuItemID:  ti.MenuItemID,
 			ProductName: ti.ProductName,
 			SKU:         ti.SKU,
 			Quantity:    ti.Quantity,

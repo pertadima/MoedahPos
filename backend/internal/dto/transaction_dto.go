@@ -52,6 +52,7 @@ type PayDraftRequest struct {
 type TransactionItemResponse struct {
 	ID          string  `json:"id"`
 	ProductID   *string `json:"product_id,omitempty"`
+	MenuItemID  *string `json:"menu_item_id,omitempty"`
 	ProductName string  `json:"product_name"`
 	SKU         string  `json:"sku"`
 	Quantity    float64 `json:"quantity"`

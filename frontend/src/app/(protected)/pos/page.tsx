@@ -706,7 +706,7 @@ export default function POSPage() {
           // Restore cart from draft items (map back to PosCartItem)
           draft.items.forEach(item => {
             const fakeMenuItem: MenuItem = {
-              id: item.product_id ?? item.id,
+              id: item.menu_item_id ?? item.product_id ?? item.id,
               store_id: storeId,
               name: item.product_name,
               description: '',
@@ -889,7 +889,8 @@ export default function POSPage() {
   // ── Restaurant: table selection screen ─────────────────────────────────────
   if (isRestaurant && !selectedTable && !isTakeAway) {
     return (
-      <div style={{ marginLeft: 0, padding: '24px 28px', minHeight: '100vh' }}>
+      <>
+        <div style={{ marginLeft: 0, padding: '24px 28px', minHeight: '100vh' }}>
         {/* Header */}
         <div
           style={{
@@ -1058,6 +1059,8 @@ export default function POSPage() {
           </div>
         )}
       </div>
+      {receipt && <ReceiptModal txn={receipt} onClose={() => setReceipt(null)} />}
+      </>
     );
   }
 

@@ -33,6 +33,7 @@ type TransactionItem struct {
 	ID            string  `db:"id"`
 	TransactionID string  `db:"transaction_id"`
 	ProductID     *string `db:"product_id"`
+	MenuItemID    *string `db:"menu_item_id"`
 	ProductName   string  `db:"product_name"` // snapshot
 	SKU           string  `db:"sku"`          // snapshot
 	Quantity      float64    `db:"quantity"`

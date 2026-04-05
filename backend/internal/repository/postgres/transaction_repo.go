@@ -61,9 +61,9 @@ func (r *TransactionRepo) Create(ctx context.Context, input domain.CreateTransac
 	// 2. INSERT items and (if completed) stock movements
 	const itemQ = `
 		INSERT INTO transaction_items
-		  (transaction_id, product_id, product_name, sku, quantity, unit_price, cost_price, discount_pct, tax_rate, subtotal, status)
-		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'pending')
-		RETURNING id, transaction_id, product_id, product_name, sku, quantity, unit_price, cost_price, discount_pct, tax_rate, subtotal, status, completed_at`
+		  (transaction_id, product_id, menu_item_id, product_name, sku, quantity, unit_price, cost_price, discount_pct, tax_rate, subtotal, status)
+		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,'pending')
+		RETURNING id, transaction_id, product_id, menu_item_id, product_name, sku, quantity, unit_price, cost_price, discount_pct, tax_rate, subtotal, status, completed_at`
 
 	const mvQ = `
 		INSERT INTO stock_movements (product_id, store_id, ref_type, ref_id, quantity_delta, notes, created_by)
@@ -78,7 +78,7 @@ func (r *TransactionRepo) Create(ctx context.Context, input domain.CreateTransac
 	for _, item := range input.Items {
 		ti := &domain.TransactionItem{}
 		if err := tx.QueryRowxContext(ctx, itemQ,
-			txn.ID, item.ProductID, item.ProductName, item.SKU,
+			txn.ID, item.ProductID, item.MenuItemID, item.ProductName, item.SKU,
 			item.Quantity, item.UnitPrice, item.CostPrice, item.DiscountPct, item.TaxRate, item.Subtotal,
 		).StructScan(ti); err != nil {
 			return nil, fmt.Errorf("TransactionRepo.Create insert item: %w", err)
@@ -133,7 +133,7 @@ func (r *TransactionRepo) GetDraftByTable(ctx context.Context, storeID, tableID 
 	}
 
 	const itemQ = `
-		SELECT id, transaction_id, product_id, product_name, sku,
+		SELECT id, transaction_id, product_id, menu_item_id, product_name, sku,
 		       quantity, unit_price, cost_price, discount_pct, tax_rate, subtotal, status, completed_at
 		FROM transaction_items WHERE transaction_id = $1`
 
@@ -171,12 +171,12 @@ func (r *TransactionRepo) UpdateDraftItems(ctx context.Context, txnID string, it
 	// Re-insert items
 	const itemQ = `
 		INSERT INTO transaction_items
-		  (transaction_id, product_id, product_name, sku, quantity, unit_price, cost_price, discount_pct, tax_rate, subtotal, status)
-		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'pending')`
+		  (transaction_id, product_id, menu_item_id, product_name, sku, quantity, unit_price, cost_price, discount_pct, tax_rate, subtotal, status)
+		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,'pending')`
 
 	for _, item := range items {
 		if _, err := tx.ExecContext(ctx, itemQ,
-			txnID, item.ProductID, item.ProductName, item.SKU,
+			txnID, item.ProductID, item.MenuItemID, item.ProductName, item.SKU,
 			item.Quantity, item.UnitPrice, item.CostPrice, item.DiscountPct, item.TaxRate, item.Subtotal,
 		); err != nil {
 			return nil, fmt.Errorf("TransactionRepo.UpdateDraftItems insert item: %w", err)
@@ -343,7 +343,7 @@ func (r *TransactionRepo) FindByID(ctx context.Context, id string) (*domain.Tran
 	}
 
 	const itemQ = `
-		SELECT id, transaction_id, product_id, product_name, sku,
+		SELECT id, transaction_id, product_id, menu_item_id, product_name, sku,
 		       quantity, unit_price, cost_price, discount_pct, tax_rate, subtotal, status, completed_at
 		FROM transaction_items WHERE transaction_id = $1`
 
@@ -441,7 +441,7 @@ func (r *TransactionRepo) GetKDSTickets(ctx context.Context, storeID string) ([]
 	}
 
 	qItems, args, err := sqlx.In(`
-		SELECT id, transaction_id, product_id, product_name, sku,
+		SELECT id, transaction_id, product_id, menu_item_id, product_name, sku,
 		       quantity, unit_price, cost_price, discount_pct, tax_rate, subtotal, status, completed_at
 		FROM transaction_items WHERE transaction_id IN (?)
 		ORDER BY id ASC`, txnIDs)

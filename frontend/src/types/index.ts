@@ -156,6 +156,7 @@ export interface StockMovement {
 export interface TransactionItem {
   id: string;
   product_id?: string;
+  menu_item_id?: string;
   product_name: string;
   sku: string;
   quantity: number;
