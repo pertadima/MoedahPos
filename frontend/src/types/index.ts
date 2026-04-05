@@ -134,6 +134,7 @@ export interface StockLevel {
   store_id: string;
   quantity: number;
   min_quantity: number;
+  cost_price: number;
   is_low_stock: boolean;
   updated_at: string;
 }

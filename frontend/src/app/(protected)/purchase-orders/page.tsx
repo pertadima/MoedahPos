@@ -53,12 +53,23 @@ const PAY_STATUS_CFG = {
   partial: { label: 'Sebagian', color: '#f59e0b', bg: 'rgba(245,158,11,0.12)', icon: Clock },
   paid: { label: 'Lunas', color: '#10b981', bg: 'rgba(16,185,129,0.12)', icon: BadgeCheck },
 };
-const EMPTY_FORM = {
+const EMPTY_FORM: {
+  supplier_id: string;
+  notes: string;
+  items: ItemRow[];
+} = {
   supplier_id: '',
   notes: '',
   items: [{ product_id: '', quantity: 1, unit_cost: 0 }],
 };
-type ItemRow = { product_id: string; quantity: number; unit_cost: number };
+type ItemRow = {
+  product_id: string;
+  quantity: number;
+  unit_cost: number;
+  product_name?: string;
+  product_sku?: string;
+  unit?: string;
+};
 
 function SearchableSelect({
   options,
@@ -1802,15 +1813,70 @@ export default function PurchaseOrdersPage() {
   }, [load]);
 
   useEffect(() => {
+    const saved = sessionStorage.getItem('openCreatePOWithItems');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          // If the parsed items are NOT in our preloaded `products` due to arbitrary limits, inject them so they are searchable in the select dropdown!
+          setProducts(prevProducts => {
+            const missing = parsed
+              .filter(
+                (it: any) =>
+                  !prevProducts.find((p) => p.id === it.product_id) && it.product_name
+              )
+              .map((it: any) => ({
+                id: it.product_id,
+                name: it.product_name,
+                sku: it.product_sku || '',
+                unit: it.unit || '',
+                cost_price: it.unit_cost || 0,
+                sell_price: 0,
+                store_id: storeId,
+                category_id: null,
+                tax_rate: 0,
+                is_active: true,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+              } as unknown as Product));
+            return [...prevProducts, ...missing];
+          });
+
+          setForm(f => ({
+            ...f,
+            items: parsed.map((it: any) => ({
+              product_id: it.product_id,
+              quantity: it.quantity,
+              unit_cost: it.unit_cost,
+              product_name: it.product_name,
+              product_sku: it.product_sku,
+              unit: it.unit,
+            })),
+            notes: 'Otomatis dari Stok Menipis',
+          }));
+          setShowModal(true);
+        }
+      } catch (e) {
+        console.error(e);
+      }
+      sessionStorage.removeItem('openCreatePOWithItems');
+    }
+  }, [storeId]);
+
+  useEffect(() => {
     if (!storeId) return;
     Promise.all([
       suppliersApi.list({ per_page: 100 }),
-      productsApi.list(storeId, { per_page: 200 }),
+      productsApi.list(storeId, { per_page: 5000 }),
       storesApi.get(storeId),
     ]).then(([s, p, st]) => {
       setSuppliers((s.data as any).data ?? []);
       const prods = (p.data as any).data ?? [];
-      setProducts(prods);
+      setProducts(prev => {
+        const existingIds = new Set(prods.map((pr: Product) => pr.id));
+        const missing = prev.filter(pr => !existingIds.has(pr.id));
+        return [...prods, ...missing];
+      });
       setStoreDetail(st.data as Store);
 
       setForm(f => {
@@ -1837,7 +1903,18 @@ export default function PurchaseOrdersPage() {
       try {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          setForm(f => ({ ...f, items: parsed, notes: 'Otomatis dari Stok Menipis' }));
+          setForm(f => ({
+            ...f,
+            items: parsed.map(it => ({
+              product_id: it.product_id,
+              quantity: it.quantity,
+              unit_cost: it.unit_cost,
+              product_name: it.product_name,
+              product_sku: it.product_sku,
+              unit: it.unit,
+            })),
+            notes: 'Otomatis dari Stok Menipis',
+          }));
           setShowModal(true);
         }
       } catch (e) {
@@ -2391,7 +2468,7 @@ export default function PurchaseOrdersPage() {
                         <SearchableSelect
                           value={item.product_id}
                           onChange={v => updateItem(i, 'product_id', v)}
-                          placeholder="Pilih produk..."
+                          placeholder={item.product_name || 'Pilih produk...'}
                           options={products.map(p => ({ value: p.id, label: p.name }))}
                         />
                         <input
@@ -2419,7 +2496,7 @@ export default function PurchaseOrdersPage() {
                           <X size={13} />
                         </button>
                       </div>
-                      {sp && (
+                      {(sp || item.product_id) && (
                         <div
                           style={{
                             display: 'flex',
@@ -2430,8 +2507,9 @@ export default function PurchaseOrdersPage() {
                           }}
                         >
                           <span>
-                            SKU: {sp.sku} · Stok: {sp.stock_qty ?? '?'} {sp.unit} · HPP:{' '}
-                            {formatRp(sp.cost_price)}
+                            SKU: {sp?.sku || item.product_sku || '—'} · Stok:{' '}
+                            {sp?.stock_qty ?? '?'} {sp?.unit || item.unit || ''} · HPP:{' '}
+                            {formatRp(sp?.cost_price || item.unit_cost)}
                           </span>
                           {lineTotal > 0 && (
                             <span style={{ color: 'var(--accent-em)', fontWeight: 600 }}>
