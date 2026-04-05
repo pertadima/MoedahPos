@@ -12,9 +12,10 @@ type StockLevel struct {
 	UpdatedAt   time.Time `db:"updated_at"`
 
 	// Populated via JOIN
-	ProductName string `db:"product_name"`
-	ProductSKU  string `db:"product_sku"`
-	Unit        string `db:"unit"`
+	ProductName string  `db:"product_name"`
+	ProductSKU  string  `db:"product_sku"`
+	Unit        string  `db:"unit"`
+	CostPrice   float64 `db:"cost_price"`
 }
 
 // StockMovement is an immutable audit-trail entry for every stock change.

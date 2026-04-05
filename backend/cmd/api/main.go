@@ -160,7 +160,24 @@ func main() { //nolint:funlen // bootstrap wiring is inherently long
 	}()
 
 	// ── Graceful Shutdown ─────────────────────────────────────────────────────
-	quit := make(chan os.Signal, 1)
+	var quit = make(chan os.Signal, 1)
+
+	// ── Background Workers ────────────────────────────────────────────────────
+	go func() {
+		ticker := time.NewTicker(5 * time.Minute) // Check every 5 minutes in production (can be tweaked)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-quit:
+				return
+			case <-ticker.C:
+				if err := expenseSvc.ProcessDueRecurringExpenses(context.Background()); err != nil {
+					log.Error().Err(err).Msg("background worker: failed to process recurring expenses")
+				}
+			}
+		}
+	}()
+
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 	log.Info().Msg("shutting down server...")

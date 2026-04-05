@@ -20,6 +20,7 @@ type StockLevelResponse struct {
 	StoreID     string  `json:"store_id"`
 	Quantity    float64 `json:"quantity"`
 	MinQuantity float64 `json:"min_quantity"`
+	CostPrice   float64 `json:"cost_price"`
 	IsLowStock  bool    `json:"is_low_stock"` // quantity <= min_quantity
 	UpdatedAt   string  `json:"updated_at"`
 }

@@ -124,6 +124,7 @@ func toStockLevelResponse(l *domain.StockLevel) *dto.StockLevelResponse {
 		StoreID:     l.StoreID,
 		Quantity:    l.Quantity,
 		MinQuantity: l.MinQuantity,
+		CostPrice:   l.CostPrice,
 		IsLowStock:  l.Quantity <= l.MinQuantity,
 		UpdatedAt:   l.UpdatedAt.Format(time.RFC3339),
 	}

@@ -238,7 +238,16 @@ func New(deps *Dependencies) http.Handler { //nolint:funlen // route wiring is i
 							r.Get("/", withPerm(deps, "reports.read", deps.ExpenseHandler.ListExpenses))
 							r.Post("/", withPerm(deps, "reports.read", deps.ExpenseHandler.CreateExpense))
 							r.Put("/{id}", withPerm(deps, "reports.read", deps.ExpenseHandler.UpdateExpense))
+							r.Patch("/{id}/status", withPerm(deps, "reports.read", deps.ExpenseHandler.UpdateExpenseStatus))
 							r.Delete("/{id}", withPerm(deps, "reports.read", deps.ExpenseHandler.DeleteExpense))
+						})
+
+						// Recurring Expenses
+						r.Route("/recurring-expenses", func(r chi.Router) {
+							r.Get("/", withPerm(deps, "reports.read", deps.ExpenseHandler.ListRecurringExpenses))
+							r.Post("/", withPerm(deps, "reports.read", deps.ExpenseHandler.CreateRecurringExpense))
+							r.Put("/{id}", withPerm(deps, "reports.read", deps.ExpenseHandler.UpdateRecurringExpense))
+							r.Delete("/{id}", withPerm(deps, "reports.read", deps.ExpenseHandler.DeleteRecurringExpense))
 						})
 
 						// ── Restaurant Mode ───────────────────────────────────

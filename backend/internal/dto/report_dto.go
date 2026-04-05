@@ -22,6 +22,8 @@ type SalesSummaryRow struct {
 	TotalNet         float64 `json:"total_net"         db:"total_net"` // sales - discount
 	TotalCost        float64 `json:"total_cost"        db:"total_cost"`
 	GrossProfit      float64 `json:"gross_profit"      db:"gross_profit"`
+	TotalExpense     float64 `json:"total_expense"     db:"total_expense"`
+	NetProfit        float64 `json:"net_profit"        db:"net_profit"`
 }
 
 // SalesSummaryResponse wraps rows + period totals.
@@ -31,6 +33,8 @@ type SalesSummaryResponse struct {
 	TotalTransactions int               `json:"total_transactions"`
 	TotalCost         float64           `json:"total_cost"`
 	GrossProfit       float64           `json:"gross_profit"`
+	TotalExpense      float64           `json:"total_expense"`
+	NetProfit         float64           `json:"net_profit"`
 	ProfitMargin      float64           `json:"profit_margin"` // %
 }
 

@@ -439,7 +439,7 @@ func NewStockRepo(db *sqlx.DB) *StockRepo { return &StockRepo{db: db} }
 func (r *StockRepo) FindLevelsByStore(ctx context.Context, storeID string, lowStockOnly bool) ([]*domain.StockLevel, error) {
 	q := `
 		SELECT sl.id, sl.product_id, sl.store_id, sl.quantity, sl.min_quantity, sl.updated_at,
-		       p.name AS product_name, p.sku AS product_sku, p.unit
+		       p.name AS product_name, p.sku AS product_sku, p.unit, p.cost_price
 		FROM stock_levels sl
 		JOIN products p ON p.id = sl.product_id AND p.deleted_at IS NULL AND p.is_active = true
 		WHERE sl.store_id = $1`

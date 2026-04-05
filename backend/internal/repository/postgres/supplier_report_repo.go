@@ -118,21 +118,47 @@ func NewReportRepo(db *sqlx.DB) *ReportRepo { return &ReportRepo{db: db} }
 
 func (r *ReportRepo) SalesSummary(ctx context.Context, storeID string, from, to time.Time) ([]dto.SalesSummaryRow, error) {
 	const q = `
+		WITH sales AS (
+			SELECT
+				TO_CHAR(t.created_at AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD') AS date,
+				COUNT(t.id) AS transaction_count,
+				SUM(t.total) AS total_sales,
+				SUM(t.tax_amt) AS total_tax,
+				SUM(t.discount_amt) AS total_discount,
+				SUM(t.total) - SUM(t.discount_amt) AS total_net,
+				COALESCE(SUM(ti_agg.item_cost), 0) AS total_cost,
+				SUM(t.total) - COALESCE(SUM(ti_agg.item_cost), 0) AS gross_profit
+			FROM transactions t
+			LEFT JOIN (
+				SELECT transaction_id, SUM(cost_price * quantity) AS item_cost
+				FROM transaction_items
+				GROUP BY transaction_id
+			) ti_agg ON ti_agg.transaction_id = t.id
+			WHERE t.store_id = $1 AND t.status = 'completed'
+			  AND t.created_at >= $2 AND t.created_at < $3
+			GROUP BY 1
+		),
+		exp AS (
+			SELECT
+				TO_CHAR(e.expense_date, 'YYYY-MM-DD') AS date,
+				SUM(e.amount) AS total_expense
+			FROM expenses e
+			WHERE e.store_id = $1 AND e.expense_date >= $2 AND e.expense_date < $3
+			GROUP BY 1
+		)
 		SELECT
-			TO_CHAR(t.created_at AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD') AS date,
-			COUNT(*)                 AS transaction_count,
-			ROUND(SUM(t.total)::numeric, 2)        AS total_sales,
-			ROUND(SUM(t.tax_amt)::numeric, 2)      AS total_tax,
-			ROUND(SUM(t.discount_amt)::numeric, 2) AS total_discount,
-			ROUND((SUM(t.total) - SUM(t.discount_amt))::numeric, 2) AS total_net,
-			ROUND(COALESCE((SELECT SUM(ti.cost_price * ti.quantity)
-			                FROM transaction_items ti WHERE ti.transaction_id = ANY(ARRAY_AGG(t.id))), 0)::numeric, 2) AS total_cost,
-			ROUND((SUM(t.total) - COALESCE((SELECT SUM(ti.cost_price * ti.quantity)
-			                               FROM transaction_items ti WHERE ti.transaction_id = ANY(ARRAY_AGG(t.id))), 0))::numeric, 2) AS gross_profit
-		FROM transactions t
-		WHERE store_id = $1 AND status = 'completed'
-		  AND created_at >= $2 AND created_at < $3
-		GROUP BY 1
+			COALESCE(s.date, e.date) AS date,
+			COALESCE(s.transaction_count, 0) AS transaction_count,
+			ROUND(COALESCE(s.total_sales, 0)::numeric, 2) AS total_sales,
+			ROUND(COALESCE(s.total_tax, 0)::numeric, 2) AS total_tax,
+			ROUND(COALESCE(s.total_discount, 0)::numeric, 2) AS total_discount,
+			ROUND(COALESCE(s.total_net, 0)::numeric, 2) AS total_net,
+			ROUND(COALESCE(s.total_cost, 0)::numeric, 2) AS total_cost,
+			ROUND(COALESCE(s.gross_profit, 0)::numeric, 2) AS gross_profit,
+			ROUND(COALESCE(e.total_expense, 0)::numeric, 2) AS total_expense,
+			ROUND((COALESCE(s.gross_profit, 0) - COALESCE(e.total_expense, 0))::numeric, 2) AS net_profit
+		FROM sales s
+		FULL OUTER JOIN exp e ON e.date = s.date
 		ORDER BY 1 DESC`
 	var rows []dto.SalesSummaryRow
 	if err := r.db.SelectContext(ctx, &rows, q, storeID, from, to); err != nil {
