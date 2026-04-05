@@ -84,6 +84,25 @@ export default function KDSPage() {
     }
   };
 
+  const handleCompleteAll = async () => {
+    if (!storeId) return;
+    try {
+      const pendingItems = tickets.flatMap(ticket => 
+        ticket.items.filter(i => i.status !== 'completed')
+      );
+      if (pendingItems.length === 0) return;
+      
+      setLoading(true);
+      await Promise.all(pendingItems.map(i => kdsApi.markItemAsDone(storeId, i.id)));
+      await fetchTickets();
+    } catch (err: unknown) {
+      console.error(err);
+      alert('Gagal menyelesaikan semua pesanan');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (!selectedStore || selectedStore.store_type !== 'restaurant') {
     return (
       <div
@@ -149,10 +168,32 @@ export default function KDSPage() {
           </div>
         </div>
 
-        <button onClick={fetchTickets} className="btn btn-secondary btn-sm" disabled={loading}>
-          <RefreshCw size={15} className={loading ? 'loading-spin' : ''} />
-          Refresh
-        </button>
+        <div style={{ display: 'flex', gap: 12 }}>
+          <button
+            onClick={handleCompleteAll}
+            className="btn btn-primary btn-sm"
+            disabled={loading || tickets.every(t => t.items.every(i => i.status === 'completed'))}
+            style={{
+              background: 'var(--brand)',
+              color: '#fff',
+              border: 'none',
+              padding: '0 16px',
+              borderRadius: 6,
+              fontWeight: 600,
+              fontSize: '0.85rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6
+            }}
+          >
+            <CheckSquare size={16} />
+            Selesaikan Semua Tiket
+          </button>
+          <button onClick={fetchTickets} className="btn btn-secondary btn-sm" disabled={loading}>
+            <RefreshCw size={15} className={loading ? 'loading-spin' : ''} />
+            Refresh
+          </button>
+        </div>
       </div>
 
       {loading && tickets.length === 0 ? (
@@ -168,11 +209,11 @@ export default function KDSPage() {
       ) : (
         <div
           style={{
-            display: 'flex',
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
             gap: 16,
-            overflowX: 'auto',
             paddingBottom: 20,
-            alignItems: 'flex-start',
+            alignItems: 'start',
           }}
         >
           {tickets.map(ticket => {
@@ -190,7 +231,6 @@ export default function KDSPage() {
               <div
                 key={ticket.id}
                 style={{
-                  flex: '0 0 280px',
                   background: 'var(--bg-elevated)',
                   borderRadius: 8,
                   border: `1px solid ${isAllDone ? '#10b981' : isLate ? '#ef4444' : 'var(--border)'}`,
