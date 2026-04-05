@@ -426,9 +426,6 @@ func seedProducts(ctx context.Context, db *sqlx.DB, storeID string, catalog []Pr
 	for _, p := range catalog {
 		catID := catMap[p.Category]
 		sellPrice := p.SellPrice
-		if isRestaurant {
-			sellPrice = 0 // Ingredients in restaurant have no direct sell price
-		}
 		_, err := db.ExecContext(ctx, `
 			INSERT INTO products
 			  (id, store_id, category_id, sku, name, barcode, unit, cost_price, sell_price, tax_rate, is_active)
@@ -525,9 +522,10 @@ func seedTransactions(ctx context.Context, db *sqlx.DB, storeID, cashierID strin
 		Name      string  `db:"name"`
 		SKU       string  `db:"sku"`
 		SellPrice float64 `db:"sell_price"`
+		CostPrice float64 `db:"cost_price"`
 		TaxRate   float64 `db:"tax_rate"`
 	}
-	must(db.SelectContext(ctx, &prods, "SELECT id, name, sku, sell_price, tax_rate FROM products WHERE store_id=$1", storeID))
+	must(db.SelectContext(ctx, &prods, "SELECT id, name, sku, sell_price, cost_price, tax_rate FROM products WHERE store_id=$1", storeID))
 	if len(prods) == 0 {
 		return 0
 	}
@@ -561,6 +559,7 @@ func seedTransactions(ctx context.Context, db *sqlx.DB, storeID, cashierID strin
 				Name      string  `db:"name"`
 				SKU       string  `db:"sku"`
 				SellPrice float64 `db:"sell_price"`
+				CostPrice float64 `db:"cost_price"`
 				TaxRate   float64 `db:"tax_rate"`
 			}
 			qty float64
@@ -590,9 +589,9 @@ func seedTransactions(ctx context.Context, db *sqlx.DB, storeID, cashierID strin
 
 		for _, line := range lines {
 			_, err = tx.ExecContext(ctx, `
-				INSERT INTO transaction_items (id, transaction_id, product_id, product_name, sku, quantity, unit_price, tax_rate, subtotal)
-				VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-			`, uuid.NewString(), txID, line.p.ID, line.p.Name, line.p.SKU, line.qty, line.p.SellPrice, line.p.TaxRate, line.sub)
+				INSERT INTO transaction_items (id, transaction_id, product_id, product_name, sku, quantity, unit_price, cost_price, tax_rate, subtotal)
+				VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+			`, uuid.NewString(), txID, line.p.ID, line.p.Name, line.p.SKU, line.qty, line.p.SellPrice, line.p.CostPrice, line.p.TaxRate, line.sub)
 			must(err)
 		}
 
@@ -605,9 +604,9 @@ func seedTransactions(ctx context.Context, db *sqlx.DB, storeID, cashierID strin
 // resetData deletes all demo tables (preserves roles/permissions/migrations).
 func resetData(ctx context.Context, db *sqlx.DB) {
 	tables := []string{
+		"transaction_items", "transactions",
 		"menu_item_ingredients", "menu_items",
 		"restaurant_tables",
-		"transaction_items", "transactions",
 		"stock_movements", "stock_batches", "stock_levels",
 		"payment_records", "purchase_order_termins", "po_payments", "purchase_order_items", "purchase_orders",
 		"price_history", "customers",
@@ -697,10 +696,11 @@ func seedRestaurantTransactions(ctx context.Context, db *sqlx.DB, storeID, cashi
 		must(err)
 
 		for _, l := range lines {
+			costPrice := l.SellPrice * 0.4 // estimate cost at 40% of sell price for demo
 			_, err = tx.ExecContext(ctx, `
-				INSERT INTO transaction_items (id, transaction_id, menu_item_id, product_name, sku, quantity, unit_price, tax_rate, subtotal)
-				VALUES ($1, $2, $3, $4, 'MENU-ITEM', 1, $5, $6, $5)
-			`, uuid.NewString(), txID, l.ID, l.Name, l.SellPrice, l.TaxRate)
+				INSERT INTO transaction_items (id, transaction_id, menu_item_id, product_name, sku, quantity, unit_price, cost_price, tax_rate, subtotal)
+				VALUES ($1, $2, $3, $4, 'MENU-ITEM', 1, $5, $6, $7, $5)
+			`, uuid.NewString(), txID, l.ID, l.Name, l.SellPrice, costPrice, l.TaxRate)
 			must(err)
 		}
 		must(tx.Commit())
@@ -715,35 +715,35 @@ func seedRestaurantTransactions(ctx context.Context, db *sqlx.DB, storeID, cashi
 // These are stored in products/stock_levels as ingredients.
 var catalogPadang = []ProductSeed{
 	// ── Daging & Protein ───────────────────────────────────
-	{"Daging Sapi", "PDG-001", "kg", "Daging & Protein", 130_000, 0, 0, 20, 2, ""},
-	{"Ayam Kampung", "PDG-002", "kg", "Daging & Protein", 65_000, 0, 0, 25, 3, ""},
-	{"Ikan Kakap", "PDG-003", "kg", "Daging & Protein", 80_000, 0, 0, 10, 2, ""},
-	{"Telur Ayam", "PDG-004", "butir", "Daging & Protein", 2_500, 0, 0, 300, 50, ""},
-	{"Paru Sapi", "PDG-005", "kg", "Daging & Protein", 90_000, 0, 0, 8, 1, ""},
-	{"Kikil Sapi", "PDG-006", "kg", "Daging & Protein", 70_000, 0, 0, 5, 1, ""},
+	{"Daging Sapi", "PDG-001", "kg", "Daging & Protein", 130_000, 160_000, 0, 20, 2, ""},
+	{"Ayam Kampung", "PDG-002", "kg", "Daging & Protein", 65_000, 85_000, 0, 25, 3, ""},
+	{"Ikan Kakap", "PDG-003", "kg", "Daging & Protein", 80_000, 100_000, 0, 10, 2, ""},
+	{"Telur Ayam", "PDG-004", "butir", "Daging & Protein", 2_500, 3_500, 0, 300, 50, ""},
+	{"Paru Sapi", "PDG-005", "kg", "Daging & Protein", 90_000, 115_000, 0, 8, 1, ""},
+	{"Kikil Sapi", "PDG-006", "kg", "Daging & Protein", 70_000, 95_000, 0, 5, 1, ""},
 	// ── Sayur & Nabati ────────────────────────────────────
-	{"Nangka Muda", "PDG-011", "kg", "Sayur & Nabati", 8_000, 0, 0, 15, 2, ""},
-	{"Kacang Panjang", "PDG-012", "kg", "Sayur & Nabati", 12_000, 0, 0, 10, 2, ""},
-	{"Daun Singkong", "PDG-013", "ikat", "Sayur & Nabati", 5_000, 0, 0, 30, 5, ""},
-	{"Terong Ungu", "PDG-014", "kg", "Sayur & Nabati", 15_000, 0, 0, 10, 2, ""},
-	{"Pare", "PDG-015", "kg", "Sayur & Nabati", 12_000, 0, 0, 8, 1, ""},
+	{"Nangka Muda", "PDG-011", "kg", "Sayur & Nabati", 8_000, 15_000, 0, 15, 2, ""},
+	{"Kacang Panjang", "PDG-012", "kg", "Sayur & Nabati", 12_000, 18_000, 0, 10, 2, ""},
+	{"Daun Singkong", "PDG-013", "ikat", "Sayur & Nabati", 5_000, 10_000, 0, 30, 5, ""},
+	{"Terong Ungu", "PDG-014", "kg", "Sayur & Nabati", 15_000, 22_000, 0, 10, 2, ""},
+	{"Pare", "PDG-015", "kg", "Sayur & Nabati", 12_000, 18_000, 0, 8, 1, ""},
 	// ── Bumbu & Rempah ────────────────────────────────────
-	{"Santan Kelapa", "PDG-021", "liter", "Bumbu & Rempah", 20_000, 0, 0, 40, 5, ""},
-	{"Cabai Merah", "PDG-022", "kg", "Bumbu & Rempah", 45_000, 0, 0, 10, 2, ""},
-	{"Bawang Merah", "PDG-023", "kg", "Bumbu & Rempah", 35_000, 0, 0, 15, 3, ""},
-	{"Bawang Putih", "PDG-024", "kg", "Bumbu & Rempah", 40_000, 0, 0, 10, 2, ""},
-	{"Lengkuas", "PDG-025", "kg", "Bumbu & Rempah", 25_000, 0, 0, 5, 1, ""},
-	{"Serai", "PDG-026", "batang", "Bumbu & Rempah", 2_000, 0, 0, 50, 10, ""},
-	{"Daun Jeruk", "PDG-027", "lembar", "Bumbu & Rempah", 500, 0, 0, 100, 20, ""},
-	{"Kunyit", "PDG-028", "kg", "Bumbu & Rempah", 20_000, 0, 0, 5, 1, ""},
+	{"Santan Kelapa", "PDG-021", "liter", "Bumbu & Rempah", 20_000, 30_000, 0, 40, 5, ""},
+	{"Cabai Merah", "PDG-022", "kg", "Bumbu & Rempah", 45_000, 60_000, 0, 10, 2, ""},
+	{"Bawang Merah", "PDG-023", "kg", "Bumbu & Rempah", 35_000, 50_000, 0, 15, 3, ""},
+	{"Bawang Putih", "PDG-024", "kg", "Bumbu & Rempah", 40_000, 55_000, 0, 10, 2, ""},
+	{"Lengkuas", "PDG-025", "kg", "Bumbu & Rempah", 25_000, 35_000, 0, 5, 1, ""},
+	{"Serai", "PDG-026", "batang", "Bumbu & Rempah", 2_000, 3_000, 0, 50, 10, ""},
+	{"Daun Jeruk", "PDG-027", "lembar", "Bumbu & Rempah", 500, 1_000, 0, 100, 20, ""},
+	{"Kunyit", "PDG-028", "kg", "Bumbu & Rempah", 20_000, 30_000, 0, 5, 1, ""},
 	// ── Karbohidrat ───────────────────────────────────────
-	{"Beras", "PDG-031", "kg", "Karbohidrat", 13_000, 0, 0, 100, 20, ""},
-	{"Lontong", "PDG-032", "porsi", "Karbohidrat", 3_000, 0, 0, 80, 10, ""},
+	{"Beras", "PDG-031", "kg", "Karbohidrat", 13_000, 18_000, 0, 100, 20, ""},
+	{"Lontong", "PDG-032", "porsi", "Karbohidrat", 3_000, 5_000, 0, 80, 10, ""},
 	// ── Minuman ───────────────────────────────────────────
-	{"Es Batu", "PDG-041", "kg", "Minuman", 3_000, 0, 0, 20, 5, ""},
-	{"The Celup", "PDG-042", "sachet", "Minuman", 500, 0, 0, 200, 30, ""},
-	{"Gula Pasir", "PDG-043", "kg", "Minuman", 14_000, 0, 0, 20, 5, ""},
-	{"Jeruk Nipis", "PDG-044", "buah", "Minuman", 1_500, 0, 0, 50, 10, ""},
+	{"Es Batu", "PDG-041", "kg", "Minuman", 3_000, 5_000, 0, 20, 5, ""},
+	{"The Celup", "PDG-042", "sachet", "Minuman", 500, 1_000, 0, 200, 30, ""},
+	{"Gula Pasir", "PDG-043", "kg", "Minuman", 14_000, 20_000, 0, 20, 5, ""},
+	{"Jeruk Nipis", "PDG-044", "buah", "Minuman", 1_500, 3_000, 0, 50, 10, ""},
 }
 
 // menuPadang defines the sold menu items with their ingredient compositions.
