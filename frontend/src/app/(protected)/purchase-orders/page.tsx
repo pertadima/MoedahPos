@@ -1809,8 +1809,25 @@ export default function PurchaseOrdersPage() {
       storesApi.get(storeId),
     ]).then(([s, p, st]) => {
       setSuppliers((s.data as any).data ?? []);
-      setProducts((p.data as any).data ?? []);
+      const prods = (p.data as any).data ?? [];
+      setProducts(prods);
       setStoreDetail(st.data as Store);
+
+      setForm(f => {
+        if (!f.items.length) return f;
+        let changed = false;
+        const newItems = f.items.map(item => {
+          if (item.unit_cost === 0 && item.product_id) {
+            const prod = prods.find((pr: Product) => pr.id === item.product_id);
+            if (prod && prod.cost_price > 0) {
+              changed = true;
+              return { ...item, unit_cost: prod.cost_price };
+            }
+          }
+          return item;
+        });
+        return changed ? { ...f, items: newItems } : f;
+      });
     });
   }, [storeId]);
 
