@@ -243,3 +243,24 @@ export const usersAdminApi = {
 export const rolesApi = {
   list: () => api.get<any>('/admin/roles'),
 };
+
+export const expensesApi = {
+  listCategories: () => api.get<any>('/expense-categories'),
+  createCategory: (body: object) => api.post<any>('/expense-categories', body),
+  list: (
+    storeId: string,
+    params?: { category_id?: string; date_from?: string; date_to?: string; page?: number; per_page?: number }
+  ) => {
+    const q = new URLSearchParams();
+    if (params?.category_id) q.set('category_id', params.category_id);
+    if (params?.date_from) q.set('date_from', params.date_from);
+    if (params?.date_to) q.set('date_to', params.date_to);
+    if (params?.page) q.set('page', String(params.page));
+    if (params?.per_page) q.set('per_page', String(params.per_page));
+    return api.get<any>(`/stores/${storeId}/expenses?${q}`);
+  },
+  create: (storeId: string, body: object) => api.post<any>(`/stores/${storeId}/expenses`, body),
+  update: (storeId: string, id: string, body: object) =>
+    api.put<any>(`/stores/${storeId}/expenses/${id}`, body),
+  delete: (storeId: string, id: string) => api.delete<any>(`/stores/${storeId}/expenses/${id}`),
+};

@@ -271,6 +271,26 @@ export interface StockValuationResponse {
   grand_total: number;
 }
 
+export interface ProfitPeriodRow {
+  period: string;
+  total_sales: number;
+  total_cost: number;
+  gross_profit: number;
+  total_expense: number;
+  net_profit: number;
+  profit_margin: number;
+}
+
+export interface ProfitSummaryResponse {
+  rows: ProfitPeriodRow[];
+  total_sales: number;
+  total_cost: number;
+  gross_profit: number;
+  total_expense: number;
+  net_profit: number;
+  profit_margin: number;
+}
+
 // ── Cart ──────────────────────────────────────────────────────────────────────
 export interface CartItem {
   product: Product;
@@ -322,4 +342,25 @@ export interface Role {
   name: string;
   description: string;
   permissions: string[];
+}
+
+// ── Expenses ──────────────────────────────────────────────────────────────────
+export interface ExpenseCategory {
+  id: string;
+  name: string;
+  description: string;
+  created_at: string;
+}
+
+export interface Expense {
+  id: string;
+  store_id: string;
+  category_id: string;
+  category_name: string;
+  amount: number;
+  expense_date: string; // YYYY-MM-DD
+  notes: string;
+  created_by?: string;
+  created_at: string;
+  updated_at: string;
 }

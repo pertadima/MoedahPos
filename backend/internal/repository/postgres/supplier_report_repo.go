@@ -218,30 +218,58 @@ func (r *ReportRepo) ProfitSummary(ctx context.Context, storeID string, from, to
 		"week":  "TO_CHAR(DATE_TRUNC('week', t.created_at AT TIME ZONE 'Asia/Jakarta'), 'YYYY-MM-DD')",
 		"month": "TO_CHAR(DATE_TRUNC('month', t.created_at AT TIME ZONE 'Asia/Jakarta'), 'YYYY-MM')",
 	}
+	expensePeriodExpr := map[string]string{
+		"day":   "TO_CHAR(e.expense_date, 'YYYY-MM-DD')",
+		"week":  "TO_CHAR(DATE_TRUNC('week', e.expense_date), 'YYYY-MM-DD')",
+		"month": "TO_CHAR(DATE_TRUNC('month', e.expense_date), 'YYYY-MM')",
+	}
+
 	expr, ok := periodExpr[groupBy]
 	if !ok {
 		expr = periodExpr["day"]
 	}
+	expExpr, ok := expensePeriodExpr[groupBy]
+	if !ok {
+		expExpr = expensePeriodExpr["day"]
+	}
 
 	q := fmt.Sprintf(`
+		WITH sales AS (
+			SELECT
+				%s AS period,
+				SUM(t.total) AS total_sales,
+				COALESCE(SUM(ti_agg.item_cost), 0) AS total_cost
+			FROM transactions t
+			LEFT JOIN (
+				SELECT transaction_id, SUM(cost_price * quantity) AS item_cost
+				FROM transaction_items
+				GROUP BY transaction_id
+			) ti_agg ON ti_agg.transaction_id = t.id
+			WHERE t.store_id = $1 AND t.status = 'completed'
+			  AND t.created_at >= $2 AND t.created_at < $3
+			GROUP BY 1
+		),
+		exp AS (
+			SELECT
+				%s AS period,
+				SUM(e.amount) AS total_expense
+			FROM expenses e
+			WHERE e.store_id = $1 AND e.expense_date >= $2 AND e.expense_date < $3
+			GROUP BY 1
+		)
 		SELECT
-			%s AS period,
-			ROUND(SUM(t.total)::numeric, 2) AS total_sales,
-			ROUND(COALESCE(SUM(ti_agg.item_cost), 0)::numeric, 2) AS total_cost,
-			ROUND((SUM(t.total) - COALESCE(SUM(ti_agg.item_cost), 0))::numeric, 2) AS gross_profit,
-			CASE WHEN SUM(t.total) > 0
-			     THEN ROUND(((SUM(t.total) - COALESCE(SUM(ti_agg.item_cost), 0)) / SUM(t.total) * 100)::numeric, 1)
+			COALESCE(s.period, e.period) AS period,
+			ROUND(COALESCE(s.total_sales, 0)::numeric, 2) AS total_sales,
+			ROUND(COALESCE(s.total_cost, 0)::numeric, 2) AS total_cost,
+			ROUND((COALESCE(s.total_sales, 0) - COALESCE(s.total_cost, 0))::numeric, 2) AS gross_profit,
+			ROUND(COALESCE(e.total_expense, 0)::numeric, 2) AS total_expense,
+			ROUND((COALESCE(s.total_sales, 0) - COALESCE(s.total_cost, 0) - COALESCE(e.total_expense, 0))::numeric, 2) AS net_profit,
+			CASE WHEN COALESCE(s.total_sales, 0) > 0
+			     THEN ROUND(((COALESCE(s.total_sales, 0) - COALESCE(s.total_cost, 0) - COALESCE(e.total_expense, 0)) / COALESCE(s.total_sales, 0) * 100)::numeric, 1)
 			     ELSE 0 END AS profit_margin
-		FROM transactions t
-		LEFT JOIN (
-			SELECT transaction_id, SUM(cost_price * quantity) AS item_cost
-			FROM transaction_items
-			GROUP BY transaction_id
-		) ti_agg ON ti_agg.transaction_id = t.id
-		WHERE t.store_id = $1 AND t.status = 'completed'
-		  AND t.created_at >= $2 AND t.created_at < $3
-		GROUP BY 1
-		ORDER BY 1`, expr)
+		FROM sales s
+		FULL OUTER JOIN exp e ON e.period = s.period
+		ORDER BY 1`, expr, expExpr)
 
 	var rows []dto.ProfitPeriodRow
 	if err := r.db.SelectContext(ctx, &rows, q, storeID, from, to); err != nil {

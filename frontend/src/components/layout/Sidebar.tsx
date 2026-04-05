@@ -23,6 +23,7 @@ import {
   UserRound,
   UserCog,
   ChefHat,
+  Wallet,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { useTheme } from '@/lib/theme/ThemeContext';
@@ -177,9 +178,12 @@ const baseGroups: NavGroup[] = [
     ],
   },
   {
-    label: 'Analitik',
+    label: 'Keuangan & Analitik',
     permission: 'reports.read',
-    items: [{ href: '/reports', icon: BarChart3, label: 'Laporan', permission: 'reports.read' }],
+    items: [
+      { href: '/expenses', icon: Wallet, label: 'Pengeluaran', permission: 'reports.read' },
+      { href: '/reports', icon: BarChart3, label: 'Laporan', permission: 'reports.read' }
+    ],
   },
   {
     label: 'Pengaturan',

@@ -11,6 +11,7 @@ import {
   Users,
   ArrowUp,
   ArrowDown,
+  Wallet,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { reportsApi, stockApi, purchaseOrdersApi } from '@/lib/api/store-apis';
@@ -36,6 +37,7 @@ export default function DashboardPage() {
   const [recentTxns, setRecentTxns] = useState<Transaction[]>([]);
   const [lowStock, setLowStock] = useState<StockLevel[]>([]);
   const [payables, setPayables] = useState<any>(null);
+  const [profitData, setProfitData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   type TimeFilter = 'today' | '7days' | '30days';
@@ -90,12 +92,14 @@ export default function DashboardPage() {
       transactionsApi.list(sid, { per_page: 5 }),
       stockApi.levels(sid, true),
       purchaseOrdersApi.payableSummary(sid),
+      reportsApi.profit(sid, thirtyDaysAgoStr(), todayStr(), 'day'),
     ])
-      .then(([s, t, st, p]) => {
+      .then(([s, t, st, p, pr]) => {
         setSummary(s.data as SalesSummaryResponse);
         setRecentTxns((t.data as any).data ?? []);
         setLowStock(st.data as StockLevel[]);
         setPayables(p.data);
+        setProfitData(pr.data);
       })
       .catch(console.error)
       .finally(() => setLoading(false));
@@ -181,6 +185,13 @@ export default function DashboardPage() {
       icon: ArrowUpRight,
       color: '#10b981',
       bg: 'rgba(16,185,129,0.12)',
+    },
+    {
+      label: 'Laba Bersih (30 hari)',
+      value: formatRp(profitData?.net_profit ?? 0),
+      icon: Wallet,
+      color: '#3b82f6',
+      bg: 'rgba(59,130,246,0.12)',
     },
   ];
 

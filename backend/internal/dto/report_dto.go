@@ -86,6 +86,8 @@ type ProfitPeriodRow struct {
 	TotalSales   float64 `json:"total_sales"  db:"total_sales"`
 	TotalCost    float64 `json:"total_cost"   db:"total_cost"`
 	GrossProfit  float64 `json:"gross_profit" db:"gross_profit"`
+	TotalExpense float64 `json:"total_expense" db:"total_expense"`
+	NetProfit    float64 `json:"net_profit" db:"net_profit"`
 	ProfitMargin float64 `json:"profit_margin" db:"profit_margin"`
 }
 
@@ -95,5 +97,7 @@ type ProfitSummaryResponse struct {
 	TotalSales   float64           `json:"total_sales"`
 	TotalCost    float64           `json:"total_cost"`
 	GrossProfit  float64           `json:"gross_profit"`
+	TotalExpense float64           `json:"total_expense"`
+	NetProfit    float64           `json:"net_profit"`
 	ProfitMargin float64           `json:"profit_margin"` // %
 }

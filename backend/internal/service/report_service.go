@@ -119,21 +119,25 @@ func (s *ReportService) ProfitSummary(ctx context.Context, filter dto.ReportFilt
 	if err != nil {
 		return nil, fmt.Errorf("profit summary: %w", err)
 	}
-	var totalSales, totalCost, grossProfit float64
+	var totalSales, totalCost, grossProfit, totalExpense, netProfit float64
 	for _, r := range rows {
 		totalSales += r.TotalSales
 		totalCost += r.TotalCost
 		grossProfit += r.GrossProfit
+		totalExpense += r.TotalExpense
+		netProfit += r.NetProfit
 	}
 	var margin float64
 	if totalSales > 0 {
-		margin = grossProfit / totalSales * 100
+		margin = netProfit / totalSales * 100
 	}
 	return &dto.ProfitSummaryResponse{
 		Rows:         rows,
 		TotalSales:   totalSales,
 		TotalCost:    totalCost,
 		GrossProfit:  grossProfit,
+		TotalExpense: totalExpense,
+		NetProfit:    netProfit,
 		ProfitMargin: margin,
 	}, nil
 }
