@@ -440,6 +440,29 @@ func (s *TransactionService) PayDraft(ctx context.Context, storeID, txnID, cashi
 	return toTransactionResponse(txn), nil
 }
 
+// ─── KDS Methods ──────────────────────────────────────────────────────────────
+
+// GetKDSTickets returns all active KDS tickets for a restaurant.
+func (s *TransactionService) GetKDSTickets(ctx context.Context, storeID string) ([]*dto.TransactionResponse, error) {
+	txns, err := s.txnRepo.GetKDSTickets(ctx, storeID)
+	if err != nil {
+		return nil, fmt.Errorf("getting kds tickets: %w", err)
+	}
+	resp := make([]*dto.TransactionResponse, 0, len(txns))
+	for _, t := range txns {
+		resp = append(resp, toTransactionResponse(t))
+	}
+	return resp, nil
+}
+
+// UpdateKDSItemStatus marks a KDS ticket item as completed or pending.
+func (s *TransactionService) UpdateKDSItemStatus(ctx context.Context, itemID string, req *dto.UpdateKDSItemStatusRequest) error {
+	if err := s.txnRepo.UpdateKDSItemStatus(ctx, itemID, req.Status); err != nil {
+		return fmt.Errorf("updating kds item status: %w", err)
+	}
+	return nil
+}
+
 // ─── Mapper ───────────────────────────────────────────────────────────────────
 
 func toTransactionResponse(t *domain.Transaction) *dto.TransactionResponse {
@@ -455,7 +478,12 @@ func toTransactionResponse(t *domain.Transaction) *dto.TransactionResponse {
 			DiscountPct: ti.DiscountPct,
 			TaxRate:     ti.TaxRate,
 			Subtotal:    ti.Subtotal,
+			Status:      ti.Status,
 		})
+		if ti.CompletedAt != nil {
+			ca := ti.CompletedAt.Format(time.RFC3339)
+			items[len(items)-1].CompletedAt = &ca
+		}
 	}
 	return &dto.TransactionResponse{
 		ID:            t.ID,
@@ -463,6 +491,7 @@ func toTransactionResponse(t *domain.Transaction) *dto.TransactionResponse {
 		CashierID:     t.CashierID,
 		CashierName:   t.CashierName,
 		TableID:       t.TableID,
+		TableNumber:   t.TableNumber,
 		CustomerName:  t.CustomerName,
 		CustomerPhone: t.CustomerPhone,
 		Subtotal:      t.Subtotal,

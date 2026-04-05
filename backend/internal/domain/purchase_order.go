@@ -14,7 +14,7 @@ type PurchaseOrder struct {
 	ReceivedBy  *string    `db:"received_by"`
 	OrderedAt   *time.Time `db:"ordered_at"`
 	ReceivedAt  *time.Time `db:"received_at"`
-	Notes       string     `db:"notes"`
+	Notes       *string    `db:"notes"`
 	CreatedAt   time.Time  `db:"created_at"`
 	UpdatedAt   time.Time  `db:"updated_at"`
 

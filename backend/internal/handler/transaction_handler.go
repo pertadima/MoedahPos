@@ -211,3 +211,38 @@ func (h *TransactionHandler) PayDraft(w http.ResponseWriter, r *http.Request) {
 	}
 	response.Created(w, result)
 }
+
+// ─── KDS Handlers ─────────────────────────────────────────────────────────────
+
+// GET /stores/:storeId/kds/tickets
+func (h *TransactionHandler) GetKDSTickets(w http.ResponseWriter, r *http.Request) {
+	storeID := chi.URLParam(r, "storeId")
+	result, err := h.txnSvc.GetKDSTickets(r.Context(), storeID)
+	if err != nil {
+		h.log.Error().Err(err).Msg("get KDS tickets failed")
+		response.InternalError(w)
+		return
+	}
+	response.Success(w, result)
+}
+
+// PUT /stores/:storeId/kds/items/:itemId
+func (h *TransactionHandler) UpdateKDSItemStatus(w http.ResponseWriter, r *http.Request) {
+	itemID := chi.URLParam(r, "itemId")
+	var req dto.UpdateKDSItemStatusRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		response.Error(w, http.StatusBadRequest, "Invalid JSON body")
+		return
+	}
+	if errs := h.validator.ValidateStruct(req); errs != nil {
+		response.ValidationError(w, errs)
+		return
+	}
+	err := h.txnSvc.UpdateKDSItemStatus(r.Context(), itemID, &req)
+	if err != nil {
+		h.log.Error().Err(err).Msg("update KDS item status failed")
+		response.InternalError(w)
+		return
+	}
+	response.Success(w, map[string]interface{}{"success": true})
+}

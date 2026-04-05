@@ -129,10 +129,44 @@ var catalogBandung = []ProductSeed{
 	{"Gula Pasir 250g", "BDG-DLY-008", "pcs", "Kebutuhan Harian", 5_000, 8_000, 0, 50, 10, "8998000008"},
 }
 
+// catalogLargeRetail — A larger, more varied set of products for high-volume testing
+var catalogLargeRetail = []ProductSeed{
+	{"Samsung Galaxy S24", "ELC-001", "unit", "Elektronik", 12_000_000, 16_000_000, 11, 0, 5, "880609531"},
+	{"iPhone 15 Pro", "ELC-002", "unit", "Elektronik", 15_000_000, 21_000_000, 11, 0, 5, "19425370"},
+	{"MacBook Air M2", "ELC-003", "unit", "Elektronik", 14_000_000, 18_500_000, 11, 0, 2, "19425312"},
+	{"Sony WH-1000XM5", "ELC-004", "unit", "Elektronik", 4_500_000, 5_999_000, 11, 0, 10, "45487361"},
+	{"Logitech MX Master 3S", "ELC-005", "unit", "Elektronik", 1_100_000, 1_689_000, 11, 0, 15, "09785517"},
+	{"T-Shirt Basic White", "APR-001", "pcs", "Apparel", 45_000, 129_000, 0, 0, 20, "20000001"},
+	{"Levi's 501 Original", "APR-002", "pcs", "Apparel", 650_000, 1_199_000, 0, 0, 10, "20000002"},
+	{"Nike Air Jordan 1", "APR-003", "pasang", "Apparel", 1_800_000, 2_499_000, 11, 0, 5, "20000003"},
+	{"Uniqlo Heattech", "APR-004", "pcs", "Apparel", 95_000, 199_000, 0, 0, 30, "20000004"},
+	{"Minyak Goreng Bimoli 2L", "GRC-001", "pouch", "Grocery", 28_000, 36_500, 0, 0, 50, "899123401"},
+	{"Beras Pandan Wangi 5kg", "GRC-002", "karung", "Grocery", 75_000, 92_000, 0, 0, 20, "899123402"},
+	{"Susu Ultra Milk 1L", "GRC-003", "box", "Grocery", 16_000, 21_500, 0, 0, 48, "899123403"},
+	{"Deterjen Rinso 700g", "GRC-004", "pack", "Grocery", 18_000, 24_500, 0, 0, 30, "899123404"},
+	{"Sabun Mandi Dettol 100g", "GRC-005", "bar", "Grocery", 4_500, 7_800, 0, 0, 100, "899123405"},
+	{"Pasta Gigi Pepsodent 190g", "GRC-006", "pcs", "Grocery", 12_000, 18_900, 0, 0, 60, "899123406"},
+	{"Shampoo Pantene 170ml", "GRC-007", "botol", "Grocery", 22_000, 32_500, 0, 0, 40, "899123407"},
+	{"Teh Pucuk Harum 350ml", "GRC-008", "botol", "Grocery", 2_800, 4_000, 0, 0, 240, "899123408"},
+	{"Aqua Mineral 600ml", "GRC-009", "botol", "Grocery", 3_000, 5_500, 0, 0, 480, "899123409"},
+	{"Indomie Goreng Original", "GRC-010", "pcs", "Grocery", 2_600, 3_500, 0, 0, 1000, "899123410"},
+	{"Kopi Kapal Api 165g", "GRC-011", "pack", "Grocery", 12_500, 16_800, 0, 0, 100, "899123411"},
+	{"Gula Pasir Gulaku 1kg", "GRC-012", "kg", "Grocery", 14_500, 18_000, 0, 0, 200, "899123412"},
+	{"Garam Meja 250g", "GRC-013", "pcs", "Grocery", 2_000, 3_500, 0, 0, 150, "899123413"},
+	{"Kecap Manis Bango 550ml", "GRC-014", "pouch", "Grocery", 22_000, 28_500, 0, 0, 80, "899123414"},
+	{"Saos Sambal ABC 335ml", "GRC-015", "botol", "Grocery", 14_000, 19_800, 0, 0, 60, "899123415"},
+	{"Tisu Paseo 250s", "GRC-016", "pack", "Grocery", 12_000, 16_500, 0, 0, 120, "899123416"},
+	{"Popok MamyPoko S38", "GRC-017", "pack", "Grocery", 65_000, 84_500, 0, 0, 40, "899123417"},
+	{"Pembalut Laurier 20s", "GRC-018", "pack", "Grocery", 16_000, 22_500, 0, 0, 80, "899123418"},
+	{"Obat Nyamuk Baygon 600ml", "GRC-019", "kaleng", "Grocery", 32_000, 45_000, 0, 0, 50, "899123419"},
+	{"Pewangi Molto 800ml", "GRC-020", "pouch", "Grocery", 22_000, 29_900, 0, 0, 60, "899123420"},
+}
+
 // ── Main ────────────────────────────────────────────────────────────────────── d
 
 func main() { //nolint:funlen // seeder bootstrap is inherently long
 	reset := flag.Bool("reset", false, "Truncate all demo tables before seeding")
+	resetRestaurant := flag.Bool("reset-restaurant", false, "Truncate only restaurant store data before seeding")
 	flag.Parse()
 
 	cfg, err := config.Load()
@@ -142,16 +176,24 @@ func main() { //nolint:funlen // seeder bootstrap is inherently long
 
 	db, err := sqlx.Connect("postgres", cfg.DB.DSN())
 	must(err)
-	defer must(db.Close())
+	defer func() { must(db.Close()) }()
 
 	ctx := context.Background()
 
 	if *reset {
-		log.Println("🗑  Resetting demo data...")
+		log.Println("🗑  Resetting all demo data...")
 		resetData(ctx, db)
 	}
 
-	log.Println("🌱 Seeding MoedahPOS demo data...")
+	// ── Store ID discovery for scoped reset ──────────────────────────────────
+	// We need these IDs for scoped operations
+	var padangStoreID string
+	_ = db.QueryRowContext(ctx, "SELECT id FROM stores WHERE name='Rumah Makan Padang Saiyo'").Scan(&padangStoreID)
+
+	if *resetRestaurant && padangStoreID != "" {
+		log.Println("🗑  Resetting Padang Restaurant data...")
+		resetStoreData(ctx, db, padangStoreID)
+	}
 
 	// ── Roles ─────────────────────────────────────────────────────────────────
 	roles := map[string]string{}
@@ -208,14 +250,18 @@ func main() { //nolint:funlen // seeder bootstrap is inherently long
 	for _, s := range storeList {
 		_, err = db.ExecContext(ctx, `
 			INSERT INTO stores (id, name, address, phone, tax_number, currency, store_type, is_active)
-			VALUES ($1, $2, $3, $4, $5, 'IDR', $6, true) ON CONFLICT DO NOTHING
+			VALUES ($1, $2, $3, $4, $5, 'IDR', $6, true)
+			ON CONFLICT (name) DO UPDATE SET
+				address=EXCLUDED.address, phone=EXCLUDED.phone,
+				tax_number=EXCLUDED.tax_number, store_type=EXCLUDED.store_type,
+				is_active=true, deleted_at=NULL
 		`, s.ID, s.Name, s.Address, s.Phone, s.TaxNum, s.StoreType)
 		must(err)
 		log.Printf("   ✓ Store: %s (%s)", s.Name, s.StoreType)
 	}
 	mainStoreID := storeList[0].ID
 	branchStoreID := storeList[1].ID
-	padangStoreID := storeList[2].ID
+	padangStoreID = storeList[2].ID
 
 	// ── User ↔ Store Memberships ───────────────────────────────────────────────
 	memberships := []struct{ Email, StoreID, Role string }{
@@ -252,10 +298,14 @@ func main() { //nolint:funlen // seeder bootstrap is inherently long
 		id := uuid.NewString()
 		_, err = db.ExecContext(ctx, `
 			INSERT INTO suppliers (id, name, contact_name, phone, email, address, is_active)
-			VALUES ($1, $2, $3, $4, $5, $6, true) ON CONFLICT DO NOTHING
+			VALUES ($1, $2, $3, $4, $5, $6, true)
+			ON CONFLICT (name) DO UPDATE SET
+				contact_name=EXCLUDED.contact_name, phone=EXCLUDED.phone,
+				email=EXCLUDED.email, address=EXCLUDED.address, is_active=true
 		`, id, s.Name, s.Contact, s.Phone, s.Email, s.Address)
 		must(err)
 		supplierIDs[s.Name] = id
+		log.Printf("   ✓ Seeded supplier: %s", s.Name)
 	}
 	log.Printf("   ✓ Seeded %d suppliers", len(suppliers))
 
@@ -265,12 +315,12 @@ func main() { //nolint:funlen // seeder bootstrap is inherently long
 
 	// Toko Utama — Jakarta (cafe / coffee-shop)
 	catMapJakarta := seedCategories(ctx, db, mainStoreID, uniqueCategories(catalogJakarta))
-	n1 := seedProducts(ctx, db, mainStoreID, catalogJakarta, catMapJakarta)
+	n1 := seedProducts(ctx, db, mainStoreID, catalogJakarta, catMapJakarta, false)
 	log.Printf("   ✓ Toko Utama — Jakarta : %d products / %d categories", n1, len(catMapJakarta))
 
 	// Cabang Bandung (minimart / convenience)
 	catMapBandung := seedCategories(ctx, db, branchStoreID, uniqueCategories(catalogBandung))
-	n2 := seedProducts(ctx, db, branchStoreID, catalogBandung, catMapBandung)
+	n2 := seedProducts(ctx, db, branchStoreID, catalogBandung, catMapBandung, false)
 	log.Printf("   ✓ Cabang Bandung       : %d products / %d categories", n2, len(catMapBandung))
 
 	// ── Restaurant Padang Seed ────────────────────────────────────────────────
@@ -278,22 +328,47 @@ func main() { //nolint:funlen // seeder bootstrap is inherently long
 	log.Println("   🍽️  Seeding restaurant (Padang) data...")
 	seedRestaurantPadang(ctx, db, padangStoreID, userIDs["admin@moedah.com"])
 
-	// ── Sample Purchase Orders ────────────────────────────────────────────────
+	// ── High Volume Retail Expansion ──────────────────────────────────────────
+	log.Println("")
+	log.Println("   🚀 Preparing High Volume Retail Data (Jakarta Extra)...")
+	// Add 50 more procedurally generated items to test scalability
+	for i := 1; i <= 50; i++ {
+		catalogLargeRetail = append(catalogLargeRetail, ProductSeed{
+			Name:      fmt.Sprintf("Item Premium %d", i),
+			SKU:       fmt.Sprintf("EXTRA-%03d", i),
+			Unit:      "pcs",
+			Category:  "Premium Goods",
+			CostPrice: float64(10_000 * i),
+			SellPrice: float64(15_000 * i),
+			TaxRate:   11,
+			InitQty:   0,
+			MinQty:    5,
+		})
+	}
+	catMapLarge := seedCategories(ctx, db, mainStoreID, uniqueCategories(catalogLargeRetail))
+	seedProducts(ctx, db, mainStoreID, catalogLargeRetail, catMapLarge, false)
+
+	// ── Sample Purchase Orders & Stock Population ─────────────────────────────
 	adminID := userIDs["admin@moedah.com"]
-	seedPurchaseOrders(ctx, db, mainStoreID, branchStoreID, adminID, supplierIDs)
+	seedActivePurchaseOrders(ctx, db, mainStoreID, branchStoreID, adminID, supplierIDs)
 
 	// ── Sample Transactions ───────────────────────────────────────────────────
 	kasirID := userIDs["kasir@moedah.com"]
 	kasirBDGID := userIDs["kasir.bdg@moedah.com"]
-	t1 := seedTransactions(ctx, db, mainStoreID, kasirID, catalogJakarta)
-	t2 := seedTransactions(ctx, db, branchStoreID, kasirBDGID, catalogBandung)
+	t1 := seedTransactions(ctx, db, mainStoreID, kasirID, false)
+	t2 := seedTransactions(ctx, db, branchStoreID, kasirBDGID, false)
+	t3 := seedTransactions(ctx, db, padangStoreID, kasirID, true) // Restaurant transactions
+
+	// ── Active KDS Tickets (Restaurant Only) ──────────────────────────────────
+	log.Println("   🔥 Seeding active KDS tickets...")
+	seedActiveKDSTickets(ctx, db, padangStoreID, kasirID)
 
 	log.Println("")
 	log.Println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 	log.Println("✅  Seed completed!")
 	log.Println("")
 	log.Printf("   Products   : %d (Jakarta) + %d (Bandung) = %d total", n1, n2, n1+n2)
-	log.Printf("   Transactions: %d (Jakarta) + %d (Bandung)", t1, t2)
+	log.Printf("   Transactions: %d (Jakarta) + %d (Bandung) + %d (Padang)", t1, t2, t3)
 	log.Println("")
 	log.Println("   Demo Credentials:")
 	log.Println("   ┌──────────────────────────────────────────────────────┐")
@@ -347,9 +422,13 @@ func seedCategories(ctx context.Context, db *sqlx.DB, storeID string, names []st
 
 // seedProducts upserts all products + stock_levels for a given store.
 // Returns the number of products seeded.
-func seedProducts(ctx context.Context, db *sqlx.DB, storeID string, catalog []ProductSeed, catMap map[string]string) int {
+func seedProducts(ctx context.Context, db *sqlx.DB, storeID string, catalog []ProductSeed, catMap map[string]string, isRestaurant bool) int {
 	for _, p := range catalog {
 		catID := catMap[p.Category]
+		sellPrice := p.SellPrice
+		if isRestaurant {
+			sellPrice = 0 // Ingredients in restaurant have no direct sell price
+		}
 		_, err := db.ExecContext(ctx, `
 			INSERT INTO products
 			  (id, store_id, category_id, sku, name, barcode, unit, cost_price, sell_price, tax_rate, is_active)
@@ -360,7 +439,7 @@ func seedProducts(ctx context.Context, db *sqlx.DB, storeID string, catalog []Pr
 			  sell_price=EXCLUDED.sell_price, tax_rate=EXCLUDED.tax_rate,
 			  updated_at=NOW(), deleted_at=NULL
 		`, uuid.NewString(), storeID, catID, p.SKU, p.Name, p.Barcode,
-			p.Unit, p.CostPrice, p.SellPrice, p.TaxRate)
+			p.Unit, p.CostPrice, sellPrice, p.TaxRate)
 		must(err)
 
 		// read actual product id after upsert
@@ -380,94 +459,144 @@ func seedProducts(ctx context.Context, db *sqlx.DB, storeID string, catalog []Pr
 	return len(catalog)
 }
 
-// seedPurchaseOrders creates sample POs for both stores.
-func seedPurchaseOrders(ctx context.Context, db *sqlx.DB, mainStoreID, branchStoreID, adminID string, supplierIDs map[string]string) {
-	pos := []struct {
-		StoreID, SupplierKey, Status, Notes string
-		Offset                              int // days ago
-	}{
-		{mainStoreID, "PT Sumber Makmur", "draft", "Pembelian rutin mingguan", 0},
-		{mainStoreID, "CV Mitra Jaya Sejahtera", "ordered", "Restock minuman kemasan", 3},
-		{branchStoreID, "PT Indofood Distributor", "draft", "Restock mie dan snack", 0},
-		{branchStoreID, "CV Mitra Jaya Sejahtera", "received", "Pembelian bulan lalu", 14},
+// seedActivePurchaseOrders creates sample POs and updates stock levels for received ones.
+func seedActivePurchaseOrders(ctx context.Context, db *sqlx.DB, mainStoreID, branchStoreID, adminID string, supplierIDs map[string]string) {
+	// 1. Get all products for mainStoreID
+	var mainProds []struct {
+		ID        string  `db:"id"`
+		Name      string  `db:"name"`
+		CostPrice float64 `db:"cost_price"`
 	}
-	for i, po := range pos {
-		poID := uuid.NewString()
-		poNum := fmt.Sprintf("PO-%s-%03d", time.Now().Format("20060102"), i+1)
-		_, _ = db.ExecContext(ctx, `
-			INSERT INTO purchase_orders
-			  (id, store_id, supplier_id, po_number, status, total_amount, ordered_by, notes, created_at)
-			VALUES ($1, $2, $3, $4, $5, 0, $6, $7, NOW() - ($8 * interval '1 day'))
-			ON CONFLICT DO NOTHING
-		`, poID, po.StoreID, supplierIDs[po.SupplierKey], poNum, po.Status, adminID, po.Notes, po.Offset)
+	must(db.SelectContext(ctx, &mainProds, "SELECT id, name, cost_price FROM products WHERE store_id=$1", mainStoreID))
+
+	// 2. Create one big 'received' PO for PT Sumber Makmur for first 40 products
+	poID := uuid.NewString()
+	poNum := "PO-INIT-001"
+	_, err := db.ExecContext(ctx, `
+		INSERT INTO purchase_orders (id, store_id, supplier_id, po_number, status, total_amount, ordered_by, received_by, received_at)
+		VALUES ($1, $2, $3, $4, 'received', 0, $5, $5, NOW())
+		ON CONFLICT (po_number) DO NOTHING
+	`, poID, mainStoreID, supplierIDs["PT Sumber Makmur"], poNum, adminID)
+	must(err)
+
+	// Since we might have skipped insertion, let's get the ID if it was already there (or use the new one)
+	_ = db.QueryRowContext(ctx, "SELECT id FROM purchase_orders WHERE po_number=$1", poNum).Scan(&poID)
+
+	var totalAmt float64
+	for i, p := range mainProds {
+		if i >= 40 {
+			break
+		}
+		qty := 100.0
+		cost := p.CostPrice
+		subtotal := qty * cost
+		totalAmt += subtotal
+
+		_, err = db.ExecContext(ctx, `
+			INSERT INTO purchase_order_items (id, po_id, product_id, quantity, unit_cost, received_qty, subtotal)
+			VALUES ($1, $2, $3, $4, $5, $4, $6)
+		`, uuid.NewString(), poID, p.ID, qty, cost, subtotal)
+		must(err)
+
+		// Update stock
+		_, err = db.ExecContext(ctx, "UPDATE stock_levels SET quantity = quantity + $1 WHERE product_id = $2", qty, p.ID)
+		must(err)
+		_, err = db.ExecContext(ctx, `
+			INSERT INTO stock_movements (id, product_id, store_id, ref_type, ref_id, quantity_delta, notes, created_by)
+			VALUES ($1, $2, $3, 'purchase_order', $4, $5, 'Initial Seed Stock', $6)
+		`, uuid.NewString(), p.ID, mainStoreID, poID, qty, adminID)
+		must(err)
 	}
-	log.Printf("   ✓ Seeded %d sample purchase orders", len(pos))
+	_, err = db.ExecContext(ctx, "UPDATE purchase_orders SET total_amount = $1 WHERE id = $2", totalAmt, poID)
+	must(err)
+
+	log.Printf("   ✓ Populated stock for %d products via received PO", 40)
 }
 
-// seedTransactions creates sample completed transactions for a store.
-// Returns number of transactions created.
-func seedTransactions(ctx context.Context, db *sqlx.DB, storeID, cashierID string, catalog []ProductSeed) int { //nolint:funlen // bulk seed loop
-	// pick first 8 products from this store's catalog
-	picks := catalog
-	if len(picks) > 8 {
-		picks = picks[:8]
+// seedTransactions creates a large history of transactions.
+func seedTransactions(ctx context.Context, db *sqlx.DB, storeID, cashierID string, isRestaurant bool) int {
+	if isRestaurant {
+		return seedRestaurantTransactions(ctx, db, storeID, cashierID)
 	}
-	customers := []string{
-		"Budi Santoso", "Pelanggan Umum", "Ani Rahayu",
-		"Dewi Lestari", "Rudi Hartono", "Maya Indah",
+
+	// Get available products with stock
+	var prods []struct {
+		ID        string  `db:"id"`
+		Name      string  `db:"name"`
+		SKU       string  `db:"sku"`
+		SellPrice float64 `db:"sell_price"`
+		TaxRate   float64 `db:"tax_rate"`
 	}
-	methods := []string{"cash", "qris", "cash", "card", "cash", "qris"}
+	must(db.SelectContext(ctx, &prods, "SELECT id, name, sku, sell_price, tax_rate FROM products WHERE store_id=$1", storeID))
+	if len(prods) == 0 {
+		return 0
+	}
+
+	customers := []string{"Budi", "Sari", "Andi", "Rini", "Guest", "General Customer", "Loyal Fan"}
 	count := 0
-
-	for i, p := range picks {
-		var prodID string
-		var sellPrice, taxRate float64
-		var prodName, sku string
-		err := db.QueryRowContext(ctx, `
-			SELECT id, name, sku, sell_price, tax_rate FROM products WHERE store_id=$1 AND sku=$2
-		`, storeID, p.SKU).Scan(&prodID, &prodName, &sku, &sellPrice, &taxRate)
-		if err != nil {
-			continue
-		}
-
-		qty := float64(i%3 + 1)
-		subtotal := sellPrice * qty
-		tax := subtotal * (taxRate / 100)
-		total := subtotal + tax
-		payAmt := total + float64((i+1)*2000)
-		customer := customers[i%len(customers)]
-		method := methods[i%len(methods)]
-		hoursAgo := float64(i * 2)
-
+	// Seed 250 transactions for this store
+	for i := 0; i < 250; i++ {
 		txID := uuid.NewString()
-		_, err = db.ExecContext(ctx, `
-			INSERT INTO transactions
-			  (id, store_id, cashier_id, customer_name, subtotal, discount_amt, tax_amt, total,
-			   payment_method, payment_amount, change_amount, status, created_at)
-			VALUES ($1,$2,$3,$4,$5,0,$6,$7,$8,$9,$10,'completed', NOW()-($11 * interval '1 hour'))
-			ON CONFLICT DO NOTHING
-		`, txID, storeID, cashierID, customer,
-			subtotal, tax, total, method, payAmt, payAmt-total, hoursAgo)
-		if err != nil {
-			continue
+		cust := customers[i%len(customers)]
+		method := "cash"
+		if i%3 == 1 {
+			method = "qris"
+		} else if i%3 == 2 {
+			method = "card"
 		}
-		_, err = db.ExecContext(ctx, `
-			INSERT INTO transaction_items
-			  (id, transaction_id, product_id, product_name, sku, quantity, unit_price, discount_pct, tax_rate, subtotal)
-			VALUES ($1,$2,$3,$4,$5,$6,$7,0,$8,$9)
-		`, uuid.NewString(), txID, prodID, prodName, sku, qty, sellPrice, taxRate, subtotal)
-		if err != nil {
-			continue
+
+		// Random date in last 30 days
+		daysAgo := i % 30
+		hoursAgo := i % 24
+		createdAt := time.Now().AddDate(0, 0, -daysAgo).Add(time.Duration(-hoursAgo) * time.Hour)
+
+		// 1-3 items per transaction
+		numItems := (i % 3) + 1
+		var subtotal, taxTotal float64
+
+		// Pre-calculate totals
+		type itemLine struct {
+			p struct {
+				ID        string  `db:"id"`
+				Name      string  `db:"name"`
+				SKU       string  `db:"sku"`
+				SellPrice float64 `db:"sell_price"`
+				TaxRate   float64 `db:"tax_rate"`
+			}
+			qty float64
+			sub float64
+			tax float64
 		}
-		// deduct stock
-		_, _ = db.ExecContext(ctx, `
-			UPDATE stock_levels SET quantity=GREATEST(0,quantity-$1), updated_at=NOW()
-			WHERE product_id=$2 AND store_id=$3
-		`, qty, prodID, storeID)
-		_, _ = db.ExecContext(ctx, `
-			INSERT INTO stock_movements (id,product_id,store_id,ref_type,ref_id,quantity_delta,notes,created_by)
-			VALUES ($1,$2,$3,'sale',$4,$5,'Penjualan kasir',$6)
-		`, uuid.NewString(), prodID, storeID, txID, -qty, cashierID)
+		var lines []itemLine
+		for j := 0; j < numItems; j++ {
+			p := prods[(i+j)%len(prods)]
+			qty := 1.0
+			itemSub := p.SellPrice * qty
+			itemTax := itemSub * (p.TaxRate / 100)
+			subtotal += itemSub
+			taxTotal += itemTax
+			lines = append(lines, itemLine{p: p, qty: qty, sub: itemSub, tax: itemTax})
+		}
+
+		tx, err := db.BeginTxx(ctx, nil)
+		must(err)
+
+		total := subtotal + taxTotal
+		_, err = tx.ExecContext(ctx, `
+			INSERT INTO transactions (id, store_id, cashier_id, customer_name, subtotal, tax_amt, total, payment_method, payment_amount, change_amount, status, created_at)
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'completed', $11)
+		`, txID, storeID, cashierID, cust, subtotal, taxTotal, total, method, total, 0, createdAt)
+		must(err)
+
+		for _, line := range lines {
+			_, err = tx.ExecContext(ctx, `
+				INSERT INTO transaction_items (id, transaction_id, product_id, product_name, sku, quantity, unit_price, tax_rate, subtotal)
+				VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+			`, uuid.NewString(), txID, line.p.ID, line.p.Name, line.p.SKU, line.qty, line.p.SellPrice, line.p.TaxRate, line.sub)
+			must(err)
+		}
+
+		must(tx.Commit())
 		count++
 	}
 	return count
@@ -479,8 +608,9 @@ func resetData(ctx context.Context, db *sqlx.DB) {
 		"menu_item_ingredients", "menu_items",
 		"restaurant_tables",
 		"transaction_items", "transactions",
-		"stock_movements", "stock_levels",
-		"purchase_order_items", "purchase_orders",
+		"stock_movements", "stock_batches", "stock_levels",
+		"payment_records", "purchase_order_termins", "po_payments", "purchase_order_items", "purchase_orders",
+		"price_history", "customers",
 		"products", "categories",
 		"user_stores", "suppliers",
 		"refresh_tokens", "users", "stores",
@@ -491,6 +621,92 @@ func resetData(ctx context.Context, db *sqlx.DB) {
 		}
 	}
 	log.Println("   ✓ All demo tables cleared")
+}
+
+// resetStoreData deletes all data specifically for one store.
+func resetStoreData(ctx context.Context, db *sqlx.DB, storeID string) {
+	queries := []string{
+		"DELETE FROM transaction_items WHERE transaction_id IN (SELECT id FROM transactions WHERE store_id = $1)",
+		"DELETE FROM transactions WHERE store_id = $1",
+		"DELETE FROM stock_movements WHERE store_id = $1",
+		"DELETE FROM stock_batches WHERE store_id = $1",
+		"DELETE FROM stock_levels WHERE store_id = $1",
+		"DELETE FROM purchase_order_items WHERE po_id IN (SELECT id FROM purchase_orders WHERE store_id = $1)",
+		"DELETE FROM purchase_orders WHERE store_id = $1",
+		"DELETE FROM menu_item_ingredients WHERE menu_item_id IN (SELECT id FROM menu_items WHERE store_id = $1)",
+		"DELETE FROM menu_items WHERE store_id = $1",
+		"DELETE FROM restaurant_tables WHERE store_id = $1",
+		"DELETE FROM products WHERE store_id = $1",
+		"DELETE FROM categories WHERE store_id = $1",
+	}
+	for _, q := range queries {
+		if _, err := db.ExecContext(ctx, q, storeID); err != nil {
+			log.Printf("   warn: could not clear data for store %s: %v", storeID, err)
+		}
+	}
+	log.Println("   ✓ Scoped store data cleared")
+}
+
+// seedRestaurantTransactions specifically uses menu_items for sales record.
+func seedRestaurantTransactions(ctx context.Context, db *sqlx.DB, storeID, cashierID string) int {
+	var menus []struct {
+		ID        string  `db:"id"`
+		Name      string  `db:"name"`
+		SellPrice float64 `db:"sell_price"`
+		TaxRate   float64 `db:"tax_rate"`
+	}
+	must(db.SelectContext(ctx, &menus, "SELECT id, name, sell_price, tax_rate FROM menu_items WHERE store_id=$1", storeID))
+	if len(menus) == 0 {
+		return 0
+	}
+
+	customers := []string{"Sultan", "Manto", "Ujang", "Nur", "Bunda"}
+	count := 0
+	for i := 0; i < 150; i++ {
+		txID := uuid.NewString()
+		cust := customers[i%len(customers)]
+		daysAgo := i % 20
+		hoursAgo := i % 12
+		createdAt := time.Now().AddDate(0, 0, -daysAgo).Add(time.Duration(-hoursAgo) * time.Hour)
+
+		numItems := (i % 4) + 1
+		var subtotal, taxTotal float64
+
+		type lineItem struct {
+			ID        string
+			Name      string
+			SellPrice float64
+			TaxRate   float64
+		}
+		var lines []lineItem
+		for j := 0; j < numItems; j++ {
+			m := menus[(i+j)%len(menus)]
+			subtotal += m.SellPrice
+			taxTotal += m.SellPrice * (m.TaxRate / 100)
+			lines = append(lines, lineItem{m.ID, m.Name, m.SellPrice, m.TaxRate})
+		}
+
+		total := subtotal + taxTotal
+		tx, err := db.BeginTxx(ctx, nil)
+		must(err)
+
+		_, err = tx.ExecContext(ctx, `
+			INSERT INTO transactions (id, store_id, cashier_id, customer_name, subtotal, tax_amt, total, payment_method, payment_amount, change_amount, status, created_at, order_type)
+			VALUES ($1, $2, $3, $4, $5, $6, $7, 'cash', $8, 0, 'completed', $9, 'dine_in')
+		`, txID, storeID, cashierID, cust, subtotal, taxTotal, total, total, createdAt)
+		must(err)
+
+		for _, l := range lines {
+			_, err = tx.ExecContext(ctx, `
+				INSERT INTO transaction_items (id, transaction_id, menu_item_id, product_name, sku, quantity, unit_price, tax_rate, subtotal)
+				VALUES ($1, $2, $3, $4, 'MENU-ITEM', 1, $5, $6, $5)
+			`, uuid.NewString(), txID, l.ID, l.Name, l.SellPrice, l.TaxRate)
+			must(err)
+		}
+		must(tx.Commit())
+		count++
+	}
+	return count
 }
 
 // ── Restaurant Padang Seeder ──────────────────────────────────────────────────
@@ -745,7 +961,7 @@ func seedRestaurantPadang(ctx context.Context, db *sqlx.DB, storeID, _ string) {
 
 	// ── Ingredient products (raw materials) ───────────────────────────────────
 	catMap := seedCategories(ctx, db, storeID, uniqueCategories(catalogPadang))
-	n := seedProducts(ctx, db, storeID, catalogPadang, catMap)
+	n := seedProducts(ctx, db, storeID, catalogPadang, catMap, true) // isRestaurant = true
 	log.Printf("   ✓ Seeded %d ingredient products / %d categories", n, len(catMap))
 
 	// ── Menu items ────────────────────────────────────────────────────────────
@@ -786,4 +1002,55 @@ func seedRestaurantPadang(ctx context.Context, db *sqlx.DB, storeID, _ string) {
 		}
 	}
 	log.Printf("   ✓ Seeded %d menu items with ingredients", len(menuPadang))
+}
+
+// seedActiveKDSTickets creates active 'hold' or 'draft' transactions with pending items.
+func seedActiveKDSTickets(ctx context.Context, db *sqlx.DB, storeID, cashierID string) {
+	// Get some tables
+	var tables []struct {
+		ID     string `db:"id"`
+		Number string `db:"table_number"`
+	}
+	must(db.SelectContext(ctx, &tables, "SELECT id, table_number FROM restaurant_tables WHERE store_id=$1 LIMIT 4", storeID))
+
+	// Get some menu items
+	var menuItems []struct {
+		ID        string  `db:"id"`
+		Name      string  `db:"name"`
+		SellPrice float64 `db:"sell_price"`
+	}
+	must(db.SelectContext(ctx, &menuItems, "SELECT id, name, sell_price FROM menu_items WHERE store_id=$1", storeID))
+
+	for i, table := range tables {
+		txID := uuid.NewString()
+		subtotal := 0.0
+
+		// Create draft transaction
+		_, err := db.ExecContext(ctx, `
+			INSERT INTO transactions (id, store_id, cashier_id, table_id, customer_name, subtotal, total, status, payment_method, created_at)
+			VALUES ($1, $2, $3, $4, $5, 0, 0, 'hold', 'cash', NOW() - ($6 * interval '5 minute'))
+		`, txID, storeID, cashierID, table.ID, fmt.Sprintf("Pelanggan %s", table.Number), i)
+		must(err)
+
+		// Add 2 random menu items
+		for j := 0; j < 2; j++ {
+			item := menuItems[(i+j)%len(menuItems)]
+			qty := 1.0
+			subtotal += item.SellPrice * qty
+
+			status := "pending"
+			if j == 0 && i%2 == 0 {
+				status = "completed"
+			}
+
+			_, err = db.ExecContext(ctx, `
+				INSERT INTO transaction_items (id, transaction_id, menu_item_id, product_name, sku, quantity, unit_price, subtotal, status)
+				VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+			`, uuid.NewString(), txID, item.ID, item.Name, "MENU-PDG", qty, item.SellPrice, item.SellPrice, status)
+			must(err)
+		}
+
+		_, err = db.ExecContext(ctx, "UPDATE transactions SET subtotal=$1, total=$1 WHERE id=$2", subtotal, txID)
+		must(err)
+	}
 }

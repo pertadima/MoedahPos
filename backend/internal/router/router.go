@@ -245,6 +245,12 @@ func New(deps *Dependencies) http.Handler { //nolint:funlen // route wiring is i
 							r.Put("/{menuItemId}", withPerm(deps, "products.update", deps.RestaurantHandler.UpdateMenuItem))
 							r.Delete("/{menuItemId}", withPerm(deps, "products.delete", deps.RestaurantHandler.DeleteMenuItem))
 						})
+
+						// KDS (Kitchen Display System)
+						r.Route("/kds", func(r chi.Router) {
+							r.Get("/tickets", withPerm(deps, "transactions.read", deps.TransactionHandler.GetKDSTickets))
+							r.Put("/items/{itemId}", withPerm(deps, "transactions.create", deps.TransactionHandler.UpdateKDSItemStatus))
+						})
 					})
 				})
 			})

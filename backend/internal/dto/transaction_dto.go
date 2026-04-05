@@ -59,6 +59,13 @@ type TransactionItemResponse struct {
 	DiscountPct float64 `json:"discount_pct"`
 	TaxRate     float64 `json:"tax_rate"`
 	Subtotal    float64 `json:"subtotal"`
+	Status      string  `json:"status"`
+	CompletedAt *string `json:"completed_at,omitempty"`
+}
+
+// UpdateKDSItemStatusRequest is the payload for updating an item's status via KDS.
+type UpdateKDSItemStatusRequest struct {
+	Status string `json:"status" validate:"required,oneof=pending completed"`
 }
 
 // TransactionResponse is the full receipt — returned on create and get.
@@ -68,6 +75,7 @@ type TransactionResponse struct {
 	CashierID     string                    `json:"cashier_id"`
 	CashierName   string                    `json:"cashier_name"`
 	TableID       *string                   `json:"table_id,omitempty"`
+	TableNumber   *string                   `json:"table_number,omitempty"`
 	CustomerName  string                    `json:"customer_name,omitempty"`
 	CustomerPhone string                    `json:"customer_phone,omitempty"`
 	Subtotal      float64                   `json:"subtotal"`

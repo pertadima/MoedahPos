@@ -105,6 +105,10 @@ type TransactionRepository interface {
 		subtotal, discountAmt, taxAmt, total float64, customerName, notes string) (*domain.Transaction, error)
 	// PayDraft finalizes a held order with payment info and deducts stock.
 	PayDraft(ctx context.Context, input domain.PayDraftInput, storeID, cashierID string) (*domain.Transaction, error)
+	// GetKDSTickets returns active tickets (draft restaurant transactions) for Kitchen Display.
+	GetKDSTickets(ctx context.Context, storeID string) ([]*domain.Transaction, error)
+	// UpdateKDSItemStatus updates the completion status of a specific KDS ticket item.
+	UpdateKDSItemStatus(ctx context.Context, itemID, status string) error
 }
 
 // PurchaseOrderRepository handles PO lifecycle and stock updates on receive.

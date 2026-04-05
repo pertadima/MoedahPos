@@ -242,7 +242,7 @@ func (s *TerminService) GenerateDocumentData(ctx context.Context, poID, docType 
 		PONumber:     po.PONumber,
 		Status:       po.Status,
 		TotalAmount:  po.TotalAmount,
-		Notes:        po.Notes,
+		Notes:        ptrToString(po.Notes),
 		CreatedAt:    po.CreatedAt.Format(time.RFC3339),
 		UpdatedAt:    po.UpdatedAt.Format(time.RFC3339),
 	}
@@ -292,3 +292,4 @@ func paymentRecordToResponse(r *domain.PaymentRecord) *dto.PaymentRecordResponse
 		CreatedAt:      r.CreatedAt.Format(time.RFC3339),
 	}
 }
+

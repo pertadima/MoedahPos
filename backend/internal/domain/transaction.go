@@ -24,6 +24,7 @@ type Transaction struct {
 
 	// Populated via JOIN
 	CashierName string            `db:"cashier_name"`
+	TableNumber *string           `db:"table_number"`
 	Items       []TransactionItem `db:"-"`
 }
 
@@ -34,12 +35,14 @@ type TransactionItem struct {
 	ProductID     *string `db:"product_id"`
 	ProductName   string  `db:"product_name"` // snapshot
 	SKU           string  `db:"sku"`          // snapshot
-	Quantity      float64 `db:"quantity"`
-	UnitPrice     float64 `db:"unit_price"`
-	CostPrice     float64 `db:"cost_price"` // snapshot of cost at time of sale
-	DiscountPct   float64 `db:"discount_pct"`
-	TaxRate       float64 `db:"tax_rate"`
-	Subtotal      float64 `db:"subtotal"`
+	Quantity      float64    `db:"quantity"`
+	UnitPrice     float64    `db:"unit_price"`
+	CostPrice     float64    `db:"cost_price"` // snapshot of cost at time of sale
+	DiscountPct   float64    `db:"discount_pct"`
+	TaxRate       float64    `db:"tax_rate"`
+	Subtotal      float64    `db:"subtotal"`
+	Status        string     `db:"status"`       // KDS status: pending | completed
+	CompletedAt   *time.Time `db:"completed_at"` // KDS completion time
 }
 
 // CreateTransactionInput carries service-calculated values to the repository.
@@ -84,4 +87,5 @@ type CreateTransactionItemInput struct {
 	DiscountPct float64
 	TaxRate     float64
 	Subtotal    float64
+	Status      string
 }

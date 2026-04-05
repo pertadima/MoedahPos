@@ -79,14 +79,16 @@ func (s *PurchaseOrderService) CreatePO(ctx context.Context, storeID string, req
 		return nil, err
 	}
 
-	poNumber := fmt.Sprintf("PO-%s-%04d", time.Now().Format("20060102"), time.Now().UnixNano()%9000+1000)
+	now := time.Now()
+	// Use microsecond precision + a larger random-ish component for uniqueness
+	poNumber := fmt.Sprintf("PO-%s-%06d", now.Format("20060102"), (now.UnixNano()/1000)%1000000)
 	po, err := s.poRepo.Create(ctx, &domain.PurchaseOrder{
 		StoreID:     storeID,
 		SupplierID:  req.SupplierID,
 		PONumber:    poNumber,
 		TotalAmount: totalAmt,
 		OrderedBy:   userID,
-		Notes:       req.Notes,
+		Notes:       stringToPtr(req.Notes),
 	}, items)
 	if err != nil {
 		return nil, fmt.Errorf("creating PO: %w", err)
@@ -113,7 +115,7 @@ func (s *PurchaseOrderService) UpdatePO(ctx context.Context, id string, req *dto
 	}
 
 	existing.SupplierID = req.SupplierID
-	existing.Notes = req.Notes
+	existing.Notes = stringToPtr(req.Notes)
 	existing.TotalAmount = totalAmt
 
 	po, err := s.poRepo.Update(ctx, existing, items)
@@ -260,7 +262,7 @@ func toPOResponse(po *domain.PurchaseOrder) *dto.POResponse {
 		PaymentStatus:  po.PaymentStatus,
 		OrderedByName:  po.OrderedByName,
 		ReceivedByName: po.ReceivedByName,
-		Notes:          po.Notes,
+		Notes:          ptrToString(po.Notes),
 		CreatedAt:      po.CreatedAt.Format(time.RFC3339),
 		UpdatedAt:      po.UpdatedAt.Format(time.RFC3339),
 	}
@@ -358,3 +360,4 @@ func toPaymentResponse(p *domain.POPayment) *dto.POPaymentResponse {
 		PaidAt:     p.PaidAt.Format(time.RFC3339),
 	}
 }
+

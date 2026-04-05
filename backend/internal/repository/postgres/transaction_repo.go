@@ -61,9 +61,9 @@ func (r *TransactionRepo) Create(ctx context.Context, input domain.CreateTransac
 	// 2. INSERT items and (if completed) stock movements
 	const itemQ = `
 		INSERT INTO transaction_items
-		  (transaction_id, product_id, product_name, sku, quantity, unit_price, cost_price, discount_pct, tax_rate, subtotal)
-		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
-		RETURNING id, transaction_id, product_id, product_name, sku, quantity, unit_price, cost_price, discount_pct, tax_rate, subtotal`
+		  (transaction_id, product_id, product_name, sku, quantity, unit_price, cost_price, discount_pct, tax_rate, subtotal, status)
+		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'pending')
+		RETURNING id, transaction_id, product_id, product_name, sku, quantity, unit_price, cost_price, discount_pct, tax_rate, subtotal, status, completed_at`
 
 	const mvQ = `
 		INSERT INTO stock_movements (product_id, store_id, ref_type, ref_id, quantity_delta, notes, created_by)
@@ -134,7 +134,7 @@ func (r *TransactionRepo) GetDraftByTable(ctx context.Context, storeID, tableID 
 
 	const itemQ = `
 		SELECT id, transaction_id, product_id, product_name, sku,
-		       quantity, unit_price, cost_price, discount_pct, tax_rate, subtotal
+		       quantity, unit_price, cost_price, discount_pct, tax_rate, subtotal, status, completed_at
 		FROM transaction_items WHERE transaction_id = $1`
 
 	if err := r.db.SelectContext(ctx, &txn.Items, itemQ, txn.ID); err != nil {
@@ -171,8 +171,8 @@ func (r *TransactionRepo) UpdateDraftItems(ctx context.Context, txnID string, it
 	// Re-insert items
 	const itemQ = `
 		INSERT INTO transaction_items
-		  (transaction_id, product_id, product_name, sku, quantity, unit_price, cost_price, discount_pct, tax_rate, subtotal)
-		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`
+		  (transaction_id, product_id, product_name, sku, quantity, unit_price, cost_price, discount_pct, tax_rate, subtotal, status)
+		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'pending')`
 
 	for _, item := range items {
 		if _, err := tx.ExecContext(ctx, itemQ,
@@ -344,7 +344,7 @@ func (r *TransactionRepo) FindByID(ctx context.Context, id string) (*domain.Tran
 
 	const itemQ = `
 		SELECT id, transaction_id, product_id, product_name, sku,
-		       quantity, unit_price, cost_price, discount_pct, tax_rate, subtotal
+		       quantity, unit_price, cost_price, discount_pct, tax_rate, subtotal, status, completed_at
 		FROM transaction_items WHERE transaction_id = $1`
 
 	if err := r.db.SelectContext(ctx, &txn.Items, itemQ, id); err != nil {
@@ -405,4 +405,74 @@ func (r *TransactionRepo) Void(ctx context.Context, txnID, userID string) error 
 	}
 
 	return tx.Commit()
+}
+
+// GetKDSTickets returns all transactions (draft or completed) for a restaurant that still have pending items.
+func (r *TransactionRepo) GetKDSTickets(ctx context.Context, storeID string) ([]*domain.Transaction, error) {
+	const q = `
+		SELECT t.id, t.store_id, t.cashier_id, t.table_id,
+		       rt.table_number,
+		       COALESCE(t.customer_name,'')  AS customer_name,
+		       COALESCE(t.customer_phone,'') AS customer_phone,
+		       t.subtotal, t.discount_amt, t.tax_amt, t.total,
+		       t.payment_method, t.payment_amount, t.change_amount, t.status,
+		       COALESCE(t.notes,'') AS notes,
+		       t.created_at, t.updated_at, u.name AS cashier_name
+		FROM transactions t
+		JOIN users u ON u.id = t.cashier_id
+		LEFT JOIN restaurant_tables rt ON t.table_id = rt.id
+		WHERE t.store_id = $1 AND EXISTS (
+			SELECT 1 FROM transaction_items ti WHERE ti.transaction_id = t.id AND ti.status = 'pending'
+		)
+		ORDER BY t.created_at ASC`
+
+	var txns []*domain.Transaction
+	if err := r.db.SelectContext(ctx, &txns, q, storeID); err != nil {
+		return nil, fmt.Errorf("TransactionRepo.GetKDSTickets headers: %w", err)
+	}
+
+	if len(txns) == 0 {
+		return txns, nil
+	}
+
+	var txnIDs []string
+	for _, t := range txns {
+		txnIDs = append(txnIDs, t.ID)
+	}
+
+	qItems, args, err := sqlx.In(`
+		SELECT id, transaction_id, product_id, product_name, sku,
+		       quantity, unit_price, cost_price, discount_pct, tax_rate, subtotal, status, completed_at
+		FROM transaction_items WHERE transaction_id IN (?)
+		ORDER BY id ASC`, txnIDs)
+	if err != nil {
+		return nil, fmt.Errorf("TransactionRepo.GetKDSTickets in query: %w", err)
+	}
+	qItems = r.db.Rebind(qItems)
+
+	var allItems []domain.TransactionItem
+	if err := r.db.SelectContext(ctx, &allItems, qItems, args...); err != nil {
+		return nil, fmt.Errorf("TransactionRepo.GetKDSTickets items: %w", err)
+	}
+
+	itemMap := make(map[string][]domain.TransactionItem)
+	for _, it := range allItems {
+		itemMap[it.TransactionID] = append(itemMap[it.TransactionID], it)
+	}
+
+	for _, t := range txns {
+		t.Items = itemMap[t.ID]
+	}
+
+	return txns, nil
+}
+
+// UpdateKDSItemStatus updates the completion status of a specific KDS ticket item.
+func (r *TransactionRepo) UpdateKDSItemStatus(ctx context.Context, itemID, status string) error {
+	if status == "completed" {
+		_, err := r.db.ExecContext(ctx, `UPDATE transaction_items SET status = $1, completed_at = NOW() WHERE id = $2`, status, itemID)
+		return err
+	}
+	_, err := r.db.ExecContext(ctx, `UPDATE transaction_items SET status = $1, completed_at = NULL WHERE id = $2`, status, itemID)
+	return err
 }
