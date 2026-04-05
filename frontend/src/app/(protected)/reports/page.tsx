@@ -124,7 +124,9 @@ export default function ReportsPage() {
     period: r.period,
     revenue: r.total_sales,
     cost: r.total_cost,
-    profit: r.gross_profit,
+    gross_profit: r.gross_profit,
+    expense: r.total_expense,
+    net_profit: r.net_profit,
     margin: r.profit_margin,
   }));
 
@@ -184,7 +186,7 @@ export default function ReportsPage() {
 
       {/* ── Summary Cards ── */}
       <div
-        style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12, marginBottom: 20 }}
+        style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 12, marginBottom: 20 }}
       >
         <div className="stat-card">
           <div className="stat-icon" style={{ background: 'rgba(16,185,129,0.12)' }}>
@@ -193,15 +195,6 @@ export default function ReportsPage() {
           <div>
             <div className="stat-label">Total Penjualan</div>
             <div className="stat-val">{formatRp(summary?.total_sales ?? 0)}</div>
-          </div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-icon" style={{ background: 'rgba(99,102,241,0.12)' }}>
-            <BarChart3 size={20} style={{ color: '#6366f1' }} />
-          </div>
-          <div>
-            <div className="stat-label">Total Transaksi</div>
-            <div className="stat-val">{summary?.total_transactions ?? 0}</div>
           </div>
         </div>
         <div className="stat-card">
@@ -224,6 +217,30 @@ export default function ReportsPage() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 2 }}>
               <div className="stat-val" style={{ color: '#f59e0b' }}>
                 {formatRp((summary as any)?.gross_profit ?? 0)}
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-icon" style={{ background: 'rgba(239,68,68,0.12)' }}>
+            <TrendingDown size={20} style={{ color: '#ef4444' }} />
+          </div>
+          <div>
+            <div className="stat-label">Pengeluaran</div>
+            <div className="stat-val" style={{ color: '#ef4444' }}>
+              {formatRp((summary as any)?.total_expense ?? 0)}
+            </div>
+          </div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-icon" style={{ background: 'rgba(16,185,129,0.12)' }}>
+            <Activity size={20} style={{ color: '#10b981' }} />
+          </div>
+          <div>
+            <div className="stat-label">Net Profit</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 2 }}>
+              <div className="stat-val" style={{ color: '#10b981' }}>
+                {formatRp((summary as any)?.net_profit ?? 0)}
               </div>
               {(summary as any)?.profit_margin != null && (
                 <ProfitMarginBadge margin={(summary as any).profit_margin} />
@@ -315,7 +332,9 @@ export default function ReportsPage() {
                   <th>Transaksi</th>
                   <th>Penjualan</th>
                   <th>HPP</th>
-                  <th>Profit</th>
+                  <th>Gross Profit</th>
+                  <th>Pengeluaran</th>
+                  <th>Net Profit</th>
                   <th>Margin</th>
                   <th>Pajak</th>
                   <th>Diskon</th>
@@ -332,6 +351,12 @@ export default function ReportsPage() {
                     <td style={{ color: '#ef4444' }}>{formatRp((r as any).total_cost ?? 0)}</td>
                     <td style={{ fontWeight: 700, color: '#f59e0b' }}>
                       {formatRp((r as any).gross_profit ?? 0)}
+                    </td>
+                    <td style={{ color: '#ef4444' }}>
+                      {formatRp((r as any).total_expense ?? 0)}
+                    </td>
+                    <td style={{ fontWeight: 700, color: '#10b981' }}>
+                      {formatRp((r as any).net_profit ?? 0)}
                     </td>
                     <td>
                       <ProfitMarginBadge margin={(r as any).profit_margin ?? 0} />
@@ -444,6 +469,16 @@ export default function ReportsPage() {
                   val: formatRp(profit?.gross_profit ?? 0),
                   color: '#f59e0b',
                 },
+                {
+                  label: 'Pengeluaran',
+                  val: formatRp(profit?.total_expense ?? 0),
+                  color: '#ef4444',
+                },
+                {
+                  label: 'Net Profit',
+                  val: formatRp(profit?.net_profit ?? 0),
+                  color: '#10b981',
+                },
               ].map(({ label, val, color }) => (
                 <div key={label} style={{ textAlign: 'right' }}>
                   <div style={{ fontSize: '0.7rem', color: 'var(--text-3)' }}>{label}</div>
@@ -497,7 +532,15 @@ export default function ReportsPage() {
                         ? [`${Number(v).toFixed(1)}%`, 'Margin']
                         : [
                             formatRp(Number(v)),
-                            name === 'revenue' ? 'Revenue' : name === 'cost' ? 'HPP' : 'Profit',
+                            name === 'revenue' 
+                              ? 'Revenue' 
+                              : name === 'cost' 
+                                ? 'HPP' 
+                                : name === 'expense' 
+                                  ? 'Pengeluaran'
+                                  : name === 'gross_profit'
+                                    ? 'Gross Profit'
+                                    : 'Net Profit',
                           ]
                     }
                   />
@@ -521,10 +564,17 @@ export default function ReportsPage() {
                   />
                   <Bar
                     yAxisId="left"
-                    dataKey="profit"
-                    fill="rgba(245,158,11,0.8)"
+                    dataKey="gross_profit"
+                    fill="rgba(245,158,11,0.5)"
                     radius={[4, 4, 0, 0]}
-                    name="profit"
+                    name="gross_profit"
+                  />
+                  <Bar
+                    yAxisId="left"
+                    dataKey="net_profit"
+                    fill="rgba(16,185,129,0.8)"
+                    radius={[4, 4, 0, 0]}
+                    name="net_profit"
                   />
                   <Line
                     yAxisId="right"
@@ -554,6 +604,8 @@ export default function ReportsPage() {
                   <th>Revenue</th>
                   <th>HPP (Harga Pokok)</th>
                   <th>Gross Profit</th>
+                  <th>Pengeluaran</th>
+                  <th>Net Profit</th>
                   <th>Margin</th>
                 </tr>
               </thead>
@@ -568,6 +620,10 @@ export default function ReportsPage() {
                     <td style={{ fontWeight: 800, color: '#f59e0b' }}>
                       {formatRp(r.gross_profit)}
                     </td>
+                    <td style={{ color: '#ef4444' }}>{formatRp(r.total_expense)}</td>
+                    <td style={{ fontWeight: 800, color: '#10b981' }}>
+                      {formatRp(r.net_profit)}
+                    </td>
                     <td>
                       <ProfitMarginBadge margin={r.profit_margin} />
                     </td>
@@ -579,6 +635,8 @@ export default function ReportsPage() {
                     <td style={{ color: 'var(--accent-em)' }}>{formatRp(profit.total_sales)}</td>
                     <td style={{ color: '#ef4444' }}>{formatRp(profit.total_cost)}</td>
                     <td style={{ color: '#f59e0b' }}>{formatRp(profit.gross_profit)}</td>
+                    <td style={{ color: '#ef4444' }}>{formatRp(profit.total_expense)}</td>
+                    <td style={{ color: '#10b981' }}>{formatRp(profit.net_profit)}</td>
                     <td>
                       <ProfitMarginBadge margin={profit.profit_margin} />
                     </td>

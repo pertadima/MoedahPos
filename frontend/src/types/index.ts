@@ -245,11 +245,20 @@ export interface SalesSummaryRow {
   total_tax: number;
   total_discount: number;
   total_net: number;
+  total_cost: number;
+  gross_profit: number;
+  total_expense: number;
+  net_profit: number;
 }
 export interface SalesSummaryResponse {
   rows: SalesSummaryRow[];
   total_sales: number;
   total_transactions: number;
+  total_cost: number;
+  gross_profit: number;
+  total_expense: number;
+  net_profit: number;
+  profit_margin: number;
 }
 export interface SalesByProductRow {
   product_id: string;
