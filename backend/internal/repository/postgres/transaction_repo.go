@@ -499,8 +499,10 @@ func (r *TransactionRepo) GetKDSTickets(ctx context.Context, storeID string) ([]
 		FROM transactions t
 		JOIN users u ON u.id = t.cashier_id
 		LEFT JOIN restaurant_tables rt ON t.table_id = rt.id
-		WHERE t.store_id = $1 AND EXISTS (
-			SELECT 1 FROM transaction_items ti WHERE ti.transaction_id = t.id AND ti.status = 'pending'
+		WHERE t.store_id = $1 AND (
+			t.status = 'draft' OR EXISTS (
+				SELECT 1 FROM transaction_items ti WHERE ti.transaction_id = t.id AND ti.status = 'pending'
+			)
 		)
 		ORDER BY t.created_at ASC`
 
