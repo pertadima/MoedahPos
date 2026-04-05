@@ -153,33 +153,111 @@ func (r *TransactionRepo) UpdateDraftItems(ctx context.Context, txnID string, it
 	}
 	defer func() { _ = tx.Rollback() }()
 
-	// Delete existing items
-	if _, err := tx.ExecContext(ctx, `DELETE FROM transaction_items WHERE transaction_id = $1`, txnID); err != nil {
-		return nil, fmt.Errorf("TransactionRepo.UpdateDraftItems delete items: %w", err)
+	// Fetch existing items for this draft to calculate diffs
+	var existingItems []domain.TransactionItem
+	if err := tx.SelectContext(ctx, &existingItems, `SELECT id, product_id, menu_item_id, quantity, status, unit_price, discount_pct, tax_rate FROM transaction_items WHERE transaction_id = $1`, txnID); err != nil {
+		return nil, fmt.Errorf("TransactionRepo.UpdateDraftItems fetch existing: %w", err)
 	}
 
-	// Update header totals + customer info
-	const updQ = `
-		UPDATE transactions
-		SET subtotal=$2, discount_amt=$3, tax_amt=$4, total=$5,
-		    customer_name=$6, notes=$7, updated_at=NOW()
-		WHERE id=$1`
-	if _, err := tx.ExecContext(ctx, updQ, txnID, subtotal, discountAmt, taxAmt, total, customerName, notes); err != nil {
-		return nil, fmt.Errorf("TransactionRepo.UpdateDraftItems update header: %w", err)
+	type ItemKey struct {
+		IsMenu bool
+		ID     string
 	}
 
-	// Re-insert items
-	const itemQ = `
-		INSERT INTO transaction_items
-		  (transaction_id, product_id, menu_item_id, product_name, sku, quantity, unit_price, cost_price, discount_pct, tax_rate, subtotal, status)
-		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,'pending')`
+	getKey := func(productID, menuID *string) ItemKey {
+		if menuID != nil {
+			return ItemKey{IsMenu: true, ID: *menuID}
+		}
+		if productID != nil {
+			return ItemKey{IsMenu: false, ID: *productID}
+		}
+		return ItemKey{} // should not happen
+	}
 
-	for _, item := range items {
-		if _, err := tx.ExecContext(ctx, itemQ,
-			txnID, item.ProductID, item.MenuItemID, item.ProductName, item.SKU,
-			item.Quantity, item.UnitPrice, item.CostPrice, item.DiscountPct, item.TaxRate, item.Subtotal,
-		); err != nil {
-			return nil, fmt.Errorf("TransactionRepo.UpdateDraftItems insert item: %w", err)
+	// incoming quantities map
+	incomingQty := make(map[ItemKey]domain.CreateTransactionItemInput)
+	for _, it := range items {
+		k := getKey(it.ProductID, it.MenuItemID)
+		if existing, ok := incomingQty[k]; ok {
+			existing.Quantity += it.Quantity
+			incomingQty[k] = existing
+		} else {
+			incomingQty[k] = it
+		}
+	}
+
+	// existing items grouped by key
+	existingGroups := make(map[ItemKey][]domain.TransactionItem)
+	for _, it := range existingItems {
+		k := getKey(it.ProductID, it.MenuItemID)
+		existingGroups[k] = append(existingGroups[k], it)
+	}
+
+	// Diffing map incoming against existing
+	for k, inItem := range incomingQty {
+		exItems := existingGroups[k]
+		var exTotal float64
+		for _, e := range exItems {
+			exTotal += e.Quantity
+		}
+
+		diff := inItem.Quantity - exTotal
+		if diff > 0 {
+			const itemQ = `
+				INSERT INTO transaction_items
+				  (transaction_id, product_id, menu_item_id, product_name, sku, quantity, unit_price, cost_price, discount_pct, tax_rate, subtotal, status)
+				VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,'pending')`
+			
+			unitNet := inItem.UnitPrice * (1 - inItem.DiscountPct/100)
+			diffTax := (unitNet * diff) * inItem.TaxRate / 100
+			diffSubtotal := (unitNet * diff) + diffTax
+
+			if _, err := tx.ExecContext(ctx, itemQ,
+				txnID, inItem.ProductID, inItem.MenuItemID, inItem.ProductName, inItem.SKU,
+				diff, inItem.UnitPrice, inItem.CostPrice, inItem.DiscountPct, inItem.TaxRate, diffSubtotal,
+			); err != nil {
+				return nil, fmt.Errorf("TransactionRepo.UpdateDraftItems insert diff: %w", err)
+			}
+		} else if diff < 0 {
+			shortfall := -diff
+			// Pass 0: pending items, Pass 1: completed items
+			for pass := 0; pass < 2; pass++ {
+				for _, e := range exItems {
+					if shortfall <= 0 {
+						break
+					}
+					isPending := e.Status == "pending"
+					if (pass == 0 && !isPending) || (pass == 1 && isPending) {
+						continue
+					}
+					
+					if e.Quantity <= shortfall {
+						if _, err := tx.ExecContext(ctx, `DELETE FROM transaction_items WHERE id = $1`, e.ID); err != nil {
+							return nil, fmt.Errorf("TransactionRepo.UpdateDraftItems delete item: %w", err)
+						}
+						shortfall -= e.Quantity
+					} else {
+						newQty := e.Quantity - shortfall
+						unitNet := e.UnitPrice * (1 - e.DiscountPct/100)
+						newSubtotal := (unitNet * newQty) * (1 + e.TaxRate/100)
+						if _, err := tx.ExecContext(ctx, `UPDATE transaction_items SET quantity = $1, subtotal = $2 WHERE id = $3`, newQty, newSubtotal, e.ID); err != nil {
+							return nil, fmt.Errorf("TransactionRepo.UpdateDraftItems update item qty: %w", err)
+						}
+						shortfall = 0
+					}
+				}
+			}
+		}
+	}
+
+	// Identify completely removed items
+	for k, exItems := range existingGroups {
+		if _, ok := incomingQty[k]; !ok {
+			for _, e := range exItems {
+				if _, err := tx.ExecContext(ctx, `DELETE FROM transaction_items WHERE id = $1`, e.ID); err != nil {
+					return nil, fmt.Errorf("TransactionRepo.UpdateDraftItems delete unlisted item: %w", err)
+				}
+			}
 		}
 	}
 

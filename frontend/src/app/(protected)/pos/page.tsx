@@ -703,10 +703,20 @@ export default function POSPage() {
         const draft = res.data as Transaction | null;
         setActiveDraft(draft);
         if (draft?.items) {
-          // Restore cart from draft items (map back to PosCartItem)
+          // Restore cart from draft items (map back to PosCartItem & aggregate split rows)
+          const aggregatedItems = new Map<string, any>();
           draft.items.forEach(item => {
+            const id = item.menu_item_id ?? item.product_id ?? item.id;
+            if (aggregatedItems.has(id)) {
+              aggregatedItems.get(id).quantity += item.quantity;
+            } else {
+              aggregatedItems.set(id, { ...item, parsedId: id });
+            }
+          });
+
+          aggregatedItems.forEach(item => {
             const fakeMenuItem: MenuItem = {
-              id: item.menu_item_id ?? item.product_id ?? item.id,
+              id: item.parsedId,
               store_id: storeId,
               name: item.product_name,
               description: '',
@@ -719,7 +729,7 @@ export default function POSPage() {
               updated_at: '',
             };
             dispatch({ type: 'ADD_MENU', item: fakeMenuItem });
-            // Set the correct quantity
+            // Set the correct aggregate quantity
             if (item.quantity > 1) {
               dispatch({ type: 'SET_QTY', id: fakeMenuItem.id, qty: item.quantity });
             }
