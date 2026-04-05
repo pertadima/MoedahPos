@@ -1814,6 +1814,22 @@ export default function PurchaseOrdersPage() {
     });
   }, [storeId]);
 
+  useEffect(() => {
+    const saved = sessionStorage.getItem('openCreatePOWithItems');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setForm(f => ({ ...f, items: parsed, notes: 'Otomatis dari Stok Menipis' }));
+          setShowModal(true);
+        }
+      } catch (e) {
+        console.error(e);
+      }
+      sessionStorage.removeItem('openCreatePOWithItems');
+    }
+  }, []);
+
   const openDetail = useCallback(
     async (po: PurchaseOrder) => {
       setDetailPO(po);

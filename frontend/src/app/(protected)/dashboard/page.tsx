@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   TrendingUp,
   ShoppingBag,
@@ -32,6 +33,7 @@ import {
 } from 'recharts';
 
 export default function DashboardPage() {
+  const router = useRouter();
   const { selectedStore } = useAuth();
   const [summary, setSummary] = useState<SalesSummaryResponse | null>(null);
   const [recentTxns, setRecentTxns] = useState<Transaction[]>([]);
@@ -104,6 +106,17 @@ export default function DashboardPage() {
       .catch(console.error)
       .finally(() => setLoading(false));
   }, [selectedStore]);
+
+  const handleCreatePO = () => {
+    if (!selectedStore || lowStock.length === 0) return;
+    const items = lowStock.map(s => ({
+      product_id: s.product_id,
+      quantity: s.min_quantity > 0 ? s.min_quantity : 1,
+      unit_cost: 0,
+    }));
+    sessionStorage.setItem('openCreatePOWithItems', JSON.stringify(items));
+    router.push('/purchase-orders');
+  };
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -505,11 +518,20 @@ export default function DashboardPage() {
           {/* Low Stock Alert */}
           {lowStock.length > 0 && (
             <div className="card" style={{ padding: 16, borderColor: 'rgba(245,158,11,0.3)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
-                <AlertTriangle size={15} style={{ color: '#f59e0b' }} />
-                <span style={{ fontWeight: 600, fontSize: '0.85rem', color: '#fbbf24' }}>
-                  Stok Menipis ({lowStock.length})
-                </span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <AlertTriangle size={15} style={{ color: '#f59e0b' }} />
+                  <span style={{ fontWeight: 600, fontSize: '0.85rem', color: '#fbbf24' }}>
+                    Stok Menipis ({lowStock.length})
+                  </span>
+                </div>
+                <button
+                  onClick={handleCreatePO}
+                  className="btn btn-primary btn-sm"
+                  style={{ fontSize: '0.7rem', padding: '4px 10px', minHeight: 'unset' }}
+                >
+                  + Buat PO
+                </button>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {lowStock.slice(0, 4).map(s => (
