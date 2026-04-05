@@ -262,5 +262,26 @@ export const expensesApi = {
   create: (storeId: string, body: object) => api.post<any>(`/stores/${storeId}/expenses`, body),
   update: (storeId: string, id: string, body: object) =>
     api.put<any>(`/stores/${storeId}/expenses/${id}`, body),
+  updateStatus: (storeId: string, id: string, body: { payment_status: 'paid' | 'unpaid' | 'cancelled' }) =>
+    api.patch<any>(`/stores/${storeId}/expenses/${id}/status`, body),
   delete: (storeId: string, id: string) => api.delete<any>(`/stores/${storeId}/expenses/${id}`),
+};
+
+export const recurringExpensesApi = {
+  list: (
+    storeId: string,
+    params?: { category_id?: string; page?: number; per_page?: number }
+  ) => {
+    const q = new URLSearchParams();
+    if (params?.category_id) q.set('category_id', params.category_id);
+    if (params?.page) q.set('page', String(params.page));
+    if (params?.per_page) q.set('per_page', String(params.per_page));
+    return api.get<any>(`/stores/${storeId}/recurring-expenses?${q}`);
+  },
+  create: (storeId: string, body: object) =>
+    api.post<any>(`/stores/${storeId}/recurring-expenses`, body),
+  update: (storeId: string, id: string, body: object) =>
+    api.put<any>(`/stores/${storeId}/recurring-expenses/${id}`, body),
+  delete: (storeId: string, id: string) =>
+    api.delete<any>(`/stores/${storeId}/recurring-expenses/${id}`),
 };
