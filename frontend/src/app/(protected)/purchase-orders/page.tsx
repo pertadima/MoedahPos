@@ -253,11 +253,12 @@ function ProductSearchSelect({
   useEffect(() => {
     if (!open) return;
     let cancelled = false;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSearching(true);
     productsApi
       .list(storeId, { search: debouncedQuery || undefined, per_page: 20 })
       .then(res => {
-        if (!cancelled) setResults((res.data as any).data ?? []);
+        if (!cancelled) setResults(res.data.data ?? []);
       })
       .catch(console.error)
       .finally(() => {
