@@ -139,6 +139,7 @@ type ReportRepository interface {
 	SalesByCashier(ctx context.Context, storeID string, from, to time.Time) ([]dto.SalesByCashierRow, error)
 	StockValuation(ctx context.Context, storeID string) ([]dto.StockValuationRow, error)
 	ProfitSummary(ctx context.Context, storeID string, from, to time.Time, groupBy string) ([]dto.ProfitPeriodRow, error)
+	CashFlowSummary(ctx context.Context, storeID string, from, to time.Time) ([]dto.CashFlowDayRow, error)
 }
 
 // PriceHistoryRepository records and retrieves price-change audit logs.

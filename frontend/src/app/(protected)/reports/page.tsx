@@ -1,11 +1,25 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
-import { BarChart3, Loader2, TrendingUp, TrendingDown, Activity } from 'lucide-react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
+import {
+  BarChart3,
+  Loader2,
+  TrendingUp,
+  TrendingDown,
+  Activity,
+  DollarSign,
+  CreditCard,
+  Banknote,
+  Smartphone,
+  ArrowUpRight,
+  ArrowDownRight,
+  Calendar,
+  Layers,
+} from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { reportsApi } from '@/lib/api/store-apis';
 import { formatRp, todayStr, thirtyDaysAgoStr } from '@/lib/utils';
-import type { SalesSummaryResponse, SalesByProductRow } from '@/types';
+import type { SalesSummaryResponse, SalesByProductRow, SalesSummaryRow } from '@/types';
 import {
   BarChart,
   Bar,
@@ -17,16 +31,73 @@ import {
   ComposedChart,
   Line,
   Area,
+  Legend,
+  ReferenceLine,
 } from 'recharts';
 
-type Tab = 'sales' | 'products' | 'profit' | 'valuation';
+// ── Types ──
+
+type Tab = 'sales' | 'products' | 'profit' | 'cashflow' | 'valuation';
 type GroupBy = 'day' | 'week' | 'month';
 
-// ── Small helpers ─────────────────────────────────────────────────────────────
+interface CashFlowDayRow {
+  date: string;
+  cash_in: number;
+  cash_out: number;
+  net_cash: number;
+  cash_in_by_method: Record<string, number>;
+}
+
+interface CashFlowResponse {
+  total_cash_in: number;
+  total_cash_out: number;
+  net_cash: number;
+  cash_in_by_method: Record<string, number>;
+  rows: CashFlowDayRow[];
+}
+
+interface StockValuationRow {
+  product_id: string;
+  product_name: string;
+  sku: string;
+  unit: string;
+  cost_price: number;
+  quantity: number;
+  total_value: number;
+}
+
+interface StockValuationResponse {
+  rows: StockValuationRow[];
+  grand_total: number;
+}
+
+interface ProfitPeriodRow {
+  period: string;
+  total_sales: number;
+  total_cost: number;
+  gross_profit: number;
+  total_expense: number;
+  net_profit: number;
+  profit_margin: number;
+}
+
+interface ProfitSummaryResponse {
+  rows: ProfitPeriodRow[];
+  total_sales: number;
+  total_cost: number;
+  gross_profit: number;
+  total_expense: number;
+  net_profit: number;
+  profit_margin: number;
+}
+
+// ── Shared Components ──
+
 function ProfitMarginBadge({ margin }: { margin: number }) {
   const color = margin >= 30 ? '#10b981' : margin >= 15 ? '#f59e0b' : '#ef4444';
   return (
     <span
+      className="badge"
       style={{
         display: 'inline-flex',
         alignItems: 'center',
@@ -44,649 +115,685 @@ function ProfitMarginBadge({ margin }: { margin: number }) {
   );
 }
 
-const CUSTOM_TOOLTIP_STYLE = {
-  background: 'var(--bg-elevated)',
-  border: '1px solid var(--border-md)',
+const TOOLTIP_STYLE: React.CSSProperties = {
+  background: 'var(--bg-card)',
+  border: '1px solid var(--border)',
   borderRadius: 8,
   color: 'var(--text-1)',
   fontSize: 12,
+  boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
 };
 
-export default function ReportsPage() {
+// Use a generic object for tooltip props to avoid Recharts version-specific Type conflicts
+// while keeping the internal usage safe.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function CfTooltip({ active, payload, label }: any) {
+  if (!active || !payload || payload.length === 0) return null;
+  return (
+    <div style={TOOLTIP_STYLE} className="p-3">
+      <div style={{ fontWeight: 600, marginBottom: 6 }}>{label}</div>
+      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+      {payload.map((p: any, i: number) => (
+        <div
+          key={p.name || i}
+          style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 3 }}
+        >
+          <span
+            style={{
+              width: 10,
+              height: 10,
+              borderRadius: 2,
+              background: (p.color as string) || (p.fill as string),
+              display: 'inline-block',
+            }}
+          />
+          <span style={{ color: 'var(--text-3)' }}>{p.name}:</span>
+          <span style={{ fontWeight: 600 }}>{formatRp(Number(p.value) ?? 0)}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function methodLabel(m: string) {
+  const map: Record<string, string> = {
+    cash: 'Tunai',
+    qris: 'QRIS',
+    transfer: 'Transfer',
+    card: 'Kartu',
+    debit: 'Debit',
+    credit: 'Kredit',
+  };
+  return map[m.toLowerCase()] ?? m;
+}
+
+function methodIcon(m: string) {
+  const lower = m.toLowerCase();
+  if (lower === 'qris') return <Smartphone size={14} />;
+  if (lower === 'transfer') return <CreditCard size={14} />;
+  if (lower === 'cash') return <Banknote size={14} />;
+  return <CreditCard size={14} />;
+}
+
+function UnifiedCard({
+  label,
+  value,
+  icon: Icon,
+  color,
+  sub,
+}: {
+  label: string;
+  value: number;
+  icon: React.ElementType;
+  color: string;
+  sub?: string;
+}) {
+  const isNeg = value < 0;
+  return (
+    <div
+      className="card"
+      style={{
+        padding: '16px 20px',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-between',
+        flex: 1,
+        minWidth: 180,
+        borderTop: `3px solid ${color}`,
+      }}
+    >
+      <div className="flex justify-between items-start">
+        <div>
+          <div className="text-[10px] font-bold uppercase tracking-wider text-3">{label}</div>
+          <div
+            className="text-xl font-black mt-1"
+            style={{ color: isNeg ? '#ef4444' : 'var(--text-1)' }}
+          >
+            {isNeg && '− '}
+            {formatRp(Math.abs(value))}
+          </div>
+        </div>
+        <div
+          className="w-8 h-8 rounded-lg flex items-center justify-center"
+          style={{ background: `${color}15`, color }}
+        >
+          <Icon size={18} />
+        </div>
+      </div>
+      {sub && <div className="text-[10px] text-3 mt-2">{sub}</div>}
+    </div>
+  );
+}
+
+function ShoppingCartIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
+      <circle cx="9" cy="21" r="1" />
+      <circle cx="20" cy="21" r="1" />
+      <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+    </svg>
+  );
+}
+
+function WarehouseIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
+      <path d="M3 21V10l9-7 9 7v11" />
+      <path d="M9 21V9" />
+      <path d="M15 21V9" />
+    </svg>
+  );
+}
+
+const TAB_CONFIG: { key: Tab; label: string; icon: React.ElementType }[] = [
+  { key: 'sales', label: 'Penjualan', icon: ShoppingCartIcon },
+  { key: 'products', label: 'Per Produk', icon: Layers },
+  { key: 'profit', label: '💰 Profit', icon: Activity },
+  { key: 'cashflow', label: '💵 Arus Kas', icon: DollarSign },
+  { key: 'valuation', label: 'Stok', icon: WarehouseIcon },
+];
+
+export default function UnifiedReportsPage() {
   const { selectedStore } = useAuth();
+  const storeId = selectedStore?.store_id;
+
   const [dateFrom, setDateFrom] = useState(thirtyDaysAgoStr());
   const [dateTo, setDateTo] = useState(todayStr());
   const [tab, setTab] = useState<Tab>('sales');
   const [groupBy, setGroupBy] = useState<GroupBy>('day');
+  const [loading, setLoading] = useState(false);
 
   const [summary, setSummary] = useState<SalesSummaryResponse | null>(null);
   const [byProduct, setByProduct] = useState<SalesByProductRow[]>([]);
-  const [valuation, setValuation] = useState<any>(null);
-  const [profit, setProfit] = useState<any>(null);
-  const [loading, setLoading] = useState(false);
+  const [valuation, setValuation] = useState<StockValuationResponse | null>(null);
+  const [profitData, setProfitData] = useState<ProfitSummaryResponse | null>(null);
+  const [cfData, setCfData] = useState<CashFlowResponse | null>(null);
 
-  const storeId = selectedStore?.store_id;
-
-  const load = () => {
+  const fetchAll = useCallback(async () => {
     if (!storeId) return;
     setLoading(true);
-
-    const run = async () => {
-      const [sRes, bpRes, svRes, prRes] = await Promise.allSettled([
+    try {
+      const results = await Promise.allSettled([
         reportsApi.salesSummary(storeId, dateFrom, dateTo),
         reportsApi.byProduct(storeId, dateFrom, dateTo),
         reportsApi.stockValuation(storeId),
         reportsApi.profit(storeId, dateFrom, dateTo, groupBy),
+        reportsApi.cashFlow(storeId, dateFrom, dateTo),
       ]);
-      if (sRes.status === 'fulfilled') setSummary(sRes.value.data as SalesSummaryResponse);
-      if (bpRes.status === 'fulfilled')
-        setByProduct((bpRes.value.data ?? []) as SalesByProductRow[]);
-      if (svRes.status === 'fulfilled') setValuation(svRes.value.data);
-      if (prRes.status === 'fulfilled') setProfit(prRes.value.data);
-      if (sRes.status === 'rejected') console.error('salesSummary:', sRes.reason);
-      if (bpRes.status === 'rejected') console.error('byProduct:', bpRes.reason);
-      if (svRes.status === 'rejected') console.error('stockValuation:', svRes.reason);
-      if (prRes.status === 'rejected') console.error('profit:', prRes.reason);
+
+      if (results[0].status === 'fulfilled')
+        setSummary(results[0].value.data as SalesSummaryResponse);
+      if (results[1].status === 'fulfilled')
+        setByProduct(results[1].value.data as SalesByProductRow[]);
+      if (results[2].status === 'fulfilled')
+        setValuation(results[2].value.data as StockValuationResponse);
+      if (results[3].status === 'fulfilled')
+        setProfitData(results[3].value.data as ProfitSummaryResponse);
+      if (results[4].status === 'fulfilled') setCfData(results[4].value.data as CashFlowResponse);
+    } catch (err) {
+      console.error('Fetch error:', err);
+    } finally {
       setLoading(false);
-    };
-    run();
-  };
-
-  // Reload profit when groupBy changes while on the profit tab
-  const reloadProfit = useCallback(() => {
-    if (!storeId || tab !== 'profit') return;
-    reportsApi
-      .profit(storeId, dateFrom, dateTo, groupBy)
-      .then(r => setProfit(r.data))
-      .catch(console.error);
-  }, [storeId, tab, dateFrom, dateTo, groupBy]);
+    }
+  }, [storeId, dateFrom, dateTo, groupBy]);
 
   useEffect(() => {
-    reloadProfit();
-  }, [reloadProfit]);
+    fetchAll();
+  }, [fetchAll, storeId]);
 
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    load();
-  }, [storeId]); // eslint-disable-line react-hooks/exhaustive-deps
+  const salesDataForChart = useMemo(
+    () =>
+      (summary?.rows ?? [])
+        .slice()
+        .reverse()
+        .map((r: SalesSummaryRow) => ({ date: r.date.slice(5), sales: r.total_sales })),
+    [summary]
+  );
+  const profitChartData = useMemo(() => profitData?.rows ?? [], [profitData]);
+  const cfChartData = useMemo(
+    () =>
+      (cfData?.rows ?? []).map((r) => ({
+        date: r.date.slice(5),
+        'Uang Masuk': r.cash_in,
+        'Uang Keluar': r.cash_out,
+        'Net Cash': r.net_cash,
+      })),
+    [cfData]
+  );
+  const cfMethodEntries = useMemo(
+    () => Object.entries(cfData?.cash_in_by_method ?? {}).sort((a, b) => b[1] - a[1]),
+    [cfData]
+  );
 
-  const chartData = (summary?.rows ?? [])
-    .slice()
-    .reverse()
-    .map(r => ({
-      date: r.date.slice(5),
-      sales: r.total_sales,
-      txn: r.transaction_count,
-    }));
-
-  const profitChartData = (profit?.rows ?? []).map((r: any) => ({
-    period: r.period,
-    revenue: r.total_sales,
-    cost: r.total_cost,
-    gross_profit: r.gross_profit,
-    expense: r.total_expense,
-    net_profit: r.net_profit,
-    margin: r.profit_margin,
-  }));
-
-  if (!selectedStore)
+  if (!selectedStore) {
     return (
-      <div style={{ padding: 32 }}>
-        <div className="empty-state card" style={{ padding: 40 }}>
-          <BarChart3 size={40} />
+      <div className="p-8">
+        <div className="empty-state card py-16 flex flex-col items-center gap-4">
+          <BarChart3 size={48} className="opacity-20" />
           <p>Pilih toko terlebih dahulu</p>
         </div>
       </div>
     );
-
-  const tabs: { key: Tab; label: string }[] = [
-    { key: 'sales', label: 'Penjualan Harian' },
-    { key: 'products', label: 'Per Produk' },
-    { key: 'profit', label: '💰 Profit' },
-    { key: 'valuation', label: 'Valuasi Stok' },
-  ];
+  }
 
   return (
-    <div style={{ padding: 24 }}>
-      {/* ── Header ── */}
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'flex-start',
-          marginBottom: 20,
-        }}
-      >
+    <div className="p-6 max-w-[1400px] mx-auto">
+      <div className="flex justify-between items-start mb-6 flex-wrap gap-4">
         <div>
-          <h1 className="page-title">Laporan</h1>
-          <p className="page-subtitle">{selectedStore.store_name}</p>
+          <h1 className="text-2xl font-black flex items-center gap-2">📊 Laporan & Keuangan</h1>
+          <p className="text-3 text-sm mt-1">{selectedStore.store_name} · Analisis performa & arus kas</p>
         </div>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+
+        <div className="card flex items-center gap-2 p-1.5 px-3">
+          <Calendar size={14} className="text-3" />
           <input
             type="date"
-            className="input"
-            style={{ width: 150 }}
+            className="input-subtle text-xs w-32 border-none bg-transparent"
             value={dateFrom}
-            onChange={e => setDateFrom(e.target.value)}
+            onChange={(e) => setDateFrom(e.target.value)}
           />
-          <span className="text-2">s/d</span>
+          <span className="text-3 text-[10px] opacity-40">TO</span>
           <input
             type="date"
-            className="input"
-            style={{ width: 150 }}
+            className="input-subtle text-xs w-32 border-none bg-transparent"
             value={dateTo}
-            onChange={e => setDateTo(e.target.value)}
+            onChange={(e) => setDateTo(e.target.value)}
           />
-          <button className="btn btn-primary" onClick={load}>
-            Tampilkan
+          <button
+            className="btn btn-primary btn-xs px-3 ml-2"
+            onClick={fetchAll}
+            disabled={loading}
+          >
+            {loading ? <Loader2 size={12} className="loading-spin" /> : 'Update Laporan'}
           </button>
         </div>
       </div>
 
-      {/* ── Summary Cards ── */}
-      <div
-        style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 12, marginBottom: 20 }}
-      >
-        <div className="stat-card">
-          <div className="stat-icon" style={{ background: 'rgba(16,185,129,0.12)' }}>
-            <TrendingUp size={20} style={{ color: '#10b981' }} />
-          </div>
-          <div>
-            <div className="stat-label">Total Penjualan</div>
-            <div className="stat-val">{formatRp(summary?.total_sales ?? 0)}</div>
-          </div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-icon" style={{ background: 'rgba(239,68,68,0.12)' }}>
-            <TrendingDown size={20} style={{ color: '#ef4444' }} />
-          </div>
-          <div>
-            <div className="stat-label">Total HPP</div>
-            <div className="stat-val" style={{ color: '#ef4444' }}>
-              {formatRp((summary as any)?.total_cost ?? 0)}
-            </div>
-          </div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-icon" style={{ background: 'rgba(245,158,11,0.12)' }}>
-            <Activity size={20} style={{ color: '#f59e0b' }} />
-          </div>
-          <div>
-            <div className="stat-label">Gross Profit</div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 2 }}>
-              <div className="stat-val" style={{ color: '#f59e0b' }}>
-                {formatRp((summary as any)?.gross_profit ?? 0)}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+        {tab === 'cashflow' ? (
+          <>
+            <UnifiedCard
+              label="Cash IN"
+              value={cfData?.total_cash_in ?? 0}
+              icon={TrendingUp}
+              color="#10b981"
+            />
+            <UnifiedCard
+              label="Cash OUT"
+              value={cfData?.total_cash_out ?? 0}
+              icon={TrendingDown}
+              color="#ef4444"
+            />
+            <UnifiedCard
+              label="Net Cash"
+              value={cfData?.net_cash ?? 0}
+              icon={ArrowUpRight}
+              color={(cfData?.net_cash ?? 0) >= 0 ? '#3b82f6' : '#ef4444'}
+            />
+            <div className="card flex flex-col justify-center px-5 border-t-2 border-indigo-500">
+              <div className="text-[10px] font-bold text-3 uppercase">Total Days</div>
+              <div className="text-2xl font-black text-indigo-500 mt-1">
+                {cfData?.rows.length ?? 0}
               </div>
             </div>
-          </div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-icon" style={{ background: 'rgba(239,68,68,0.12)' }}>
-            <TrendingDown size={20} style={{ color: '#ef4444' }} />
-          </div>
-          <div>
-            <div className="stat-label">Pengeluaran</div>
-            <div className="stat-val" style={{ color: '#ef4444' }}>
-              {formatRp((summary as any)?.total_expense ?? 0)}
-            </div>
-          </div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-icon" style={{ background: 'rgba(16,185,129,0.12)' }}>
-            <Activity size={20} style={{ color: '#10b981' }} />
-          </div>
-          <div>
-            <div className="stat-label">Net Profit</div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 2 }}>
-              <div className="stat-val" style={{ color: '#10b981' }}>
-                {formatRp((summary as any)?.net_profit ?? 0)}
+          </>
+        ) : tab === 'valuation' ? (
+          <UnifiedCard
+            label="Total Valuasi Stok"
+            value={valuation?.grand_total ?? 0}
+            icon={WarehouseIcon}
+            color="#6366f1"
+          />
+        ) : (
+          <>
+            <UnifiedCard
+              label="Omzet"
+              value={summary?.total_sales ?? 0}
+              icon={TrendingUp}
+              color="#10b981"
+            />
+            <UnifiedCard
+              label="Laba Kotor"
+              value={summary?.gross_profit ?? 0}
+              icon={Activity}
+              color="#f59e0b"
+            />
+            <UnifiedCard
+              label="Laba Bersih"
+              value={summary?.net_profit ?? 0}
+              icon={Activity}
+              color="#3b82f6"
+            />
+            <div className="card flex flex-col justify-center px-5 border-t-2 border-indigo-500">
+              <div className="text-[10px] font-bold text-3 uppercase">Avg Margin</div>
+              <div className="text-2xl font-black text-indigo-500 mt-1">
+                {(summary?.profit_margin ?? 0).toFixed(1)}%
               </div>
-              {(summary as any)?.profit_margin != null && (
-                <ProfitMarginBadge margin={(summary as any).profit_margin} />
-              )}
             </div>
-          </div>
-        </div>
+          </>
+        )}
       </div>
 
-      {/* ── Tab Nav ── */}
-      <div
-        style={{
-          display: 'flex',
-          gap: 4,
-          background: 'var(--bg-card)',
-          borderRadius: 10,
-          padding: 4,
-          marginBottom: 16,
-          width: 'fit-content',
-          border: '1px solid var(--border)',
-        }}
-      >
-        {tabs.map(({ key, label }) => (
+      <div className="card inline-flex p-1 gap-1 mb-5 bg-surface border-none shadow-sm">
+        {TAB_CONFIG.map(({ key, label, icon: TabIcon }) => (
           <button
             key={key}
             onClick={() => setTab(key)}
-            style={{
-              padding: '7px 16px',
-              borderRadius: 7,
-              border: 'none',
-              cursor: 'pointer',
-              fontSize: '0.85rem',
-              fontWeight: 500,
-              transition: 'all 0.12s',
-              background: tab === key ? 'var(--accent-in)' : 'transparent',
-              color: tab === key ? '#fff' : 'var(--text-2)',
-            }}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all ${
+              tab === key ? 'bg-accent-em text-white' : 'text-3 hover:bg-surface-hv'
+            }`}
           >
+            <TabIcon size={12} />
             {label}
           </button>
         ))}
       </div>
 
       {loading ? (
-        <div style={{ display: 'flex', justifyContent: 'center', padding: 40 }}>
-          <Loader2 size={24} className="loading-spin" style={{ color: 'var(--accent-em)' }} />
-        </div>
-      ) : tab === 'sales' ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <div className="card" style={{ padding: 20 }}>
-            <div style={{ fontWeight: 700, marginBottom: 16 }}>Penjualan Harian</div>
-            {chartData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={240}>
-                <BarChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                  <XAxis
-                    dataKey="date"
-                    tick={{ fill: 'var(--text-3)', fontSize: 11 }}
-                    axisLine={false}
-                    tickLine={false}
-                  />
-                  <YAxis
-                    tick={{ fill: 'var(--text-3)', fontSize: 11 }}
-                    axisLine={false}
-                    tickLine={false}
-                    tickFormatter={v =>
-                      v >= 1000000 ? `${(v / 1000000).toFixed(1)}M` : `${(v / 1000).toFixed(0)}K`
-                    }
-                  />
-                  <Tooltip
-                    contentStyle={CUSTOM_TOOLTIP_STYLE}
-                    formatter={(v: unknown) => [formatRp(Number(v)), 'Penjualan']}
-                  />
-                  <Bar dataKey="sales" fill="#10b981" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="empty-state" style={{ height: 200 }}>
-                <BarChart3 size={32} />
-                <p>Belum ada data</p>
-              </div>
-            )}
-          </div>
-          <div className="card" style={{ overflow: 'hidden' }}>
-            <table className="tbl">
-              <thead>
-                <tr>
-                  <th>Tanggal</th>
-                  <th>Transaksi</th>
-                  <th>Penjualan</th>
-                  <th>HPP</th>
-                  <th>Gross Profit</th>
-                  <th>Pengeluaran</th>
-                  <th>Net Profit</th>
-                  <th>Margin</th>
-                  <th>Pajak</th>
-                  <th>Diskon</th>
-                </tr>
-              </thead>
-              <tbody>
-                {(summary?.rows ?? []).map(r => (
-                  <tr key={r.date}>
-                    <td style={{ fontFamily: 'monospace' }}>{r.date}</td>
-                    <td>{r.transaction_count}</td>
-                    <td style={{ fontWeight: 600, color: 'var(--accent-em)' }}>
-                      {formatRp(r.total_sales)}
-                    </td>
-                    <td style={{ color: '#ef4444' }}>{formatRp((r as any).total_cost ?? 0)}</td>
-                    <td style={{ fontWeight: 700, color: '#f59e0b' }}>
-                      {formatRp((r as any).gross_profit ?? 0)}
-                    </td>
-                    <td style={{ color: '#ef4444' }}>{formatRp((r as any).total_expense ?? 0)}</td>
-                    <td style={{ fontWeight: 700, color: '#10b981' }}>
-                      {formatRp((r as any).net_profit ?? 0)}
-                    </td>
-                    <td>
-                      <ProfitMarginBadge margin={(r as any).profit_margin ?? 0} />
-                    </td>
-                    <td style={{ color: 'var(--text-2)' }}>{formatRp(r.total_tax)}</td>
-                    <td style={{ color: 'var(--accent-rd)' }}>{formatRp(r.total_discount)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      ) : tab === 'products' ? (
-        <div className="card" style={{ overflow: 'hidden' }}>
-          <table className="tbl">
-            <thead>
-              <tr>
-                <th>Produk</th>
-                <th>SKU</th>
-                <th>Qty</th>
-                <th>Revenue</th>
-                <th>HPP</th>
-                <th>Profit</th>
-                <th>Margin</th>
-                <th>Pajak</th>
-              </tr>
-            </thead>
-            <tbody>
-              {byProduct.map((r, i) => (
-                <tr key={r.product_id || i}>
-                  <td>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <span
-                        style={{
-                          background: 'var(--bg-elevated)',
-                          width: 24,
-                          height: 24,
-                          borderRadius: 6,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: '0.7rem',
-                          fontWeight: 700,
-                          color: 'var(--text-2)',
-                        }}
-                      >
-                        {i + 1}
-                      </span>
-                      {r.product_name}
-                    </div>
-                  </td>
-                  <td
-                    style={{ fontFamily: 'monospace', fontSize: '0.82rem', color: 'var(--text-2)' }}
-                  >
-                    {r.sku}
-                  </td>
-                  <td style={{ fontWeight: 600 }}>{r.total_quantity}</td>
-                  <td style={{ fontWeight: 700, color: 'var(--accent-em)' }}>
-                    {formatRp(r.total_revenue)}
-                  </td>
-                  <td style={{ color: '#ef4444' }}>{formatRp((r as any).total_cost ?? 0)}</td>
-                  <td style={{ fontWeight: 700, color: '#f59e0b' }}>
-                    {formatRp((r as any).gross_profit ?? 0)}
-                  </td>
-                  <td>
-                    <ProfitMarginBadge margin={(r as any).profit_margin ?? 0} />
-                  </td>
-                  <td style={{ color: 'var(--text-2)' }}>{formatRp(r.total_tax)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      ) : tab === 'profit' ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          {/* Period group selector */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: '0.85rem', color: 'var(--text-2)' }}>Kelompokkan per:</span>
-            {(['day', 'week', 'month'] as GroupBy[]).map(g => (
-              <button
-                key={g}
-                onClick={() => setGroupBy(g)}
-                style={{
-                  padding: '5px 14px',
-                  borderRadius: 8,
-                  cursor: 'pointer',
-                  fontSize: '0.82rem',
-                  fontWeight: 500,
-                  transition: 'all 0.12s',
-                  background: groupBy === g ? 'var(--accent-in)' : 'var(--bg-card)',
-                  color: groupBy === g ? '#fff' : 'var(--text-2)',
-                  border: `1px solid ${groupBy === g ? 'transparent' : 'var(--border)'}`,
-                }}
-              >
-                {{ day: 'Hari', week: 'Minggu', month: 'Bulan' }[g]}
-              </button>
-            ))}
-
-            {/* period-level summary pills */}
-            <div style={{ marginLeft: 'auto', display: 'flex', gap: 10 }}>
-              {[
-                {
-                  label: 'Total Revenue',
-                  val: formatRp(profit?.total_sales ?? 0),
-                  color: '#10b981',
-                },
-                { label: 'Total HPP', val: formatRp(profit?.total_cost ?? 0), color: '#ef4444' },
-                {
-                  label: 'Gross Profit',
-                  val: formatRp(profit?.gross_profit ?? 0),
-                  color: '#f59e0b',
-                },
-                {
-                  label: 'Pengeluaran',
-                  val: formatRp(profit?.total_expense ?? 0),
-                  color: '#ef4444',
-                },
-                {
-                  label: 'Net Profit',
-                  val: formatRp(profit?.net_profit ?? 0),
-                  color: '#10b981',
-                },
-              ].map(({ label, val, color }) => (
-                <div key={label} style={{ textAlign: 'right' }}>
-                  <div style={{ fontSize: '0.7rem', color: 'var(--text-3)' }}>{label}</div>
-                  <div style={{ fontWeight: 800, fontSize: '0.92rem', color }}>{val}</div>
-                </div>
-              ))}
-              {(profit?.profit_margin ?? 0) > 0 && (
-                <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontSize: '0.7rem', color: 'var(--text-3)' }}>Margin</div>
-                  <ProfitMarginBadge margin={profit.profit_margin} />
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Stacked area chart */}
-          <div className="card" style={{ padding: 20 }}>
-            <div style={{ fontWeight: 700, marginBottom: 16 }}>Revenue vs HPP vs Profit</div>
-            {profitChartData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={260}>
-                <ComposedChart data={profitChartData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                  <XAxis
-                    dataKey="period"
-                    tick={{ fill: 'var(--text-3)', fontSize: 11 }}
-                    axisLine={false}
-                    tickLine={false}
-                  />
-                  <YAxis
-                    yAxisId="left"
-                    tick={{ fill: 'var(--text-3)', fontSize: 11 }}
-                    axisLine={false}
-                    tickLine={false}
-                    tickFormatter={v =>
-                      v >= 1000000 ? `${(v / 1000000).toFixed(1)}M` : `${(v / 1000).toFixed(0)}K`
-                    }
-                  />
-                  <YAxis
-                    yAxisId="right"
-                    orientation="right"
-                    tick={{ fill: 'var(--text-3)', fontSize: 11 }}
-                    axisLine={false}
-                    tickLine={false}
-                    tickFormatter={v => `${v}%`}
-                    domain={[0, 100]}
-                  />
-                  <Tooltip
-                    contentStyle={CUSTOM_TOOLTIP_STYLE}
-                    formatter={(v: unknown, name: unknown) =>
-                      name === 'margin'
-                        ? [`${Number(v).toFixed(1)}%`, 'Margin']
-                        : [
-                            formatRp(Number(v)),
-                            name === 'revenue'
-                              ? 'Revenue'
-                              : name === 'cost'
-                                ? 'HPP'
-                                : name === 'expense'
-                                  ? 'Pengeluaran'
-                                  : name === 'gross_profit'
-                                    ? 'Gross Profit'
-                                    : 'Net Profit',
-                          ]
-                    }
-                  />
-                  <Area
-                    yAxisId="left"
-                    type="monotone"
-                    dataKey="revenue"
-                    fill="rgba(99,102,241,0.1)"
-                    stroke="#6366f1"
-                    strokeWidth={2}
-                    name="revenue"
-                  />
-                  <Area
-                    yAxisId="left"
-                    type="monotone"
-                    dataKey="cost"
-                    fill="rgba(239,68,68,0.1)"
-                    stroke="#ef4444"
-                    strokeWidth={2}
-                    name="cost"
-                  />
-                  <Bar
-                    yAxisId="left"
-                    dataKey="gross_profit"
-                    fill="rgba(245,158,11,0.5)"
-                    radius={[4, 4, 0, 0]}
-                    name="gross_profit"
-                  />
-                  <Bar
-                    yAxisId="left"
-                    dataKey="net_profit"
-                    fill="rgba(16,185,129,0.8)"
-                    radius={[4, 4, 0, 0]}
-                    name="net_profit"
-                  />
-                  <Line
-                    yAxisId="right"
-                    type="monotone"
-                    dataKey="margin"
-                    stroke="#10b981"
-                    strokeWidth={2}
-                    dot={false}
-                    name="margin"
-                  />
-                </ComposedChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="empty-state" style={{ height: 200 }}>
-                <BarChart3 size={32} />
-                <p>Belum ada data profit</p>
-              </div>
-            )}
-          </div>
-
-          {/* Profit table */}
-          <div className="card" style={{ overflow: 'hidden' }}>
-            <table className="tbl">
-              <thead>
-                <tr>
-                  <th>Periode</th>
-                  <th>Revenue</th>
-                  <th>HPP (Harga Pokok)</th>
-                  <th>Gross Profit</th>
-                  <th>Pengeluaran</th>
-                  <th>Net Profit</th>
-                  <th>Margin</th>
-                </tr>
-              </thead>
-              <tbody>
-                {(profit?.rows ?? []).map((r: any) => (
-                  <tr key={r.period}>
-                    <td style={{ fontFamily: 'monospace', fontWeight: 600 }}>{r.period}</td>
-                    <td style={{ color: 'var(--accent-em)', fontWeight: 600 }}>
-                      {formatRp(r.total_sales)}
-                    </td>
-                    <td style={{ color: '#ef4444' }}>{formatRp(r.total_cost)}</td>
-                    <td style={{ fontWeight: 800, color: '#f59e0b' }}>
-                      {formatRp(r.gross_profit)}
-                    </td>
-                    <td style={{ color: '#ef4444' }}>{formatRp(r.total_expense)}</td>
-                    <td style={{ fontWeight: 800, color: '#10b981' }}>{formatRp(r.net_profit)}</td>
-                    <td>
-                      <ProfitMarginBadge margin={r.profit_margin} />
-                    </td>
-                  </tr>
-                ))}
-                {profit && (
-                  <tr style={{ background: 'var(--bg-elevated)', fontWeight: 700 }}>
-                    <td>TOTAL</td>
-                    <td style={{ color: 'var(--accent-em)' }}>{formatRp(profit.total_sales)}</td>
-                    <td style={{ color: '#ef4444' }}>{formatRp(profit.total_cost)}</td>
-                    <td style={{ color: '#f59e0b' }}>{formatRp(profit.gross_profit)}</td>
-                    <td style={{ color: '#ef4444' }}>{formatRp(profit.total_expense)}</td>
-                    <td style={{ color: '#10b981' }}>{formatRp(profit.net_profit)}</td>
-                    <td>
-                      <ProfitMarginBadge margin={profit.profit_margin} />
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+        <div className="flex justify-center py-32">
+          <Loader2 size={32} className="loading-spin text-accent-em" />
         </div>
       ) : (
-        <div className="card" style={{ overflow: 'hidden' }}>
-          <div
-            style={{
-              padding: '12px 14px',
-              borderBottom: '1px solid var(--border)',
-              display: 'flex',
-              justifyContent: 'space-between',
-              fontWeight: 600,
-            }}
-          >
-            <span>Grand Total Valuasi Stok</span>
-            <span style={{ color: 'var(--accent-em)' }}>
-              {formatRp(valuation?.grand_total ?? 0)}
-            </span>
-          </div>
-          <table className="tbl">
-            <thead>
-              <tr>
-                <th>Produk</th>
-                <th>SKU</th>
-                <th>Stok</th>
-                <th>Harga Beli</th>
-                <th>Nilai Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              {(valuation?.rows ?? []).map((r: any) => (
-                <tr key={r.product_id}>
-                  <td style={{ fontWeight: 600 }}>{r.product_name}</td>
-                  <td
-                    style={{ fontFamily: 'monospace', fontSize: '0.82rem', color: 'var(--text-2)' }}
+        <div className="animate-in fade-in slide-in-from-bottom-1 duration-300">
+          {tab === 'sales' && (
+            <div className="flex flex-col gap-5">
+              <div className="card p-6">
+                <h3 className="text-sm font-bold mb-6">📈 Grafik Omzet Harian</h3>
+                <div className="w-full h-72">
+                  <ResponsiveContainer>
+                    <BarChart data={salesDataForChart}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
+                      <XAxis
+                        dataKey="date"
+                        tick={{ fontSize: 10, fill: 'var(--text-3)' }}
+                        axisLine={false}
+                        tickLine={false}
+                      />
+                      <YAxis
+                        tick={{ fontSize: 10, fill: 'var(--text-3)' }}
+                        axisLine={false}
+                        tickLine={false}
+                        tickFormatter={(v: number) => (v >= 1000000 ? `${v / 1000000}jt` : `${v / 1000}rb`)}
+                      />
+                      <Tooltip
+                        contentStyle={TOOLTIP_STYLE}
+                        formatter={(v: number) => [formatRp(v), 'Omzet']}
+                      />
+                      <Bar dataKey="sales" fill="#10b981" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+              <div className="card overflow-hidden">
+                <table className="tbl text-sm">
+                  <thead>
+                    <tr>
+                      <th>Tanggal</th>
+                      <th className="text-right">Transaksi</th>
+                      <th className="text-right">Omzet</th>
+                      <th className="text-right">Laba Kotor</th>
+                      <th className="text-right">Net Profit</th>
+                      <th className="text-center">Margin</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(summary?.rows ?? []).map((r) => (
+                      <tr key={r.date}>
+                        <td className="font-bold">{r.date}</td>
+                        <td className="text-right">{r.transaction_count}</td>
+                        <td className="text-right font-black text-accent-em">
+                          {formatRp(r.total_sales)}
+                        </td>
+                        <td className="text-right text-warning font-semibold">
+                          {formatRp(r.gross_profit)}
+                        </td>
+                        <td className="text-right text-blue-500 font-bold">
+                          {formatRp(r.net_profit)}
+                        </td>
+                        <td className="text-center">
+                          <ProfitMarginBadge margin={r.profit_margin ?? 0} />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {tab === 'products' && (
+            <div className="card overflow-hidden">
+              <table className="tbl text-sm">
+                <thead>
+                  <tr>
+                    <th>Nama Produk</th>
+                    <th>SKU</th>
+                    <th className="text-right">Terjual</th>
+                    <th className="text-right">Revenue</th>
+                    <th className="text-right">Profit</th>
+                    <th className="text-center">Margin</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {byProduct.map((r) => (
+                    <tr key={r.product_id}>
+                      <td className="font-bold">{r.product_name}</td>
+                      <td className="text-xs font-mono opacity-50">{r.sku}</td>
+                      <td className="text-right font-bold">{r.total_quantity}</td>
+                      <td className="text-right text-accent-em font-bold">
+                        {formatRp(r.total_revenue)}
+                      </td>
+                      <td className="text-right text-warning font-semibold">
+                        {formatRp(r.gross_profit)}
+                      </td>
+                      <td className="text-center">
+                        <ProfitMarginBadge margin={r.profit_margin} />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {tab === 'profit' && (
+            <div className="flex flex-col gap-5">
+              <div className="flex items-center gap-2">
+                {(['day', 'week', 'month'] as GroupBy[]).map((g) => (
+                  <button
+                    key={g}
+                    onClick={() => setGroupBy(g)}
+                    className={`btn btn-xs px-4 rounded-full ${
+                      groupBy === g ? 'btn-primary' : 'btn-outline'
+                    }`}
                   >
-                    {r.sku}
-                  </td>
-                  <td>
-                    {r.quantity} {r.unit}
-                  </td>
-                  <td style={{ color: 'var(--text-2)' }}>{formatRp(r.cost_price)}</td>
-                  <td style={{ fontWeight: 700, color: 'var(--accent-em)' }}>
-                    {formatRp(r.total_value)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                    {{ day: 'Harian', week: 'Mingguan', month: 'Bulanan' }[g]}
+                  </button>
+                ))}
+              </div>
+              <div className="card p-6">
+                <h3 className="text-sm font-bold mb-6">📉 Profitability vs Expenses</h3>
+                <div className="w-full h-80">
+                  <ResponsiveContainer>
+                    <ComposedChart data={profitChartData}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                      <XAxis dataKey="period" tick={{ fontSize: 10 }} />
+                      <YAxis
+                        tick={{ fontSize: 10 }}
+                        tickFormatter={(v: number) => (v >= 1000000 ? `${v / 1000000}jt` : `${v / 1000}rb`)}
+                      />
+                      <Tooltip contentStyle={TOOLTIP_STYLE} />
+                      <Legend verticalAlign="top" wrapperStyle={{ fontSize: 10, paddingBottom: 10 }} />
+                      <Area
+                        type="monotone"
+                        dataKey="total_sales"
+                        fill="#10b98122"
+                        stroke="#10b981"
+                        name="Revenue"
+                      />
+                      <Bar dataKey="gross_profit" fill="#f59e0b" radius={[4, 4, 0, 0]} name="Gross" />
+                      <Bar dataKey="net_profit" fill="#3b82f6" radius={[4, 4, 0, 0]} name="Net" />
+                      <Line
+                        type="monotone"
+                        dataKey="total_expense"
+                        stroke="#ef4444"
+                        name="Expenses"
+                        strokeWidth={2}
+                      />
+                    </ComposedChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+              <div className="card overflow-hidden">
+                <table className="tbl text-sm">
+                  <thead>
+                    <tr>
+                      <th>Periode</th>
+                      <th className="text-right">Revenue</th>
+                      <th className="text-right">Cost</th>
+                      <th className="text-right">Expense</th>
+                      <th className="text-right">Net Profit</th>
+                      <th className="text-center">Margin</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {profitChartData.map((r) => (
+                      <tr key={r.period}>
+                        <td className="font-bold">{r.period}</td>
+                        <td className="text-right font-bold text-accent-em">
+                          {formatRp(r.total_sales)}
+                        </td>
+                        <td className="text-right opacity-60">{formatRp(r.total_cost)}</td>
+                        <td className="text-right text-accent-rd">{formatRp(r.total_expense)}</td>
+                        <td className="text-right text-blue-600 font-black">
+                          {formatRp(r.net_profit)}
+                        </td>
+                        <td className="text-center">
+                          <ProfitMarginBadge margin={r.profit_margin} />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {tab === 'cashflow' && (
+            <div className="flex flex-col gap-5">
+              {cfMethodEntries.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {cfMethodEntries.map(([m, a]) => (
+                    <div key={m} className="card p-3 px-4 flex items-center gap-3">
+                      <div className="text-accent-em">{methodIcon(m)}</div>
+                      <div>
+                        <div className="text-[10px] font-bold uppercase text-3">
+                          {methodLabel(m)}
+                        </div>
+                        <div className="font-bold">{formatRp(a)}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div className="card p-6">
+                <h3 className="text-sm font-bold mb-6">📉 Tren Arus Kas Aktual</h3>
+                <div className="w-full h-80">
+                  <ResponsiveContainer>
+                    <ComposedChart data={cfChartData}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                      <XAxis dataKey="date" tick={{ fontSize: 10 }} />
+                      <YAxis
+                        tick={{ fontSize: 10 }}
+                        tickFormatter={(v: number) => (v >= 1000000 ? `${v / 1000000}jt` : `${v / 1000}rb`)}
+                      />
+                      <Tooltip content={<CfTooltip />} />
+                      <Legend
+                        verticalAlign="top"
+                        wrapperStyle={{ fontSize: 10, paddingBottom: 15 }}
+                      />
+                      <ReferenceLine y={0} stroke="var(--border)" />
+                      <Bar dataKey="Uang Masuk" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={30} />
+                      <Bar
+                        dataKey="Uang Keluar"
+                        fill="#ef4444"
+                        radius={[4, 4, 0, 0]}
+                        maxBarSize={30}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="Net Cash"
+                        stroke="#3b82f6"
+                        strokeWidth={3}
+                        dot={{ r: 4 }}
+                      />
+                    </ComposedChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+              <div className="card overflow-hidden">
+                <table className="tbl text-sm">
+                  <thead>
+                    <tr>
+                      <th>Tanggal</th>
+                      <th className="text-right">Masuk</th>
+                      <th className="text-right">Keluar</th>
+                      <th className="text-right">Net</th>
+                      <th>Metode Kas Masuk</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(cfData?.rows ?? [])
+                      .slice()
+                      .reverse()
+                      .map((r) => (
+                        <tr key={r.date}>
+                          <td className="font-bold">{r.date}</td>
+                          <td className="text-right text-accent-em font-bold">
+                            {formatRp(r.cash_in)}
+                          </td>
+                          <td className="text-right text-accent-rd">{formatRp(r.cash_out)}</td>
+                          <td
+                            className={`text-right font-black ${
+                              r.net_cash >= 0 ? 'text-blue-500' : 'text-accent-rd'
+                            }`}
+                          >
+                            {formatRp(r.net_cash)}
+                          </td>
+                          <td className="text-[10px] opacity-60">
+                            {Object.entries(r.cash_in_by_method)
+                              .map(([m, a]) => `${methodLabel(m)}: ${formatRp(a)}`)
+                              .join(' · ')}
+                          </td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {tab === 'valuation' && (
+            <div className="card overflow-hidden">
+              <div className="p-5 border-b bg-indigo-500/5 flex justify-between items-end">
+                <h3 className="font-black text-lg">💰 Valuasi Persediaan</h3>
+                <div className="text-right">
+                  <div className="text-[10px] font-bold uppercase text-3">Grand Total</div>
+                  <div className="text-2xl font-black text-indigo-600">
+                    {formatRp(valuation?.grand_total ?? 0)}
+                  </div>
+                </div>
+              </div>
+              <table className="tbl text-sm">
+                <thead>
+                  <tr>
+                    <th>Produk</th>
+                    <th>SKU</th>
+                    <th className="text-right">Stok</th>
+                    <th className="text-right">Harga Beli</th>
+                    <th className="text-right">Subtotal</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(valuation?.rows ?? []).map((r) => (
+                    <tr key={r.product_id}>
+                      <td className="font-bold">{r.product_name}</td>
+                      <td className="text-xs font-mono opacity-50">{r.sku}</td>
+                      <td className="text-right font-bold">
+                        {r.quantity} {r.unit}
+                      </td>
+                      <td className="text-right opacity-60">{formatRp(r.cost_price)}</td>
+                      <td className="text-right font-black text-indigo-500">
+                        {formatRp(r.total_value)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       )}
     </div>

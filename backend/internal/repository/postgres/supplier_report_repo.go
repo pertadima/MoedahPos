@@ -303,3 +303,132 @@ func (r *ReportRepo) ProfitSummary(ctx context.Context, storeID string, from, to
 	}
 	return rows, nil
 }
+
+// cashInRow is a scanned row from the cash_in CTE.
+type cashInRow struct {
+	Date          string  `db:"date"`
+	CashIn        float64 `db:"cash_in"`
+	PaymentMethod string  `db:"payment_method"`
+}
+
+// cashOutRow is a scanned row from the cash_out aggregation.
+type cashOutRow struct {
+	Date    string  `db:"date"`
+	CashOut float64 `db:"cash_out"`
+}
+
+// cashFlowDayData is the in-memory accumulator for a single day.
+type cashFlowDayData struct {
+	cashIn         float64
+	cashOut        float64
+	cashInByMethod map[string]float64
+}
+
+const cashInQ = `
+	SELECT
+		TO_CHAR(t.created_at AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD') AS date,
+		SUM(t.total) AS cash_in,
+		t.payment_method
+	FROM transactions t
+	WHERE t.store_id = $1
+	  AND t.status = 'completed'
+	  AND t.created_at >= $2 AND t.created_at < $3
+	GROUP BY 1, t.payment_method
+	ORDER BY 1`
+
+const cashOutQ = `
+	SELECT date, SUM(cash_out) AS cash_out FROM (
+		SELECT
+			TO_CHAR(pp.paid_at AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD') AS date,
+			SUM(pp.amount) AS cash_out
+		FROM po_payments pp
+		WHERE pp.store_id = $1
+		  AND pp.paid_at >= $2 AND pp.paid_at < $3
+		GROUP BY 1
+		UNION ALL
+		SELECT
+			TO_CHAR(pr.created_at AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD') AS date,
+			SUM(pr.amount_paid) AS cash_out
+		FROM payment_records pr
+		JOIN purchase_order_termins pot ON pot.id = pr.termin_id
+		JOIN purchase_orders po ON po.id = pot.po_id
+		WHERE po.store_id = $1
+		  AND pr.created_at >= $2 AND pr.created_at < $3
+		GROUP BY 1
+		UNION ALL
+		SELECT
+			TO_CHAR(e.expense_date, 'YYYY-MM-DD') AS date,
+			SUM(e.amount) AS cash_out
+		FROM expenses e
+		WHERE e.store_id = $1
+		  AND e.payment_status = 'paid'
+		  AND e.expense_date >= $2::date AND e.expense_date < $3::date
+		GROUP BY 1
+	) sub
+	GROUP BY date
+	ORDER BY date`
+
+// mergeCashFlowRows combines in/out rows into a sorted day-level slice.
+func mergeCashFlowRows(inRows []cashInRow, outRows []cashOutRow) []dto.CashFlowDayRow {
+	dayMap := map[string]*cashFlowDayData{}
+	allDates := map[string]struct{}{}
+
+	for _, row := range inRows {
+		allDates[row.Date] = struct{}{}
+		d, ok := dayMap[row.Date]
+		if !ok {
+			d = &cashFlowDayData{cashInByMethod: map[string]float64{}}
+			dayMap[row.Date] = d
+		}
+		d.cashIn += row.CashIn
+		d.cashInByMethod[row.PaymentMethod] += row.CashIn
+	}
+	for _, row := range outRows {
+		allDates[row.Date] = struct{}{}
+		d, ok := dayMap[row.Date]
+		if !ok {
+			d = &cashFlowDayData{cashInByMethod: map[string]float64{}}
+			dayMap[row.Date] = d
+		}
+		d.cashOut += row.CashOut
+	}
+
+	dates := make([]string, 0, len(allDates))
+	for d := range allDates {
+		dates = append(dates, d)
+	}
+	// YYYY-MM-DD strings sort lexicographically = chronologically
+	for i := range dates {
+		for j := i + 1; j < len(dates); j++ {
+			if dates[i] > dates[j] {
+				dates[i], dates[j] = dates[j], dates[i]
+			}
+		}
+	}
+
+	result := make([]dto.CashFlowDayRow, 0, len(dates))
+	for _, d := range dates {
+		dd := dayMap[d]
+		result = append(result, dto.CashFlowDayRow{
+			Date:           d,
+			CashIn:         dd.cashIn,
+			CashOut:        dd.cashOut,
+			NetCash:        dd.cashIn - dd.cashOut,
+			CashInByMethod: dd.cashInByMethod,
+		})
+	}
+	return result
+}
+
+// CashFlowSummary builds per-day cash in/out rows from actual paid transactions.
+func (r *ReportRepo) CashFlowSummary(ctx context.Context, storeID string, from, to time.Time) ([]dto.CashFlowDayRow, error) {
+	var inRows []cashInRow
+	if err := r.db.SelectContext(ctx, &inRows, cashInQ, storeID, from, to); err != nil {
+		return nil, fmt.Errorf("ReportRepo.CashFlowSummary cash_in: %w", err)
+	}
+	var outRows []cashOutRow
+	if err := r.db.SelectContext(ctx, &outRows, cashOutQ, storeID, from, to); err != nil {
+		return nil, fmt.Errorf("ReportRepo.CashFlowSummary cash_out: %w", err)
+	}
+	return mergeCashFlowRows(inRows, outRows), nil
+}

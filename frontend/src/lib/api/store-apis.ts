@@ -165,6 +165,12 @@ export const reportsApi = {
     if (dateTo) q.set('date_to', dateTo);
     return api.get<any>(`/stores/${storeId}/reports/profit?${q}`);
   },
+  cashFlow: (storeId: string, dateFrom?: string, dateTo?: string) => {
+    const q = new URLSearchParams();
+    if (dateFrom) q.set('date_from', dateFrom);
+    if (dateTo) q.set('date_to', dateTo);
+    return api.get<any>(`/stores/${storeId}/reports/cash-flow?${q}`);
+  },
 };
 
 export const priceHistoryApi = {

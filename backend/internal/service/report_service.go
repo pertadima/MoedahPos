@@ -145,3 +145,29 @@ func (s *ReportService) ProfitSummary(ctx context.Context, filter dto.ReportFilt
 		ProfitMargin: margin,
 	}, nil
 }
+
+// CashFlow returns actual cash movement (in/out) per day for a date range.
+func (s *ReportService) CashFlow(ctx context.Context, filter dto.ReportFilter) (*dto.CashFlowResponse, error) {
+	from, to := defaultDateRange(filter)
+	rows, err := s.reportRepo.CashFlowSummary(ctx, filter.StoreID, from, to)
+	if err != nil {
+		return nil, fmt.Errorf("cash flow: %w", err)
+	}
+
+	var totalIn, totalOut float64
+	totalByMethod := map[string]float64{}
+	for _, r := range rows {
+		totalIn += r.CashIn
+		totalOut += r.CashOut
+		for method, amt := range r.CashInByMethod {
+			totalByMethod[method] += amt
+		}
+	}
+	return &dto.CashFlowResponse{
+		TotalCashIn:    totalIn,
+		TotalCashOut:   totalOut,
+		NetCash:        totalIn - totalOut,
+		CashInByMethod: totalByMethod,
+		Rows:           rows,
+	}, nil
+}

@@ -105,3 +105,23 @@ type ProfitSummaryResponse struct {
 	NetProfit    float64           `json:"net_profit"`
 	ProfitMargin float64           `json:"profit_margin"` // %
 }
+
+// ─── Cash Flow ────────────────────────────────────────────────────────────────
+
+// CashFlowDayRow is one day of actual cash movement.
+type CashFlowDayRow struct {
+	Date           string             `json:"date"            db:"date"`
+	CashIn         float64            `json:"cash_in"         db:"cash_in"`
+	CashOut        float64            `json:"cash_out"        db:"cash_out"`
+	NetCash        float64            `json:"net_cash"        db:"net_cash"`
+	CashInByMethod map[string]float64 `json:"cash_in_by_method"`
+}
+
+// CashFlowResponse is the full response for the cash-flow endpoint.
+type CashFlowResponse struct {
+	TotalCashIn    float64            `json:"total_cash_in"`
+	TotalCashOut   float64            `json:"total_cash_out"`
+	NetCash        float64            `json:"net_cash"`
+	CashInByMethod map[string]float64 `json:"cash_in_by_method"`
+	Rows           []CashFlowDayRow   `json:"rows"`
+}

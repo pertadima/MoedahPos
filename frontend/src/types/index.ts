@@ -250,6 +250,7 @@ export interface SalesSummaryRow {
   gross_profit: number;
   total_expense: number;
   net_profit: number;
+  profit_margin?: number;
 }
 export interface SalesSummaryResponse {
   rows: SalesSummaryRow[];
@@ -267,6 +268,9 @@ export interface SalesByProductRow {
   sku: string;
   total_quantity: number;
   total_revenue: number;
+  total_cost: number;
+  gross_profit: number;
+  profit_margin: number;
   total_tax: number;
 }
 export interface StockValuationResponse {

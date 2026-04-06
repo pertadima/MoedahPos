@@ -94,5 +94,17 @@ func (h *ReportHandler) ProfitSummary(w http.ResponseWriter, r *http.Request) {
 	response.Success(w, result)
 }
 
+// GET /stores/:storeId/reports/cash-flow?date_from=&date_to=
+func (h *ReportHandler) CashFlow(w http.ResponseWriter, r *http.Request) {
+	storeID := chi.URLParam(r, "storeId")
+	result, err := h.reportSvc.CashFlow(r.Context(), filterFromQuery(r, storeID))
+	if err != nil {
+		h.log.Error().Err(err).Msg("cash flow failed")
+		response.InternalError(w)
+		return
+	}
+	response.Success(w, result)
+}
+
 // unused errors suppressor
 var _ = errors.New
