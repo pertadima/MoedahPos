@@ -85,6 +85,7 @@ func main() {
 	terminRepo := postgres.NewTerminRepo(sqlxDB)               // PO installment schedule
 	paymentRecordRepo := postgres.NewPaymentRecordRepo(sqlxDB) // PO payment records
 	expenseRepo := postgres.NewExpenseRepo(sqlxDB)
+	stockAdjustmentRepo := postgres.NewStockAdjustmentRepo(sqlxDB)
 
 	// ── Services ──────────────────────────────────────────────────────────────
 	authSvc := service.NewAuthService(userRepo, refreshTokenRepo, jwtMgr, cfg.Bcrypt.Cost, log)
@@ -103,6 +104,7 @@ func main() {
 	userAdminSvc := service.NewUserAdminService(userRepo, roleRepo, cfg.Bcrypt.Cost, log)
 	terminSvc := service.NewTerminService(terminRepo, paymentRecordRepo, poRepo, storeRepo, log)
 	expenseSvc := service.NewExpenseService(expenseRepo, log)
+	stockAdjustmentSvc := service.NewStockAdjustmentService(stockAdjustmentRepo)
 
 	// ── Handlers ──────────────────────────────────────────────────────────────
 	authHandler := handler.NewAuthHandler(authSvc, validate, log)
@@ -120,28 +122,30 @@ func main() {
 	batchStockHandler := handler.NewBatchStockHandler(batchSvc, log) // FIFO batch inventory
 	terminHandler := handler.NewTerminHandler(terminSvc, validate, log)
 	expenseHandler := handler.NewExpenseHandler(expenseSvc, validate, log)
+	stockAdjustmentHandler := handler.NewStockAdjustmentHandler(stockAdjustmentSvc, validate, &log)
 
 	// ── Router ────────────────────────────────────────────────────────────────
 	r := router.New(&router.Dependencies{
-		AuthHandler:          authHandler,
-		JWTManager:           jwtMgr,
-		StoreHandler:         storeHandler,
-		ProductHandler:       productHandler,
-		StockHandler:         stockHandler,
-		TransactionHandler:   transactionHandler,
-		PurchaseOrderHandler: poHandler,
-		SupplierHandler:      supplierHandler,
-		ReportHandler:        reportHandler,
-		RestaurantHandler:    restaurantHandler,
-		PriceHistoryHandler:  priceHistoryHandler,
-		CustomerHandler:      customerHandler,
-		UserAdminHandler:     userAdminHandler,
-		BatchStockHandler:    batchStockHandler,
-		TerminHandler:        terminHandler,
-		ExpenseHandler:       expenseHandler,
-		RoleStore:            roleStore,
-		DB:                   sqlxDB,
-		Log:                  log,
+		AuthHandler:            authHandler,
+		JWTManager:             jwtMgr,
+		StoreHandler:           storeHandler,
+		ProductHandler:         productHandler,
+		StockHandler:           stockHandler,
+		TransactionHandler:     transactionHandler,
+		PurchaseOrderHandler:   poHandler,
+		SupplierHandler:        supplierHandler,
+		ReportHandler:          reportHandler,
+		RestaurantHandler:      restaurantHandler,
+		PriceHistoryHandler:    priceHistoryHandler,
+		CustomerHandler:        customerHandler,
+		UserAdminHandler:       userAdminHandler,
+		BatchStockHandler:      batchStockHandler,
+		TerminHandler:          terminHandler,
+		ExpenseHandler:         expenseHandler,
+		StockAdjustmentHandler: stockAdjustmentHandler,
+		RoleStore:              roleStore,
+		DB:                     sqlxDB,
+		Log:                    log,
 	})
 
 	// ── HTTP Server ───────────────────────────────────────────────────────────

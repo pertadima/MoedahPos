@@ -161,7 +161,8 @@ const baseGroups: NavGroup[] = [
         label: 'Riwayat Harga',
         permission: 'products.read',
       },
-      { href: '/stock', icon: Warehouse, label: 'Stok', permission: 'stock.read' },
+      { href: '/stock', icon: Warehouse, label: 'Stok Terkini', permission: 'stock.read' },
+      { href: '/stock-adjustments', icon: ClipboardList, label: 'Penyesuaian Stok', permission: 'stock.update' },
     ],
   },
   {
