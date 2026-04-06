@@ -49,23 +49,25 @@ export default function StockAdjustmentsPage() {
   });
 
   const [productSearch, setProductSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
+  const [isSearchingProducts, setIsSearchingProducts] = useState(false);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(productSearch);
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [productSearch]);
 
   const fetchData = async () => {
     if (!storeId) return;
     try {
       setLoading(true);
       setErrorHeader(null);
-      const [adjRes, prodRes] = await Promise.all([
-        stockAdjustmentApi.getHistory(storeId),
-        api.get<Product[]>(`/stores/${storeId}/products?per_page=1000`),
-      ]);
+      const adjRes = await stockAdjustmentApi.getHistory(storeId);
       const adjData = Array.isArray(adjRes?.data) ? adjRes.data : (adjRes?.data as any)?.data || [];
-      const prodData = Array.isArray(prodRes?.data)
-        ? prodRes.data
-        : (prodRes?.data as any)?.data || [];
       setAdjustments(adjData);
-      setProducts(prodData);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Gagal memuat data';
       setErrorHeader(msg);
@@ -77,6 +79,28 @@ export default function StockAdjustmentsPage() {
   useEffect(() => {
     fetchData();
   }, [storeId]);
+
+  useEffect(() => {
+    if (!storeId) return;
+    const fetchSearchedProducts = async () => {
+      try {
+        setIsSearchingProducts(true);
+        const params = new URLSearchParams({ per_page: '20' });
+        // Hanya lakukan pencarian text jika product belum dipilih ATAU jika mengubah input lagi
+        if (debouncedSearch && !formData.product_id) {
+          params.append('search', debouncedSearch);
+        }
+        const res = await api.get<Product[]>(`/stores/${storeId}/products?${params.toString()}`);
+        const prodData = Array.isArray(res?.data) ? res.data : (res?.data as any)?.data || [];
+        setProducts(prodData);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setIsSearchingProducts(false);
+      }
+    };
+    fetchSearchedProducts();
+  }, [storeId, debouncedSearch, formData.product_id]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -413,67 +437,69 @@ export default function StockAdjustmentsPage() {
                           '0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1)',
                       }}
                     >
-                      {products
-                        .filter(
-                          p =>
-                            p.name.toLowerCase().includes(productSearch.toLowerCase()) ||
-                            p.sku.toLowerCase().includes(productSearch.toLowerCase())
-                        )
-                        .map(p => (
-                          <button
-                            key={p.id}
-                            type="button"
-                            style={{
-                              width: '100%',
-                              textAlign: 'left',
-                              padding: '10px 14px',
-                              background:
-                                formData.product_id === p.id ? 'var(--bg-surface)' : 'transparent',
-                              border: 'none',
-                              borderBottom: '1px solid var(--border-light)',
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'space-between',
-                              transition: 'background 0.2s',
-                            }}
-                            onClick={() => {
-                              setFormData({ ...formData, product_id: p.id });
-                              setProductSearch(`${p.name} (${p.sku})`);
-                              setShowDropdown(false);
-                            }}
-                            onMouseOver={e =>
-                              (e.currentTarget.style.background = 'var(--bg-surface)')
-                            }
-                            onMouseOut={e =>
-                              (e.currentTarget.style.background =
-                                formData.product_id === p.id ? 'var(--bg-surface)' : 'transparent')
-                            }
-                          >
-                            <div>
-                              <div
-                                style={{
-                                  fontWeight: 600,
-                                  fontSize: '0.85rem',
-                                  color: 'var(--text-1)',
-                                }}
-                              >
-                                {p.name}
-                              </div>
-                              <div style={{ fontSize: '0.75rem', color: 'var(--text-3)' }}>
-                                SKU: {p.sku} | Unit: {p.unit}
-                              </div>
+                      {products.map(p => (
+                        <button
+                          key={p.id}
+                          type="button"
+                          style={{
+                            width: '100%',
+                            textAlign: 'left',
+                            padding: '10px 14px',
+                            background:
+                              formData.product_id === p.id ? 'var(--bg-surface)' : 'transparent',
+                            border: 'none',
+                            borderBottom: '1px solid var(--border-light)',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            transition: 'background 0.2s',
+                          }}
+                          onClick={() => {
+                            setFormData({ ...formData, product_id: p.id });
+                            setProductSearch(`${p.name} (${p.sku})`);
+                            setShowDropdown(false);
+                          }}
+                          onMouseOver={e =>
+                            (e.currentTarget.style.background = 'var(--bg-surface)')
+                          }
+                          onMouseOut={e =>
+                            (e.currentTarget.style.background =
+                              formData.product_id === p.id ? 'var(--bg-surface)' : 'transparent')
+                          }
+                        >
+                          <div>
+                            <div
+                              style={{
+                                fontWeight: 600,
+                                fontSize: '0.85rem',
+                                color: 'var(--text-1)',
+                              }}
+                            >
+                              {p.name}
                             </div>
-                            {formData.product_id === p.id && (
-                              <Check size={16} style={{ color: 'var(--accent-em)' }} />
-                            )}
-                          </button>
-                        ))}
-                      {products.filter(
-                        p =>
-                          p.name.toLowerCase().includes(productSearch.toLowerCase()) ||
-                          p.sku.toLowerCase().includes(productSearch.toLowerCase())
-                      ).length === 0 && (
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-3)' }}>
+                              SKU: {p.sku} | Unit: {p.unit}
+                            </div>
+                          </div>
+                          {formData.product_id === p.id && (
+                            <Check size={16} style={{ color: 'var(--accent-em)' }} />
+                          )}
+                        </button>
+                      ))}
+                      {isSearchingProducts && (
+                        <div
+                          style={{
+                            padding: '16px',
+                            fontSize: '0.8rem',
+                            color: 'var(--text-3)',
+                            textAlign: 'center',
+                          }}
+                        >
+                          Mencari produk...
+                        </div>
+                      )}
+                      {!isSearchingProducts && products.length === 0 && (
                         <div
                           style={{
                             padding: '16px',
