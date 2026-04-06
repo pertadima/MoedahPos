@@ -534,24 +534,27 @@ export default function UnifiedReportsPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {(summary?.rows ?? []).map((r, i) => (
-                      <tr key={`${r.date}-${i}`}>
-                        <td className="font-bold">{formatDate(r.date)}</td>
-                        <td className="!text-right">{r.transaction_count}</td>
-                        <td className="!text-right font-black text-accent-em">
-                          {formatRp(r.total_sales)}
-                        </td>
-                        <td className="!text-right text-warning font-semibold">
-                          {formatRp(r.gross_profit)}
-                        </td>
-                        <td className="!text-right text-blue-500 font-bold">
-                          {formatRp(r.net_profit)}
-                        </td>
-                        <td className="!text-center">
-                          <ProfitMarginBadge margin={r.profit_margin ?? 0} />
-                        </td>
-                      </tr>
-                    ))}
+                    {(summary?.rows ?? [])
+                      .slice()
+                      .reverse()
+                      .map((r, i) => (
+                        <tr key={`${r.date}-${i}`}>
+                          <td className="font-bold">{formatDate(r.date)}</td>
+                          <td className="!text-right">{r.transaction_count}</td>
+                          <td className="!text-right font-black text-accent-em">
+                            {formatRp(r.total_sales)}
+                          </td>
+                          <td className="!text-right text-warning font-semibold">
+                            {formatRp(r.gross_profit)}
+                          </td>
+                          <td className="!text-right text-blue-500 font-bold">
+                            {formatRp(r.net_profit)}
+                          </td>
+                          <td className="!text-center">
+                            <ProfitMarginBadge margin={r.profit_margin ?? 0} />
+                          </td>
+                        </tr>
+                      ))}
                   </tbody>
                 </table>
               </div>
@@ -666,22 +669,27 @@ export default function UnifiedReportsPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {profitChartData.map((r, i) => (
-                      <tr key={`${r.period}-${i}`}>
-                        <td className="font-bold">{formatDate(r.period)}</td>
-                        <td className="!text-right font-bold text-accent-em">
-                          {formatRp(r.total_sales)}
-                        </td>
-                        <td className="!text-right opacity-60">{formatRp(r.total_cost)}</td>
-                        <td className="!text-right text-accent-rd">{formatRp(r.total_expense)}</td>
-                        <td className="!text-right text-blue-600 font-black">
-                          {formatRp(r.net_profit)}
-                        </td>
-                        <td className="!text-center">
-                          <ProfitMarginBadge margin={r.profit_margin} />
-                        </td>
-                      </tr>
-                    ))}
+                    {profitChartData
+                      .slice()
+                      .reverse()
+                      .map((r, i) => (
+                        <tr key={`${r.period}-${i}`}>
+                          <td className="font-bold">{formatDate(r.period)}</td>
+                          <td className="!text-right font-bold text-accent-em">
+                            {formatRp(r.total_sales)}
+                          </td>
+                          <td className="!text-right opacity-60">{formatRp(r.total_cost)}</td>
+                          <td className="!text-right text-accent-rd">
+                            {formatRp(r.total_expense)}
+                          </td>
+                          <td className="!text-right text-blue-600 font-black">
+                            {formatRp(r.net_profit)}
+                          </td>
+                          <td className="!text-center">
+                            <ProfitMarginBadge margin={r.profit_margin} />
+                          </td>
+                        </tr>
+                      ))}
                   </tbody>
                 </table>
               </div>
