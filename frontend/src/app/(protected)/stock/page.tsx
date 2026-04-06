@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, useMemo } from 'react';
 import {
   AlertTriangle,
   ChevronDown,
@@ -247,6 +247,12 @@ export default function StockPage() {
   const [tab, setTab] = useState<Tab>('stok');
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [currentPage, setCurrentPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
 
   const storeId = selectedStore?.store_id;
   const role = selectedStore?.role;
@@ -374,6 +380,23 @@ export default function StockPage() {
     });
   };
 
+  // ── Pagination Logic ────────────────────────────────────────────────────────
+  const filteredLevels = useMemo(() => {
+    if (!searchQuery) return levels;
+    const lowerQ = searchQuery.toLowerCase();
+    return levels.filter(
+      l =>
+        l.product_name.toLowerCase().includes(lowerQ) ||
+        l.product_sku.toLowerCase().includes(lowerQ)
+    );
+  }, [levels, searchQuery]);
+
+  const itemsPerPage = 20;
+  const totalItems = filteredLevels.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedLevels = filteredLevels.slice(startIndex, startIndex + itemsPerPage);
+
   // ── No store selected ──────────────────────────────────────────────────────
 
   if (!selectedStore) {
@@ -455,26 +478,55 @@ export default function StockPage() {
       ) : tab === 'stok' ? (
         // ── Combined Stock + Batch (expandable) ─────────────────────────────
         <div className="card" style={{ overflow: 'hidden' }}>
-          {/* Legend */}
+          {/* Search & Legend */}
           <div
             style={{
               padding: '10px 16px',
               borderBottom: '1px solid var(--border)',
               display: 'flex',
+              justifyContent: 'space-between',
               alignItems: 'center',
               gap: 16,
-              fontSize: '0.78rem',
-              color: 'var(--text-3)',
+              flexWrap: 'wrap',
             }}
           >
-            <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-              <ChevronRight size={12} />
-              Klik baris untuk lihat detail batch FIFO
-            </span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-              <Layers size={12} />
-              Qty batch = total dari semua batch aktif
-            </span>
+            <div style={{ position: 'relative', width: 280, maxWidth: '100%' }}>
+              <Search
+                size={15}
+                style={{
+                  position: 'absolute',
+                  left: 12,
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  color: 'var(--text-3)',
+                }}
+              />
+              <input
+                type="text"
+                placeholder="Cari produk atau SKU..."
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '8px 12px 8px 36px',
+                  borderRadius: 6,
+                  border: '1px solid var(--border)',
+                  background: 'var(--bg-surface)',
+                  color: 'var(--text-1)',
+                  fontSize: '0.85rem',
+                }}
+              />
+            </div>
+            <div style={{ display: 'flex', gap: 16, fontSize: '0.78rem', color: 'var(--text-3)' }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                <ChevronRight size={12} />
+                Klik baris untuk lihat detail batch FIFO
+              </span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                <Layers size={12} />
+                Qty batch = total dari semua batch aktif
+              </span>
+            </div>
           </div>
 
           <table className="tbl">
@@ -491,7 +543,7 @@ export default function StockPage() {
               </tr>
             </thead>
             <tbody>
-              {levels.map(level => (
+              {paginatedLevels.map(level => (
                 <StockRow
                   key={level.product_id}
                   level={level}
@@ -503,6 +555,52 @@ export default function StockPage() {
               ))}
             </tbody>
           </table>
+
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div
+              style={{
+                padding: '12px 16px',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                borderTop: '1px solid var(--border)',
+                background: 'var(--bg-card)',
+              }}
+            >
+              <div style={{ fontSize: '0.85rem', color: 'var(--text-3)' }}>
+                Menampilkan {startIndex + 1}-{Math.min(startIndex + itemsPerPage, totalItems)} dari{' '}
+                {totalItems} produk
+              </div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button
+                  className="btn btn-ghost btn-sm"
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                >
+                  Sebelumnya
+                </button>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    margin: '0 8px',
+                    fontSize: '0.85rem',
+                    fontWeight: 500,
+                  }}
+                >
+                  {currentPage} / {totalPages}
+                </div>
+                <button
+                  className="btn btn-ghost btn-sm"
+                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                >
+                  Selanjutnya
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       ) : (
         // ── Riwayat Mutasi ──────────────────────────────────────────────────
