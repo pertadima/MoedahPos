@@ -58,7 +58,7 @@ export default function StockAdjustmentsPage() {
       setErrorHeader(null);
       const [adjRes, prodRes] = await Promise.all([
         stockAdjustmentApi.getHistory(storeId),
-        api.get<Product[]>(`/stores/${storeId}/products`),
+        api.get<Product[]>(`/stores/${storeId}/products?per_page=1000`),
       ]);
       const adjData = Array.isArray(adjRes?.data) ? adjRes.data : (adjRes?.data as any)?.data || [];
       const prodData = Array.isArray(prodRes?.data)
