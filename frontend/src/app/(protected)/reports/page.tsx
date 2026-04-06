@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { reportsApi } from '@/lib/api/store-apis';
-import { formatRp, todayStr, thirtyDaysAgoStr } from '@/lib/utils';
+import { formatRp, todayStr, thirtyDaysAgoStr, formatDate } from '@/lib/utils';
 import type { SalesSummaryResponse, SalesByProductRow, SalesSummaryRow } from '@/types';
 import {
   BarChart,
@@ -512,7 +512,8 @@ export default function UnifiedReportsPage() {
                         />
                         <Tooltip
                           contentStyle={TOOLTIP_STYLE}
-                          formatter={(v: number) => [formatRp(v), 'Omzet']}
+                          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                          formatter={(v: any) => [formatRp(Number(v || 0)), 'Omzet']}
                         />
                         <Bar dataKey="sales" fill="#10b981" radius={[4, 4, 0, 0]} />
                       </BarChart>
@@ -535,7 +536,7 @@ export default function UnifiedReportsPage() {
                   <tbody>
                     {(summary?.rows ?? []).map((r, i) => (
                       <tr key={`${r.date}-${i}`}>
-                        <td className="font-bold">{r.date}</td>
+                        <td className="font-bold">{formatDate(r.date)}</td>
                         <td className="!text-right">{r.transaction_count}</td>
                         <td className="!text-right font-black text-accent-em">
                           {formatRp(r.total_sales)}
@@ -667,7 +668,7 @@ export default function UnifiedReportsPage() {
                   <tbody>
                     {profitChartData.map((r, i) => (
                       <tr key={`${r.period}-${i}`}>
-                        <td className="font-bold">{r.period}</td>
+                        <td className="font-bold">{formatDate(r.period)}</td>
                         <td className="!text-right font-bold text-accent-em">
                           {formatRp(r.total_sales)}
                         </td>
@@ -765,7 +766,7 @@ export default function UnifiedReportsPage() {
                       .reverse()
                       .map((r, i) => (
                         <tr key={`${r.date}-${i}`}>
-                          <td className="font-bold">{r.date}</td>
+                          <td className="font-bold">{formatDate(r.date)}</td>
                           <td className="!text-right text-accent-em font-bold">
                             {formatRp(r.cash_in)}
                           </td>
