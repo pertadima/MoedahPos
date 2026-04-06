@@ -222,6 +222,179 @@ function SearchableSelect({
   );
 }
 
+// ── Server-side product search combobox ───────────────────────────────────────
+function ProductSearchSelect({
+  storeId,
+  value,
+  selectedName,
+  onSelect,
+}: {
+  storeId: string;
+  value: string;
+  selectedName?: string;
+  onSelect: (product: Product) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState('');
+  const [debouncedQuery, setDebouncedQuery] = useState('');
+  const [results, setResults] = useState<Product[]>([]);
+  const [searching, setSearching] = useState(false);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+
+  // Debounce
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedQuery(query), 300);
+    return () => clearTimeout(t);
+  }, [query]);
+
+  // Fetch from API
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    setSearching(true);
+    productsApi
+      .list(storeId, { search: debouncedQuery || undefined, per_page: 20 })
+      .then(res => {
+        if (!cancelled) setResults((res.data as any).data ?? []);
+      })
+      .catch(console.error)
+      .finally(() => {
+        if (!cancelled) setSearching(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [storeId, debouncedQuery, open]);
+
+  // Click outside
+  useEffect(() => {
+    function handler(e: MouseEvent) {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const displayName = selectedName || (value ? value : '');
+
+  return (
+    <div ref={wrapperRef} style={{ position: 'relative', width: '100%' }}>
+      <div
+        className="input"
+        style={{
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          minHeight: 38,
+        }}
+        onClick={() => {
+          setOpen(o => !o);
+          setQuery('');
+        }}
+      >
+        <span
+          style={{
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+            color: displayName ? 'inherit' : 'var(--text-3)',
+          }}
+        >
+          {displayName || 'Pilih produk...'}
+        </span>
+        <ChevronRight size={14} style={{ transform: open ? 'rotate(90deg)' : 'rotate(0)' }} />
+      </div>
+
+      {open && (
+        <div
+          style={{
+            position: 'absolute',
+            top: '100%',
+            left: 0,
+            right: 0,
+            zIndex: 3000,
+            background: 'var(--bg-card)',
+            border: '1px solid var(--border)',
+            borderRadius: 8,
+            marginTop: 4,
+            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+            maxHeight: 300,
+            display: 'flex',
+            flexDirection: 'column',
+          }}
+        >
+          <div style={{ padding: 8, borderBottom: '1px solid var(--border)' }}>
+            <input
+              autoFocus
+              className="input"
+              placeholder="Cari nama / SKU produk..."
+              style={{ width: '100%', height: 32, fontSize: '0.82rem' }}
+              value={query}
+              onChange={e => setQuery(e.target.value)}
+            />
+          </div>
+          <div style={{ overflowY: 'auto', flex: 1, padding: 4 }}>
+            {searching ? (
+              <div
+                style={{
+                  padding: '12px',
+                  textAlign: 'center',
+                  fontSize: '0.82rem',
+                  color: 'var(--text-3)',
+                }}
+              >
+                Mencari...
+              </div>
+            ) : results.length === 0 ? (
+              <div
+                style={{
+                  padding: '12px',
+                  textAlign: 'center',
+                  fontSize: '0.82rem',
+                  color: 'var(--text-3)',
+                }}
+              >
+                {debouncedQuery ? 'Tidak ditemukan' : 'Ketik untuk mencari produk'}
+              </div>
+            ) : (
+              results.map(p => (
+                <div
+                  key={p.id}
+                  style={{
+                    padding: '8px 12px',
+                    cursor: 'pointer',
+                    fontSize: '0.82rem',
+                    borderRadius: 6,
+                    background: p.id === value ? 'var(--bg-active)' : 'transparent',
+                  }}
+                  onClick={() => {
+                    onSelect(p);
+                    setOpen(false);
+                  }}
+                  onMouseEnter={e => {
+                    if (p.id !== value) e.currentTarget.style.background = 'var(--bg-hover)';
+                  }}
+                  onMouseLeave={e => {
+                    if (p.id !== value) e.currentTarget.style.background = 'transparent';
+                  }}
+                >
+                  <div style={{ fontWeight: 500 }}>{p.name}</div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-3)' }}>
+                    SKU: {p.sku} · {p.unit}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 type ActionType = 'submit' | 'receive' | 'cancel';
 
 interface PayableSummary {
@@ -1786,7 +1959,7 @@ export default function PurchaseOrdersPage() {
   const [confirmLoading, setConfirmLoading] = useState(false);
   const [payments, setPayments] = useState<POPayment[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<Map<string, Product>>(new Map());
   const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -1818,15 +1991,14 @@ export default function PurchaseOrdersPage() {
       try {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          // If the parsed items are NOT in our preloaded `products` due to arbitrary limits, inject them so they are searchable in the select dropdown!
+          // Seed the product cache so the form items display their names correctly
           setProducts(prevProducts => {
-            const missing = parsed
-              .filter(
-                (it: any) => !prevProducts.find(p => p.id === it.product_id) && it.product_name
-              )
-              .map(
-                (it: any) =>
-                  ({
+            const next = new Map(prevProducts);
+            parsed
+              .filter((it: any) => it.product_id && it.product_name)
+              .forEach((it: any) => {
+                if (!next.has(it.product_id)) {
+                  next.set(it.product_id, {
                     id: it.product_id,
                     name: it.product_name,
                     sku: it.product_sku || '',
@@ -1839,9 +2011,10 @@ export default function PurchaseOrdersPage() {
                     is_active: true,
                     created_at: new Date().toISOString(),
                     updated_at: new Date().toISOString(),
-                  }) as unknown as Product
-              );
-            return [...prevProducts, ...missing];
+                  } as unknown as Product);
+                }
+              });
+            return next;
           });
 
           setForm(f => ({
@@ -1867,35 +2040,9 @@ export default function PurchaseOrdersPage() {
 
   useEffect(() => {
     if (!storeId) return;
-    Promise.all([
-      suppliersApi.list({ per_page: 100 }),
-      productsApi.list(storeId, { per_page: 5000 }),
-      storesApi.get(storeId),
-    ]).then(([s, p, st]) => {
+    Promise.all([suppliersApi.list({ per_page: 100 }), storesApi.get(storeId)]).then(([s, st]) => {
       setSuppliers((s.data as any).data ?? []);
-      const prods = (p.data as any).data ?? [];
-      setProducts(prev => {
-        const existingIds = new Set(prods.map((pr: Product) => pr.id));
-        const missing = prev.filter(pr => !existingIds.has(pr.id));
-        return [...prods, ...missing];
-      });
       setStoreDetail(st.data as Store);
-
-      setForm(f => {
-        if (!f.items.length) return f;
-        let changed = false;
-        const newItems = f.items.map(item => {
-          if (item.unit_cost === 0 && item.product_id) {
-            const prod = prods.find((pr: Product) => pr.id === item.product_id);
-            if (prod && prod.cost_price > 0) {
-              changed = true;
-              return { ...item, unit_cost: prod.cost_price };
-            }
-          }
-          return item;
-        });
-        return changed ? { ...f, items: newItems } : f;
-      });
     });
   }, [storeId]);
 
@@ -1998,7 +2145,7 @@ export default function PurchaseOrdersPage() {
       items: f.items.map((item, idx) => {
         if (idx !== i) return item;
         if (k === 'product_id') {
-          const p = products.find(p => p.id === String(v));
+          const p = products.get(String(v));
           return { ...item, product_id: String(v), unit_cost: p?.cost_price ?? item.unit_cost };
         }
         return { ...item, [k]: Number(v) };
@@ -2456,7 +2603,7 @@ export default function PurchaseOrdersPage() {
                   ))}
                 </div>
                 {form.items.map((item, i) => {
-                  const sp = products.find(p => p.id === item.product_id);
+                  const sp = products.get(item.product_id);
                   const lineTotal = item.quantity * item.unit_cost;
                   return (
                     <div key={i} style={{ marginBottom: 8 }}>
@@ -2467,11 +2614,32 @@ export default function PurchaseOrdersPage() {
                           gap: 6,
                         }}
                       >
-                        <SearchableSelect
+                        <ProductSearchSelect
+                          storeId={storeId!}
                           value={item.product_id}
-                          onChange={v => updateItem(i, 'product_id', v)}
-                          placeholder={item.product_name || 'Pilih produk...'}
-                          options={products.map(p => ({ value: p.id, label: p.name }))}
+                          selectedName={
+                            item.product_name ||
+                            (item.product_id ? products.get(item.product_id)?.name : undefined)
+                          }
+                          onSelect={p => {
+                            // Cache the product for cost_price lookup
+                            setProducts(prev => new Map(prev).set(p.id, p));
+                            setForm(f => ({
+                              ...f,
+                              items: f.items.map((it, idx) =>
+                                idx !== i
+                                  ? it
+                                  : {
+                                      ...it,
+                                      product_id: p.id,
+                                      product_name: p.name,
+                                      product_sku: p.sku,
+                                      unit: p.unit,
+                                      unit_cost: p.cost_price > 0 ? p.cost_price : it.unit_cost,
+                                    }
+                              ),
+                            }));
+                          }}
                         />
                         <input
                           type="number"
