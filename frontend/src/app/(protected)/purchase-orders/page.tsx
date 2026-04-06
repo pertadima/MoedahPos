@@ -239,7 +239,9 @@ function ProductSearchSelect({
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [results, setResults] = useState<Product[]>([]);
   const [searching, setSearching] = useState(false);
-  const wrapperRef = useRef<HTMLDivElement>(null);
+  const [dropdownStyle, setDropdownStyle] = useState<React.CSSProperties>({});
+  const triggerRef = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Debounce
   useEffect(() => {
@@ -266,10 +268,41 @@ function ProductSearchSelect({
     };
   }, [storeId, debouncedQuery, open]);
 
-  // Click outside
+  // Reposition dropdown on open
+  useEffect(() => {
+    if (!open || !triggerRef.current) return;
+    const rect = triggerRef.current.getBoundingClientRect();
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const dropHeight = 300;
+    if (spaceBelow >= dropHeight) {
+      setDropdownStyle({
+        position: 'fixed',
+        top: rect.bottom + 4,
+        left: rect.left,
+        width: rect.width,
+        zIndex: 9999,
+      });
+    } else {
+      // Open upwards if not enough space below
+      setDropdownStyle({
+        position: 'fixed',
+        bottom: window.innerHeight - rect.top + 4,
+        left: rect.left,
+        width: rect.width,
+        zIndex: 9999,
+      });
+    }
+  }, [open]);
+
+  // Click outside (both trigger and dropdown)
   useEffect(() => {
     function handler(e: MouseEvent) {
-      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
+      if (
+        triggerRef.current &&
+        !triggerRef.current.contains(e.target as Node) &&
+        dropdownRef.current &&
+        !dropdownRef.current.contains(e.target as Node)
+      ) {
         setOpen(false);
       }
     }
@@ -280,8 +313,9 @@ function ProductSearchSelect({
   const displayName = selectedName || (value ? value : '');
 
   return (
-    <div ref={wrapperRef} style={{ position: 'relative', width: '100%' }}>
+    <div style={{ position: 'relative', width: '100%' }}>
       <div
+        ref={triggerRef}
         className="input"
         style={{
           cursor: 'pointer',
@@ -310,17 +344,13 @@ function ProductSearchSelect({
 
       {open && (
         <div
+          ref={dropdownRef}
           style={{
-            position: 'absolute',
-            top: '100%',
-            left: 0,
-            right: 0,
-            zIndex: 3000,
+            ...dropdownStyle,
             background: 'var(--bg-card)',
             border: '1px solid var(--border)',
             borderRadius: 8,
-            marginTop: 4,
-            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+            boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
             maxHeight: 300,
             display: 'flex',
             flexDirection: 'column',
