@@ -283,6 +283,11 @@ export default function UnifiedReportsPage() {
   const [tab, setTab] = useState<Tab>('sales');
   const [groupBy, setGroupBy] = useState<GroupBy>('day');
   const [loading, setLoading] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const [summary, setSummary] = useState<SalesSummaryResponse | null>(null);
   const [byProduct, setByProduct] = useState<SalesByProductRow[]>([]);
@@ -483,34 +488,36 @@ export default function UnifiedReportsPage() {
               <div className="card p-6">
                 <h3 className="text-sm font-bold mb-6">📈 Grafik Omzet Harian</h3>
                 <div className="w-full h-72">
-                  <ResponsiveContainer>
-                    <BarChart data={salesDataForChart}>
-                      <CartesianGrid
-                        strokeDasharray="3 3"
-                        vertical={false}
-                        stroke="var(--border)"
-                      />
-                      <XAxis
-                        dataKey="date"
-                        tick={{ fontSize: 10, fill: 'var(--text-3)' }}
-                        axisLine={false}
-                        tickLine={false}
-                      />
-                      <YAxis
-                        tick={{ fontSize: 10, fill: 'var(--text-3)' }}
-                        axisLine={false}
-                        tickLine={false}
-                        tickFormatter={(v: number) =>
-                          v >= 1000000 ? `${v / 1000000}jt` : `${v / 1000}rb`
-                        }
-                      />
-                      <Tooltip
-                        contentStyle={TOOLTIP_STYLE}
-                        formatter={(v: number) => [formatRp(v), 'Omzet']}
-                      />
-                      <Bar dataKey="sales" fill="#10b981" radius={[4, 4, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
+                  {isMounted && (
+                    <ResponsiveContainer>
+                      <BarChart data={salesDataForChart}>
+                        <CartesianGrid
+                          strokeDasharray="3 3"
+                          vertical={false}
+                          stroke="var(--border)"
+                        />
+                        <XAxis
+                          dataKey="date"
+                          tick={{ fontSize: 10, fill: 'var(--text-3)' }}
+                          axisLine={false}
+                          tickLine={false}
+                        />
+                        <YAxis
+                          tick={{ fontSize: 10, fill: 'var(--text-3)' }}
+                          axisLine={false}
+                          tickLine={false}
+                          tickFormatter={(v: number) =>
+                            v >= 1000000 ? `${v / 1000000}jt` : `${v / 1000}rb`
+                          }
+                        />
+                        <Tooltip
+                          contentStyle={TOOLTIP_STYLE}
+                          formatter={(v: number) => [formatRp(v), 'Omzet']}
+                        />
+                        <Bar dataKey="sales" fill="#10b981" radius={[4, 4, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  )}
                 </div>
               </div>
               <div className="card overflow-hidden">
@@ -526,8 +533,8 @@ export default function UnifiedReportsPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {(summary?.rows ?? []).map(r => (
-                      <tr key={r.date}>
+                    {(summary?.rows ?? []).map((r, i) => (
+                      <tr key={`${r.date}-${i}`}>
                         <td className="font-bold">{r.date}</td>
                         <td className="!text-right">{r.transaction_count}</td>
                         <td className="!text-right font-black text-accent-em">
@@ -603,44 +610,46 @@ export default function UnifiedReportsPage() {
               <div className="card p-6">
                 <h3 className="text-sm font-bold mb-6">📉 Profitability vs Expenses</h3>
                 <div className="w-full h-80">
-                  <ResponsiveContainer>
-                    <ComposedChart data={profitChartData}>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                      <XAxis dataKey="period" tick={{ fontSize: 10 }} />
-                      <YAxis
-                        tick={{ fontSize: 10 }}
-                        tickFormatter={(v: number) =>
-                          v >= 1000000 ? `${v / 1000000}jt` : `${v / 1000}rb`
-                        }
-                      />
-                      <Tooltip contentStyle={TOOLTIP_STYLE} />
-                      <Legend
-                        verticalAlign="top"
-                        wrapperStyle={{ fontSize: 10, paddingBottom: 10 }}
-                      />
-                      <Area
-                        type="monotone"
-                        dataKey="total_sales"
-                        fill="#10b98122"
-                        stroke="#10b981"
-                        name="Revenue"
-                      />
-                      <Bar
-                        dataKey="gross_profit"
-                        fill="#f59e0b"
-                        radius={[4, 4, 0, 0]}
-                        name="Gross"
-                      />
-                      <Bar dataKey="net_profit" fill="#3b82f6" radius={[4, 4, 0, 0]} name="Net" />
-                      <Line
-                        type="monotone"
-                        dataKey="total_expense"
-                        stroke="#ef4444"
-                        name="Expenses"
-                        strokeWidth={2}
-                      />
-                    </ComposedChart>
-                  </ResponsiveContainer>
+                  {isMounted && (
+                    <ResponsiveContainer>
+                      <ComposedChart data={profitChartData}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                        <XAxis dataKey="period" tick={{ fontSize: 10 }} />
+                        <YAxis
+                          tick={{ fontSize: 10 }}
+                          tickFormatter={(v: number) =>
+                            v >= 1000000 ? `${v / 1000000}jt` : `${v / 1000}rb`
+                          }
+                        />
+                        <Tooltip contentStyle={TOOLTIP_STYLE} />
+                        <Legend
+                          verticalAlign="top"
+                          wrapperStyle={{ fontSize: 10, paddingBottom: 10 }}
+                        />
+                        <Area
+                          type="monotone"
+                          dataKey="total_sales"
+                          fill="#10b98122"
+                          stroke="#10b981"
+                          name="Revenue"
+                        />
+                        <Bar
+                          dataKey="gross_profit"
+                          fill="#f59e0b"
+                          radius={[4, 4, 0, 0]}
+                          name="Gross"
+                        />
+                        <Bar dataKey="net_profit" fill="#3b82f6" radius={[4, 4, 0, 0]} name="Net" />
+                        <Line
+                          type="monotone"
+                          dataKey="total_expense"
+                          stroke="#ef4444"
+                          name="Expenses"
+                          strokeWidth={2}
+                        />
+                      </ComposedChart>
+                    </ResponsiveContainer>
+                  )}
                 </div>
               </div>
               <div className="card overflow-hidden">
@@ -656,8 +665,8 @@ export default function UnifiedReportsPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {profitChartData.map(r => (
-                      <tr key={r.period}>
+                    {profitChartData.map((r, i) => (
+                      <tr key={`${r.period}-${i}`}>
                         <td className="font-bold">{r.period}</td>
                         <td className="!text-right font-bold text-accent-em">
                           {formatRp(r.total_sales)}
@@ -698,43 +707,45 @@ export default function UnifiedReportsPage() {
               <div className="card p-6">
                 <h3 className="text-sm font-bold mb-6">📉 Tren Arus Kas Aktual</h3>
                 <div className="w-full h-80">
-                  <ResponsiveContainer>
-                    <ComposedChart data={cfChartData}>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                      <XAxis dataKey="date" tick={{ fontSize: 10 }} />
-                      <YAxis
-                        tick={{ fontSize: 10 }}
-                        tickFormatter={(v: number) =>
-                          v >= 1000000 ? `${v / 1000000}jt` : `${v / 1000}rb`
-                        }
-                      />
-                      <Tooltip content={<CfTooltip />} />
-                      <Legend
-                        verticalAlign="top"
-                        wrapperStyle={{ fontSize: 10, paddingBottom: 15 }}
-                      />
-                      <ReferenceLine y={0} stroke="var(--border)" />
-                      <Bar
-                        dataKey="Uang Masuk"
-                        fill="#10b981"
-                        radius={[4, 4, 0, 0]}
-                        maxBarSize={30}
-                      />
-                      <Bar
-                        dataKey="Uang Keluar"
-                        fill="#ef4444"
-                        radius={[4, 4, 0, 0]}
-                        maxBarSize={30}
-                      />
-                      <Line
-                        type="monotone"
-                        dataKey="Net Cash"
-                        stroke="#3b82f6"
-                        strokeWidth={3}
-                        dot={{ r: 4 }}
-                      />
-                    </ComposedChart>
-                  </ResponsiveContainer>
+                  {isMounted && (
+                    <ResponsiveContainer>
+                      <ComposedChart data={cfChartData}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                        <XAxis dataKey="date" tick={{ fontSize: 10 }} />
+                        <YAxis
+                          tick={{ fontSize: 10 }}
+                          tickFormatter={(v: number) =>
+                            v >= 1000000 ? `${v / 1000000}jt` : `${v / 1000}rb`
+                          }
+                        />
+                        <Tooltip content={<CfTooltip />} />
+                        <Legend
+                          verticalAlign="top"
+                          wrapperStyle={{ fontSize: 10, paddingBottom: 15 }}
+                        />
+                        <ReferenceLine y={0} stroke="var(--border)" />
+                        <Bar
+                          dataKey="Uang Masuk"
+                          fill="#10b981"
+                          radius={[4, 4, 0, 0]}
+                          maxBarSize={30}
+                        />
+                        <Bar
+                          dataKey="Uang Keluar"
+                          fill="#ef4444"
+                          radius={[4, 4, 0, 0]}
+                          maxBarSize={30}
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="Net Cash"
+                          stroke="#3b82f6"
+                          strokeWidth={3}
+                          dot={{ r: 4 }}
+                        />
+                      </ComposedChart>
+                    </ResponsiveContainer>
+                  )}
                 </div>
               </div>
               <div className="card overflow-hidden">
@@ -752,8 +763,8 @@ export default function UnifiedReportsPage() {
                     {(cfData?.rows ?? [])
                       .slice()
                       .reverse()
-                      .map(r => (
-                        <tr key={r.date}>
+                      .map((r, i) => (
+                        <tr key={`${r.date}-${i}`}>
                           <td className="font-bold">{r.date}</td>
                           <td className="!text-right text-accent-em font-bold">
                             {formatRp(r.cash_in)}
@@ -801,8 +812,8 @@ export default function UnifiedReportsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {(valuation?.rows ?? []).map(r => (
-                    <tr key={r.product_id}>
+                  {(valuation?.rows ?? []).map((r, i) => (
+                    <tr key={`${r.product_id}-${i}`}>
                       <td className="font-bold">{r.product_name}</td>
                       <td className="text-xs font-mono opacity-50">{r.sku}</td>
                       <td className="!text-right font-bold">
