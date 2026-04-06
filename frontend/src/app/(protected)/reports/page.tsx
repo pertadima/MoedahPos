@@ -564,8 +564,8 @@ export default function UnifiedReportsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {byProduct.map(r => (
-                    <tr key={r.product_id}>
+                  {byProduct.map((r, i) => (
+                    <tr key={`${r.product_id}-${i}`}>
                       <td className="font-bold">{r.product_name}</td>
                       <td className="text-xs font-mono opacity-50">{r.sku}</td>
                       <td className="!text-right font-bold">{r.total_quantity}</td>
