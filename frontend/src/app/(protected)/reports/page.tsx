@@ -12,7 +12,6 @@ import {
   Banknote,
   Smartphone,
   ArrowUpRight,
-  ArrowDownRight,
   Calendar,
   Layers,
 } from 'lucide-react';
@@ -334,7 +333,7 @@ export default function UnifiedReportsPage() {
   const profitChartData = useMemo(() => profitData?.rows ?? [], [profitData]);
   const cfChartData = useMemo(
     () =>
-      (cfData?.rows ?? []).map((r) => ({
+      (cfData?.rows ?? []).map(r => ({
         date: r.date.slice(5),
         'Uang Masuk': r.cash_in,
         'Uang Keluar': r.cash_out,
@@ -363,7 +362,9 @@ export default function UnifiedReportsPage() {
       <div className="flex justify-between items-start mb-6 flex-wrap gap-4">
         <div>
           <h1 className="text-2xl font-black flex items-center gap-2">📊 Laporan & Keuangan</h1>
-          <p className="text-3 text-sm mt-1">{selectedStore.store_name} · Analisis performa & arus kas</p>
+          <p className="text-3 text-sm mt-1">
+            {selectedStore.store_name} · Analisis performa & arus kas
+          </p>
         </div>
 
         <div className="card flex items-center gap-2 p-1.5 px-3">
@@ -372,14 +373,14 @@ export default function UnifiedReportsPage() {
             type="date"
             className="input-subtle text-xs w-32 border-none bg-transparent"
             value={dateFrom}
-            onChange={(e) => setDateFrom(e.target.value)}
+            onChange={e => setDateFrom(e.target.value)}
           />
           <span className="text-3 text-[10px] opacity-40">TO</span>
           <input
             type="date"
             className="input-subtle text-xs w-32 border-none bg-transparent"
             value={dateTo}
-            onChange={(e) => setDateTo(e.target.value)}
+            onChange={e => setDateTo(e.target.value)}
           />
           <button
             className="btn btn-primary btn-xs px-3 ml-2"
@@ -484,7 +485,11 @@ export default function UnifiedReportsPage() {
                 <div className="w-full h-72">
                   <ResponsiveContainer>
                     <BarChart data={salesDataForChart}>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        vertical={false}
+                        stroke="var(--border)"
+                      />
                       <XAxis
                         dataKey="date"
                         tick={{ fontSize: 10, fill: 'var(--text-3)' }}
@@ -495,7 +500,9 @@ export default function UnifiedReportsPage() {
                         tick={{ fontSize: 10, fill: 'var(--text-3)' }}
                         axisLine={false}
                         tickLine={false}
-                        tickFormatter={(v: number) => (v >= 1000000 ? `${v / 1000000}jt` : `${v / 1000}rb`)}
+                        tickFormatter={(v: number) =>
+                          v >= 1000000 ? `${v / 1000000}jt` : `${v / 1000}rb`
+                        }
                       />
                       <Tooltip
                         contentStyle={TOOLTIP_STYLE}
@@ -510,29 +517,29 @@ export default function UnifiedReportsPage() {
                 <table className="tbl text-sm">
                   <thead>
                     <tr>
-                      <th>Tanggal</th>
-                      <th className="text-right">Transaksi</th>
-                      <th className="text-right">Omzet</th>
-                      <th className="text-right">Laba Kotor</th>
-                      <th className="text-right">Net Profit</th>
-                      <th className="text-center">Margin</th>
+                      <th className="w-[120px]">Tanggal</th>
+                      <th className="!text-right w-[100px]">Transaksi</th>
+                      <th className="!text-right w-[150px]">Omzet</th>
+                      <th className="!text-right w-[150px]">Laba Kotor</th>
+                      <th className="!text-right w-[150px]">Net Profit</th>
+                      <th className="!text-center w-[100px]">Margin</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {(summary?.rows ?? []).map((r) => (
+                    {(summary?.rows ?? []).map(r => (
                       <tr key={r.date}>
                         <td className="font-bold">{r.date}</td>
-                        <td className="text-right">{r.transaction_count}</td>
-                        <td className="text-right font-black text-accent-em">
+                        <td className="!text-right">{r.transaction_count}</td>
+                        <td className="!text-right font-black text-accent-em">
                           {formatRp(r.total_sales)}
                         </td>
-                        <td className="text-right text-warning font-semibold">
+                        <td className="!text-right text-warning font-semibold">
                           {formatRp(r.gross_profit)}
                         </td>
-                        <td className="text-right text-blue-500 font-bold">
+                        <td className="!text-right text-blue-500 font-bold">
                           {formatRp(r.net_profit)}
                         </td>
-                        <td className="text-center">
+                        <td className="!text-center">
                           <ProfitMarginBadge margin={r.profit_margin ?? 0} />
                         </td>
                       </tr>
@@ -548,27 +555,27 @@ export default function UnifiedReportsPage() {
               <table className="tbl text-sm">
                 <thead>
                   <tr>
-                    <th>Nama Produk</th>
-                    <th>SKU</th>
-                    <th className="text-right">Terjual</th>
-                    <th className="text-right">Revenue</th>
-                    <th className="text-right">Profit</th>
-                    <th className="text-center">Margin</th>
+                    <th className="w-[30%]">Nama Produk</th>
+                    <th className="w-[15%]">SKU</th>
+                    <th className="!text-right w-[10%]">Terjual</th>
+                    <th className="!text-right w-[15%]">Revenue</th>
+                    <th className="!text-right w-[15%]">Profit</th>
+                    <th className="!text-center w-[15%]">Margin</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {byProduct.map((r) => (
+                  {byProduct.map(r => (
                     <tr key={r.product_id}>
                       <td className="font-bold">{r.product_name}</td>
                       <td className="text-xs font-mono opacity-50">{r.sku}</td>
-                      <td className="text-right font-bold">{r.total_quantity}</td>
-                      <td className="text-right text-accent-em font-bold">
+                      <td className="!text-right font-bold">{r.total_quantity}</td>
+                      <td className="!text-right text-accent-em font-bold">
                         {formatRp(r.total_revenue)}
                       </td>
-                      <td className="text-right text-warning font-semibold">
+                      <td className="!text-right text-warning font-semibold">
                         {formatRp(r.gross_profit)}
                       </td>
-                      <td className="text-center">
+                      <td className="!text-center">
                         <ProfitMarginBadge margin={r.profit_margin} />
                       </td>
                     </tr>
@@ -581,7 +588,7 @@ export default function UnifiedReportsPage() {
           {tab === 'profit' && (
             <div className="flex flex-col gap-5">
               <div className="flex items-center gap-2">
-                {(['day', 'week', 'month'] as GroupBy[]).map((g) => (
+                {(['day', 'week', 'month'] as GroupBy[]).map(g => (
                   <button
                     key={g}
                     onClick={() => setGroupBy(g)}
@@ -602,10 +609,15 @@ export default function UnifiedReportsPage() {
                       <XAxis dataKey="period" tick={{ fontSize: 10 }} />
                       <YAxis
                         tick={{ fontSize: 10 }}
-                        tickFormatter={(v: number) => (v >= 1000000 ? `${v / 1000000}jt` : `${v / 1000}rb`)}
+                        tickFormatter={(v: number) =>
+                          v >= 1000000 ? `${v / 1000000}jt` : `${v / 1000}rb`
+                        }
                       />
                       <Tooltip contentStyle={TOOLTIP_STYLE} />
-                      <Legend verticalAlign="top" wrapperStyle={{ fontSize: 10, paddingBottom: 10 }} />
+                      <Legend
+                        verticalAlign="top"
+                        wrapperStyle={{ fontSize: 10, paddingBottom: 10 }}
+                      />
                       <Area
                         type="monotone"
                         dataKey="total_sales"
@@ -613,7 +625,12 @@ export default function UnifiedReportsPage() {
                         stroke="#10b981"
                         name="Revenue"
                       />
-                      <Bar dataKey="gross_profit" fill="#f59e0b" radius={[4, 4, 0, 0]} name="Gross" />
+                      <Bar
+                        dataKey="gross_profit"
+                        fill="#f59e0b"
+                        radius={[4, 4, 0, 0]}
+                        name="Gross"
+                      />
                       <Bar dataKey="net_profit" fill="#3b82f6" radius={[4, 4, 0, 0]} name="Net" />
                       <Line
                         type="monotone"
@@ -630,27 +647,27 @@ export default function UnifiedReportsPage() {
                 <table className="tbl text-sm">
                   <thead>
                     <tr>
-                      <th>Periode</th>
-                      <th className="text-right">Revenue</th>
-                      <th className="text-right">Cost</th>
-                      <th className="text-right">Expense</th>
-                      <th className="text-right">Net Profit</th>
-                      <th className="text-center">Margin</th>
+                      <th className="w-[120px]">Periode</th>
+                      <th className="!text-right w-[150px]">Revenue</th>
+                      <th className="!text-right w-[150px]">Cost</th>
+                      <th className="!text-right w-[150px]">Expense</th>
+                      <th className="!text-right w-[150px]">Net Profit</th>
+                      <th className="!text-center w-[100px]">Margin</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {profitChartData.map((r) => (
+                    {profitChartData.map(r => (
                       <tr key={r.period}>
                         <td className="font-bold">{r.period}</td>
-                        <td className="text-right font-bold text-accent-em">
+                        <td className="!text-right font-bold text-accent-em">
                           {formatRp(r.total_sales)}
                         </td>
-                        <td className="text-right opacity-60">{formatRp(r.total_cost)}</td>
-                        <td className="text-right text-accent-rd">{formatRp(r.total_expense)}</td>
-                        <td className="text-right text-blue-600 font-black">
+                        <td className="!text-right opacity-60">{formatRp(r.total_cost)}</td>
+                        <td className="!text-right text-accent-rd">{formatRp(r.total_expense)}</td>
+                        <td className="!text-right text-blue-600 font-black">
                           {formatRp(r.net_profit)}
                         </td>
-                        <td className="text-center">
+                        <td className="!text-center">
                           <ProfitMarginBadge margin={r.profit_margin} />
                         </td>
                       </tr>
@@ -687,7 +704,9 @@ export default function UnifiedReportsPage() {
                       <XAxis dataKey="date" tick={{ fontSize: 10 }} />
                       <YAxis
                         tick={{ fontSize: 10 }}
-                        tickFormatter={(v: number) => (v >= 1000000 ? `${v / 1000000}jt` : `${v / 1000}rb`)}
+                        tickFormatter={(v: number) =>
+                          v >= 1000000 ? `${v / 1000000}jt` : `${v / 1000}rb`
+                        }
                       />
                       <Tooltip content={<CfTooltip />} />
                       <Legend
@@ -695,7 +714,12 @@ export default function UnifiedReportsPage() {
                         wrapperStyle={{ fontSize: 10, paddingBottom: 15 }}
                       />
                       <ReferenceLine y={0} stroke="var(--border)" />
-                      <Bar dataKey="Uang Masuk" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={30} />
+                      <Bar
+                        dataKey="Uang Masuk"
+                        fill="#10b981"
+                        radius={[4, 4, 0, 0]}
+                        maxBarSize={30}
+                      />
                       <Bar
                         dataKey="Uang Keluar"
                         fill="#ef4444"
@@ -717,10 +741,10 @@ export default function UnifiedReportsPage() {
                 <table className="tbl text-sm">
                   <thead>
                     <tr>
-                      <th>Tanggal</th>
-                      <th className="text-right">Masuk</th>
-                      <th className="text-right">Keluar</th>
-                      <th className="text-right">Net</th>
+                      <th className="w-[120px]">Tanggal</th>
+                      <th className="!text-right w-[150px]">Masuk</th>
+                      <th className="!text-right w-[150px]">Keluar</th>
+                      <th className="!text-right w-[150px]">Net</th>
                       <th>Metode Kas Masuk</th>
                     </tr>
                   </thead>
@@ -728,15 +752,15 @@ export default function UnifiedReportsPage() {
                     {(cfData?.rows ?? [])
                       .slice()
                       .reverse()
-                      .map((r) => (
+                      .map(r => (
                         <tr key={r.date}>
                           <td className="font-bold">{r.date}</td>
-                          <td className="text-right text-accent-em font-bold">
+                          <td className="!text-right text-accent-em font-bold">
                             {formatRp(r.cash_in)}
                           </td>
-                          <td className="text-right text-accent-rd">{formatRp(r.cash_out)}</td>
+                          <td className="!text-right text-accent-rd">{formatRp(r.cash_out)}</td>
                           <td
-                            className={`text-right font-black ${
+                            className={`!text-right font-black ${
                               r.net_cash >= 0 ? 'text-blue-500' : 'text-accent-rd'
                             }`}
                           >
@@ -769,23 +793,23 @@ export default function UnifiedReportsPage() {
               <table className="tbl text-sm">
                 <thead>
                   <tr>
-                    <th>Produk</th>
-                    <th>SKU</th>
-                    <th className="text-right">Stok</th>
-                    <th className="text-right">Harga Beli</th>
-                    <th className="text-right">Subtotal</th>
+                    <th className="w-[30%]">Produk</th>
+                    <th className="w-[15%]">SKU</th>
+                    <th className="!text-right w-[15%]">Stok</th>
+                    <th className="!text-right w-[20%]">Harga Beli</th>
+                    <th className="!text-right w-[20%]">Subtotal</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {(valuation?.rows ?? []).map((r) => (
+                  {(valuation?.rows ?? []).map(r => (
                     <tr key={r.product_id}>
                       <td className="font-bold">{r.product_name}</td>
                       <td className="text-xs font-mono opacity-50">{r.sku}</td>
-                      <td className="text-right font-bold">
+                      <td className="!text-right font-bold">
                         {r.quantity} {r.unit}
                       </td>
-                      <td className="text-right opacity-60">{formatRp(r.cost_price)}</td>
-                      <td className="text-right font-black text-indigo-500">
+                      <td className="!text-right opacity-60">{formatRp(r.cost_price)}</td>
+                      <td className="!text-right font-black text-indigo-500">
                         {formatRp(r.total_value)}
                       </td>
                     </tr>
