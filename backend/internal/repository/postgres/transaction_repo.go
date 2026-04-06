@@ -14,7 +14,11 @@ import (
 )
 
 // TransactionRepo is the PostgreSQL implementation of repository.TransactionRepository.
+//
+//nolint:goconst // Magic strings are okay
 type TransactionRepo struct{ db *sqlx.DB }
+
+const statusCompleted = "completed"
 
 func NewTransactionRepo(db *sqlx.DB) *TransactionRepo { return &TransactionRepo{db: db} }
 
@@ -29,7 +33,7 @@ func (r *TransactionRepo) Create(ctx context.Context, input domain.CreateTransac
 
 	status := input.Status
 	if status == "" {
-		status = "completed"
+		status = statusCompleted
 	}
 
 	// 1. INSERT transaction header (table_id may be nil for retail)
@@ -86,7 +90,7 @@ func (r *TransactionRepo) Create(ctx context.Context, input domain.CreateTransac
 		txn.Items = append(txn.Items, *ti)
 
 		// Only deduct stock for completed (paid) orders
-		if status == "completed" && item.ProductID != nil {
+		if status == statusCompleted && item.ProductID != nil {
 			if _, err := tx.ExecContext(ctx, mvQ,
 				*item.ProductID, input.StoreID, txn.ID, -item.Quantity, input.CashierID,
 			); err != nil {
@@ -145,7 +149,7 @@ func (r *TransactionRepo) GetDraftByTable(ctx context.Context, storeID, tableID 
 
 // UpdateDraftItems replaces all items on a draft transaction and recalculates totals.
 //
-//nolint:gocognit,funlen // Diff logic is complex
+//nolint:gocognit,funlen,cyclop // Diff logic is complex
 func (r *TransactionRepo) UpdateDraftItems(ctx context.Context, txnID string, items []domain.CreateTransactionItemInput,
 	subtotal, discountAmt, taxAmt, total float64, customerName, notes string) (*domain.Transaction, error) {
 
@@ -561,7 +565,7 @@ func (r *TransactionRepo) GetKDSTickets(ctx context.Context, storeID string) ([]
 
 // UpdateKDSItemStatus updates the completion status of a specific KDS ticket item.
 func (r *TransactionRepo) UpdateKDSItemStatus(ctx context.Context, itemID, status string) error {
-	if status == "completed" {
+	if status == statusCompleted {
 		_, err := r.db.ExecContext(ctx, `UPDATE transaction_items SET status = $1, completed_at = NOW() WHERE id = $2`, status, itemID)
 		return err
 	}

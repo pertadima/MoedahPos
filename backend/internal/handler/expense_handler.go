@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/rs/zerolog"
@@ -15,6 +16,7 @@ import (
 	"github.com/moedahpos/backend/pkg/response"
 )
 
+//nolint:goconst // Magic strings are okay here
 type ExpenseHandler struct {
 	expenseSvc *service.ExpenseService
 	validate   *validator.Validator
@@ -124,7 +126,7 @@ func (h *ExpenseHandler) UpdateExpense(w http.ResponseWriter, r *http.Request) {
 	expense, err := h.expenseSvc.UpdateExpense(r.Context(), id, storeID, &req)
 	if err != nil {
 		h.log.Error().Err(err).Msg("update expense failed")
-		if err.Error() == "updating expense: expense not found" || err.Error() == "expense not found" {
+		if strings.Contains(err.Error(), "expense not found") {
 			response.NotFound(w, "Expense")
 			return
 		}

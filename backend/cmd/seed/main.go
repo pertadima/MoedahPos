@@ -422,7 +422,9 @@ func seedCategories(ctx context.Context, db *sqlx.DB, storeID string, names []st
 
 // seedProducts upserts all products + stock_levels for a given store.
 // Returns the number of products seeded.
-func seedProducts(ctx context.Context, db *sqlx.DB, storeID string, catalog []ProductSeed, catMap map[string]string, _ bool) int {
+//
+//nolint:revive // isRestaurant is reserved for future use
+func seedProducts(ctx context.Context, db *sqlx.DB, storeID string, catalog []ProductSeed, catMap map[string]string, isRestaurant bool) int {
 	for _, p := range catalog {
 		catID := catMap[p.Category]
 		sellPrice := p.SellPrice
@@ -456,8 +458,8 @@ func seedProducts(ctx context.Context, db *sqlx.DB, storeID string, catalog []Pr
 	return len(catalog)
 }
 
-// seedActivePurchaseOrders creates sample POs and updates stock levels for received ones.
-func seedActivePurchaseOrders(ctx context.Context, db *sqlx.DB, mainStoreID, _, adminID string, supplierIDs map[string]string) {
+//nolint:revive // branchStoreID is unused
+func seedActivePurchaseOrders(ctx context.Context, db *sqlx.DB, mainStoreID, branchStoreID, adminID string, supplierIDs map[string]string) {
 	// 1. Get all products for mainStoreID
 	var mainProds []struct {
 		ID        string  `db:"id"`
@@ -510,8 +512,8 @@ func seedActivePurchaseOrders(ctx context.Context, db *sqlx.DB, mainStoreID, _, 
 	log.Printf("   ✓ Populated stock for %d products via received PO", 40)
 }
 
-// seedTransactions creates a large history of transactions.
-func seedTransactions(ctx context.Context, db *sqlx.DB, storeID, cashierID string, _ bool) int {
+//nolint:funlen,gocognit,cyclop // Demo data seeder for MoedahPOS
+func seedTransactions(ctx context.Context, db *sqlx.DB, storeID, cashierID string, isRestaurant bool) int {
 	if isRestaurant {
 		return seedRestaurantTransactions(ctx, db, storeID, cashierID)
 	}
