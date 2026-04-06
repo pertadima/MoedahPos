@@ -544,10 +544,18 @@ export default function UnifiedReportsPage() {
                           <td className="!text-right font-black text-accent-em">
                             {formatRp(r.total_sales)}
                           </td>
-                          <td className="!text-right text-warning font-semibold">
+                          <td
+                            className={`!text-right font-semibold ${
+                              r.gross_profit >= 0 ? 'text-warning' : 'text-accent-rd'
+                            }`}
+                          >
                             {formatRp(r.gross_profit)}
                           </td>
-                          <td className="!text-right text-blue-500 font-bold">
+                          <td
+                            className={`!text-right font-bold ${
+                              r.net_profit >= 0 ? 'text-blue-500' : 'text-accent-rd'
+                            }`}
+                          >
                             {formatRp(r.net_profit)}
                           </td>
                           <td className="!text-center">
@@ -678,11 +686,17 @@ export default function UnifiedReportsPage() {
                           <td className="!text-right font-bold text-accent-em">
                             {formatRp(r.total_sales)}
                           </td>
-                          <td className="!text-right opacity-60">{formatRp(r.total_cost)}</td>
+                          <td className="!text-right text-accent-rd opacity-60">
+                            {formatRp(r.total_cost)}
+                          </td>
                           <td className="!text-right text-accent-rd">
                             {formatRp(r.total_expense)}
                           </td>
-                          <td className="!text-right text-blue-600 font-black">
+                          <td
+                            className={`!text-right font-black ${
+                              r.net_profit >= 0 ? 'text-blue-600' : 'text-accent-rd'
+                            }`}
+                          >
                             {formatRp(r.net_profit)}
                           </td>
                           <td className="!text-center">

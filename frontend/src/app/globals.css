@@ -33,6 +33,19 @@
 @theme inline {
   --color-background: var(--bg-base);
   --color-foreground: var(--text-1);
+
+  --color-brand: var(--brand);
+  --color-brand-dk: var(--brand-dk);
+  --color-brand-lt: var(--brand-lt);
+
+  --color-accent-em: var(--accent-em);
+  --color-accent-in: var(--accent-in);
+  --color-accent-am: var(--accent-am);
+  --color-accent-rd: var(--accent-rd);
+
+  --color-text-1: var(--text-1);
+  --color-text-2: var(--text-2);
+  --color-text-3: var(--text-3);
 }
 
 /* ── Light Mode Overrides ────────────────────────────────────────────────── */
