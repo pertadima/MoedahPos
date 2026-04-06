@@ -10,9 +10,14 @@ import {
   TrendingDown,
   TrendingUp,
   Warehouse,
+  Search,
+  Check,
+  Plus,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { stockApi } from '@/lib/api/store-apis';
+import { api } from '@/lib/api/client';
+import { stockAdjustmentApi, type CreateAdjustmentInput } from '@/lib/api/stock-adjustments';
 import {
   getBatchSummary,
   listBatches,
@@ -35,6 +40,13 @@ function formatCurrency(n: number) {
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type Tab = 'stok' | 'movements';
+
+interface Product {
+  id: string;
+  name: string;
+  sku: string;
+  unit: string;
+}
 
 const TABS: [Tab, string][] = [
   ['stok', 'Stok & Batch'],
@@ -237,6 +249,78 @@ export default function StockPage() {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
   const storeId = selectedStore?.store_id;
+  const role = selectedStore?.role;
+  const canUpdateStock = ['superadmin', 'admin', 'manager'].includes(role || '');
+
+  // ── Modal state ─────────────────────────────────────────────────────────────
+  const [products, setProducts] = useState<Product[]>([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [formData, setFormData] = useState<CreateAdjustmentInput>({
+    product_id: '',
+    type: 'OUT',
+    reason: 'DAMAGED',
+    quantity: 1,
+    notes: '',
+  });
+
+  const [productSearch, setProductSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [isSearchingProducts, setIsSearchingProducts] = useState(false);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(productSearch);
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [productSearch]);
+
+  useEffect(() => {
+    if (!storeId) return;
+    const fetchSearchedProducts = async () => {
+      try {
+        setIsSearchingProducts(true);
+        const params = new URLSearchParams({ per_page: '20' });
+        if (debouncedSearch && !formData.product_id) {
+          params.append('search', debouncedSearch);
+        }
+        const res = await api.get<Product[]>(`/stores/${storeId}/products?${params.toString()}`);
+        const prodData = Array.isArray(res?.data) ? res.data : (res?.data as any)?.data || [];
+        setProducts(prodData);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setIsSearchingProducts(false);
+      }
+    };
+    fetchSearchedProducts();
+  }, [storeId, debouncedSearch, formData.product_id]);
+
+  const handleAdjustmentSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!storeId) return;
+    try {
+      setSubmitting(true);
+      await stockAdjustmentApi.create(storeId, formData);
+      setIsModalOpen(false);
+      setFormData({
+        product_id: '',
+        type: 'OUT',
+        reason: 'DAMAGED',
+        quantity: 1,
+        notes: '',
+      });
+      setProductSearch('');
+      setShowDropdown(false);
+      loadAll();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Gagal menyimpan penyesuaian';
+      alert(msg);
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   // ── Data loaders ────────────────────────────────────────────────────────────
 
@@ -263,7 +347,6 @@ export default function StockPage() {
   }, [storeId]);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadAll();
   }, [loadAll]);
 
@@ -309,12 +392,26 @@ export default function StockPage() {
   return (
     <div style={{ padding: 24 }}>
       {/* Header */}
-      <div style={{ marginBottom: 20 }}>
-        <h1 className="page-title">Manajemen Stok</h1>
-        <p className="page-subtitle">
-          {selectedStore.store_name} · {levels.length} produk
-          {lowCount > 0 ? ` · ⚠ ${lowCount} stok menipis` : ''}
-        </p>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: 20,
+        }}
+      >
+        <div>
+          <h1 className="page-title">Manajemen Stok</h1>
+          <p className="page-subtitle">
+            {selectedStore.store_name} · {levels.length} produk
+            {lowCount > 0 ? ` · ⚠ ${lowCount} stok menipis` : ''}
+          </p>
+        </div>
+        {canUpdateStock && (
+          <button className="btn btn-primary btn-sm" onClick={() => setIsModalOpen(true)}>
+            <Plus size={16} /> Buat Penyesuaian
+          </button>
+        )}
       </div>
 
       {/* Tabs */}
@@ -463,6 +560,320 @@ export default function StockPage() {
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {/* ── Create Modal ─────────────────────────────────────────────────────── */}
+      {isModalOpen && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 1000,
+            background: 'rgba(0,0,0,0.6)',
+            backdropFilter: 'blur(4px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 16,
+          }}
+        >
+          <div
+            className="card"
+            style={{
+              width: '100%',
+              maxWidth: 500,
+              padding: 28,
+              animation: 'slideIn 0.2s ease',
+            }}
+          >
+            <h3 style={{ margin: '0 0 16px', color: 'var(--text-1)' }}>Catat Penyesuaian Stok</h3>
+
+            <form
+              onSubmit={handleAdjustmentSubmit}
+              style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}
+            >
+              {/* Searchable Product Dropdown */}
+              <div>
+                <label
+                  style={{
+                    display: 'block',
+                    marginBottom: '6px',
+                    fontSize: '0.8rem',
+                    fontWeight: 600,
+                  }}
+                >
+                  Produk <span style={{ color: 'var(--danger)' }}>*</span>
+                </label>
+                <div
+                  style={{ position: 'relative' }}
+                  onBlur={e => {
+                    // Cek jika elemen yang di-klik berada di luar div ini
+                    if (!e.currentTarget.contains(e.relatedTarget)) {
+                      setShowDropdown(false);
+                      // Jika ada product_id tapi search dikosongkan, kembalikan ke nama produk terpilih
+                      if (formData.product_id) {
+                        const selectedProduct = products.find(p => p.id === formData.product_id);
+                        if (selectedProduct)
+                          setProductSearch(`${selectedProduct.name} (${selectedProduct.sku})`);
+                      }
+                    }
+                  }}
+                >
+                  <Search
+                    size={16}
+                    style={{ position: 'absolute', left: 12, top: 11, color: 'var(--text-3)' }}
+                  />
+                  <input
+                    type="text"
+                    className="input"
+                    placeholder="Cari nama komponen atau SKU..."
+                    style={{ paddingLeft: 36 }}
+                    value={
+                      productSearch ||
+                      (formData.product_id && !showDropdown
+                        ? `${products.find(p => p.id === formData.product_id)?.name} (${products.find(p => p.id === formData.product_id)?.sku})`
+                        : productSearch)
+                    }
+                    onChange={e => {
+                      setProductSearch(e.target.value);
+                      setShowDropdown(true);
+                      if (formData.product_id) setFormData({ ...formData, product_id: '' });
+                    }}
+                    onFocus={() => setShowDropdown(true)}
+                  />
+                  {showDropdown && (
+                    <div
+                      style={{
+                        position: 'absolute',
+                        top: '100%',
+                        left: 0,
+                        right: 0,
+                        zIndex: 50,
+                        background: 'var(--bg-elevated)',
+                        border: '1px solid var(--border-md)',
+                        borderRadius: 8,
+                        maxHeight: 220,
+                        overflowY: 'auto',
+                        marginTop: 4,
+                        boxShadow:
+                          '0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1)',
+                      }}
+                    >
+                      {products.map(p => (
+                        <button
+                          key={p.id}
+                          type="button"
+                          style={{
+                            width: '100%',
+                            textAlign: 'left',
+                            padding: '10px 14px',
+                            background:
+                              formData.product_id === p.id ? 'var(--bg-surface)' : 'transparent',
+                            border: 'none',
+                            borderBottom: '1px solid var(--border-light)',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            transition: 'background 0.2s',
+                          }}
+                          onClick={() => {
+                            setFormData({ ...formData, product_id: p.id });
+                            setProductSearch(`${p.name} (${p.sku})`);
+                            setShowDropdown(false);
+                          }}
+                          onMouseOver={e =>
+                            (e.currentTarget.style.background = 'var(--bg-surface)')
+                          }
+                          onMouseOut={e =>
+                            (e.currentTarget.style.background =
+                              formData.product_id === p.id ? 'var(--bg-surface)' : 'transparent')
+                          }
+                        >
+                          <div>
+                            <div
+                              style={{
+                                fontWeight: 600,
+                                fontSize: '0.85rem',
+                                color: 'var(--text-1)',
+                              }}
+                            >
+                              {p.name}
+                            </div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-3)' }}>
+                              SKU: {p.sku} | Unit: {p.unit}
+                            </div>
+                          </div>
+                          {formData.product_id === p.id && (
+                            <Check size={16} style={{ color: 'var(--accent-em)' }} />
+                          )}
+                        </button>
+                      ))}
+                      {isSearchingProducts && (
+                        <div
+                          style={{
+                            padding: '16px',
+                            fontSize: '0.8rem',
+                            color: 'var(--text-3)',
+                            textAlign: 'center',
+                          }}
+                        >
+                          Mencari produk...
+                        </div>
+                      )}
+                      {!isSearchingProducts && products.length === 0 && (
+                        <div
+                          style={{
+                            padding: '16px',
+                            fontSize: '0.8rem',
+                            color: 'var(--text-3)',
+                            textAlign: 'center',
+                          }}
+                        >
+                          Tidak ada produk yang cocok dengan pencarian.
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                <div>
+                  <label
+                    style={{
+                      display: 'block',
+                      marginBottom: '6px',
+                      fontSize: '0.8rem',
+                      fontWeight: 600,
+                    }}
+                  >
+                    Tipe Permintaan
+                  </label>
+                  <select
+                    className="input"
+                    value={formData.type}
+                    onChange={e => {
+                      const newType = e.target.value as 'IN' | 'OUT';
+                      setFormData({
+                        ...formData,
+                        type: newType,
+                        reason: newType === 'IN' ? 'MANUAL_CORRECTION' : 'DAMAGED',
+                      });
+                    }}
+                  >
+                    <option value="OUT">Keluar (OUT)</option>
+                    <option value="IN">Masuk (IN)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label
+                    style={{
+                      display: 'block',
+                      marginBottom: '6px',
+                      fontSize: '0.8rem',
+                      fontWeight: 600,
+                    }}
+                  >
+                    Alasan
+                  </label>
+                  <select
+                    className="input"
+                    value={formData.reason}
+                    onChange={e =>
+                      setFormData({
+                        ...formData,
+                        reason: e.target.value as CreateAdjustmentInput['reason'],
+                      })
+                    }
+                  >
+                    {formData.type === 'OUT' && (
+                      <>
+                        <option value="DAMAGED">Barang Rusak</option>
+                        <option value="LOST">Barang Hilang</option>
+                      </>
+                    )}
+                    <option value="MANUAL_CORRECTION">Koreksi Manual</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label
+                  style={{
+                    display: 'block',
+                    marginBottom: '6px',
+                    fontSize: '0.8rem',
+                    fontWeight: 600,
+                  }}
+                >
+                  Kuantitas <span style={{ color: 'var(--danger)' }}>*</span>
+                </label>
+                <input
+                  type="number"
+                  min="0.1"
+                  step="0.1"
+                  className="input"
+                  required
+                  value={formData.quantity}
+                  onChange={e => setFormData({ ...formData, quantity: parseFloat(e.target.value) })}
+                />
+              </div>
+
+              <div>
+                <label
+                  style={{
+                    display: 'block',
+                    marginBottom: '6px',
+                    fontSize: '0.8rem',
+                    fontWeight: 600,
+                  }}
+                >
+                  Catatan{' '}
+                  {formData.reason === 'MANUAL_CORRECTION' && (
+                    <span style={{ color: 'var(--danger)' }}>*</span>
+                  )}
+                </label>
+                <textarea
+                  className="input"
+                  rows={3}
+                  required={formData.reason === 'MANUAL_CORRECTION'}
+                  value={formData.notes}
+                  placeholder={
+                    formData.reason === 'MANUAL_CORRECTION' ? 'Wajib isi alasan detail' : 'Opsional'
+                  }
+                  onChange={e => setFormData({ ...formData, notes: e.target.value })}
+                />
+              </div>
+
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'flex-end',
+                  gap: '8px',
+                  marginTop: '8px',
+                }}
+              >
+                <button
+                  type="button"
+                  className="btn btn-ghost"
+                  onClick={() => setIsModalOpen(false)}
+                  disabled={submitting}
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  disabled={submitting || !formData.product_id}
+                >
+                  {submitting ? 'Menyimpan...' : 'Simpan Penyesuaian'}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>
