@@ -342,7 +342,7 @@ export default function Sidebar() {
             {/* Group items */}
             {group.items.map(({ href, icon: Icon, label }) => {
               const active =
-                pathname === href || (href !== '/dashboard' && pathname.startsWith(href));
+                pathname === href || (href !== '/dashboard' && pathname.startsWith(href + '/'));
               return (
                 <Link key={href} href={href} className={`nav-item ${active ? 'active' : ''}`}>
                   <Icon size={15} />

@@ -29,7 +29,7 @@ func NewStockAdjustmentHandler(svc *service.StockAdjustmentService, validate *va
 }
 
 func (h *StockAdjustmentHandler) Create(w http.ResponseWriter, r *http.Request) {
-	storeID := chi.URLParam(r, "store_id")
+	storeID := chi.URLParam(r, "storeId")
 	if storeID == "" {
 		response.Error(w, http.StatusBadRequest, "store_id represents a required parameter")
 		return
@@ -63,7 +63,7 @@ func (h *StockAdjustmentHandler) Create(w http.ResponseWriter, r *http.Request) 
 }
 
 func (h *StockAdjustmentHandler) GetHistory(w http.ResponseWriter, r *http.Request) {
-	storeID := chi.URLParam(r, "store_id")
+	storeID := chi.URLParam(r, "storeId")
 	if storeID == "" {
 		response.Error(w, http.StatusBadRequest, "store_id required")
 		return
