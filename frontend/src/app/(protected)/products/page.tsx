@@ -199,7 +199,7 @@ export default function ProductsPage() {
                 <th>Harga Beli</th>
                 <th>PPN</th>
                 <th>Status</th>
-                <th></th>
+                <th />
               </tr>
             </thead>
             <tbody>

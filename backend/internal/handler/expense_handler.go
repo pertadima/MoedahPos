@@ -263,4 +263,3 @@ func (h *ExpenseHandler) DeleteRecurringExpense(w http.ResponseWriter, r *http.R
 	}
 	response.JSON(w, http.StatusOK, map[string]interface{}{"success": true, "message": "Recurring expense deleted"})
 }
-

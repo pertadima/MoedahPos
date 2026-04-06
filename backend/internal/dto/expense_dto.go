@@ -1,16 +1,16 @@
 package dto
 
 type CreateExpenseRequest struct {
-	CategoryID  string  `json:"category_id" validate:"required,uuid"`
-	Amount      float64 `json:"amount" validate:"required,gt=0"`
+	CategoryID    string  `json:"category_id" validate:"required,uuid"`
+	Amount        float64 `json:"amount" validate:"required,gt=0"`
 	ExpenseDate   string  `json:"expense_date" validate:"required"` // YYYY-MM-DD
 	Notes         string  `json:"notes"`
 	PaymentStatus string  `json:"payment_status"` // paid, unpaid (defaults to paid if empty)
 }
 
 type UpdateExpenseRequest struct {
-	CategoryID  string  `json:"category_id" validate:"required,uuid"`
-	Amount      float64 `json:"amount" validate:"required,gt=0"`
+	CategoryID    string  `json:"category_id" validate:"required,uuid"`
+	Amount        float64 `json:"amount" validate:"required,gt=0"`
 	ExpenseDate   string  `json:"expense_date" validate:"required"` // YYYY-MM-DD
 	Notes         string  `json:"notes"`
 	PaymentStatus string  `json:"payment_status"`
@@ -30,17 +30,17 @@ type ExpenseListFilter struct {
 }
 
 type ExpenseResponse struct {
-	ID           string  `json:"id"`
-	StoreID      string  `json:"store_id"`
-	CategoryID   string  `json:"category_id"`
-	CategoryName string  `json:"category_name"`
-	Amount       float64 `json:"amount"`
-	ExpenseDate  string  `json:"expense_date"`
-	Notes           string  `json:"notes"`
-	PaymentStatus   string  `json:"payment_status"`
-	CreatedBy       *string `json:"created_by"`
-	CreatedAt       string  `json:"created_at"`
-	UpdatedAt       string  `json:"updated_at"`
+	ID            string  `json:"id"`
+	StoreID       string  `json:"store_id"`
+	CategoryID    string  `json:"category_id"`
+	CategoryName  string  `json:"category_name"`
+	Amount        float64 `json:"amount"`
+	ExpenseDate   string  `json:"expense_date"`
+	Notes         string  `json:"notes"`
+	PaymentStatus string  `json:"payment_status"`
+	CreatedBy     *string `json:"created_by"`
+	CreatedAt     string  `json:"created_at"`
+	UpdatedAt     string  `json:"updated_at"`
 }
 
 type ExpenseCategoryResponse struct {
@@ -51,7 +51,7 @@ type ExpenseCategoryResponse struct {
 }
 
 type UpdateExpenseStatusRequest struct {
-	PaymentStatus string `json:"payment_status" validate:"required,oneof=paid unpaid cancelled"`
+	PaymentStatus string `json:"payment_status" validate:"required,oneof=paid unpaid canceled"`
 }
 
 type CreateRecurringExpenseRequest struct {

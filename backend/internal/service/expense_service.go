@@ -66,8 +66,8 @@ func (s *ExpenseService) CreateExpense(ctx context.Context, storeID, userID stri
 	}
 
 	e, err := s.expenseRepo.CreateExpense(ctx, &domain.Expense{
-		StoreID:     storeID,
-		CategoryID:  req.CategoryID,
+		StoreID:       storeID,
+		CategoryID:    req.CategoryID,
 		Amount:        req.Amount,
 		ExpenseDate:   expenseDate,
 		Notes:         req.Notes,
@@ -126,12 +126,12 @@ func (s *ExpenseService) DeleteExpense(ctx context.Context, id, storeID string) 
 
 func (s *ExpenseService) toExpenseResponse(e *domain.Expense) *dto.ExpenseResponse {
 	return &dto.ExpenseResponse{
-		ID:           e.ID,
-		StoreID:      e.StoreID,
-		CategoryID:   e.CategoryID,
-		CategoryName: e.CategoryName,
-		Amount:       e.Amount,
-		ExpenseDate:  e.ExpenseDate.Format("2006-01-02"),
+		ID:            e.ID,
+		StoreID:       e.StoreID,
+		CategoryID:    e.CategoryID,
+		CategoryName:  e.CategoryName,
+		Amount:        e.Amount,
+		ExpenseDate:   e.ExpenseDate.Format("2006-01-02"),
 		Notes:         e.Notes,
 		PaymentStatus: e.PaymentStatus,
 		CreatedBy:     e.CreatedBy,
@@ -320,4 +320,3 @@ func (s *ExpenseService) toRecurringExpenseResponse(e *domain.RecurringExpense) 
 		LastGeneratedAt: lastGen,
 	}
 }
-

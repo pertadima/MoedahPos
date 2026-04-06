@@ -387,7 +387,7 @@ export interface RecurringExpense {
   interval: 'daily' | 'weekly' | 'monthly' | 'yearly';
   interval_value: number;
   start_date: string; // YYYY-MM-DD
-  end_date?: string;  // YYYY-MM-DD
+  end_date?: string; // YYYY-MM-DD
   next_run_date: string; // YYYY-MM-DD
   notes: string;
   is_active: boolean;

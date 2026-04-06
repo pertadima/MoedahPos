@@ -182,7 +182,7 @@ const baseGroups: NavGroup[] = [
     permission: 'reports.read',
     items: [
       { href: '/expenses', icon: Wallet, label: 'Pengeluaran', permission: 'reports.read' },
-      { href: '/reports', icon: BarChart3, label: 'Laporan', permission: 'reports.read' }
+      { href: '/reports', icon: BarChart3, label: 'Laporan', permission: 'reports.read' },
     ],
   },
   {

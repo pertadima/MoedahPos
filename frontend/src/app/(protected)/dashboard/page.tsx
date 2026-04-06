@@ -435,9 +435,9 @@ export default function DashboardPage() {
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {topProducts.length > 0 ? (
-                    topProducts.map(p => (
+                    topProducts.map((p, i) => (
                       <div
-                        key={`${p.product_id}-${Math.random()}`}
+                        key={`${p.product_id}-${i}`}
                         style={{
                           display: 'flex',
                           justifyContent: 'space-between',
@@ -481,9 +481,9 @@ export default function DashboardPage() {
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {bottomProducts.length > 0 ? (
-                    bottomProducts.map(p => (
+                    bottomProducts.map((p, i) => (
                       <div
-                        key={`${p.product_id}-${Math.random()}`}
+                        key={`${p.product_id}-${i}`}
                         style={{
                           display: 'flex',
                           justifyContent: 'space-between',
@@ -521,7 +521,14 @@ export default function DashboardPage() {
           {/* Low Stock Alert */}
           {lowStock.length > 0 && (
             <div className="card" style={{ padding: 16, borderColor: 'rgba(245,158,11,0.3)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: 12,
+                }}
+              >
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                   <AlertTriangle size={15} style={{ color: '#f59e0b' }} />
                   <span style={{ fontWeight: 600, fontSize: '0.85rem', color: '#fbbf24' }}>

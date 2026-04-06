@@ -1018,7 +1018,7 @@ export default function TransactionsPage() {
                 <th>Metode</th>
                 <th>Total</th>
                 <th>Status</th>
-                <th style={{ width: 60 }}></th>
+                <th style={{ width: 60 }} />
               </tr>
             </thead>
             <tbody>

@@ -102,7 +102,6 @@ export default function ReportsPage() {
   }, [storeId, tab, dateFrom, dateTo, groupBy]);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     reloadProfit();
   }, [reloadProfit]);
 
@@ -352,9 +351,7 @@ export default function ReportsPage() {
                     <td style={{ fontWeight: 700, color: '#f59e0b' }}>
                       {formatRp((r as any).gross_profit ?? 0)}
                     </td>
-                    <td style={{ color: '#ef4444' }}>
-                      {formatRp((r as any).total_expense ?? 0)}
-                    </td>
+                    <td style={{ color: '#ef4444' }}>{formatRp((r as any).total_expense ?? 0)}</td>
                     <td style={{ fontWeight: 700, color: '#10b981' }}>
                       {formatRp((r as any).net_profit ?? 0)}
                     </td>
@@ -532,11 +529,11 @@ export default function ReportsPage() {
                         ? [`${Number(v).toFixed(1)}%`, 'Margin']
                         : [
                             formatRp(Number(v)),
-                            name === 'revenue' 
-                              ? 'Revenue' 
-                              : name === 'cost' 
-                                ? 'HPP' 
-                                : name === 'expense' 
+                            name === 'revenue'
+                              ? 'Revenue'
+                              : name === 'cost'
+                                ? 'HPP'
+                                : name === 'expense'
                                   ? 'Pengeluaran'
                                   : name === 'gross_profit'
                                     ? 'Gross Profit'
@@ -621,9 +618,7 @@ export default function ReportsPage() {
                       {formatRp(r.gross_profit)}
                     </td>
                     <td style={{ color: '#ef4444' }}>{formatRp(r.total_expense)}</td>
-                    <td style={{ fontWeight: 800, color: '#10b981' }}>
-                      {formatRp(r.net_profit)}
-                    </td>
+                    <td style={{ fontWeight: 800, color: '#10b981' }}>{formatRp(r.net_profit)}</td>
                     <td>
                       <ProfitMarginBadge margin={r.profit_margin} />
                     </td>

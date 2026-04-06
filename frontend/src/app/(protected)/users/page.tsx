@@ -1031,7 +1031,7 @@ export default function UsersPage() {
                 <th>Toko</th>
                 <th>Peran</th>
                 <th>Status</th>
-                <th style={{ width: 80 }}></th>
+                <th style={{ width: 80 }} />
               </tr>
             </thead>
             <tbody>

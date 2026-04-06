@@ -139,7 +139,7 @@ export default function SuppliersPage() {
                 <th>Email</th>
                 <th>Status</th>
                 <th>Dibuat</th>
-                <th></th>
+                <th />
               </tr>
             </thead>
             <tbody>

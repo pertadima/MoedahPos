@@ -360,4 +360,3 @@ func toPaymentResponse(p *domain.POPayment) *dto.POPaymentResponse {
 		PaidAt:     p.PaidAt.Format(time.RFC3339),
 	}
 }
-

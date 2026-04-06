@@ -22,7 +22,8 @@ import (
 	"github.com/moedahpos/backend/pkg/rbac"
 )
 
-func main() { //nolint:funlen // bootstrap wiring is inherently long
+//nolint:gocognit,funlen // bootstrap wiring is inherently long
+func main() {
 	// ── Config ────────────────────────────────────────────────────────────────
 	cfg, err := config.Load()
 	if err != nil {

@@ -901,175 +901,175 @@ export default function POSPage() {
     return (
       <>
         <div style={{ marginLeft: 0, padding: '24px 28px', minHeight: '100vh' }}>
-        {/* Header */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            marginBottom: 24,
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <UtensilsCrossed size={22} style={{ color: 'var(--brand)' }} />
-            <div>
-              <h1 style={{ fontSize: '1.3rem', fontWeight: 800, margin: 0 }}>Pilih Meja</h1>
-              <p style={{ color: 'var(--text-2)', fontSize: '0.85rem', margin: 0 }}>
-                {selectedStore.store_name}
-              </p>
-            </div>
-          </div>
-
-          {/* Take Away shortcut button */}
-          <button
-            onClick={() => {
-              setIsTakeAway(true);
-              dispatch({ type: 'CLEAR' });
-              setError('');
-              setHoldError('');
-            }}
+          {/* Header */}
+          <div
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: 8,
-              background: 'linear-gradient(135deg, rgba(255,167,36,0.15), rgba(255,167,36,0.05))',
-              border: '1.5px solid rgba(255,167,36,0.5)',
-              borderRadius: 12,
-              padding: '10px 18px',
-              cursor: 'pointer',
-              fontWeight: 700,
-              fontSize: '0.9rem',
-              color: '#FFA724',
-              boxShadow: '0 2px 12px rgba(255,167,36,0.15)',
-              transition: 'all 0.18s',
+              justifyContent: 'space-between',
+              marginBottom: 24,
             }}
           >
-            <ShoppingBag size={16} />
-            Take Away
-          </button>
-        </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <UtensilsCrossed size={22} style={{ color: 'var(--brand)' }} />
+              <div>
+                <h1 style={{ fontSize: '1.3rem', fontWeight: 800, margin: 0 }}>Pilih Meja</h1>
+                <p style={{ color: 'var(--text-2)', fontSize: '0.85rem', margin: 0 }}>
+                  {selectedStore.store_name}
+                </p>
+              </div>
+            </div>
 
-        {tablesLoading ? (
-          <div style={{ display: 'flex', justifyContent: 'center', padding: 64 }}>
-            <Loader2 size={32} className="loading-spin" style={{ color: 'var(--brand)' }} />
+            {/* Take Away shortcut button */}
+            <button
+              onClick={() => {
+                setIsTakeAway(true);
+                dispatch({ type: 'CLEAR' });
+                setError('');
+                setHoldError('');
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                background: 'linear-gradient(135deg, rgba(255,167,36,0.15), rgba(255,167,36,0.05))',
+                border: '1.5px solid rgba(255,167,36,0.5)',
+                borderRadius: 12,
+                padding: '10px 18px',
+                cursor: 'pointer',
+                fontWeight: 700,
+                fontSize: '0.9rem',
+                color: '#FFA724',
+                boxShadow: '0 2px 12px rgba(255,167,36,0.15)',
+                transition: 'all 0.18s',
+              }}
+            >
+              <ShoppingBag size={16} />
+              Take Away
+            </button>
           </div>
-        ) : tables.length === 0 ? (
-          <div className="empty-state">
-            <Coffee size={40} />
-            <p>Belum ada meja. Tambahkan meja di menu Manajemen Meja.</p>
-          </div>
-        ) : (
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))',
-              gap: 16,
-            }}
-          >
-            {tables.map(table => {
-              const draft = tablesDraftMap[table.id];
-              const hasOrder = !!draft;
-              const isOccupied = table.status === 'occupied' || hasOrder;
-              const isUnavailable = table.status === 'unavailable';
 
-              return (
-                <button
-                  key={table.id}
-                  onClick={() => !isUnavailable && handleSelectTable(table)}
-                  style={{
-                    background: isUnavailable
-                      ? 'var(--bg-elevated)'
-                      : isOccupied
-                        ? 'linear-gradient(135deg, rgba(255,167,36,0.15), rgba(255,167,36,0.05))'
-                        : 'linear-gradient(135deg, rgba(8,132,246,0.12), rgba(8,132,246,0.04))',
-                    border: isUnavailable
-                      ? '1.5px solid var(--border)'
-                      : isOccupied
-                        ? '1.5px solid rgba(255,167,36,0.5)'
-                        : '1.5px solid rgba(8,132,246,0.35)',
-                    borderRadius: 16,
-                    padding: '20px 16px',
-                    cursor: isUnavailable ? 'not-allowed' : 'pointer',
-                    opacity: isUnavailable ? 0.5 : 1,
-                    textAlign: 'center',
-                    transition: 'all 0.18s',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    gap: 8,
-                    position: 'relative',
-                  }}
-                >
-                  {/* Status dot */}
-                  <div
+          {tablesLoading ? (
+            <div style={{ display: 'flex', justifyContent: 'center', padding: 64 }}>
+              <Loader2 size={32} className="loading-spin" style={{ color: 'var(--brand)' }} />
+            </div>
+          ) : tables.length === 0 ? (
+            <div className="empty-state">
+              <Coffee size={40} />
+              <p>Belum ada meja. Tambahkan meja di menu Manajemen Meja.</p>
+            </div>
+          ) : (
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))',
+                gap: 16,
+              }}
+            >
+              {tables.map(table => {
+                const draft = tablesDraftMap[table.id];
+                const hasOrder = !!draft;
+                const isOccupied = table.status === 'occupied' || hasOrder;
+                const isUnavailable = table.status === 'unavailable';
+
+                return (
+                  <button
+                    key={table.id}
+                    onClick={() => !isUnavailable && handleSelectTable(table)}
                     style={{
-                      width: 10,
-                      height: 10,
-                      borderRadius: '50%',
                       background: isUnavailable
-                        ? 'var(--text-3)'
+                        ? 'var(--bg-elevated)'
                         : isOccupied
-                          ? '#FFA724'
-                          : '#22c55e',
-                      position: 'absolute',
-                      top: 12,
-                      right: 12,
-                      boxShadow:
-                        isOccupied && !isUnavailable ? '0 0 8px rgba(255,167,36,0.6)' : 'none',
-                    }}
-                  />
-
-                  <div style={{ fontSize: '2rem' }}>🪑</div>
-                  <div style={{ fontWeight: 800, fontSize: '1.05rem', color: 'var(--text-1)' }}>
-                    Meja {table.table_number}
-                  </div>
-                  <div
-                    style={{
-                      fontSize: '0.75rem',
-                      color: 'var(--text-2)',
+                          ? 'linear-gradient(135deg, rgba(255,167,36,0.15), rgba(255,167,36,0.05))'
+                          : 'linear-gradient(135deg, rgba(8,132,246,0.12), rgba(8,132,246,0.04))',
+                      border: isUnavailable
+                        ? '1.5px solid var(--border)'
+                        : isOccupied
+                          ? '1.5px solid rgba(255,167,36,0.5)'
+                          : '1.5px solid rgba(8,132,246,0.35)',
+                      borderRadius: 16,
+                      padding: '20px 16px',
+                      cursor: isUnavailable ? 'not-allowed' : 'pointer',
+                      opacity: isUnavailable ? 0.5 : 1,
+                      textAlign: 'center',
+                      transition: 'all 0.18s',
                       display: 'flex',
+                      flexDirection: 'column',
                       alignItems: 'center',
-                      gap: 4,
+                      gap: 8,
+                      position: 'relative',
                     }}
                   >
-                    <Users size={11} /> {table.capacity} kursi
-                  </div>
-
-                  {hasOrder && draft ? (
+                    {/* Status dot */}
                     <div
                       style={{
-                        background: 'rgba(255,167,36,0.18)',
-                        borderRadius: 8,
-                        padding: '4px 8px',
-                        fontSize: '0.72rem',
-                        color: '#FFA724',
-                        fontWeight: 600,
+                        width: 10,
+                        height: 10,
+                        borderRadius: '50%',
+                        background: isUnavailable
+                          ? 'var(--text-3)'
+                          : isOccupied
+                            ? '#FFA724'
+                            : '#22c55e',
+                        position: 'absolute',
+                        top: 12,
+                        right: 12,
+                        boxShadow:
+                          isOccupied && !isUnavailable ? '0 0 8px rgba(255,167,36,0.6)' : 'none',
+                      }}
+                    />
+
+                    <div style={{ fontSize: '2rem' }}>🪑</div>
+                    <div style={{ fontWeight: 800, fontSize: '1.05rem', color: 'var(--text-1)' }}>
+                      Meja {table.table_number}
+                    </div>
+                    <div
+                      style={{
+                        fontSize: '0.75rem',
+                        color: 'var(--text-2)',
                         display: 'flex',
                         alignItems: 'center',
                         gap: 4,
                       }}
                     >
-                      <Clock size={10} />
-                      {draft.items.length} item · {formatRp(draft.total)}
+                      <Users size={11} /> {table.capacity} kursi
                     </div>
-                  ) : (
-                    <div
-                      style={{
-                        fontSize: '0.72rem',
-                        fontWeight: 600,
-                        color: isUnavailable ? 'var(--text-3)' : 'var(--brand)',
-                      }}
-                    >
-                      {isUnavailable ? 'Tidak Tersedia' : 'Tersedia'}
-                    </div>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        )}
-      </div>
-      {receipt && <ReceiptModal txn={receipt} onClose={() => setReceipt(null)} />}
+
+                    {hasOrder && draft ? (
+                      <div
+                        style={{
+                          background: 'rgba(255,167,36,0.18)',
+                          borderRadius: 8,
+                          padding: '4px 8px',
+                          fontSize: '0.72rem',
+                          color: '#FFA724',
+                          fontWeight: 600,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 4,
+                        }}
+                      >
+                        <Clock size={10} />
+                        {draft.items.length} item · {formatRp(draft.total)}
+                      </div>
+                    ) : (
+                      <div
+                        style={{
+                          fontSize: '0.72rem',
+                          fontWeight: 600,
+                          color: isUnavailable ? 'var(--text-3)' : 'var(--brand)',
+                        }}
+                      >
+                        {isUnavailable ? 'Tidak Tersedia' : 'Tersedia'}
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+        {receipt && <ReceiptModal txn={receipt} onClose={() => setReceipt(null)} />}
       </>
     );
   }

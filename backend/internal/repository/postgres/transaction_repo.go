@@ -144,6 +144,8 @@ func (r *TransactionRepo) GetDraftByTable(ctx context.Context, storeID, tableID 
 }
 
 // UpdateDraftItems replaces all items on a draft transaction and recalculates totals.
+//
+//nolint:gocognit,funlen // Diff logic is complex
 func (r *TransactionRepo) UpdateDraftItems(ctx context.Context, txnID string, items []domain.CreateTransactionItemInput,
 	subtotal, discountAmt, taxAmt, total float64, customerName, notes string) (*domain.Transaction, error) {
 
@@ -152,6 +154,16 @@ func (r *TransactionRepo) UpdateDraftItems(ctx context.Context, txnID string, it
 		return nil, fmt.Errorf("TransactionRepo.UpdateDraftItems begin: %w", err)
 	}
 	defer func() { _ = tx.Rollback() }()
+
+	// Update header totals + customer info
+	const updQ = `
+		UPDATE transactions
+		SET subtotal=$2, discount_amt=$3, tax_amt=$4, total=$5,
+		    customer_name=$6, notes=$7, updated_at=NOW()
+		WHERE id=$1`
+	if _, err := tx.ExecContext(ctx, updQ, txnID, subtotal, discountAmt, taxAmt, total, customerName, notes); err != nil {
+		return nil, fmt.Errorf("TransactionRepo.UpdateDraftItems update header: %w", err)
+	}
 
 	// Fetch existing items for this draft to calculate diffs
 	var existingItems []domain.TransactionItem
@@ -207,7 +219,7 @@ func (r *TransactionRepo) UpdateDraftItems(ctx context.Context, txnID string, it
 				INSERT INTO transaction_items
 				  (transaction_id, product_id, menu_item_id, product_name, sku, quantity, unit_price, cost_price, discount_pct, tax_rate, subtotal, status)
 				VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,'pending')`
-			
+
 			unitNet := inItem.UnitPrice * (1 - inItem.DiscountPct/100)
 			diffTax := (unitNet * diff) * inItem.TaxRate / 100
 			diffSubtotal := (unitNet * diff) + diffTax
@@ -230,7 +242,7 @@ func (r *TransactionRepo) UpdateDraftItems(ctx context.Context, txnID string, it
 					if (pass == 0 && !isPending) || (pass == 1 && isPending) {
 						continue
 					}
-					
+
 					if e.Quantity <= shortfall {
 						if _, err := tx.ExecContext(ctx, `DELETE FROM transaction_items WHERE id = $1`, e.ID); err != nil {
 							return nil, fmt.Errorf("TransactionRepo.UpdateDraftItems delete item: %w", err)

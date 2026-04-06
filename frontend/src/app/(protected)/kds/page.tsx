@@ -21,7 +21,7 @@ export default function KDSPage() {
   const { selectedStore } = useAuth();
   const [tickets, setTickets] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
-  const [errorHeader, setErrorHeader] = useState('');
+
   const [now, setNow] = useState(Date.now());
 
   const storeId = selectedStore?.store_id;
@@ -32,12 +32,12 @@ export default function KDSPage() {
       const res = await kdsApi.getTickets(storeId);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       setTickets(((res.data as any).data as Transaction[]) ?? (res.data as Transaction[]) ?? []);
-      setErrorHeader('');
+      // Assuming we just catch without header for now, maybe add toast later
     } catch (err: unknown) {
       if (err instanceof ApiError) {
-        setErrorHeader(err.message);
+        console.error(err.message);
       } else {
-        setErrorHeader('Gagal memuat tiket KDS');
+        console.error('Gagal memuat tiket KDS');
       }
     } finally {
       setLoading(false);
@@ -87,11 +87,11 @@ export default function KDSPage() {
   const handleCompleteAll = async () => {
     if (!storeId) return;
     try {
-      const pendingItems = tickets.flatMap(ticket => 
+      const pendingItems = tickets.flatMap(ticket =>
         ticket.items.filter(i => i.status !== 'completed')
       );
       if (pendingItems.length === 0) return;
-      
+
       setLoading(true);
       await Promise.all(pendingItems.map(i => kdsApi.markItemAsDone(storeId, i.id)));
       await fetchTickets();
@@ -183,7 +183,7 @@ export default function KDSPage() {
               fontSize: '0.85rem',
               display: 'flex',
               alignItems: 'center',
-              gap: 6
+              gap: 6,
             }}
           >
             <CheckSquare size={16} />

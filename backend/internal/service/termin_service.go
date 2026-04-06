@@ -292,4 +292,3 @@ func paymentRecordToResponse(r *domain.PaymentRecord) *dto.PaymentRecordResponse
 		CreatedAt:      r.CreatedAt.Format(time.RFC3339),
 	}
 }
-

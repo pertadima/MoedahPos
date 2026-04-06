@@ -147,7 +147,7 @@ var catalogLargeRetail = []ProductSeed{
 	{"Sabun Mandi Dettol 100g", "GRC-005", "bar", "Grocery", 4_500, 7_800, 0, 0, 100, "899123405"},
 	{"Pasta Gigi Pepsodent 190g", "GRC-006", "pcs", "Grocery", 12_000, 18_900, 0, 0, 60, "899123406"},
 	{"Shampoo Pantene 170ml", "GRC-007", "botol", "Grocery", 22_000, 32_500, 0, 0, 40, "899123407"},
-	{"Teh Pucuk Harum 350ml", "GRC-008", "botol", "Grocery", 2_800, 4_000, 0, 0, 240, "899123408"},
+	{"The Pucuk Harum 350ml", "GRC-008", "botol", "Grocery", 2_800, 4_000, 0, 0, 240, "899123408"},
 	{"Aqua Mineral 600ml", "GRC-009", "botol", "Grocery", 3_000, 5_500, 0, 0, 480, "899123409"},
 	{"Indomie Goreng Original", "GRC-010", "pcs", "Grocery", 2_600, 3_500, 0, 0, 1000, "899123410"},
 	{"Kopi Kapal Api 165g", "GRC-011", "pack", "Grocery", 12_500, 16_800, 0, 0, 100, "899123411"},
@@ -422,7 +422,7 @@ func seedCategories(ctx context.Context, db *sqlx.DB, storeID string, names []st
 
 // seedProducts upserts all products + stock_levels for a given store.
 // Returns the number of products seeded.
-func seedProducts(ctx context.Context, db *sqlx.DB, storeID string, catalog []ProductSeed, catMap map[string]string, isRestaurant bool) int {
+func seedProducts(ctx context.Context, db *sqlx.DB, storeID string, catalog []ProductSeed, catMap map[string]string, _ bool) int {
 	for _, p := range catalog {
 		catID := catMap[p.Category]
 		sellPrice := p.SellPrice
@@ -457,7 +457,7 @@ func seedProducts(ctx context.Context, db *sqlx.DB, storeID string, catalog []Pr
 }
 
 // seedActivePurchaseOrders creates sample POs and updates stock levels for received ones.
-func seedActivePurchaseOrders(ctx context.Context, db *sqlx.DB, mainStoreID, branchStoreID, adminID string, supplierIDs map[string]string) {
+func seedActivePurchaseOrders(ctx context.Context, db *sqlx.DB, mainStoreID, _, adminID string, supplierIDs map[string]string) {
 	// 1. Get all products for mainStoreID
 	var mainProds []struct {
 		ID        string  `db:"id"`
@@ -511,7 +511,7 @@ func seedActivePurchaseOrders(ctx context.Context, db *sqlx.DB, mainStoreID, bra
 }
 
 // seedTransactions creates a large history of transactions.
-func seedTransactions(ctx context.Context, db *sqlx.DB, storeID, cashierID string, isRestaurant bool) int {
+func seedTransactions(ctx context.Context, db *sqlx.DB, storeID, cashierID string, _ bool) int {
 	if isRestaurant {
 		return seedRestaurantTransactions(ctx, db, storeID, cashierID)
 	}
@@ -537,9 +537,10 @@ func seedTransactions(ctx context.Context, db *sqlx.DB, storeID, cashierID strin
 		txID := uuid.NewString()
 		cust := customers[i%len(customers)]
 		method := "cash"
-		if i%3 == 1 {
+		switch i % 3 {
+		case 1:
 			method = "qris"
-		} else if i%3 == 2 {
+		case 2:
 			method = "card"
 		}
 

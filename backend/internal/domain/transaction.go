@@ -30,12 +30,12 @@ type Transaction struct {
 
 // TransactionItem is a single line in a transaction (price snapshot at sale time).
 type TransactionItem struct {
-	ID            string  `db:"id"`
-	TransactionID string  `db:"transaction_id"`
-	ProductID     *string `db:"product_id"`
-	MenuItemID    *string `db:"menu_item_id"`
-	ProductName   string  `db:"product_name"` // snapshot
-	SKU           string  `db:"sku"`          // snapshot
+	ID            string     `db:"id"`
+	TransactionID string     `db:"transaction_id"`
+	ProductID     *string    `db:"product_id"`
+	MenuItemID    *string    `db:"menu_item_id"`
+	ProductName   string     `db:"product_name"` // snapshot
+	SKU           string     `db:"sku"`          // snapshot
 	Quantity      float64    `db:"quantity"`
 	UnitPrice     float64    `db:"unit_price"`
 	CostPrice     float64    `db:"cost_price"` // snapshot of cost at time of sale

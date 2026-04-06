@@ -306,8 +306,8 @@ function TerminPanel({ po, storeId, onOpenDoc, onUpdate }: TerminPanelProps) {
       .finally(() => setLoading(false));
   }, [storeId, po.id]);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     load();
   }, [storeId, po.id]);
 
@@ -1822,23 +1822,25 @@ export default function PurchaseOrdersPage() {
           setProducts(prevProducts => {
             const missing = parsed
               .filter(
-                (it: any) =>
-                  !prevProducts.find((p) => p.id === it.product_id) && it.product_name
+                (it: any) => !prevProducts.find(p => p.id === it.product_id) && it.product_name
               )
-              .map((it: any) => ({
-                id: it.product_id,
-                name: it.product_name,
-                sku: it.product_sku || '',
-                unit: it.unit || '',
-                cost_price: it.unit_cost || 0,
-                sell_price: 0,
-                store_id: storeId,
-                category_id: null,
-                tax_rate: 0,
-                is_active: true,
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString()
-              } as unknown as Product));
+              .map(
+                (it: any) =>
+                  ({
+                    id: it.product_id,
+                    name: it.product_name,
+                    sku: it.product_sku || '',
+                    unit: it.unit || '',
+                    cost_price: it.unit_cost || 0,
+                    sell_price: 0,
+                    store_id: storeId,
+                    category_id: null,
+                    tax_rate: 0,
+                    is_active: true,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                  }) as unknown as Product
+              );
             return [...prevProducts, ...missing];
           });
 
@@ -2507,8 +2509,8 @@ export default function PurchaseOrdersPage() {
                           }}
                         >
                           <span>
-                            SKU: {sp?.sku || item.product_sku || '—'} · Stok:{' '}
-                            {sp?.stock_qty ?? '?'} {sp?.unit || item.unit || ''} · HPP:{' '}
+                            SKU: {sp?.sku || item.product_sku || '—'} · Stok: {sp?.stock_qty ?? '?'}{' '}
+                            {sp?.unit || item.unit || ''} · HPP:{' '}
                             {formatRp(sp?.cost_price || item.unit_cost)}
                           </span>
                           {lineTotal > 0 && (
