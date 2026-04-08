@@ -5,17 +5,16 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Mail, Lock, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthContext';
-import { useTheme } from '@/lib/theme/ThemeContext';
 import { ApiError } from '@/lib/api/client';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPw, setShowPw] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const { login } = useAuth();
-  const { isDark } = useTheme();
   const router = useRouter();
 
   const handleSubmit = async (e: FormEvent) => {
@@ -34,155 +33,496 @@ export default function LoginPage() {
   };
 
   return (
-    <div style={{ width: '100%', maxWidth: 400 }}>
-      {/* Logo */}
-      <div style={{ textAlign: 'center', marginBottom: 28 }}>
+    <div
+      style={{
+        display: 'flex',
+        height: '100vh',
+        width: '100vw',
+        margin: 0,
+        padding: 0,
+        background: '#ffffff',
+        overflow: 'hidden',
+      }}
+    >
+      {/* Left Section - Login Form */}
+      <div
+        style={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          padding: '60px 40px',
+          background: '#ffffff',
+          animation: 'slideInLeft 0.6s ease-out',
+          position: 'relative',
+        }}
+      >
+        {/* Logo - Top Left */}
         <div
           style={{
-            width: 72,
-            height: 72,
-            borderRadius: 20,
-            margin: '0 auto 16px',
-            overflow: 'hidden',
-            boxShadow: '0 0 40px rgba(8,132,246,0.30), 0 0 80px rgba(8,132,246,0.12)',
-            background: isDark ? 'transparent' : 'white',
+            position: 'absolute',
+            top: 40,
+            left: 40,
+            animation: 'fadeIn 0.8s ease-out',
+            width: 180,
+            height: 60,
           }}
         >
           <Image
-            src={isDark ? '/logo-icon-dark.svg' : '/logo-icon-light.svg'}
+            src="/logo-icon-light.svg"
             alt="Moedah"
-            width={72}
-            height={72}
-            style={{ display: 'block', width: '100%', height: '100%' }}
+            width={180}
+            height={60}
+            style={{
+              display: 'block',
+              width: '180px',
+              height: '60px',
+            }}
             priority
           />
         </div>
-        <h1
+
+        {/* Centered Content */}
+        <div
           style={{
-            fontSize: '1.6rem',
-            fontWeight: 800,
-            color: 'var(--brand)',
-            letterSpacing: '-0.5px',
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'center',
           }}
         >
-          Moedah POS
-        </h1>
-        <p style={{ color: 'var(--text-2)', marginTop: 4, fontSize: '0.9rem' }}>
-          Masuk ke akun Anda
-        </p>
-      </div>
-
-      {/* Card */}
-      <div className="card" style={{ padding: '28px 28px 24px' }}>
-        {error && (
-          <div
-            style={{
-              background: 'rgba(239,68,68,0.12)',
-              border: '1px solid rgba(239,68,68,0.3)',
-              borderRadius: 8,
-              padding: '10px 14px',
-              marginBottom: 18,
-              color: '#f87171',
-              fontSize: '0.85rem',
-            }}
-          >
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          {/* Email */}
-          <div className="input-group">
-            <label className="input-label">Email</label>
-            <div style={{ position: 'relative' }}>
-              <Mail
-                size={15}
-                style={{
-                  position: 'absolute',
-                  left: 12,
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  color: 'var(--text-3)',
-                }}
-              />
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                placeholder="nama@email.com"
-                className="input"
-                style={{ paddingLeft: 36 }}
-              />
+          <div style={{ width: '100%', maxWidth: 420 }}>
+            {/* Header */}
+            <div style={{ marginBottom: 40, animation: 'fadeIn 0.8s ease-out' }}>
+              <h1
+                style={{ fontSize: '1.8rem', fontWeight: 800, color: '#1f2937', marginBottom: 8 }}
+              >
+                Welcome Back
+              </h1>
+              <p style={{ color: '#6b7280', fontSize: '0.95rem' }}>
+                Enter your email and password to access your account.
+              </p>
             </div>
-          </div>
 
-          {/* Password */}
-          <div className="input-group">
-            <label className="input-label">Password</label>
-            <div style={{ position: 'relative' }}>
-              <Lock
-                size={15}
+            {/* Error Message */}
+            {error && (
+              <div
                 style={{
-                  position: 'absolute',
-                  left: 12,
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  color: 'var(--text-3)',
-                }}
-              />
-              <input
-                type={showPw ? 'text' : 'password'}
-                required
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                placeholder="Password Anda"
-                className="input"
-                style={{ paddingLeft: 36, paddingRight: 40 }}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPw(!showPw)}
-                style={{
-                  position: 'absolute',
-                  right: 10,
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  color: 'var(--text-3)',
-                  padding: 2,
+                  background: '#fee2e2',
+                  border: '1px solid #fecaca',
+                  borderRadius: 8,
+                  padding: '12px 14px',
+                  marginBottom: 20,
+                  color: '#991b1b',
+                  fontSize: '0.85rem',
+                  animation: 'slideDown 0.3s ease-out',
                 }}
               >
-                {showPw ? <EyeOff size={15} /> : <Eye size={15} />}
-              </button>
-            </div>
-          </div>
+                {error}
+              </div>
+            )}
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="btn btn-lg"
-            style={{
-              marginTop: 4,
-              background: 'linear-gradient(135deg, #0884F6, #0670d4)',
-              color: '#fff',
-              boxShadow: loading ? 'none' : '0 4px 20px rgba(8,132,246,0.4)',
-              transition: 'all 0.2s',
-            }}
-          >
-            {loading ? <Loader2 size={18} className="loading-spin" /> : null}
-            {loading ? 'Masuk...' : 'Masuk'}
-          </button>
-        </form>
+            {/* Form */}
+            <form
+              onSubmit={handleSubmit}
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 16,
+                animation: 'fadeIn 1s ease-out',
+              }}
+            >
+              {/* Email Field */}
+              <div>
+                <label
+                  style={{
+                    display: 'block',
+                    color: '#374151',
+                    fontSize: '0.9rem',
+                    fontWeight: 500,
+                    marginBottom: 6,
+                  }}
+                >
+                  Email
+                </label>
+                <div style={{ position: 'relative' }}>
+                  <Mail
+                    size={18}
+                    style={{
+                      position: 'absolute',
+                      left: 12,
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      color: '#9ca3af',
+                    }}
+                  />
+                  <input
+                    type="email"
+                    required
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                    placeholder="sellostore@company.com"
+                    style={{
+                      width: '100%',
+                      padding: '11px 12px 11px 40px',
+                      border: '1px solid #e5e7eb',
+                      borderRadius: 6,
+                      fontSize: '0.95rem',
+                      outline: 'none',
+                      transition: 'all 0.2s',
+                      boxSizing: 'border-box',
+                    }}
+                    onFocus={e => {
+                      e.target.style.borderColor = '#0884F6';
+                      e.target.style.boxShadow = '0 0 0 3px rgba(8, 132, 246, 0.1)';
+                      e.target.style.background = '#f8fbff';
+                    }}
+                    onBlur={e => {
+                      e.target.style.borderColor = '#e5e7eb';
+                      e.target.style.boxShadow = 'none';
+                      e.target.style.background = '#ffffff';
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Password Field */}
+              <div>
+                <label
+                  style={{
+                    display: 'block',
+                    color: '#374151',
+                    fontSize: '0.9rem',
+                    fontWeight: 500,
+                    marginBottom: 6,
+                  }}
+                >
+                  Password
+                </label>
+                <div style={{ position: 'relative' }}>
+                  <Lock
+                    size={18}
+                    style={{
+                      position: 'absolute',
+                      left: 12,
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      color: '#9ca3af',
+                    }}
+                  />
+                  <input
+                    type={showPw ? 'text' : 'password'}
+                    required
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    placeholder="Sellostore."
+                    style={{
+                      width: '100%',
+                      padding: '11px 40px 11px 40px',
+                      border: '1px solid #e5e7eb',
+                      borderRadius: 6,
+                      fontSize: '0.95rem',
+                      outline: 'none',
+                      transition: 'all 0.2s',
+                      boxSizing: 'border-box',
+                    }}
+                    onFocus={e => {
+                      e.target.style.borderColor = '#0884F6';
+                      e.target.style.boxShadow = '0 0 0 3px rgba(8, 132, 246, 0.1)';
+                      e.target.style.background = '#f8fbff';
+                    }}
+                    onBlur={e => {
+                      e.target.style.borderColor = '#e5e7eb';
+                      e.target.style.boxShadow = 'none';
+                      e.target.style.background = '#ffffff';
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPw(!showPw)}
+                    style={{
+                      position: 'absolute',
+                      right: 12,
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      color: '#9ca3af',
+                      padding: '4px 6px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      transition: 'color 0.2s',
+                    }}
+                    onMouseEnter={e => (e.currentTarget.style.color = '#6b7280')}
+                    onMouseLeave={e => (e.currentTarget.style.color = '#9ca3af')}
+                  >
+                    {showPw ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Remember Me */}
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <input
+                  type="checkbox"
+                  id="remember"
+                  checked={rememberMe}
+                  onChange={e => setRememberMe(e.target.checked)}
+                  style={{
+                    width: 16,
+                    height: 16,
+                    cursor: 'pointer',
+                    accentColor: '#0884F6',
+                  }}
+                />
+                <label
+                  htmlFor="remember"
+                  style={{
+                    marginLeft: 8,
+                    color: '#6b7280',
+                    fontSize: '0.9rem',
+                    cursor: 'pointer',
+                    userSelect: 'none',
+                  }}
+                >
+                  Remember Me
+                </label>
+              </div>
+
+              {/* Login Button */}
+              <button
+                type="submit"
+                disabled={loading}
+                style={{
+                  width: '100%',
+                  padding: '11px',
+                  marginTop: 8,
+                  background: loading ? '#B3D9F2' : '#0884F6',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: 6,
+                  fontSize: '0.95rem',
+                  fontWeight: 600,
+                  cursor: loading ? 'not-allowed' : 'pointer',
+                  transition: 'all 0.2s',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 8,
+                  boxShadow: loading ? 'none' : '0 2px 8px rgba(8, 132, 246, 0.3)',
+                }}
+                onMouseEnter={e => {
+                  if (!loading) {
+                    e.currentTarget.style.background = '#0670D4';
+                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(8, 132, 246, 0.4)';
+                  }
+                }}
+                onMouseLeave={e => {
+                  if (!loading) {
+                    e.currentTarget.style.background = '#0884F6';
+                    e.currentTarget.style.boxShadow = '0 2px 8px rgba(8, 132, 246, 0.3)';
+                  }
+                }}
+              >
+                {loading ? (
+                  <Loader2 size={18} style={{ animation: 'spin 1s linear infinite' }} />
+                ) : null}
+                {loading ? 'Signing in...' : 'Log In'}
+              </button>
+            </form>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div
+          style={{
+            position: 'absolute',
+            bottom: 20,
+            left: 0,
+            right: 0,
+            textAlign: 'center',
+            fontSize: '0.8rem',
+            color: '#9ca3af',
+          }}
+        >
+          <p>Copyright © 2025 Moedah Enterprises LTD.</p>
+        </div>
       </div>
 
-      <p
-        style={{ textAlign: 'center', color: 'var(--text-3)', fontSize: '0.78rem', marginTop: 20 }}
+      {/* Right Section - Blue Gradient with Content */}
+      <div
+        style={{
+          flex: 1,
+          background: 'linear-gradient(135deg, #0884F6 0%, #0670D4 100%)',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          padding: '60px 40px',
+          position: 'relative',
+          overflow: 'hidden',
+          animation: 'slideInRight 0.6s ease-out',
+        }}
       >
-        Moedah &copy; {new Date().getFullYear()} — Point of Sale System
-      </p>
+        {/* Decorative Elements */}
+        <div
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            opacity: 0.1,
+            backgroundImage: `repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,.1) 10px, rgba(255,255,255,.1) 20px)`,
+            pointerEvents: 'none',
+          }}
+        />
+
+        {/* Content */}
+        <div
+          style={{
+            position: 'relative',
+            zIndex: 1,
+            textAlign: 'center',
+            maxWidth: 400,
+            animation: 'fadeIn 1s ease-out 0.3s backwards',
+          }}
+        >
+          <h2
+            style={{
+              color: '#fff',
+              fontSize: '2rem',
+              fontWeight: 700,
+              marginBottom: 16,
+              lineHeight: 1.3,
+            }}
+          >
+            Effortlessly manage your team and operations.
+          </h2>
+          <p style={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.95rem', marginBottom: 40 }}>
+            Log in to access your CRM dashboard and manage your team.
+          </p>
+
+          {/* Dashboard Mockup */}
+          <div
+            style={{
+              background: 'rgba(255,255,255,0.15)',
+              borderRadius: 12,
+              padding: 4,
+              backdropFilter: 'blur(10px)',
+              border: '1px solid rgba(255,255,255,0.2)',
+              animation: 'slideUp 0.8s ease-out 0.5s backwards',
+            }}
+          >
+            <div
+              style={{
+                background: 'linear-gradient(135deg, #f5f7fa 0%, #ffffff 100%)',
+                borderRadius: 10,
+                padding: 16,
+                boxShadow: '0 20px 40px rgba(0,0,0,0.1)',
+              }}
+            >
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr',
+                  gap: 12,
+                  fontSize: '0.75rem',
+                }}
+              >
+                <div
+                  style={{
+                    background: 'linear-gradient(135deg, #0884F6 0%, #0670D4 100%)',
+                    color: '#fff',
+                    padding: 12,
+                    borderRadius: 6,
+                    fontWeight: 600,
+                  }}
+                >
+                  💰 $189,574
+                </div>
+                <div
+                  style={{ background: '#f3f4f6', padding: 12, borderRadius: 6, fontWeight: 600 }}
+                >
+                  ⏱️ 00:01:30
+                </div>
+                <div
+                  style={{ background: '#f3f4f6', padding: 12, borderRadius: 6, fontWeight: 600 }}
+                >
+                  💸 $25,684
+                </div>
+                <div
+                  style={{
+                    background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                    color: '#fff',
+                    padding: 12,
+                    borderRadius: 6,
+                    fontWeight: 600,
+                  }}
+                >
+                  📊 6,248 Units
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <style>{`
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        @keyframes slideInLeft {
+          from {
+            opacity: 0;
+            transform: translateX(-30px);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+        @keyframes slideInRight {
+          from {
+            opacity: 0;
+            transform: translateX(30px);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
+        @keyframes slideDown {
+          from {
+            opacity: 0;
+            transform: translateY(-10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        @keyframes slideUp {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+      `}</style>
     </div>
   );
 }
