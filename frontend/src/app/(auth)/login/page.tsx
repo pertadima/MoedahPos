@@ -3,7 +3,7 @@
 import React, { useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { Mail, Lock, Eye, EyeOff, Loader2, Sun, Moon } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { useTheme } from '@/lib/theme/ThemeContext';
 import { ApiError } from '@/lib/api/client';
@@ -35,30 +35,6 @@ export default function LoginPage() {
 
   return (
     <div style={{ width: '100%', maxWidth: 400 }}>
-      {/* Theme toggle — top right of card area */}
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
-        <button
-          onClick={toggleTheme}
-          title={isDark ? 'Mode terang' : 'Mode gelap'}
-          style={{
-            background: 'var(--bg-elevated)',
-            border: '1px solid var(--border-md)',
-            borderRadius: 8,
-            padding: '6px 10px',
-            cursor: 'pointer',
-            color: 'var(--text-2)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
-            fontSize: '0.78rem',
-            fontWeight: 500,
-          }}
-        >
-          {isDark ? <Sun size={14} /> : <Moon size={14} />}
-          {isDark ? 'Terang' : 'Gelap'}
-        </button>
-      </div>
-
       {/* Logo */}
       <div style={{ textAlign: 'center', marginBottom: 28 }}>
         <div

@@ -242,23 +242,35 @@ export default function Sidebar() {
     <aside className="sidebar">
       {/* Logo */}
       <div className="sidebar-logo">
-        <Image
-          src={isDark ? '/logo-icon-dark.svg' : '/logo-icon-light.svg'}
-          alt="Moedah"
-          width={32}
-          height={36}
-          style={{ objectFit: 'contain', flexShrink: 0 }}
-          priority
-        />
-        <div
-          style={{
-            fontWeight: 800,
-            fontSize: '1rem',
-            color: 'var(--brand)',
-            letterSpacing: '-0.3px',
-          }}
-        >
-          Moedah
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Image
+              src={isDark ? '/logo-icon-dark.svg' : '/logo-icon-light.svg'}
+              alt="Moedah"
+              width={32}
+              height={36}
+              style={{ objectFit: 'contain', flexShrink: 0 }}
+              priority
+            />
+            <div
+              style={{
+                fontWeight: 800,
+                fontSize: '1rem',
+                color: 'var(--brand)',
+                letterSpacing: '-0.3px',
+              }}
+            >
+              Moedah
+            </div>
+          </div>
+          <button
+            onClick={toggleTheme}
+            className="btn btn-ghost btn-sm"
+            title={isDark ? 'Ganti ke mode terang' : 'Ganti ke mode gelap'}
+            style={{ padding: '6px 8px', borderRadius: 8, border: '1px solid var(--border-md)' }}
+          >
+            {isDark ? <Sun size={14} /> : <Moon size={14} />}
+          </button>
         </div>
       </div>
 
@@ -401,16 +413,8 @@ export default function Sidebar() {
             </div>
           </div>
         )}
-        {/* Theme toggle + Logout row */}
+        {/* Logout row */}
         <div style={{ display: 'flex', gap: 6 }}>
-          <button
-            onClick={toggleTheme}
-            className="btn btn-ghost btn-sm"
-            title={isDark ? 'Ganti ke mode terang' : 'Ganti ke mode gelap'}
-            style={{ padding: '6px 8px', borderRadius: 8, border: '1px solid var(--border-md)' }}
-          >
-            {isDark ? <Sun size={14} /> : <Moon size={14} />}
-          </button>
           <button
             onClick={logout}
             className="btn btn-ghost btn-sm"
