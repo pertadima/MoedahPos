@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   LayoutDashboard,
   ShoppingCart,
@@ -216,16 +216,12 @@ export default function Sidebar() {
   const role = selectedStore?.role;
   const isSuperOrAdmin = role === 'superadmin' || role === 'admin';
 
-  // Sidebar collapse state
-  const [isCollapsed, setIsCollapsed] = useState(false);
-
-  // Load collapsed state from localStorage on mount
-  useEffect(() => {
+  // Initialize collapsed state from localStorage
+  const [isCollapsed, setIsCollapsed] = useState(() => {
+    if (typeof window === 'undefined') return false;
     const saved = localStorage.getItem('sidebar-collapsed');
-    if (saved !== null) {
-      setIsCollapsed(JSON.parse(saved));
-    }
-  }, []);
+    return saved !== null ? JSON.parse(saved) : false;
+  });
 
   // Save collapsed state to localStorage
   const toggleCollapsed = () => {

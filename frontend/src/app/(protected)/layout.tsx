@@ -9,30 +9,25 @@ import Sidebar from '@/components/layout/Sidebar';
 export default function ProtectedLayout({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
-  const [isCollapsed, setIsCollapsed] = useState(false);
-  const [isMounted, setIsMounted] = useState(false);
 
-  useEffect(() => {
-    setIsMounted(true);
+  // Initialize collapsed state from localStorage with lazy initializer
+  const [isCollapsed, setIsCollapsed] = useState(() => {
+    if (typeof window === 'undefined') return false;
     const saved = localStorage.getItem('sidebar-collapsed');
-    if (saved !== null) {
-      setIsCollapsed(JSON.parse(saved));
-    }
-  }, []);
+    return saved !== null ? JSON.parse(saved) : false;
+  });
 
+  // Listen for storage changes from sidebar toggle
   useEffect(() => {
-    const checkCollapsed = () => {
+    const handleStorageChange = () => {
       const saved = localStorage.getItem('sidebar-collapsed');
       if (saved !== null) {
         setIsCollapsed(JSON.parse(saved));
       }
     };
-    window.addEventListener('storage', checkCollapsed);
-    const interval = setInterval(checkCollapsed, 100);
-    return () => {
-      window.removeEventListener('storage', checkCollapsed);
-      clearInterval(interval);
-    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
   useEffect(() => {
@@ -59,7 +54,7 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
 
   if (!isAuthenticated) return null;
 
-  const sidebarWidth = isMounted ? (isCollapsed ? 64 : 240) : 240;
+  const sidebarWidth = isCollapsed ? 64 : 240;
 
   return (
     <div style={{ display: 'flex' }}>
