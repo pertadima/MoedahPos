@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { useState } from 'react';
 import {
   LayoutDashboard,
   ShoppingCart,
@@ -30,6 +29,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { useTheme } from '@/lib/theme/ThemeContext';
+import { useSidebar } from '@/lib/context/SidebarContext';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface NavItem {
@@ -212,23 +212,10 @@ export default function Sidebar() {
   const pathname = usePathname();
   const { user, selectedStore, stores, selectStore, logout } = useAuth();
   const { isDark, toggleTheme } = useTheme();
+  const { isCollapsed, toggleCollapsed } = useSidebar();
   const isRestaurant = selectedStore?.store_type === 'restaurant';
   const role = selectedStore?.role;
   const isSuperOrAdmin = role === 'superadmin' || role === 'admin';
-
-  // Initialize collapsed state from localStorage
-  const [isCollapsed, setIsCollapsed] = useState(() => {
-    if (typeof window === 'undefined') return false;
-    const saved = localStorage.getItem('sidebar-collapsed');
-    return saved !== null ? JSON.parse(saved) : false;
-  });
-
-  // Save collapsed state to localStorage
-  const toggleCollapsed = () => {
-    const newState = !isCollapsed;
-    setIsCollapsed(newState);
-    localStorage.setItem('sidebar-collapsed', JSON.stringify(newState));
-  };
 
   // Inject restaurant group after "Penjualan" when in restaurant mode
   const allGroups: NavGroup[] = isRestaurant
