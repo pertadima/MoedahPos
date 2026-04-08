@@ -282,17 +282,6 @@ export default function Sidebar() {
                 style={{ objectFit: 'contain', flexShrink: 0 }}
                 priority
               />
-              <div
-                style={{
-                  fontWeight: 800,
-                  fontSize: '1rem',
-                  color: 'var(--brand)',
-                  letterSpacing: '-0.3px',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                Moedah
-              </div>
             </div>
             <div style={{ display: 'flex', gap: 4 }}>
               <button
