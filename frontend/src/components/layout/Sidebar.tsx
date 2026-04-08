@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
+import { useState, useEffect } from 'react';
 import {
   LayoutDashboard,
   ShoppingCart,
@@ -24,6 +25,8 @@ import {
   UserCog,
   ChefHat,
   Wallet,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { useTheme } from '@/lib/theme/ThemeContext';
@@ -213,6 +216,24 @@ export default function Sidebar() {
   const role = selectedStore?.role;
   const isSuperOrAdmin = role === 'superadmin' || role === 'admin';
 
+  // Sidebar collapse state
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
+  // Load collapsed state from localStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem('sidebar-collapsed');
+    if (saved !== null) {
+      setIsCollapsed(JSON.parse(saved));
+    }
+  }, []);
+
+  // Save collapsed state to localStorage
+  const toggleCollapsed = () => {
+    const newState = !isCollapsed;
+    setIsCollapsed(newState);
+    localStorage.setItem('sidebar-collapsed', JSON.stringify(newState));
+  };
+
   // Inject restaurant group after "Penjualan" when in restaurant mode
   const allGroups: NavGroup[] = isRestaurant
     ? [baseGroups[0], baseGroups[1], restaurantGroup, ...baseGroups.slice(2)]
@@ -239,43 +260,75 @@ export default function Sidebar() {
     .filter(Boolean) as NavGroup[];
 
   return (
-    <aside className="sidebar">
+    <aside
+      className={`sidebar ${isCollapsed ? 'sidebar-collapsed' : 'sidebar-expanded'}`}
+      style={{
+        width: isCollapsed ? 64 : 240,
+        transition: 'width 0.3s ease-in-out',
+      }}
+    >
       {/* Logo */}
       <div className="sidebar-logo">
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Image
-              src={isDark ? '/logo-icon-dark.svg' : '/logo-icon-light.svg'}
-              alt="Moedah"
-              width={32}
-              height={36}
-              style={{ objectFit: 'contain', flexShrink: 0 }}
-              priority
-            />
-            <div
-              style={{
-                fontWeight: 800,
-                fontSize: '1rem',
-                color: 'var(--brand)',
-                letterSpacing: '-0.3px',
-              }}
+        {isCollapsed ? (
+          <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+            <button
+              onClick={toggleCollapsed}
+              className="btn btn-ghost btn-sm"
+              title={isCollapsed ? 'Perluas sidebar' : 'Ciutkan sidebar'}
+              style={{ padding: '6px 8px', borderRadius: 8, border: '1px solid var(--border-md)' }}
+              aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             >
-              Moedah
+              {isCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
+            </button>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Image
+                src={isDark ? '/logo-icon-dark.svg' : '/logo-icon-light.svg'}
+                alt="Moedah"
+                width={32}
+                height={36}
+                style={{ objectFit: 'contain', flexShrink: 0 }}
+                priority
+              />
+              <div
+                style={{
+                  fontWeight: 800,
+                  fontSize: '1rem',
+                  color: 'var(--brand)',
+                  letterSpacing: '-0.3px',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                Moedah
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: 4 }}>
+              <button
+                onClick={toggleTheme}
+                className="btn btn-ghost btn-sm"
+                title={isDark ? 'Ganti ke mode terang' : 'Ganti ke mode gelap'}
+                style={{ padding: '6px 8px', borderRadius: 8, border: '1px solid var(--border-md)' }}
+              >
+                {isDark ? <Sun size={14} /> : <Moon size={14} />}
+              </button>
+              <button
+                onClick={toggleCollapsed}
+                className="btn btn-ghost btn-sm"
+                title={isCollapsed ? 'Perluas sidebar' : 'Ciutkan sidebar'}
+                style={{ padding: '6px 8px', borderRadius: 8, border: '1px solid var(--border-md)' }}
+                aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              >
+                {isCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
+              </button>
             </div>
           </div>
-          <button
-            onClick={toggleTheme}
-            className="btn btn-ghost btn-sm"
-            title={isDark ? 'Ganti ke mode terang' : 'Ganti ke mode gelap'}
-            style={{ padding: '6px 8px', borderRadius: 8, border: '1px solid var(--border-md)' }}
-          >
-            {isDark ? <Sun size={14} /> : <Moon size={14} />}
-          </button>
-        </div>
+        )}
       </div>
 
       {/* Store Selector */}
-      {stores.length > 0 && (
+      {stores.length > 0 && !isCollapsed && (
         <div style={{ padding: '10px 12px 8px', borderBottom: '1px solid var(--border)' }}>
           <div
             style={{
@@ -288,28 +341,30 @@ export default function Sidebar() {
           >
             Toko Aktif
           </div>
-          <select
-            value={selectedStore?.store_id ?? ''}
-            onChange={e => selectStore(e.target.value)}
-            style={{
-              width: '100%',
-              background: 'var(--bg-elevated)',
-              border: '1px solid var(--border-md)',
-              borderRadius: 7,
-              padding: '6px 10px',
-              color: 'var(--text-1)',
-              fontSize: '0.8rem',
-              cursor: 'pointer',
-              outline: 'none',
-            }}
-          >
-            {!selectedStore && <option value="">— Pilih Toko —</option>}
-            {stores.map(s => (
-              <option key={s.store_id} value={s.store_id}>
-                {s.store_name}
-              </option>
-            ))}
-          </select>
+          <div style={{ position: 'relative' }}>
+            <select
+              value={selectedStore?.store_id ?? ''}
+              onChange={e => selectStore(e.target.value)}
+              style={{
+                width: '100%',
+                background: 'var(--bg-elevated)',
+                border: '1px solid var(--border-md)',
+                borderRadius: 7,
+                padding: '6px 10px',
+                color: 'var(--text-1)',
+                fontSize: '0.8rem',
+                cursor: 'pointer',
+                outline: 'none',
+              }}
+            >
+              {!selectedStore && <option value="">— Pilih Toko —</option>}
+              {stores.map(s => (
+                <option key={s.store_id} value={s.store_id}>
+                  {s.store_name}
+                </option>
+              ))}
+            </select>
+          </div>
           {selectedStore && (
             <div style={{ display: 'flex', gap: 6, marginTop: 5, alignItems: 'center' }}>
               <div style={{ fontSize: '0.7rem', color: 'var(--accent-em)' }}>
@@ -337,27 +392,51 @@ export default function Sidebar() {
         {finalGroups.map(group => (
           <div key={group.label} style={{ marginBottom: 4 }}>
             {/* Group label */}
-            <div
-              style={{
-                fontSize: '0.62rem',
-                fontWeight: 700,
-                letterSpacing: '0.09em',
-                textTransform: 'uppercase',
-                color: 'var(--text-3)',
-                padding: '10px 14px 4px',
-              }}
-            >
-              {group.label}
-            </div>
+            {!isCollapsed && (
+              <div
+                style={{
+                  fontSize: '0.62rem',
+                  fontWeight: 700,
+                  letterSpacing: '0.09em',
+                  textTransform: 'uppercase',
+                  color: 'var(--text-3)',
+                  padding: '10px 14px 4px',
+                  opacity: isCollapsed ? 0 : 1,
+                  transition: 'opacity 0.2s ease-in-out',
+                }}
+              >
+                {group.label}
+              </div>
+            )}
 
             {/* Group items */}
             {group.items.map(({ href, icon: Icon, label }) => {
               const active =
                 pathname === href || (href !== '/dashboard' && pathname.startsWith(href + '/'));
               return (
-                <Link key={href} href={href} className={`nav-item ${active ? 'active' : ''}`}>
+                <Link
+                  key={href}
+                  href={href}
+                  className={`nav-item ${active ? 'active' : ''}`}
+                  title={isCollapsed ? label : undefined}
+                  style={{
+                    justifyContent: isCollapsed ? 'center' : 'flex-start',
+                    padding: isCollapsed ? '12px 8px' : '12px 14px',
+                  }}
+                >
                   <Icon size={15} />
-                  {label}
+                  {!isCollapsed && (
+                    <span
+                      style={{
+                        marginLeft: 8,
+                        opacity: isCollapsed ? 0 : 1,
+                        transition: 'opacity 0.2s ease-in-out',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {label}
+                    </span>
+                  )}
                 </Link>
               );
             })}
@@ -368,7 +447,21 @@ export default function Sidebar() {
       {/* User Profile + Logout */}
       <div style={{ padding: '12px', borderTop: '1px solid var(--border)' }}>
         {user && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: isCollapsed ? 'center' : 'flex-start',
+              justifyContent: isCollapsed ? 'center' : 'flex-start',
+              gap: 8,
+              marginBottom: 8,
+              cursor: isCollapsed ? 'pointer' : 'default',
+            }}
+            title={
+              isCollapsed
+                ? `${user.name}\n${user.email}`
+                : undefined
+            }
+          >
             <div
               style={{
                 width: 32,
@@ -386,31 +479,39 @@ export default function Sidebar() {
             >
               {user.name.charAt(0).toUpperCase()}
             </div>
-            <div style={{ overflow: 'hidden' }}>
+            {!isCollapsed && (
               <div
                 style={{
-                  fontSize: '0.8rem',
-                  fontWeight: 600,
-                  color: 'var(--text-1)',
-                  whiteSpace: 'nowrap',
                   overflow: 'hidden',
-                  textOverflow: 'ellipsis',
+                  opacity: isCollapsed ? 0 : 1,
+                  transition: 'opacity 0.2s ease-in-out',
                 }}
               >
-                {user.name}
+                <div
+                  style={{
+                    fontSize: '0.8rem',
+                    fontWeight: 600,
+                    color: 'var(--text-1)',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                  }}
+                >
+                  {user.name}
+                </div>
+                <div
+                  style={{
+                    fontSize: '0.7rem',
+                    color: 'var(--text-3)',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                  }}
+                >
+                  {user.email}
+                </div>
               </div>
-              <div
-                style={{
-                  fontSize: '0.7rem',
-                  color: 'var(--text-3)',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                }}
-              >
-                {user.email}
-              </div>
-            </div>
+            )}
           </div>
         )}
         {/* Logout row */}
@@ -418,9 +519,16 @@ export default function Sidebar() {
           <button
             onClick={logout}
             className="btn btn-ghost btn-sm"
-            style={{ flex: 1, justifyContent: 'flex-start', gap: 8 }}
+            title={isCollapsed ? 'Keluar' : undefined}
+            style={{
+              flex: 1,
+              justifyContent: isCollapsed ? 'center' : 'flex-start',
+              gap: 8,
+              padding: isCollapsed ? '6px 8px' : '6px 12px',
+            }}
           >
-            <LogOut size={14} /> Keluar
+            <LogOut size={14} />
+            {!isCollapsed && <span>Keluar</span>}
           </button>
         </div>
       </div>

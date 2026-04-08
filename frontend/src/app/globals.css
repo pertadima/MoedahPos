@@ -299,8 +299,6 @@ body {
 
 /* ── Sidebar ─────────────────────────────────────────────────────────────── */
 .sidebar {
-  width: 220px;
-  min-width: 220px;
   height: 100vh;
   position: fixed;
   left: 0;
@@ -311,6 +309,14 @@ body {
   flex-direction: column;
   z-index: 40;
   overflow-y: auto;
+}
+.sidebar-expanded {
+  width: 240px;
+  min-width: 240px;
+}
+.sidebar-collapsed {
+  width: 64px;
+  min-width: 64px;
 }
 .sidebar-logo {
   display: flex;
@@ -362,10 +368,11 @@ body {
 
 /* ── Layout ──────────────────────────────────────────────────────────────── */
 .main-layout {
-  margin-left: 220px;
+  margin-left: 240px;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  transition: margin-left 0.3s ease-in-out;
 }
 .page-header {
   padding: 20px 24px 0;
