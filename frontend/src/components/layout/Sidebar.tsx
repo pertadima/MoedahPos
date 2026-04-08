@@ -265,7 +265,14 @@ export default function Sidebar() {
             </button>
           </div>
         ) : (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              width: '100%',
+            }}
+          >
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <Image
                 src={isDark ? '/logo-icon-dark.svg' : '/logo-icon-light.svg'}
@@ -292,7 +299,11 @@ export default function Sidebar() {
                 onClick={toggleTheme}
                 className="btn btn-ghost btn-sm"
                 title={isDark ? 'Ganti ke mode terang' : 'Ganti ke mode gelap'}
-                style={{ padding: '6px 8px', borderRadius: 8, border: '1px solid var(--border-md)' }}
+                style={{
+                  padding: '6px 8px',
+                  borderRadius: 8,
+                  border: '1px solid var(--border-md)',
+                }}
               >
                 {isDark ? <Sun size={14} /> : <Moon size={14} />}
               </button>
@@ -300,7 +311,11 @@ export default function Sidebar() {
                 onClick={toggleCollapsed}
                 className="btn btn-ghost btn-sm"
                 title={isCollapsed ? 'Perluas sidebar' : 'Ciutkan sidebar'}
-                style={{ padding: '6px 8px', borderRadius: 8, border: '1px solid var(--border-md)' }}
+                style={{
+                  padding: '6px 8px',
+                  borderRadius: 8,
+                  border: '1px solid var(--border-md)',
+                }}
                 aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
               >
                 {isCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
@@ -439,11 +454,7 @@ export default function Sidebar() {
               marginBottom: 8,
               cursor: isCollapsed ? 'pointer' : 'default',
             }}
-            title={
-              isCollapsed
-                ? `${user.name}\n${user.email}`
-                : undefined
-            }
+            title={isCollapsed ? `${user.name}\n${user.email}` : undefined}
           >
             <div
               style={{

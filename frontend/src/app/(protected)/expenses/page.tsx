@@ -113,7 +113,7 @@ function ExpensesPage() {
             Catat dan kelola semua pengeluaran selain stok produk.
           </p>
         </div>
-       {activeTab !== 'rutin' && (
+        {activeTab !== 'rutin' && (
           <button
             onClick={() => {
               setEditTarget(null);
@@ -121,11 +121,10 @@ function ExpensesPage() {
             }}
             className="btn btn-primary"
             style={{ display: 'flex', alignItems: 'center', gap: 6 }}
-            >
+          >
             <Plus size={16} /> Tambah Pengeluaran
           </button>
         )}
-        
       </div>
 
       <div

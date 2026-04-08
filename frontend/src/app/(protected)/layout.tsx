@@ -37,7 +37,9 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
   return (
     <div style={{ display: 'flex' }}>
       <Sidebar />
-      <div style={{ flex: 1, marginLeft: sidebarWidth, transition: 'margin-left 0.3s ease-in-out' }}>
+      <div
+        style={{ flex: 1, marginLeft: sidebarWidth, transition: 'margin-left 0.3s ease-in-out' }}
+      >
         {children}
       </div>
     </div>
