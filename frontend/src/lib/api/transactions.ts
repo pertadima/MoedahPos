@@ -5,7 +5,9 @@ export type TxItemInput = {
   product_id?: string;
   menu_item_id?: string;
   quantity: number;
-  discount_pct: number;
+  discount_pct: number; // legacy; used when discount_type = 'PERCENTAGE'
+  discount_type?: 'PERCENTAGE' | 'FIXED' | 'OVERRIDE';
+  discount_value?: number; // value for FIXED/OVERRIDE/PERCENTAGE
 };
 
 export const transactionsApi = {
@@ -41,6 +43,8 @@ export const transactionsApi = {
       payment_amount: number;
       notes?: string;
       items: TxItemInput[];
+      cart_discount_type?: 'PERCENTAGE' | 'FIXED';
+      cart_discount_value?: number;
     }
   ) => api.post<Transaction>(`/stores/${storeId}/transactions`, payload),
 
@@ -61,6 +65,8 @@ export const transactionsApi = {
       customer_name?: string;
       notes?: string;
       items: TxItemInput[];
+      cart_discount_type?: 'PERCENTAGE' | 'FIXED';
+      cart_discount_value?: number;
     }
   ) => api.post<Transaction>(`/stores/${storeId}/transactions/draft`, payload),
 
@@ -72,6 +78,8 @@ export const transactionsApi = {
       customer_name?: string;
       notes?: string;
       items: TxItemInput[];
+      cart_discount_type?: 'PERCENTAGE' | 'FIXED';
+      cart_discount_value?: number;
     }
   ) => api.put<Transaction>(`/stores/${storeId}/transactions/${txnId}/draft`, payload),
 

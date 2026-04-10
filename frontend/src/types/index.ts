@@ -160,8 +160,12 @@ export interface TransactionItem {
   product_name: string;
   sku: string;
   quantity: number;
+  original_price: number;
   unit_price: number;
   discount_pct: number;
+  discount_type: 'PERCENTAGE' | 'FIXED' | 'OVERRIDE';
+  discount_value: number;
+  cart_discount_allocated: number;
   tax_rate: number;
   subtotal: number;
   status: 'pending' | 'completed';
@@ -183,8 +187,10 @@ export interface Transaction {
   payment_method: string;
   payment_amount: number;
   change_amount: number;
-  status: string; // 'draft' | 'completed' | 'voided'
+  status: string;
   notes: string;
+  cart_discount_type: string;
+  cart_discount_value: number;
   items: TransactionItem[];
   created_at: string;
   updated_at: string;
@@ -307,12 +313,17 @@ export interface ProfitSummaryResponse {
 }
 
 // ── Cart ──────────────────────────────────────────────────────────────────────
+export type DiscountType = 'PERCENTAGE' | 'FIXED' | 'OVERRIDE';
+
 export interface CartItem {
   product: Product;
   quantity: number;
-  discount_pct: number;
-  unitPrice: number;
-  subtotal: number;
+  discount_pct: number; // legacy field, keep for compat
+  discountType: DiscountType;
+  discountValue: number; // e.g. 10 for 10%, 5000 for Rp5k fixed, or override price
+  originalPrice: number; // product's sell_price, never changes
+  unitPrice: number; // final price after discount, used for display & submission
+  subtotal: number; // unitPrice * qty (excl. tax)
   taxAmt: number;
 }
 

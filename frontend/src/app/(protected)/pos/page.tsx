@@ -32,8 +32,10 @@ import type {
   MenuItem,
   Customer,
   RestaurantTable,
+  DiscountType,
 } from '@/types';
 import { ApiError } from '@/lib/api/client';
+
 
 // ── Unified cart item type ────────────────────────────────────────────────────
 // We re-use CartItem but may hold either a product or a menu item.
@@ -47,34 +49,76 @@ type CartAction =
   | { type: 'ADD_MENU'; item: MenuItem }
   | { type: 'REMOVE'; id: string }
   | { type: 'SET_QTY'; id: string; qty: number }
+  | {
+      type: 'SET_DISCOUNT';
+      id: string;
+      discountType: DiscountType;
+      discountValue: number;
+    }
   | { type: 'CLEAR' };
 
+/** Compute final unit price + line totals from discount inputs. */
+function applyDiscount(
+  originalPrice: number,
+  qty: number,
+  taxRate: number,
+  discountType: DiscountType,
+  discountValue: number
+): { unitPrice: number; subtotal: number; taxAmt: number } {
+  let finalPrice: number;
+  switch (discountType) {
+    case 'FIXED':
+      finalPrice = Math.max(0, originalPrice - discountValue);
+      break;
+    case 'OVERRIDE':
+      finalPrice = Math.max(0, discountValue);
+      break;
+    default: // PERCENTAGE
+      finalPrice = originalPrice * (1 - discountValue / 100);
+  }
+  if (finalPrice < 0) finalPrice = 0;
+  const subtotal = finalPrice * qty;
+  const taxAmt = subtotal * (taxRate / 100);
+  return { unitPrice: finalPrice, subtotal, taxAmt };
+}
+
 function makeFromProduct(product: Product, qty = 1): PosCartItem {
-  const net = product.sell_price * qty;
-  const tax = net * (product.tax_rate / 100);
+  const { unitPrice, subtotal, taxAmt } = applyDiscount(
+    product.sell_price,
+    qty,
+    product.tax_rate,
+    'PERCENTAGE',
+    0
+  );
   return {
     product,
     quantity: qty,
     discount_pct: 0,
-    unitPrice: product.sell_price,
-    subtotal: net,
-    taxAmt: tax,
+    discountType: 'PERCENTAGE',
+    discountValue: 0,
+    originalPrice: product.sell_price,
+    unitPrice,
+    subtotal,
+    taxAmt,
   };
 }
 
 function makeFromMenu(item: MenuItem, qty = 1): PosCartItem {
-  const price = item.sell_price;
   const taxRate = item.tax_rate ?? 0;
-  const net = price * qty;
-  const tax = net * (taxRate / 100);
-  // Coerce MenuItem into Product shape enough for the cart
+  const { unitPrice, subtotal, taxAmt } = applyDiscount(
+    item.sell_price,
+    qty,
+    taxRate,
+    'PERCENTAGE',
+    0
+  );
   const fakeProduct: Product = {
     id: item.id,
     name: item.name,
     sku: 'MENU',
     unit: 'porsi',
     description: '',
-    sell_price: price,
+    sell_price: item.sell_price,
     cost_price: 0,
     tax_rate: taxRate,
     is_active: true,
@@ -88,9 +132,12 @@ function makeFromMenu(item: MenuItem, qty = 1): PosCartItem {
     product: fakeProduct,
     quantity: qty,
     discount_pct: 0,
-    unitPrice: price,
-    subtotal: net,
-    taxAmt: tax,
+    discountType: 'PERCENTAGE',
+    discountValue: 0,
+    originalPrice: item.sell_price,
+    unitPrice,
+    subtotal,
+    taxAmt,
     menuItemId: item.id,
   };
 }
@@ -119,12 +166,35 @@ function cartReducer(state: PosCartItem[], action: CartAction): PosCartItem[] {
       if (action.qty < 1) return state.filter(i => i.product.id !== action.id);
       return state.map(i => {
         if (i.product.id !== action.id) return i;
-        if (i.menuItemId) {
-          const net = i.unitPrice * action.qty;
-          const tax = net * (i.product.tax_rate / 100);
-          return { ...i, quantity: action.qty, subtotal: net, taxAmt: tax };
-        }
-        return makeFromProduct(i.product, action.qty);
+        const { unitPrice, subtotal, taxAmt } = applyDiscount(
+          i.originalPrice,
+          action.qty,
+          i.product.tax_rate,
+          i.discountType,
+          i.discountValue
+        );
+        return { ...i, quantity: action.qty, unitPrice, subtotal, taxAmt };
+      });
+    }
+    case 'SET_DISCOUNT': {
+      return state.map(i => {
+        if (i.product.id !== action.id) return i;
+        const { unitPrice, subtotal, taxAmt } = applyDiscount(
+          i.originalPrice,
+          i.quantity,
+          i.product.tax_rate,
+          action.discountType,
+          action.discountValue
+        );
+        return {
+          ...i,
+          discountType: action.discountType,
+          discountValue: action.discountValue,
+          discount_pct: action.discountType === 'PERCENTAGE' ? action.discountValue : 0,
+          unitPrice,
+          subtotal,
+          taxAmt,
+        };
       });
     }
     case 'CLEAR':
@@ -596,6 +666,10 @@ export default function POSPage() {
   const [error, setError] = useState('');
   const [holdError, setHoldError] = useState('');
 
+  // Cart-level discount state
+  const [cartDiscountType, setCartDiscountType] = useState<'PERCENTAGE' | 'FIXED'>('PERCENTAGE');
+  const [cartDiscountValue, setCartDiscountValue] = useState(0);
+
   // Customer picker
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [custSearch, setCustSearch] = useState('');
@@ -781,12 +855,23 @@ export default function POSPage() {
         product_id: i.menuItemId ? '' : i.product.id,
         menu_item_id: i.menuItemId ?? '',
         quantity: i.quantity,
-        discount_pct: 0,
+        discount_pct: i.discountType === 'PERCENTAGE' ? i.discountValue : 0,
+        discount_type: i.discountType,
+        discount_value: i.discountValue,
       }));
       if (activeDraft) {
-        await transactionsApi.updateDraft(storeId, activeDraft.id, { items });
+        await transactionsApi.updateDraft(storeId, activeDraft.id, {
+          items,
+          cart_discount_type: cartDiscountType,
+          cart_discount_value: cartDiscountValue,
+        });
       } else {
-        await transactionsApi.createDraft(storeId, { table_id: selectedTable.id, items });
+        await transactionsApi.createDraft(storeId, {
+          table_id: selectedTable.id,
+          items,
+          cart_discount_type: cartDiscountType,
+          cart_discount_value: cartDiscountValue,
+        });
       }
       // Mark table occupied in UI
       await tablesApi.updateStatus(storeId, selectedTable.id, 'occupied');
@@ -816,11 +901,26 @@ export default function POSPage() {
     return matchSearch && matchCat;
   });
 
-  // ── Totals ──────────────────────────────────────────────────────────────────
-  const subtotal = cart.reduce((s, i) => s + i.subtotal, 0);
+  // ── Totals ───────────────────────────────────────────────────────────────────
+  const subtotalAfterItems = cart.reduce((s, i) => s + i.subtotal, 0); // after item discounts
   const taxAmt = cart.reduce((s, i) => s + i.taxAmt, 0);
-  const total = subtotal + taxAmt;
   const itemCount = cart.reduce((s, i) => s + i.quantity, 0);
+
+  // Cart-level discount amount (for display only; backend re-computes authoritative values)
+  const cartDiscountAmt =
+    cartDiscountType === 'PERCENTAGE'
+      ? (subtotalAfterItems * cartDiscountValue) / 100
+      : Math.min(cartDiscountValue, subtotalAfterItems);
+
+  const subtotal = Math.max(0, subtotalAfterItems - cartDiscountAmt); // post-cart-discount net
+  const total = subtotal + taxAmt;
+
+  // Total discount across both levels (item + cart)
+  const totalItemDiscount = cart.reduce(
+    (s, i) => s + (i.originalPrice - i.unitPrice) * i.quantity,
+    0
+  );
+  const totalDiscount = totalItemDiscount + cartDiscountAmt;
 
   // ── Checkout (retail + restaurant direct pay) ────────────────────────────────
   const handleConfirmPayment = useCallback(
@@ -833,7 +933,9 @@ export default function POSPage() {
           product_id: i.menuItemId ? '' : i.product.id,
           menu_item_id: i.menuItemId ?? '',
           quantity: i.quantity,
-          discount_pct: 0,
+          discount_pct: i.discountType === 'PERCENTAGE' ? i.discountValue : 0,
+          discount_type: i.discountType,
+          discount_value: i.discountValue,
         }));
         let res;
         if (isRestaurant && activeDraft) {
@@ -855,12 +957,16 @@ export default function POSPage() {
             customer_name: selectedCustomer?.name ?? '',
             customer_phone: selectedCustomer?.phone ?? '',
             items,
+            cart_discount_type: cartDiscountType,
+            cart_discount_value: cartDiscountValue,
           });
         }
         setReceipt(res.data as Transaction);
         setSelectedCustomer(null);
         setCustSearch('');
         setShowPayment(false);
+        setCartDiscountValue(0);
+        setCartDiscountType('PERCENTAGE');
         if (isRestaurant) {
           handleBackToTables();
         } else {
@@ -874,7 +980,10 @@ export default function POSPage() {
         setPayLoading(false);
       }
     },
-    [storeId, cart, selectedCustomer, isRestaurant, activeDraft, selectedTable, handleBackToTables]
+    [
+      storeId, cart, selectedCustomer, isRestaurant, activeDraft, selectedTable,
+      handleBackToTables, cartDiscountType, cartDiscountValue,
+    ]
   );
 
   if (!selectedStore) {
@@ -1530,69 +1639,316 @@ export default function POSPage() {
               </p>
             </div>
           ) : (
-            (cart as PosCartItem[]).map(item => (
-              <div key={item.product.id} className="cart-item">
-                <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'flex-start',
-                  }}
-                >
-                  <div className="cart-item-name" style={{ flex: 1, paddingRight: 8 }}>
-                    {item.menuItemId && (
-                      <span style={{ fontSize: '0.65rem', color: '#fb923c', marginRight: 4 }}>
-                        🍽
-                      </span>
-                    )}
-                    {item.product.name}
-                  </div>
-                  <button
-                    className="btn btn-ghost btn-sm"
-                    style={{ padding: '2px 4px', color: 'var(--accent-rd)' }}
-                    onClick={() => dispatch({ type: 'REMOVE', id: item.product.id })}
+            (cart as PosCartItem[]).map(item => {
+              const isDiscounted = item.unitPrice < item.originalPrice;
+              const discBadge =
+                item.discountType === 'PERCENTAGE' && item.discountValue > 0
+                  ? `-${item.discountValue}%`
+                  : item.discountType === 'FIXED' && item.discountValue > 0
+                    ? `-${formatRp(item.discountValue)}`
+                    : item.discountType === 'OVERRIDE' && item.discountValue > 0
+                      ? 'OVERRIDE'
+                      : null;
+
+              return (
+                <div key={item.product.id} className="cart-item">
+                  {/* Name row */}
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'flex-start',
+                    }}
                   >
-                    <X size={13} />
-                  </button>
-                </div>
-                <div className="cart-item-row">
-                  <div className="qty-ctrl">
+                    <div className="cart-item-name" style={{ flex: 1, paddingRight: 8 }}>
+                      {item.menuItemId && (
+                        <span style={{ fontSize: '0.65rem', color: '#fb923c', marginRight: 4 }}>
+                          🍽
+                        </span>
+                      )}
+                      {item.product.name}
+                      {discBadge && (
+                        <span
+                          style={{
+                            marginLeft: 6,
+                            fontSize: '0.62rem',
+                            fontWeight: 700,
+                            padding: '1px 5px',
+                            borderRadius: 4,
+                            background:
+                              item.discountType === 'OVERRIDE'
+                                ? 'rgba(251,146,60,0.18)'
+                                : 'rgba(239,68,68,0.15)',
+                            color:
+                              item.discountType === 'OVERRIDE' ? '#fb923c' : 'var(--accent-rd)',
+                          }}
+                        >
+                          {discBadge}
+                        </span>
+                      )}
+                    </div>
                     <button
-                      className="qty-btn"
-                      onClick={() =>
-                        dispatch({ type: 'SET_QTY', id: item.product.id, qty: item.quantity - 1 })
-                      }
+                      className="btn btn-ghost btn-sm"
+                      style={{ padding: '2px 4px', color: 'var(--accent-rd)' }}
+                      onClick={() => dispatch({ type: 'REMOVE', id: item.product.id })}
                     >
-                      <Minus size={12} />
-                    </button>
-                    <span className="qty-val">{item.quantity}</span>
-                    <button
-                      className="qty-btn"
-                      onClick={() =>
-                        dispatch({ type: 'SET_QTY', id: item.product.id, qty: item.quantity + 1 })
-                      }
-                    >
-                      <Plus size={12} />
+                      <X size={13} />
                     </button>
                   </div>
-                  <span style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--accent-em)' }}>
-                    {formatRp(item.subtotal)}
-                  </span>
+
+                  {/* Qty + subtotal row */}
+                  <div className="cart-item-row">
+                    <div className="qty-ctrl">
+                      <button
+                        className="qty-btn"
+                        onClick={() =>
+                          dispatch({
+                            type: 'SET_QTY',
+                            id: item.product.id,
+                            qty: item.quantity - 1,
+                          })
+                        }
+                      >
+                        <Minus size={12} />
+                      </button>
+                      <span className="qty-val">{item.quantity}</span>
+                      <button
+                        className="qty-btn"
+                        onClick={() =>
+                          dispatch({
+                            type: 'SET_QTY',
+                            id: item.product.id,
+                            qty: item.quantity + 1,
+                          })
+                        }
+                      >
+                        <Plus size={12} />
+                      </button>
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                      {isDiscounted && (
+                        <div
+                          style={{
+                            fontSize: '0.68rem',
+                            color: 'var(--text-3)',
+                            textDecoration: 'line-through',
+                          }}
+                        >
+                          {formatRp(item.originalPrice * item.quantity)}
+                        </div>
+                      )}
+                      <span
+                        style={{
+                          fontWeight: 700,
+                          fontSize: '0.85rem',
+                          color: isDiscounted ? 'var(--accent-rd)' : 'var(--accent-em)',
+                        }}
+                      >
+                        {formatRp(item.subtotal)}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Price detail row */}
+                  <div style={{ fontSize: '0.72rem', color: 'var(--text-3)', marginBottom: 6 }}>
+                    {formatRp(item.unitPrice)} × {item.quantity}
+                    {item.product.tax_rate > 0 && ` · PPN ${item.product.tax_rate}%`}
+                  </div>
+
+                  {/* Discount controls */}
+                  <div
+                    style={{
+                      display: 'flex',
+                      gap: 4,
+                      alignItems: 'center',
+                      background: 'var(--bg-elevated)',
+                      borderRadius: 8,
+                      padding: '5px 6px',
+                      border: '1px solid var(--border)',
+                    }}
+                  >
+                    {/* 3-way type toggle */}
+                    {(['PERCENTAGE', 'FIXED', 'OVERRIDE'] as DiscountType[]).map(dt => (
+                      <button
+                        key={dt}
+                        onClick={() =>
+                          dispatch({
+                            type: 'SET_DISCOUNT',
+                            id: item.product.id,
+                            discountType: dt,
+                            discountValue: dt === item.discountType ? item.discountValue : 0,
+                          })
+                        }
+                        style={{
+                          fontSize: '0.62rem',
+                          fontWeight: 700,
+                          padding: '2px 6px',
+                          borderRadius: 5,
+                          border: 'none',
+                          cursor: 'pointer',
+                          background:
+                            item.discountType === dt
+                              ? dt === 'OVERRIDE'
+                                ? '#fb923c'
+                                : 'var(--accent-em)'
+                              : 'transparent',
+                          color: item.discountType === dt ? '#fff' : 'var(--text-3)',
+                          transition: 'all 0.12s',
+                        }}
+                      >
+                        {dt === 'PERCENTAGE' ? '%' : dt === 'FIXED' ? 'Rp' : 'Price'}
+                      </button>
+                    ))}
+
+                    {/* Value input */}
+                    <input
+                      type="number"
+                      min={0}
+                      max={
+                        item.discountType === 'PERCENTAGE'
+                          ? 100
+                          : item.discountType === 'FIXED'
+                            ? item.originalPrice
+                            : undefined
+                      }
+                      step={item.discountType === 'PERCENTAGE' ? 1 : 500}
+                      placeholder={
+                        item.discountType === 'PERCENTAGE'
+                          ? '0 – 100'
+                          : item.discountType === 'FIXED'
+                            ? 'Rp...'
+                            : formatRp(item.originalPrice)
+                      }
+                      value={item.discountValue === 0 ? '' : item.discountValue}
+                      onChange={e => {
+                        const val = parseFloat(e.target.value) || 0;
+                        dispatch({
+                          type: 'SET_DISCOUNT',
+                          id: item.product.id,
+                          discountType: item.discountType,
+                          discountValue: val,
+                        });
+                      }}
+                      style={{
+                        flex: 1,
+                        border: 'none',
+                        background: 'transparent',
+                        fontSize: '0.75rem',
+                        color: 'var(--text-1)',
+                        outline: 'none',
+                        minWidth: 0,
+                        textAlign: 'right',
+                      }}
+                    />
+                  </div>
                 </div>
-                <div style={{ fontSize: '0.72rem', color: 'var(--text-3)' }}>
-                  {formatRp(item.unitPrice)} × {item.quantity}
-                  {item.product.tax_rate > 0 && ` · PPN ${item.product.tax_rate}%`}
-                </div>
-              </div>
-            ))
+              );
+            })
+
           )}
         </div>
 
         <div className="cart-footer">
+          {/* subtotal before cart discount */}
           <div className="cart-total-row">
-            <span className="text-2">Subtotal</span>
-            <span>{formatRp(subtotal)}</span>
+            <span className="text-2">Subtotal Item</span>
+            <span>{formatRp(subtotalAfterItems)}</span>
           </div>
+
+          {/* Item-level discount row */}
+          {totalItemDiscount > 0 && (
+            <div className="cart-total-row" style={{ color: 'var(--accent-rd)', fontSize: '0.82rem' }}>
+              <span>Diskon Item</span>
+              <span>-{formatRp(totalItemDiscount)}</span>
+            </div>
+          )}
+
+          {/* Cart-level discount control */}
+          {cart.length > 0 && (
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 5,
+                padding: '8px 0 4px',
+                borderTop: '1px dashed var(--border)',
+                borderBottom: '1px dashed var(--border)',
+                margin: '4px 0',
+              }}
+            >
+              <div style={{ fontSize: '0.72rem', color: 'var(--text-3)', fontWeight: 600 }}>
+                Diskon Keranjang
+              </div>
+              <div
+                style={{
+                  display: 'flex',
+                  gap: 4,
+                  alignItems: 'center',
+                  background: 'var(--bg-elevated)',
+                  borderRadius: 8,
+                  padding: '5px 8px',
+                  border: '1px solid var(--border)',
+                }}
+              >
+                {/* Type toggle */}
+                {(['PERCENTAGE', 'FIXED'] as const).map(dt => (
+                  <button
+                    key={dt}
+                    onClick={() => {
+                      setCartDiscountType(dt);
+                      setCartDiscountValue(0);
+                    }}
+                    style={{
+                      fontSize: '0.65rem',
+                      fontWeight: 700,
+                      padding: '3px 8px',
+                      borderRadius: 5,
+                      border: 'none',
+                      cursor: 'pointer',
+                      background: cartDiscountType === dt ? 'var(--accent-em)' : 'transparent',
+                      color: cartDiscountType === dt ? '#fff' : 'var(--text-3)',
+                      transition: 'all 0.12s',
+                    }}
+                  >
+                    {dt === 'PERCENTAGE' ? '%' : 'Rp'}
+                  </button>
+                ))}
+                <input
+                  type="number"
+                  min={0}
+                  max={cartDiscountType === 'PERCENTAGE' ? 100 : undefined}
+                  step={cartDiscountType === 'PERCENTAGE' ? 1 : 1000}
+                  placeholder={cartDiscountType === 'PERCENTAGE' ? '0 – 100' : 'Jumlah...'}
+                  value={cartDiscountValue === 0 ? '' : cartDiscountValue}
+                  onChange={e => setCartDiscountValue(parseFloat(e.target.value) || 0)}
+                  style={{
+                    flex: 1,
+                    border: 'none',
+                    background: 'transparent',
+                    fontSize: '0.8rem',
+                    color: 'var(--text-1)',
+                    outline: 'none',
+                    textAlign: 'right',
+                    minWidth: 0,
+                  }}
+                />
+                {cartDiscountAmt > 0 && (
+                  <span
+                    style={{
+                      fontSize: '0.72rem',
+                      color: 'var(--accent-rd)',
+                      fontWeight: 700,
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    -{formatRp(cartDiscountAmt)}
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Net subtotal after cart discount */}
           <div className="cart-total-row">
             <span className="text-2">PPN</span>
             <span>{formatRp(taxAmt)}</span>
@@ -1601,6 +1957,7 @@ export default function POSPage() {
             <span>Total</span>
             <span style={{ color: 'var(--accent-em)' }}>{formatRp(total)}</span>
           </div>
+
 
           {/* Hold error */}
           {holdError && (

@@ -41,14 +41,16 @@ func (r *TransactionRepo) Create(ctx context.Context, input domain.CreateTransac
 		INSERT INTO transactions
 		  (store_id, cashier_id, table_id, customer_name, customer_phone,
 		   subtotal, discount_amt, tax_amt, total,
-		   payment_method, payment_amount, change_amount, status, notes)
-		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
+		   payment_method, payment_amount, change_amount, status, notes,
+		   cart_discount_type, cart_discount_value)
+		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)
 		RETURNING id, store_id, cashier_id, table_id,
 		          COALESCE(customer_name,'')  AS customer_name,
 		          COALESCE(customer_phone,'') AS customer_phone,
 		          subtotal, discount_amt, tax_amt, total,
 		          payment_method, payment_amount, change_amount, status,
 		          COALESCE(notes,'') AS notes,
+		          cart_discount_type, cart_discount_value,
 		          created_at, updated_at`
 
 	txn := &domain.Transaction{}
@@ -57,6 +59,7 @@ func (r *TransactionRepo) Create(ctx context.Context, input domain.CreateTransac
 		input.CustomerName, input.CustomerPhone,
 		input.Subtotal, input.DiscountAmt, input.TaxAmt, input.Total,
 		input.PaymentMethod, input.PaymentAmount, input.ChangeAmount, status, input.Notes,
+		input.CartDiscountType, input.CartDiscountValue,
 	).StructScan(txn)
 	if err != nil {
 		return nil, fmt.Errorf("TransactionRepo.Create insert txn: %w", err)
@@ -65,9 +68,13 @@ func (r *TransactionRepo) Create(ctx context.Context, input domain.CreateTransac
 	// 2. INSERT items and (if completed) stock movements
 	const itemQ = `
 		INSERT INTO transaction_items
-		  (transaction_id, product_id, menu_item_id, product_name, sku, quantity, unit_price, cost_price, discount_pct, tax_rate, subtotal, status)
-		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,'pending')
-		RETURNING id, transaction_id, product_id, menu_item_id, product_name, sku, quantity, unit_price, cost_price, discount_pct, tax_rate, subtotal, status, completed_at`
+		  (transaction_id, product_id, menu_item_id, product_name, sku, quantity,
+		   original_price, unit_price, cost_price, discount_pct, discount_type, discount_value,
+		   cart_discount_allocated, tax_rate, subtotal, status)
+		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,'pending')
+		RETURNING id, transaction_id, product_id, menu_item_id, product_name, sku, quantity,
+		          original_price, unit_price, cost_price, discount_pct, discount_type, discount_value,
+		          cart_discount_allocated, tax_rate, subtotal, status, completed_at`
 
 	const mvQ = `
 		INSERT INTO stock_movements (product_id, store_id, ref_type, ref_id, quantity_delta, notes, created_by)
@@ -83,7 +90,10 @@ func (r *TransactionRepo) Create(ctx context.Context, input domain.CreateTransac
 		ti := &domain.TransactionItem{}
 		if err := tx.QueryRowxContext(ctx, itemQ,
 			txn.ID, item.ProductID, item.MenuItemID, item.ProductName, item.SKU,
-			item.Quantity, item.UnitPrice, item.CostPrice, item.DiscountPct, item.TaxRate, item.Subtotal,
+			item.Quantity, item.OriginalPrice, item.UnitPrice, item.CostPrice,
+			item.DiscountPct, item.DiscountType, item.DiscountValue,
+			item.CartDiscountAllocated,
+			item.TaxRate, item.Subtotal,
 		).StructScan(ti); err != nil {
 			return nil, fmt.Errorf("TransactionRepo.Create insert item: %w", err)
 		}
@@ -138,7 +148,8 @@ func (r *TransactionRepo) GetDraftByTable(ctx context.Context, storeID, tableID 
 
 	const itemQ = `
 		SELECT id, transaction_id, product_id, menu_item_id, product_name, sku,
-		       quantity, unit_price, cost_price, discount_pct, tax_rate, subtotal, status, completed_at
+		       quantity, original_price, unit_price, cost_price, discount_pct, discount_type, discount_value,
+		       cart_discount_allocated, tax_rate, subtotal, status, completed_at
 		FROM transaction_items WHERE transaction_id = $1`
 
 	if err := r.db.SelectContext(ctx, &txn.Items, itemQ, txn.ID); err != nil {
@@ -221,8 +232,10 @@ func (r *TransactionRepo) UpdateDraftItems(ctx context.Context, txnID string, it
 		if diff > 0 {
 			const itemQ = `
 				INSERT INTO transaction_items
-				  (transaction_id, product_id, menu_item_id, product_name, sku, quantity, unit_price, cost_price, discount_pct, tax_rate, subtotal, status)
-				VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,'pending')`
+				  (transaction_id, product_id, menu_item_id, product_name, sku, quantity,
+				   original_price, unit_price, cost_price, discount_pct, discount_type, discount_value,
+				   cart_discount_allocated, tax_rate, subtotal, status)
+				VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,'pending')`
 
 			unitNet := inItem.UnitPrice * (1 - inItem.DiscountPct/100)
 			diffTax := (unitNet * diff) * inItem.TaxRate / 100
@@ -230,7 +243,10 @@ func (r *TransactionRepo) UpdateDraftItems(ctx context.Context, txnID string, it
 
 			if _, err := tx.ExecContext(ctx, itemQ,
 				txnID, inItem.ProductID, inItem.MenuItemID, inItem.ProductName, inItem.SKU,
-				diff, inItem.UnitPrice, inItem.CostPrice, inItem.DiscountPct, inItem.TaxRate, diffSubtotal,
+				diff, inItem.OriginalPrice, inItem.UnitPrice, inItem.CostPrice,
+				inItem.DiscountPct, inItem.DiscountType, inItem.DiscountValue,
+				inItem.CartDiscountAllocated,
+				inItem.TaxRate, diffSubtotal,
 			); err != nil {
 				return nil, fmt.Errorf("TransactionRepo.UpdateDraftItems insert diff: %w", err)
 			}
@@ -438,7 +454,8 @@ func (r *TransactionRepo) FindByID(ctx context.Context, id string) (*domain.Tran
 
 	const itemQ = `
 		SELECT id, transaction_id, product_id, menu_item_id, product_name, sku,
-		       quantity, unit_price, cost_price, discount_pct, tax_rate, subtotal, status, completed_at
+		       quantity, original_price, unit_price, cost_price, discount_pct, discount_type, discount_value,
+		       cart_discount_allocated, tax_rate, subtotal, status, completed_at
 		FROM transaction_items WHERE transaction_id = $1`
 
 	if err := r.db.SelectContext(ctx, &txn.Items, itemQ, id); err != nil {
@@ -538,7 +555,8 @@ func (r *TransactionRepo) GetKDSTickets(ctx context.Context, storeID string) ([]
 
 	qItems, args, err := sqlx.In(`
 		SELECT id, transaction_id, product_id, menu_item_id, product_name, sku,
-		       quantity, unit_price, cost_price, discount_pct, tax_rate, subtotal, status, completed_at
+		       quantity, original_price, unit_price, cost_price, discount_pct, discount_type, discount_value,
+		       cart_discount_allocated, tax_rate, subtotal, status, completed_at
 		FROM transaction_items WHERE transaction_id IN (?)
 		ORDER BY id ASC`, txnIDs)
 	if err != nil {
