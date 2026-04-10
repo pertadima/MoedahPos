@@ -365,19 +365,7 @@ export default function LoginPage() {
           animation: 'slideInRight 0.6s ease-out',
         }}
       >
-        {/* Decorative Elements */}
-        <div
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            opacity: 0.1,
-            backgroundImage: `repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,.1) 10px, rgba(255,255,255,.1) 20px)`,
-            pointerEvents: 'none',
-          }}
-        />
+        
 
         {/* Content */}
         <div
@@ -404,67 +392,28 @@ export default function LoginPage() {
             Log in to access your CRM dashboard and manage your team.
           </p>
 
-          {/* Dashboard Mockup */}
+          {/* Dashboard Image */}
           <div
             style={{
-              background: 'rgba(255,255,255,0.15)',
-              borderRadius: 12,
-              padding: 4,
-              backdropFilter: 'blur(10px)',
-              border: '1px solid rgba(255,255,255,0.2)',
               animation: 'slideUp 0.8s ease-out 0.5s backwards',
+              borderRadius: 12,
+              overflow: 'hidden',
+              width: '100%',
+              maxWidth: 840,
             }}
           >
-            <div
+            <Image
+              src="/dashboard.webp"
+              alt="Dashboard Preview"
+              width={840}
+              height={525}
               style={{
-                background: 'linear-gradient(135deg, #f5f7fa 0%, #ffffff 100%)',
-                borderRadius: 10,
-                padding: 16,
-                boxShadow: '0 20px 40px rgba(0,0,0,0.1)',
+                display: 'block',
+                width: '100%',
+                height: 'auto',
               }}
-            >
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: '1fr 1fr',
-                  gap: 12,
-                  fontSize: '0.75rem',
-                }}
-              >
-                <div
-                  style={{
-                    background: 'linear-gradient(135deg, #0884F6 0%, #0670D4 100%)',
-                    color: '#fff',
-                    padding: 12,
-                    borderRadius: 6,
-                    fontWeight: 600,
-                  }}
-                >
-                  💰 $189,574
-                </div>
-                <div
-                  style={{ background: '#f3f4f6', padding: 12, borderRadius: 6, fontWeight: 600 }}
-                >
-                  ⏱️ 00:01:30
-                </div>
-                <div
-                  style={{ background: '#f3f4f6', padding: 12, borderRadius: 6, fontWeight: 600 }}
-                >
-                  💸 $25,684
-                </div>
-                <div
-                  style={{
-                    background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
-                    color: '#fff',
-                    padding: 12,
-                    borderRadius: 6,
-                    fontWeight: 600,
-                  }}
-                >
-                  📊 6,248 Units
-                </div>
-              </div>
-            </div>
+              priority
+            />
           </div>
         </div>
       </div>
