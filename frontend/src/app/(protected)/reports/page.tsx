@@ -579,7 +579,7 @@ export default function UnifiedReportsPage() {
                       <th className="!text-right w-[110px]">Total Pajak</th>
                       <th className="!text-right w-[130px]">Total Diskon</th>
                       <th className="!text-right w-[110px]">Total Net</th>
-                      <th className="!text-right w-[110px]">Total Cost</th>
+                      <th className="!text-right w-[110px]">Total HPP</th>
                       <th className="!text-right w-[120px]">Laba Kotor</th>
                       <th className="!text-right w-[130px]">Total Pengeluaran</th>
                       <th className="!text-right w-[110px]">Laba Bersih</th>
