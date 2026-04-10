@@ -373,25 +373,13 @@ export default function LoginPage() {
             position: 'relative',
             zIndex: 1,
             textAlign: 'center',
-            maxWidth: 400,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: 30,
             animation: 'fadeIn 1s ease-out 0.3s backwards',
           }}
         >
-          <h2
-            style={{
-              color: '#fff',
-              fontSize: '2rem',
-              fontWeight: 700,
-              marginBottom: 16,
-              lineHeight: 1.3,
-            }}
-          >
-            Effortlessly manage your team and operations.
-          </h2>
-          <p style={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.95rem', marginBottom: 40 }}>
-            Log in to access your CRM dashboard and manage your team.
-          </p>
-
           {/* Dashboard Image */}
           <div
             style={{
@@ -399,14 +387,14 @@ export default function LoginPage() {
               borderRadius: 12,
               overflow: 'hidden',
               width: '100%',
-              maxWidth: 840,
+              maxWidth: 600,
             }}
           >
             <Image
               src="/dashboard.webp"
               alt="Dashboard Preview"
-              width={840}
-              height={525}
+              width={600}
+              height={375}
               style={{
                 display: 'block',
                 width: '100%',
@@ -414,6 +402,24 @@ export default function LoginPage() {
               }}
               priority
             />
+          </div>
+
+          {/* Text Below Image */}
+          <div style={{ maxWidth: 350 }}>
+            <h2
+              style={{
+                color: '#fff',
+                fontSize: '1.5rem',
+                fontWeight: 700,
+                marginBottom: 12,
+                lineHeight: 1.3,
+              }}
+            >
+              Manage your restaurant and sales efficiently.
+            </h2>
+            <p style={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.85rem', marginBottom: 0 }}>
+              Access your POS dashboard to manage orders, inventory, and sales.
+            </p>
           </div>
         </div>
       </div>
