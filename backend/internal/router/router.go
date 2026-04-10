@@ -50,6 +50,7 @@ type Dependencies struct {
 
 	ExpenseHandler         *handler.ExpenseHandler
 	StockAdjustmentHandler *handler.StockAdjustmentHandler
+	IncomeHandler          *handler.IncomeHandler
 
 	// Shared
 	RoleStore *rbac.RoleStore
@@ -103,6 +104,11 @@ func New(deps *Dependencies) http.Handler { //nolint:funlen // route wiring is i
 			r.Route("/expense-categories", func(r chi.Router) {
 				r.Get("/", deps.ExpenseHandler.ListCategories)
 				r.Post("/", deps.ExpenseHandler.CreateCategory)
+			})
+
+			r.Route("/income-categories", func(r chi.Router) {
+				r.Get("/", deps.IncomeHandler.ListCategories)
+				r.Post("/", deps.IncomeHandler.CreateCategory)
 			})
 
 			// ── Admin: User & Role management ─────────────────────────────────
@@ -256,6 +262,14 @@ func New(deps *Dependencies) http.Handler { //nolint:funlen // route wiring is i
 							r.Post("/", withPerm(deps, "reports.read", deps.ExpenseHandler.CreateRecurringExpense))
 							r.Put("/{id}", withPerm(deps, "reports.read", deps.ExpenseHandler.UpdateRecurringExpense))
 							r.Delete("/{id}", withPerm(deps, "reports.read", deps.ExpenseHandler.DeleteRecurringExpense))
+						})
+
+						// Incomes
+						r.Route("/incomes", func(r chi.Router) {
+							r.Get("/", withPerm(deps, "reports.read", deps.IncomeHandler.ListIncomes))
+							r.Post("/", withPerm(deps, "reports.read", deps.IncomeHandler.CreateIncome))
+							r.Put("/{id}", withPerm(deps, "reports.read", deps.IncomeHandler.UpdateIncome))
+							r.Delete("/{id}", withPerm(deps, "reports.read", deps.IncomeHandler.DeleteIncome))
 						})
 
 						// ── Restaurant Mode ───────────────────────────────────

@@ -304,11 +304,17 @@ func (r *ReportRepo) ProfitSummary(ctx context.Context, storeID string, from, to
 	return rows, nil
 }
 
-// cashInRow is a scanned row from the cash_in CTE.
+// cashInRow is a scanned row from the cash_in CTE (sales transactions).
 type cashInRow struct {
 	Date          string  `db:"date"`
 	CashIn        float64 `db:"cash_in"`
 	PaymentMethod string  `db:"payment_method"`
+}
+
+// incomeInRow is a scanned row from the incomes table.
+type incomeInRow struct {
+	Date    string  `db:"date"`
+	OtherIn float64 `db:"other_in"`
 }
 
 // cashOutRow is a scanned row from the cash_out aggregation.
@@ -321,6 +327,8 @@ type cashOutRow struct {
 type cashFlowDayData struct {
 	cashIn         float64
 	cashOut        float64
+	salesIn        float64
+	otherIn        float64
 	cashInByMethod map[string]float64
 }
 
@@ -368,8 +376,8 @@ const cashOutQ = `
 	GROUP BY date
 	ORDER BY date`
 
-// mergeCashFlowRows combines in/out rows into a sorted day-level slice.
-func mergeCashFlowRows(inRows []cashInRow, outRows []cashOutRow) []dto.CashFlowDayRow {
+// mergeCashFlowRows combines in/out/income rows into a sorted day-level slice.
+func mergeCashFlowRows(inRows []cashInRow, outRows []cashOutRow, incomeRows []incomeInRow) []dto.CashFlowDayRow {
 	dayMap := map[string]*cashFlowDayData{}
 	allDates := map[string]struct{}{}
 
@@ -381,7 +389,18 @@ func mergeCashFlowRows(inRows []cashInRow, outRows []cashOutRow) []dto.CashFlowD
 			dayMap[row.Date] = d
 		}
 		d.cashIn += row.CashIn
+		d.salesIn += row.CashIn
 		d.cashInByMethod[row.PaymentMethod] += row.CashIn
+	}
+	for _, row := range incomeRows {
+		allDates[row.Date] = struct{}{}
+		d, ok := dayMap[row.Date]
+		if !ok {
+			d = &cashFlowDayData{cashInByMethod: map[string]float64{}}
+			dayMap[row.Date] = d
+		}
+		d.cashIn += row.OtherIn
+		d.otherIn += row.OtherIn
 	}
 	for _, row := range outRows {
 		allDates[row.Date] = struct{}{}
@@ -415,12 +434,25 @@ func mergeCashFlowRows(inRows []cashInRow, outRows []cashOutRow) []dto.CashFlowD
 			CashOut:        dd.cashOut,
 			NetCash:        dd.cashIn - dd.cashOut,
 			CashInByMethod: dd.cashInByMethod,
+			SalesIn:        dd.salesIn,
+			OtherIn:        dd.otherIn,
 		})
 	}
 	return result
 }
 
-// CashFlowSummary builds per-day cash in/out rows from actual paid transactions.
+// incomeInQ returns per-day income totals from the incomes table.
+const incomeInQ = `
+	SELECT
+		TO_CHAR(income_date, 'YYYY-MM-DD') AS date,
+		SUM(amount) AS other_in
+	FROM incomes
+	WHERE store_id = $1
+	  AND income_date >= $2::date AND income_date < $3::date
+	GROUP BY 1
+	ORDER BY 1`
+
+// CashFlowSummary builds per-day cash in/out rows from actual paid transactions and incomes.
 func (r *ReportRepo) CashFlowSummary(ctx context.Context, storeID string, from, to time.Time) ([]dto.CashFlowDayRow, error) {
 	var inRows []cashInRow
 	if err := r.db.SelectContext(ctx, &inRows, cashInQ, storeID, from, to); err != nil {
@@ -430,5 +462,9 @@ func (r *ReportRepo) CashFlowSummary(ctx context.Context, storeID string, from, 
 	if err := r.db.SelectContext(ctx, &outRows, cashOutQ, storeID, from, to); err != nil {
 		return nil, fmt.Errorf("ReportRepo.CashFlowSummary cash_out: %w", err)
 	}
-	return mergeCashFlowRows(inRows, outRows), nil
+	var incomeRows []incomeInRow
+	if err := r.db.SelectContext(ctx, &incomeRows, incomeInQ, storeID, from, to); err != nil {
+		return nil, fmt.Errorf("ReportRepo.CashFlowSummary income_in: %w", err)
+	}
+	return mergeCashFlowRows(inRows, outRows, incomeRows), nil
 }

@@ -577,7 +577,7 @@ export default function DashboardPage() {
           {/* PO Debt summary */}
           <div className="card" style={{ padding: 16 }}>
             <div style={{ fontWeight: 700, fontSize: '0.85rem', marginBottom: 12 }}>
-              Hutang Purchase Order
+              Hutang Pembelian
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem' }}>

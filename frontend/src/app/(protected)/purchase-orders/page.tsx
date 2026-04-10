@@ -1224,21 +1224,21 @@ function ConfirmModal({ action, po, onConfirm, onCancel, loading }: ConfirmModal
   const config = {
     submit: {
       icon: <CheckCircle2 size={28} style={{ color: '#6366f1' }} />,
-      title: 'Submit Purchase Order?',
+      title: 'Submit Pembelian?',
       body: `PO ${po.po_number} akan dikirim ke supplier. Status berubah menjadi Dipesan.`,
       confirmLabel: 'Ya, Submit PO',
       confirmClass: 'btn btn-primary',
     },
     receive: {
       icon: <Package size={28} style={{ color: '#10b981' }} />,
-      title: 'Terima Purchase Order?',
+      title: 'Terima Pembelian?',
       body: `Konfirmasi penerimaan PO ${po.po_number}. Stok akan bertambah, HPP produk akan diperbarui, dan hutang ke supplier akan tercatat.`,
       confirmLabel: 'Ya, Terima PO',
       confirmClass: 'btn btn-primary',
     },
     cancel: {
       icon: <AlertTriangle size={28} style={{ color: '#ef4444' }} />,
-      title: 'Batalkan Purchase Order?',
+      title: 'Batalkan Pembelian?',
       body: `PO ${po.po_number} akan dibatalkan. Tindakan ini tidak dapat dibatalkan.`,
       confirmLabel: 'Ya, Batalkan',
       confirmClass: 'btn btn-danger',
@@ -2227,7 +2227,7 @@ export default function PurchaseOrdersPage() {
         }}
       >
         <div>
-          <h1 className="page-title">Purchase Order</h1>
+          <h1 className="page-title">Pembelian</h1>
           <p className="page-subtitle">{selectedStore.store_name}</p>
         </div>
         <button
@@ -2561,7 +2561,7 @@ export default function PurchaseOrdersPage() {
                 marginBottom: 18,
               }}
             >
-              <h2 style={{ fontWeight: 800 }}>Buat Purchase Order</h2>
+              <h2 style={{ fontWeight: 800 }}>Buat Pembelian</h2>
               <button className="btn btn-ghost btn-sm" onClick={() => setShowModal(false)}>
                 <X size={15} />
               </button>

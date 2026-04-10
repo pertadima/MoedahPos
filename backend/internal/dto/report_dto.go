@@ -115,6 +115,9 @@ type CashFlowDayRow struct {
 	CashOut        float64            `json:"cash_out"        db:"cash_out"`
 	NetCash        float64            `json:"net_cash"        db:"net_cash"`
 	CashInByMethod map[string]float64 `json:"cash_in_by_method"`
+	// Breakdown: sales vs other income
+	SalesIn float64 `json:"sales_in"`
+	OtherIn float64 `json:"other_in"`
 }
 
 // CashFlowResponse is the full response for the cash-flow endpoint.
@@ -123,5 +126,8 @@ type CashFlowResponse struct {
 	TotalCashOut   float64            `json:"total_cash_out"`
 	NetCash        float64            `json:"net_cash"`
 	CashInByMethod map[string]float64 `json:"cash_in_by_method"`
+	// Breakdown totals
+	TotalSalesIn float64          `json:"total_sales_in"`
+	TotalOtherIn float64          `json:"total_other_in"`
 	Rows           []CashFlowDayRow   `json:"rows"`
 }

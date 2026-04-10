@@ -379,7 +379,7 @@ export default function UnifiedReportsPage() {
     () =>
       (summary?.rows ?? [])
         .slice()
-        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
         .map((r: SalesSummaryRow) => ({ date: r.date.slice(5), sales: r.total_sales })),
     [summary]
   );
@@ -578,7 +578,7 @@ export default function UnifiedReportsPage() {
                       <th className="!text-right w-[120px]">Total Penjualan</th>
                       <th className="!text-right w-[110px]">Total Pajak</th>
                       <th className="!text-right w-[130px]">Total Diskon</th>
-                      <th className="!text-right w-[110px]">Total Net</th>
+                      <th className="!text-right w-[110px]">Jumlah Akhir</th>
                       <th className="!text-right w-[110px]">Total HPP</th>
                       <th className="!text-right w-[120px]">Laba Kotor</th>
                       <th className="!text-right w-[130px]">Total Pengeluaran</th>

@@ -86,6 +86,7 @@ func main() {
 	paymentRecordRepo := postgres.NewPaymentRecordRepo(sqlxDB) // PO payment records
 	expenseRepo := postgres.NewExpenseRepo(sqlxDB)
 	stockAdjustmentRepo := postgres.NewStockAdjustmentRepo(sqlxDB)
+	incomeRepo := postgres.NewIncomeRepo(sqlxDB)
 
 	// ── Services ──────────────────────────────────────────────────────────────
 	authSvc := service.NewAuthService(userRepo, refreshTokenRepo, jwtMgr, cfg.Bcrypt.Cost, log)
@@ -105,6 +106,7 @@ func main() {
 	terminSvc := service.NewTerminService(terminRepo, paymentRecordRepo, poRepo, storeRepo, log)
 	expenseSvc := service.NewExpenseService(expenseRepo, log)
 	stockAdjustmentSvc := service.NewStockAdjustmentService(stockAdjustmentRepo)
+	incomeSvc := service.NewIncomeService(incomeRepo, log)
 
 	// ── Handlers ──────────────────────────────────────────────────────────────
 	authHandler := handler.NewAuthHandler(authSvc, validate, log)
@@ -123,6 +125,7 @@ func main() {
 	terminHandler := handler.NewTerminHandler(terminSvc, validate, log)
 	expenseHandler := handler.NewExpenseHandler(expenseSvc, validate, log)
 	stockAdjustmentHandler := handler.NewStockAdjustmentHandler(stockAdjustmentSvc, validate, &log)
+	incomeHandler := handler.NewIncomeHandler(incomeSvc, validate, log)
 
 	// ── Router ────────────────────────────────────────────────────────────────
 	r := router.New(&router.Dependencies{
@@ -143,6 +146,7 @@ func main() {
 		TerminHandler:          terminHandler,
 		ExpenseHandler:         expenseHandler,
 		StockAdjustmentHandler: stockAdjustmentHandler,
+		IncomeHandler:          incomeHandler,
 		RoleStore:              roleStore,
 		DB:                     sqlxDB,
 		Log:                    log,

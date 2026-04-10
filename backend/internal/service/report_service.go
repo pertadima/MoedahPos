@@ -154,11 +154,13 @@ func (s *ReportService) CashFlow(ctx context.Context, filter dto.ReportFilter) (
 		return nil, fmt.Errorf("cash flow: %w", err)
 	}
 
-	var totalIn, totalOut float64
+	var totalIn, totalOut, totalSalesIn, totalOtherIn float64
 	totalByMethod := map[string]float64{}
 	for _, r := range rows {
 		totalIn += r.CashIn
 		totalOut += r.CashOut
+		totalSalesIn += r.SalesIn
+		totalOtherIn += r.OtherIn
 		for method, amt := range r.CashInByMethod {
 			totalByMethod[method] += amt
 		}
@@ -168,6 +170,9 @@ func (s *ReportService) CashFlow(ctx context.Context, filter dto.ReportFilter) (
 		TotalCashOut:   totalOut,
 		NetCash:        totalIn - totalOut,
 		CashInByMethod: totalByMethod,
+		TotalSalesIn:   totalSalesIn,
+		TotalOtherIn:   totalOtherIn,
 		Rows:           rows,
 	}, nil
 }
+

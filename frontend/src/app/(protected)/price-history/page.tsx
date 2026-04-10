@@ -75,7 +75,7 @@ function SourceBadge({ source }: { source: string }) {
   const cfg =
     source === 'manual'
       ? { bg: 'rgba(99,102,241,0.15)', color: '#818cf8', label: 'Manual' }
-      : { bg: 'rgba(245,158,11,0.15)', color: '#f59e0b', label: 'Purchase Order' };
+      : { bg: 'rgba(245,158,11,0.15)', color: '#f59e0b', label: 'Pembelian' };
   return (
     <span
       style={{
@@ -199,7 +199,7 @@ export default function PriceHistoryPage() {
           {[
             { val: '', label: 'Semua' },
             { val: 'manual', label: 'Manual' },
-            { val: 'purchase_order', label: 'Purchase Order' },
+            { val: 'purchase_order', label: 'Pembelian' },
           ].map(({ val, label }) => (
             <button
               key={val}

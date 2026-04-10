@@ -26,6 +26,7 @@ import {
   Wallet,
   ChevronLeft,
   ChevronRight,
+  ArrowDownToLine,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { useTheme } from '@/lib/theme/ThemeContext';
@@ -174,7 +175,7 @@ const baseGroups: NavGroup[] = [
       {
         href: '/purchase-orders',
         icon: ClipboardList,
-        label: 'Purchase Order',
+        label: 'Pembelian',
         permission: 'suppliers.read',
       },
       { href: '/suppliers', icon: Users, label: 'Supplier', permission: 'suppliers.read' },
@@ -184,6 +185,7 @@ const baseGroups: NavGroup[] = [
     label: 'Keuangan & Analitik',
     permission: 'reports.read',
     items: [
+      { href: '/incomes', icon: ArrowDownToLine, label: 'Pemasukan', permission: 'reports.read' },
       { href: '/expenses', icon: Wallet, label: 'Pengeluaran', permission: 'reports.read' },
       { href: '/reports', icon: BarChart3, label: 'Laporan', permission: 'reports.read' },
     ],
