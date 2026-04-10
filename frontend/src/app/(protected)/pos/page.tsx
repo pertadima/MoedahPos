@@ -38,7 +38,6 @@ import type {
 } from '@/types';
 import { ApiError } from '@/lib/api/client';
 
-
 // ── Unified cart item type ────────────────────────────────────────────────────
 // We re-use CartItem but may hold either a product or a menu item.
 // menuItemId is set for restaurant items.
@@ -992,8 +991,15 @@ export default function POSPage() {
       }
     },
     [
-      storeId, cart, selectedCustomer, isRestaurant, activeDraft, selectedTable,
-      handleBackToTables, cartDiscountType, cartDiscountValue,
+      storeId,
+      cart,
+      selectedCustomer,
+      isRestaurant,
+      activeDraft,
+      selectedTable,
+      handleBackToTables,
+      cartDiscountType,
+      cartDiscountValue,
     ]
   );
 
@@ -1680,9 +1686,7 @@ export default function POSPage() {
                 });
                 if (autoCollapseRef.current) clearTimeout(autoCollapseRef.current);
                 autoCollapseRef.current = setTimeout(() => {
-                  setExpandedDiscountId(prev =>
-                    prev === item.product.id ? null : prev
-                  );
+                  setExpandedDiscountId(prev => (prev === item.product.id ? null : prev));
                 }, 1200);
               };
 
@@ -1700,9 +1704,10 @@ export default function POSPage() {
                   error = 'Diskon melebihi harga';
                 }
                 // Warn if final price would be below cost
-                const simFinal = item.discountType === 'PERCENTAGE'
-                  ? item.originalPrice * (1 - safeVal / 100)
-                  : item.originalPrice - safeVal;
+                const simFinal =
+                  item.discountType === 'PERCENTAGE'
+                    ? item.originalPrice * (1 - safeVal / 100)
+                    : item.originalPrice - safeVal;
                 if (costPrice > 0 && simFinal < costPrice && !error) {
                   error = `⚠ Harga jual di bawah ${costLabel} (${formatRp(costPrice)})`;
                 }
@@ -1719,10 +1724,15 @@ export default function POSPage() {
                 <div
                   key={item.product.id}
                   className="cart-item"
-                  style={isDiscounted ? {
-                    background: 'linear-gradient(135deg, rgba(239,68,68,0.06), rgba(239,68,68,0.02))',
-                    border: '1px solid rgba(239,68,68,0.12)',
-                  } : undefined}
+                  style={
+                    isDiscounted
+                      ? {
+                          background:
+                            'linear-gradient(135deg, rgba(239,68,68,0.06), rgba(239,68,68,0.02))',
+                          border: '1px solid rgba(239,68,68,0.12)',
+                        }
+                      : undefined
+                  }
                 >
                   {/* Name row */}
                   <div
@@ -1833,9 +1843,7 @@ export default function POSPage() {
                     {/* Discount trigger / badge */}
                     {isDiscounted && discBadge ? (
                       <button
-                        onClick={() =>
-                          setExpandedDiscountId(isExpanded ? null : item.product.id)
-                        }
+                        onClick={() => setExpandedDiscountId(isExpanded ? null : item.product.id)}
                         title="Ubah diskon"
                         style={{
                           display: 'inline-flex',
@@ -1857,9 +1865,7 @@ export default function POSPage() {
                       </button>
                     ) : (
                       <button
-                        onClick={() =>
-                          setExpandedDiscountId(isExpanded ? null : item.product.id)
-                        }
+                        onClick={() => setExpandedDiscountId(isExpanded ? null : item.product.id)}
                         style={{
                           display: 'inline-flex',
                           alignItems: 'center',
@@ -1888,7 +1894,8 @@ export default function POSPage() {
                       maxHeight: isExpanded ? 160 : 0,
                       opacity: isExpanded ? 1 : 0,
                       marginTop: isExpanded ? 6 : 0,
-                      transition: 'max-height 0.28s cubic-bezier(0.4,0,0.2,1), opacity 0.2s ease, margin 0.2s ease',
+                      transition:
+                        'max-height 0.28s cubic-bezier(0.4,0,0.2,1), opacity 0.2s ease, margin 0.2s ease',
                     }}
                   >
                     <div
@@ -1936,9 +1943,13 @@ export default function POSPage() {
                                 fontWeight: 700,
                                 cursor: 'pointer',
                                 transition: 'all 0.15s ease',
-                                background: item.discountType === dt ? 'var(--accent-em)' : 'transparent',
+                                background:
+                                  item.discountType === dt ? 'var(--accent-em)' : 'transparent',
                                 color: item.discountType === dt ? '#fff' : 'var(--text-3)',
-                                boxShadow: item.discountType === dt ? '0 1px 4px rgba(8,132,246,0.3)' : 'none',
+                                boxShadow:
+                                  item.discountType === dt
+                                    ? '0 1px 4px rgba(8,132,246,0.3)'
+                                    : 'none',
                               }}
                             >
                               {dt === 'PERCENTAGE' ? '%' : 'Rp'}
@@ -1949,7 +1960,8 @@ export default function POSPage() {
                         <div style={{ display: 'flex', gap: 4, flex: 1, flexWrap: 'wrap' }}>
                           {item.discountType === 'PERCENTAGE'
                             ? pctPresets.map(v => {
-                                const isSelected = item.discountType === 'PERCENTAGE' && item.discountValue === v;
+                                const isSelected =
+                                  item.discountType === 'PERCENTAGE' && item.discountValue === v;
                                 return (
                                   <button
                                     key={v}
@@ -1961,9 +1973,13 @@ export default function POSPage() {
                                       fontWeight: 600,
                                       cursor: 'pointer',
                                       transition: 'all 0.12s ease',
-                                      background: isSelected ? 'rgba(8,132,246,0.15)' : 'var(--bg-elevated)',
+                                      background: isSelected
+                                        ? 'rgba(8,132,246,0.15)'
+                                        : 'var(--bg-elevated)',
                                       color: isSelected ? 'var(--accent-em)' : 'var(--text-2)',
-                                      border: isSelected ? '1px solid rgba(8,132,246,0.4)' : '1px solid var(--border)',
+                                      border: isSelected
+                                        ? '1px solid rgba(8,132,246,0.4)'
+                                        : '1px solid var(--border)',
                                       whiteSpace: 'nowrap',
                                     }}
                                   >
@@ -1972,7 +1988,8 @@ export default function POSPage() {
                                 );
                               })
                             : fixedPresets.map(v => {
-                                const isSelected = item.discountType === 'FIXED' && item.discountValue === v;
+                                const isSelected =
+                                  item.discountType === 'FIXED' && item.discountValue === v;
                                 return (
                                   <button
                                     key={v}
@@ -1984,9 +2001,13 @@ export default function POSPage() {
                                       fontWeight: 600,
                                       cursor: 'pointer',
                                       transition: 'all 0.12s ease',
-                                      background: isSelected ? 'rgba(8,132,246,0.15)' : 'var(--bg-elevated)',
+                                      background: isSelected
+                                        ? 'rgba(8,132,246,0.15)'
+                                        : 'var(--bg-elevated)',
                                       color: isSelected ? 'var(--accent-em)' : 'var(--text-2)',
-                                      border: isSelected ? '1px solid rgba(8,132,246,0.4)' : '1px solid var(--border)',
+                                      border: isSelected
+                                        ? '1px solid rgba(8,132,246,0.4)'
+                                        : '1px solid var(--border)',
                                       whiteSpace: 'nowrap',
                                     }}
                                   >
@@ -2079,7 +2100,10 @@ export default function POSPage() {
 
           {/* Item-level discount row */}
           {totalItemDiscount > 0 && (
-            <div className="cart-total-row" style={{ color: 'var(--accent-rd)', fontSize: '0.82rem' }}>
+            <div
+              className="cart-total-row"
+              style={{ color: 'var(--accent-rd)', fontSize: '0.82rem' }}
+            >
               <span>Diskon Item</span>
               <span>-{formatRp(totalItemDiscount)}</span>
             </div>
@@ -2191,9 +2215,11 @@ export default function POSPage() {
                             fontWeight: 700,
                             cursor: 'pointer',
                             transition: 'all 0.15s ease',
-                            background: cartDiscountType === dt ? 'var(--accent-em)' : 'transparent',
+                            background:
+                              cartDiscountType === dt ? 'var(--accent-em)' : 'transparent',
                             color: cartDiscountType === dt ? '#fff' : 'var(--text-3)',
-                            boxShadow: cartDiscountType === dt ? '0 1px 4px rgba(8,132,246,0.3)' : 'none',
+                            boxShadow:
+                              cartDiscountType === dt ? '0 1px 4px rgba(8,132,246,0.3)' : 'none',
                           }}
                         >
                           {dt === 'PERCENTAGE' ? '%' : 'Rp'}
@@ -2204,7 +2230,8 @@ export default function POSPage() {
                     <div style={{ display: 'flex', gap: 4, flex: 1, flexWrap: 'wrap' }}>
                       {cartDiscountType === 'PERCENTAGE'
                         ? [5, 10, 15, 20].map(v => {
-                            const isSelected = cartDiscountType === 'PERCENTAGE' && cartDiscountValue === v;
+                            const isSelected =
+                              cartDiscountType === 'PERCENTAGE' && cartDiscountValue === v;
                             return (
                               <button
                                 key={v}
@@ -2219,9 +2246,13 @@ export default function POSPage() {
                                   fontWeight: 600,
                                   cursor: 'pointer',
                                   transition: 'all 0.12s ease',
-                                  background: isSelected ? 'rgba(8,132,246,0.15)' : 'var(--bg-elevated)',
+                                  background: isSelected
+                                    ? 'rgba(8,132,246,0.15)'
+                                    : 'var(--bg-elevated)',
                                   color: isSelected ? 'var(--accent-em)' : 'var(--text-2)',
-                                  border: isSelected ? '1px solid rgba(8,132,246,0.4)' : '1px solid var(--border)',
+                                  border: isSelected
+                                    ? '1px solid rgba(8,132,246,0.4)'
+                                    : '1px solid var(--border)',
                                   whiteSpace: 'nowrap',
                                 }}
                               >
@@ -2230,7 +2261,8 @@ export default function POSPage() {
                             );
                           })
                         : [5000, 10000].map(v => {
-                            const isSelected = cartDiscountType === 'FIXED' && cartDiscountValue === v;
+                            const isSelected =
+                              cartDiscountType === 'FIXED' && cartDiscountValue === v;
                             return (
                               <button
                                 key={v}
@@ -2245,9 +2277,13 @@ export default function POSPage() {
                                   fontWeight: 600,
                                   cursor: 'pointer',
                                   transition: 'all 0.12s ease',
-                                  background: isSelected ? 'rgba(8,132,246,0.15)' : 'var(--bg-elevated)',
+                                  background: isSelected
+                                    ? 'rgba(8,132,246,0.15)'
+                                    : 'var(--bg-elevated)',
                                   color: isSelected ? 'var(--accent-em)' : 'var(--text-2)',
-                                  border: isSelected ? '1px solid rgba(8,132,246,0.4)' : '1px solid var(--border)',
+                                  border: isSelected
+                                    ? '1px solid rgba(8,132,246,0.4)'
+                                    : '1px solid var(--border)',
                                   whiteSpace: 'nowrap',
                                 }}
                               >
@@ -2264,9 +2300,7 @@ export default function POSPage() {
                       min={0}
                       max={cartDiscountType === 'PERCENTAGE' ? 100 : undefined}
                       step={cartDiscountType === 'PERCENTAGE' ? 1 : 1000}
-                      placeholder={
-                        cartDiscountType === 'PERCENTAGE' ? 'Masukkan %' : 'Masukkan Rp'
-                      }
+                      placeholder={cartDiscountType === 'PERCENTAGE' ? 'Masukkan %' : 'Masukkan Rp'}
                       value={cartDiscountValue === 0 ? '' : cartDiscountValue}
                       onChange={e => {
                         let val = parseFloat(e.target.value) || 0;
@@ -2357,7 +2391,6 @@ export default function POSPage() {
               </span>
             </div>
           )}
-
 
           {/* Hold error */}
           {holdError && (
