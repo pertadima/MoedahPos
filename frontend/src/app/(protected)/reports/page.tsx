@@ -14,11 +14,14 @@ import {
   ArrowUpRight,
   Calendar,
   Layers,
+  ChevronDown,
+  ChevronRight,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { reportsApi } from '@/lib/api/store-apis';
+import { transactionsApi } from '@/lib/api/transactions';
 import { formatRp, todayStr, thirtyDaysAgoStr, formatDate } from '@/lib/utils';
-import type { SalesSummaryResponse, SalesByProductRow, SalesSummaryRow } from '@/types';
+import type { SalesSummaryResponse, SalesByProductRow, SalesSummaryRow, Transaction } from '@/types';
 import {
   BarChart,
   Bar,
@@ -294,6 +297,9 @@ export default function UnifiedReportsPage() {
   const [valuation, setValuation] = useState<StockValuationResponse | null>(null);
   const [profitData, setProfitData] = useState<ProfitSummaryResponse | null>(null);
   const [cfData, setCfData] = useState<CashFlowResponse | null>(null);
+  const [expandedDates, setExpandedDates] = useState<Set<string>>(new Set());
+  const [transactionsByDate, setTransactionsByDate] = useState<Record<string, Transaction[]>>({});
+  const [loadingTransactions, setLoadingTransactions] = useState<Set<string>>(new Set());
 
   const fetchAll = useCallback(async () => {
     if (!storeId) return;
@@ -326,6 +332,43 @@ export default function UnifiedReportsPage() {
   useEffect(() => {
     fetchAll();
   }, [fetchAll, storeId]);
+
+  const toggleDateExpanded = useCallback(
+    async (date: string) => {
+      const now = new Set(expandedDates);
+      if (now.has(date)) {
+        now.delete(date);
+        setExpandedDates(now);
+      } else {
+        // Fetch transactions for this date if not already loaded
+        if (!transactionsByDate[date] && !loadingTransactions.has(date)) {
+          setLoadingTransactions(prev => new Set(prev).add(date));
+          try {
+            const response = await transactionsApi.list(storeId!, {
+              date_from: date,
+              date_to: date,
+              per_page: 100,
+            });
+            setTransactionsByDate(prev => ({
+              ...prev,
+              [date]: response.data.data || [],
+            }));
+          } catch (err) {
+            console.error(`Failed to load transactions for ${date}:`, err);
+          } finally {
+            setLoadingTransactions(prev => {
+              const updated = new Set(prev);
+              updated.delete(date);
+              return updated;
+            });
+          }
+        }
+        now.add(date);
+        setExpandedDates(now);
+      }
+    },
+    [expandedDates, transactionsByDate, loadingTransactions, storeId]
+  );
 
   const salesDataForChart = useMemo(
     () =>
@@ -525,6 +568,7 @@ export default function UnifiedReportsPage() {
                 <table className="tbl text-sm">
                   <thead>
                     <tr>
+                      <th className="w-[30px]"></th>
                       <th className="w-[120px]">Tanggal</th>
                       <th className="!text-right w-[100px]">Transaksi</th>
                       <th className="!text-right w-[150px]">Omzet</th>
@@ -537,32 +581,149 @@ export default function UnifiedReportsPage() {
                     {(summary?.rows ?? [])
                       .slice()
                       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-                      .map((r, i) => (
-                        <tr key={`${r.date}-${i}`}>
-                          <td className="font-bold">{formatDate(r.date)}</td>
-                          <td className="!text-right">{r.transaction_count}</td>
-                          <td className="!text-right font-black text-accent-em">
-                            {formatRp(r.total_sales)}
-                          </td>
-                          <td
-                            className={`!text-right font-semibold ${
-                              r.gross_profit >= 0 ? 'text-warning' : 'text-accent-rd'
-                            }`}
-                          >
-                            {formatRp(r.gross_profit)}
-                          </td>
-                          <td
-                            className={`!text-right font-bold ${
-                              r.net_profit >= 0 ? 'text-blue-500' : 'text-accent-rd'
-                            }`}
-                          >
-                            {formatRp(r.net_profit)}
-                          </td>
-                          <td className="!text-center">
-                            <ProfitMarginBadge margin={r.profit_margin ?? 0} />
-                          </td>
-                        </tr>
-                      ))}
+                      .flatMap((r, i) => {
+                        const isExpanded = expandedDates.has(r.date);
+                        const isLoading = loadingTransactions.has(r.date);
+                        const transactions = transactionsByDate[r.date] || [];
+                        const rows: React.ReactNode[] = [
+                          <tr key={`date-${r.date}`}>
+                            <td className="text-center">
+                              <button
+                                onClick={() => toggleDateExpanded(r.date)}
+                                className="p-1 hover:bg-surface-hv rounded transition"
+                              >
+                                {isExpanded ? (
+                                  <ChevronDown size={16} />
+                                ) : (
+                                  <ChevronRight size={16} />
+                                )}
+                              </button>
+                            </td>
+                            <td className="font-bold">{formatDate(r.date)}</td>
+                            <td className="!text-right">{r.transaction_count}</td>
+                            <td className="!text-right font-black text-accent-em">
+                              {formatRp(r.total_sales)}
+                            </td>
+                            <td
+                              className={`!text-right font-semibold ${
+                                r.gross_profit >= 0 ? 'text-warning' : 'text-accent-rd'
+                              }`}
+                            >
+                              {formatRp(r.gross_profit)}
+                            </td>
+                            <td
+                              className={`!text-right font-bold ${
+                                r.net_profit >= 0 ? 'text-blue-500' : 'text-accent-rd'
+                              }`}
+                            >
+                              {formatRp(r.net_profit)}
+                            </td>
+                            <td className="!text-center">
+                              <ProfitMarginBadge margin={r.profit_margin ?? 0} />
+                            </td>
+                          </tr>,
+                        ];
+
+                        if (isExpanded) {
+                          if (isLoading) {
+                            rows.push(
+                              <tr key={`loading-${r.date}`}>
+                                <td colSpan={7} className="text-center py-4">
+                                  <Loader2 size={16} className="loading-spin mx-auto" />
+                                </td>
+                              </tr>
+                            );
+                          } else if (transactions.length > 0) {
+                            // Add a row with nested transaction table
+                            rows.push(
+                              <tr key={`nested-table-${r.date}`}>
+                                <td colSpan={7} className="p-0">
+                                  <div className="bg-surface overflow-hidden rounded">
+                                    <table className="tbl text-xs w-full">
+                                      <thead>
+                                        <tr className="bg-surface-hv border-b border-border">
+                                          <th className="w-[12%]">ID</th>
+                                          <th className="w-[12%]">WAKTU</th>
+                                          <th className="w-[16%]">KASIR</th>
+                                          <th className="w-[14%]">PELANGGAN</th>
+                                          <th className="w-[12%]">METODE</th>
+                                          <th className="!text-right w-[13%]">SUBTOTAL</th>
+                                          <th className="!text-right w-[13%]">DISKON</th>
+                                          <th className="!text-right w-[13%]">PAJAK</th>
+                                          <th className="!text-right w-[13%]">TOTAL</th>
+                                          <th className="!text-center w-[6%]">STATUS</th>
+                                        </tr>
+                                      </thead>
+                                      <tbody>
+                                        {transactions.map((tx, txIdx) => (
+                                          <tr key={`tx-${r.date}-${txIdx}`} className="border-b border-border hover:bg-surface-hv transition">
+                                            <td className="font-mono text-[10px] opacity-75">
+                                              {tx.id?.slice(0, 8) || 'N/A'}
+                                            </td>
+                                            <td className="text-[10px] opacity-75">
+                                              {tx.transaction_timestamp
+                                                ? new Date(tx.transaction_timestamp).toLocaleTimeString('id-ID', {
+                                                    hour: '2-digit',
+                                                    minute: '2-digit',
+                                                    hour12: false,
+                                                  })
+                                                : 'N/A'}
+                                            </td>
+                                            <td className="text-[10px]">
+                                              <div className="flex items-center gap-2">
+                                                <div className="w-6 h-6 rounded-full bg-accent-em/20 text-accent-em flex items-center justify-center text-[9px] font-bold">
+                                                  {tx.cashier_name?.charAt(0).toUpperCase() || 'A'}
+                                                </div>
+                                                <span className="opacity-75">{tx.cashier_name || 'N/A'}</span>
+                                              </div>
+                                            </td>
+                                            <td className="text-[10px] opacity-75">
+                                              {tx.customer_name || '−'}
+                                            </td>
+                                            <td>
+                                              <span className="inline-block px-2 py-1 bg-blue-500/20 text-blue-500 rounded text-[9px] font-medium">
+                                                {tx.payment_method || 'N/A'}
+                                              </span>
+                                            </td>
+                                            <td className="!text-right text-[10px] opacity-75">
+                                              {formatRp(tx.subtotal || 0)}
+                                            </td>
+                                            <td className="!text-right text-[10px] opacity-75">
+                                              {formatRp(tx.discount_amt || 0)}
+                                            </td>
+                                            <td className="!text-right text-[10px] opacity-75">
+                                              {formatRp(tx.tax_amt || 0)}
+                                            </td>
+                                            <td className="!text-right font-semibold text-accent-em text-[10px]">
+                                              {formatRp(tx.total || 0)}
+                                            </td>
+                                            <td className="!text-center">
+                                              <span className="inline-flex items-center gap-1 text-[9px] font-bold opacity-60">
+                                                <span className="w-2 h-2 rounded-full bg-green-500"></span>
+                                                Selesai
+                                              </span>
+                                            </td>
+                                          </tr>
+                                        ))}
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                </td>
+                              </tr>
+                            );
+                          } else {
+                            rows.push(
+                              <tr key={`empty-${r.date}`}>
+                                <td colSpan={7} className="text-center py-4 text-xs opacity-50">
+                                  No transactions
+                                </td>
+                              </tr>
+                            );
+                          }
+                        }
+
+                        return rows;
+                      })}
                   </tbody>
                 </table>
               </div>
