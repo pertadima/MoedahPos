@@ -18,6 +18,8 @@ import {
   Coffee,
   Clock,
   Users,
+  Tag,
+  ChevronDown,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { productsApi } from '@/lib/api/products';
@@ -666,6 +668,12 @@ export default function POSPage() {
   const [error, setError] = useState('');
   const [holdError, setHoldError] = useState('');
 
+  // Discount panel expand/collapse state
+  const [expandedDiscountId, setExpandedDiscountId] = useState<string | null>(null);
+  const [cartDiscountOpen, setCartDiscountOpen] = useState(false);
+  const [discountErrors, setDiscountErrors] = useState<Record<string, string>>({});
+  const autoCollapseRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   // Cart-level discount state
   const [cartDiscountType, setCartDiscountType] = useState<'PERCENTAGE' | 'FIXED'>('PERCENTAGE');
   const [cartDiscountValue, setCartDiscountValue] = useState(0);
@@ -967,6 +975,9 @@ export default function POSPage() {
         setShowPayment(false);
         setCartDiscountValue(0);
         setCartDiscountType('PERCENTAGE');
+        setCartDiscountOpen(false);
+        setExpandedDiscountId(null);
+        setDiscountErrors({});
         if (isRestaurant) {
           handleBackToTables();
         } else {
@@ -1641,17 +1652,68 @@ export default function POSPage() {
           ) : (
             (cart as PosCartItem[]).map(item => {
               const isDiscounted = item.unitPrice < item.originalPrice;
+              const isExpanded = expandedDiscountId === item.product.id;
               const discBadge =
                 item.discountType === 'PERCENTAGE' && item.discountValue > 0
                   ? `-${item.discountValue}%`
                   : item.discountType === 'FIXED' && item.discountValue > 0
                     ? `-${formatRp(item.discountValue)}`
                     : item.discountType === 'OVERRIDE' && item.discountValue > 0
-                      ? 'OVERRIDE'
+                      ? `= ${formatRp(item.discountValue)}`
                       : null;
+              const itemError = discountErrors[item.product.id] ?? '';
+
+              const pctPresets = [5, 10, 15, 20];
+              const fixedPresets = [5000, 10000];
+
+              const handleQuickApply = (type: DiscountType, value: number) => {
+                if (type === 'PERCENTAGE' && value > 100) return;
+                setDiscountErrors(prev => ({ ...prev, [item.product.id]: '' }));
+                dispatch({
+                  type: 'SET_DISCOUNT',
+                  id: item.product.id,
+                  discountType: type,
+                  discountValue: value,
+                });
+                if (autoCollapseRef.current) clearTimeout(autoCollapseRef.current);
+                autoCollapseRef.current = setTimeout(() => {
+                  setExpandedDiscountId(prev =>
+                    prev === item.product.id ? null : prev
+                  );
+                }, 1200);
+              };
+
+              const handleInputChange = (val: number) => {
+                let error = '';
+                let safeVal = val;
+                if (val < 0) {
+                  safeVal = 0;
+                  error = 'Nilai tidak boleh negatif';
+                } else if (item.discountType === 'PERCENTAGE' && val > 100) {
+                  safeVal = 100;
+                  error = 'Diskon maksimal 100%';
+                } else if (item.discountType === 'FIXED' && val > item.originalPrice) {
+                  safeVal = item.originalPrice;
+                  error = 'Diskon melebihi harga';
+                }
+                setDiscountErrors(prev => ({ ...prev, [item.product.id]: error }));
+                dispatch({
+                  type: 'SET_DISCOUNT',
+                  id: item.product.id,
+                  discountType: item.discountType,
+                  discountValue: safeVal,
+                });
+              };
 
               return (
-                <div key={item.product.id} className="cart-item">
+                <div
+                  key={item.product.id}
+                  className="cart-item"
+                  style={isDiscounted ? {
+                    background: 'linear-gradient(135deg, rgba(239,68,68,0.06), rgba(239,68,68,0.02))',
+                    border: '1px solid rgba(239,68,68,0.12)',
+                  } : undefined}
+                >
                   {/* Name row */}
                   <div
                     style={{
@@ -1667,30 +1729,14 @@ export default function POSPage() {
                         </span>
                       )}
                       {item.product.name}
-                      {discBadge && (
-                        <span
-                          style={{
-                            marginLeft: 6,
-                            fontSize: '0.62rem',
-                            fontWeight: 700,
-                            padding: '1px 5px',
-                            borderRadius: 4,
-                            background:
-                              item.discountType === 'OVERRIDE'
-                                ? 'rgba(251,146,60,0.18)'
-                                : 'rgba(239,68,68,0.15)',
-                            color:
-                              item.discountType === 'OVERRIDE' ? '#fb923c' : 'var(--accent-rd)',
-                          }}
-                        >
-                          {discBadge}
-                        </span>
-                      )}
                     </div>
                     <button
                       className="btn btn-ghost btn-sm"
                       style={{ padding: '2px 4px', color: 'var(--accent-rd)' }}
-                      onClick={() => dispatch({ type: 'REMOVE', id: item.product.id })}
+                      onClick={() => {
+                        dispatch({ type: 'REMOVE', id: item.product.id });
+                        if (expandedDiscountId === item.product.id) setExpandedDiscountId(null);
+                      }}
                     >
                       <X size={13} />
                     </button>
@@ -1742,6 +1788,7 @@ export default function POSPage() {
                           fontWeight: 700,
                           fontSize: '0.85rem',
                           color: isDiscounted ? 'var(--accent-rd)' : 'var(--accent-em)',
+                          transition: 'color 0.2s ease',
                         }}
                       >
                         {formatRp(item.subtotal)}
@@ -1749,102 +1796,256 @@ export default function POSPage() {
                     </div>
                   </div>
 
-                  {/* Price detail row */}
-                  <div style={{ fontSize: '0.72rem', color: 'var(--text-3)', marginBottom: 6 }}>
-                    {formatRp(item.unitPrice)} × {item.quantity}
-                    {item.product.tax_rate > 0 && ` · PPN ${item.product.tax_rate}%`}
-                  </div>
-
-                  {/* Discount controls */}
+                  {/* Price detail + discount trigger row */}
                   <div
                     style={{
                       display: 'flex',
-                      gap: 4,
                       alignItems: 'center',
-                      background: 'var(--bg-elevated)',
-                      borderRadius: 8,
-                      padding: '5px 6px',
-                      border: '1px solid var(--border)',
+                      justifyContent: 'space-between',
+                      gap: 6,
                     }}
                   >
-                    {/* 3-way type toggle */}
-                    {(['PERCENTAGE', 'FIXED', 'OVERRIDE'] as DiscountType[]).map(dt => (
+                    <div style={{ fontSize: '0.72rem', color: 'var(--text-3)' }}>
+                      {formatRp(item.unitPrice)} × {item.quantity}
+                      {item.product.tax_rate > 0 && ` · PPN ${item.product.tax_rate}%`}
+                    </div>
+                    {/* Discount trigger / badge */}
+                    {isDiscounted && discBadge ? (
                       <button
-                        key={dt}
                         onClick={() =>
-                          dispatch({
-                            type: 'SET_DISCOUNT',
-                            id: item.product.id,
-                            discountType: dt,
-                            discountValue: dt === item.discountType ? item.discountValue : 0,
-                          })
+                          setExpandedDiscountId(isExpanded ? null : item.product.id)
                         }
+                        title="Ubah diskon"
                         style={{
-                          fontSize: '0.62rem',
-                          fontWeight: 700,
-                          padding: '2px 6px',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 3,
+                          padding: '2px 7px',
                           borderRadius: 5,
-                          border: 'none',
+                          fontSize: '0.65rem',
+                          fontWeight: 700,
+                          background: 'rgba(239,68,68,0.12)',
+                          color: 'var(--accent-rd)',
                           cursor: 'pointer',
-                          background:
-                            item.discountType === dt
-                              ? dt === 'OVERRIDE'
-                                ? '#fb923c'
-                                : 'var(--accent-em)'
-                              : 'transparent',
-                          color: item.discountType === dt ? '#fff' : 'var(--text-3)',
-                          transition: 'all 0.12s',
+                          border: 'none',
+                          transition: 'all 0.15s ease',
                         }}
                       >
-                        {dt === 'PERCENTAGE' ? '%' : dt === 'FIXED' ? 'Rp' : 'Price'}
+                        <Tag size={9} />
+                        {discBadge}
                       </button>
-                    ))}
+                    ) : (
+                      <button
+                        onClick={() =>
+                          setExpandedDiscountId(isExpanded ? null : item.product.id)
+                        }
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 4,
+                          padding: '3px 10px',
+                          borderRadius: 6,
+                          fontSize: '0.7rem',
+                          fontWeight: 600,
+                          color: 'var(--text-3)',
+                          background: 'transparent',
+                          border: '1px dashed var(--border-md)',
+                          cursor: 'pointer',
+                          transition: 'all 0.18s ease',
+                        }}
+                      >
+                        <Tag size={9} />
+                        Diskon
+                      </button>
+                    )}
+                  </div>
 
-                    {/* Value input */}
-                    <input
-                      type="number"
-                      min={0}
-                      max={
-                        item.discountType === 'PERCENTAGE'
-                          ? 100
-                          : item.discountType === 'FIXED'
-                            ? item.originalPrice
-                            : undefined
-                      }
-                      step={item.discountType === 'PERCENTAGE' ? 1 : 500}
-                      placeholder={
-                        item.discountType === 'PERCENTAGE'
-                          ? '0 – 100'
-                          : item.discountType === 'FIXED'
-                            ? 'Rp...'
-                            : formatRp(item.originalPrice)
-                      }
-                      value={item.discountValue === 0 ? '' : item.discountValue}
-                      onChange={e => {
-                        const val = parseFloat(e.target.value) || 0;
-                        dispatch({
-                          type: 'SET_DISCOUNT',
-                          id: item.product.id,
-                          discountType: item.discountType,
-                          discountValue: val,
-                        });
-                      }}
+                  {/* Collapsible discount panel */}
+                  <div
+                    style={{
+                      overflow: 'hidden',
+                      maxHeight: isExpanded ? 160 : 0,
+                      opacity: isExpanded ? 1 : 0,
+                      marginTop: isExpanded ? 6 : 0,
+                      transition: 'max-height 0.28s cubic-bezier(0.4,0,0.2,1), opacity 0.2s ease, margin 0.2s ease',
+                    }}
+                  >
+                    <div
                       style={{
-                        flex: 1,
-                        border: 'none',
-                        background: 'transparent',
-                        fontSize: '0.75rem',
-                        color: 'var(--text-1)',
-                        outline: 'none',
-                        minWidth: 0,
-                        textAlign: 'right',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 6,
+                        padding: '8px 10px',
+                        background: 'var(--bg-card)',
+                        border: '1px solid var(--border-md)',
+                        borderRadius: 8,
                       }}
-                    />
+                    >
+                      {/* Type toggle + quick buttons row */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        {/* % / Rp toggle group */}
+                        <div
+                          style={{
+                            display: 'flex',
+                            gap: 0,
+                            background: 'var(--bg-elevated)',
+                            borderRadius: 6,
+                            padding: 2,
+                            border: '1px solid var(--border)',
+                          }}
+                        >
+                          {(['PERCENTAGE', 'FIXED'] as DiscountType[]).map(dt => (
+                            <button
+                              key={dt}
+                              onClick={() => {
+                                setDiscountErrors(prev => ({ ...prev, [item.product.id]: '' }));
+                                dispatch({
+                                  type: 'SET_DISCOUNT',
+                                  id: item.product.id,
+                                  discountType: dt,
+                                  discountValue: 0,
+                                });
+                              }}
+                              style={{
+                                flex: 1,
+                                padding: '4px 10px',
+                                border: 'none',
+                                borderRadius: 5,
+                                fontSize: '0.68rem',
+                                fontWeight: 700,
+                                cursor: 'pointer',
+                                transition: 'all 0.15s ease',
+                                background: item.discountType === dt ? 'var(--accent-em)' : 'transparent',
+                                color: item.discountType === dt ? '#fff' : 'var(--text-3)',
+                                boxShadow: item.discountType === dt ? '0 1px 4px rgba(8,132,246,0.3)' : 'none',
+                              }}
+                            >
+                              {dt === 'PERCENTAGE' ? '%' : 'Rp'}
+                            </button>
+                          ))}
+                        </div>
+                        {/* Quick preset buttons */}
+                        <div style={{ display: 'flex', gap: 4, flex: 1, flexWrap: 'wrap' }}>
+                          {item.discountType === 'PERCENTAGE'
+                            ? pctPresets.map(v => {
+                                const isSelected = item.discountType === 'PERCENTAGE' && item.discountValue === v;
+                                return (
+                                  <button
+                                    key={v}
+                                    onClick={() => handleQuickApply('PERCENTAGE', v)}
+                                    style={{
+                                      padding: '4px 8px',
+                                      borderRadius: 6,
+                                      fontSize: '0.68rem',
+                                      fontWeight: 600,
+                                      cursor: 'pointer',
+                                      transition: 'all 0.12s ease',
+                                      background: isSelected ? 'rgba(8,132,246,0.15)' : 'var(--bg-elevated)',
+                                      color: isSelected ? 'var(--accent-em)' : 'var(--text-2)',
+                                      border: isSelected ? '1px solid rgba(8,132,246,0.4)' : '1px solid var(--border)',
+                                      whiteSpace: 'nowrap',
+                                    }}
+                                  >
+                                    -{v}%
+                                  </button>
+                                );
+                              })
+                            : fixedPresets.map(v => {
+                                const isSelected = item.discountType === 'FIXED' && item.discountValue === v;
+                                return (
+                                  <button
+                                    key={v}
+                                    onClick={() => handleQuickApply('FIXED', v)}
+                                    style={{
+                                      padding: '4px 8px',
+                                      borderRadius: 6,
+                                      fontSize: '0.68rem',
+                                      fontWeight: 600,
+                                      cursor: 'pointer',
+                                      transition: 'all 0.12s ease',
+                                      background: isSelected ? 'rgba(8,132,246,0.15)' : 'var(--bg-elevated)',
+                                      color: isSelected ? 'var(--accent-em)' : 'var(--text-2)',
+                                      border: isSelected ? '1px solid rgba(8,132,246,0.4)' : '1px solid var(--border)',
+                                      whiteSpace: 'nowrap',
+                                    }}
+                                  >
+                                    -{v / 1000}rb
+                                  </button>
+                                );
+                              })}
+                        </div>
+                      </div>
+                      {/* Input row */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <input
+                          type="number"
+                          min={0}
+                          max={item.discountType === 'PERCENTAGE' ? 100 : item.originalPrice}
+                          step={item.discountType === 'PERCENTAGE' ? 1 : 500}
+                          placeholder={
+                            item.discountType === 'PERCENTAGE' ? 'Masukkan %' : 'Masukkan Rp'
+                          }
+                          value={item.discountValue === 0 ? '' : item.discountValue}
+                          onChange={e => handleInputChange(parseFloat(e.target.value) || 0)}
+                          style={{
+                            flex: 1,
+                            minWidth: 0,
+                            padding: '6px 8px',
+                            borderRadius: 6,
+                            border: '1px solid var(--border-md)',
+                            background: 'var(--bg-elevated)',
+                            color: 'var(--text-1)',
+                            fontSize: '0.78rem',
+                            fontWeight: 600,
+                            outline: 'none',
+                          }}
+                        />
+                        {item.discountValue > 0 && (
+                          <button
+                            onClick={() => {
+                              setDiscountErrors(prev => ({ ...prev, [item.product.id]: '' }));
+                              dispatch({
+                                type: 'SET_DISCOUNT',
+                                id: item.product.id,
+                                discountType: item.discountType,
+                                discountValue: 0,
+                              });
+                            }}
+                            style={{
+                              padding: '5px 10px',
+                              borderRadius: 5,
+                              fontSize: '0.68rem',
+                              fontWeight: 600,
+                              cursor: 'pointer',
+                              border: 'none',
+                              background: 'rgba(239,68,68,0.1)',
+                              color: 'var(--accent-rd)',
+                              transition: 'all 0.12s ease',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            Hapus
+                          </button>
+                        )}
+                      </div>
+                      {/* Error */}
+                      {itemError && (
+                        <div
+                          style={{
+                            fontSize: '0.68rem',
+                            color: 'var(--accent-rd)',
+                            fontWeight: 500,
+                            paddingTop: 2,
+                          }}
+                        >
+                          {itemError}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               );
             })
-
           )}
         </div>
 
@@ -1863,100 +2064,278 @@ export default function POSPage() {
             </div>
           )}
 
-          {/* Cart-level discount control */}
+          {/* Cart-level discount — collapsible */}
           {cart.length > 0 && (
             <div
               style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 5,
-                padding: '8px 0 4px',
+                padding: '6px 0',
                 borderTop: '1px dashed var(--border)',
                 borderBottom: '1px dashed var(--border)',
-                margin: '4px 0',
+                margin: '2px 0',
               }}
             >
-              <div style={{ fontSize: '0.72rem', color: 'var(--text-3)', fontWeight: 600 }}>
-                Diskon Keranjang
-              </div>
-              <div
+              {/* Trigger button */}
+              <button
+                onClick={() => setCartDiscountOpen(prev => !prev)}
                 style={{
                   display: 'flex',
-                  gap: 4,
                   alignItems: 'center',
-                  background: 'var(--bg-elevated)',
-                  borderRadius: 8,
-                  padding: '5px 8px',
-                  border: '1px solid var(--border)',
+                  justifyContent: 'space-between',
+                  width: '100%',
+                  padding: '6px 4px',
+                  border: 'none',
+                  background: 'transparent',
+                  cursor: 'pointer',
+                  color: 'var(--text-2)',
+                  fontSize: '0.78rem',
+                  fontWeight: 600,
+                  borderRadius: 6,
+                  transition: 'all 0.15s ease',
                 }}
               >
-                {/* Type toggle */}
-                {(['PERCENTAGE', 'FIXED'] as const).map(dt => (
-                  <button
-                    key={dt}
-                    onClick={() => {
-                      setCartDiscountType(dt);
-                      setCartDiscountValue(0);
-                    }}
-                    style={{
-                      fontSize: '0.65rem',
-                      fontWeight: 700,
-                      padding: '3px 8px',
-                      borderRadius: 5,
-                      border: 'none',
-                      cursor: 'pointer',
-                      background: cartDiscountType === dt ? 'var(--accent-em)' : 'transparent',
-                      color: cartDiscountType === dt ? '#fff' : 'var(--text-3)',
-                      transition: 'all 0.12s',
-                    }}
-                  >
-                    {dt === 'PERCENTAGE' ? '%' : 'Rp'}
-                  </button>
-                ))}
-                <input
-                  type="number"
-                  min={0}
-                  max={cartDiscountType === 'PERCENTAGE' ? 100 : undefined}
-                  step={cartDiscountType === 'PERCENTAGE' ? 1 : 1000}
-                  placeholder={cartDiscountType === 'PERCENTAGE' ? '0 – 100' : 'Jumlah...'}
-                  value={cartDiscountValue === 0 ? '' : cartDiscountValue}
-                  onChange={e => setCartDiscountValue(parseFloat(e.target.value) || 0)}
+                <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <Tag size={12} />
+                  Diskon Keranjang
+                  {cartDiscountAmt > 0 && (
+                    <span
+                      style={{
+                        marginLeft: 4,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        padding: '2px 7px',
+                        borderRadius: 5,
+                        fontSize: '0.65rem',
+                        fontWeight: 700,
+                        background: 'rgba(239,68,68,0.12)',
+                        color: 'var(--accent-rd)',
+                      }}
+                    >
+                      -{formatRp(cartDiscountAmt)}
+                    </span>
+                  )}
+                </span>
+                <ChevronDown
+                  size={14}
                   style={{
-                    flex: 1,
-                    border: 'none',
-                    background: 'transparent',
-                    fontSize: '0.8rem',
-                    color: 'var(--text-1)',
-                    outline: 'none',
-                    textAlign: 'right',
-                    minWidth: 0,
+                    transition: 'transform 0.2s ease',
+                    transform: cartDiscountOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                    color: 'var(--text-3)',
                   }}
                 />
-                {cartDiscountAmt > 0 && (
-                  <span
-                    style={{
-                      fontSize: '0.72rem',
-                      color: 'var(--accent-rd)',
-                      fontWeight: 700,
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    -{formatRp(cartDiscountAmt)}
-                  </span>
-                )}
+              </button>
+
+              {/* Collapsible panel */}
+              <div
+                style={{
+                  overflow: 'hidden',
+                  maxHeight: cartDiscountOpen ? 160 : 0,
+                  opacity: cartDiscountOpen ? 1 : 0,
+                  transition: 'max-height 0.28s cubic-bezier(0.4,0,0.2,1), opacity 0.2s ease',
+                }}
+              >
+                <div
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 6,
+                    padding: '8px 4px 4px',
+                  }}
+                >
+                  {/* Type toggle + quick buttons */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    {/* % / Rp toggle group */}
+                    <div
+                      style={{
+                        display: 'flex',
+                        gap: 0,
+                        background: 'var(--bg-elevated)',
+                        borderRadius: 6,
+                        padding: 2,
+                        border: '1px solid var(--border)',
+                      }}
+                    >
+                      {(['PERCENTAGE', 'FIXED'] as const).map(dt => (
+                        <button
+                          key={dt}
+                          onClick={() => {
+                            setCartDiscountType(dt);
+                            setCartDiscountValue(0);
+                          }}
+                          style={{
+                            flex: 1,
+                            padding: '4px 10px',
+                            border: 'none',
+                            borderRadius: 5,
+                            fontSize: '0.68rem',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            transition: 'all 0.15s ease',
+                            background: cartDiscountType === dt ? 'var(--accent-em)' : 'transparent',
+                            color: cartDiscountType === dt ? '#fff' : 'var(--text-3)',
+                            boxShadow: cartDiscountType === dt ? '0 1px 4px rgba(8,132,246,0.3)' : 'none',
+                          }}
+                        >
+                          {dt === 'PERCENTAGE' ? '%' : 'Rp'}
+                        </button>
+                      ))}
+                    </div>
+                    {/* Quick preset buttons */}
+                    <div style={{ display: 'flex', gap: 4, flex: 1, flexWrap: 'wrap' }}>
+                      {cartDiscountType === 'PERCENTAGE'
+                        ? [5, 10, 15, 20].map(v => {
+                            const isSelected = cartDiscountType === 'PERCENTAGE' && cartDiscountValue === v;
+                            return (
+                              <button
+                                key={v}
+                                onClick={() => {
+                                  setCartDiscountType('PERCENTAGE');
+                                  setCartDiscountValue(v);
+                                }}
+                                style={{
+                                  padding: '4px 8px',
+                                  borderRadius: 6,
+                                  fontSize: '0.68rem',
+                                  fontWeight: 600,
+                                  cursor: 'pointer',
+                                  transition: 'all 0.12s ease',
+                                  background: isSelected ? 'rgba(8,132,246,0.15)' : 'var(--bg-elevated)',
+                                  color: isSelected ? 'var(--accent-em)' : 'var(--text-2)',
+                                  border: isSelected ? '1px solid rgba(8,132,246,0.4)' : '1px solid var(--border)',
+                                  whiteSpace: 'nowrap',
+                                }}
+                              >
+                                -{v}%
+                              </button>
+                            );
+                          })
+                        : [5000, 10000].map(v => {
+                            const isSelected = cartDiscountType === 'FIXED' && cartDiscountValue === v;
+                            return (
+                              <button
+                                key={v}
+                                onClick={() => {
+                                  setCartDiscountType('FIXED');
+                                  setCartDiscountValue(v);
+                                }}
+                                style={{
+                                  padding: '4px 8px',
+                                  borderRadius: 6,
+                                  fontSize: '0.68rem',
+                                  fontWeight: 600,
+                                  cursor: 'pointer',
+                                  transition: 'all 0.12s ease',
+                                  background: isSelected ? 'rgba(8,132,246,0.15)' : 'var(--bg-elevated)',
+                                  color: isSelected ? 'var(--accent-em)' : 'var(--text-2)',
+                                  border: isSelected ? '1px solid rgba(8,132,246,0.4)' : '1px solid var(--border)',
+                                  whiteSpace: 'nowrap',
+                                }}
+                              >
+                                -{v / 1000}rb
+                              </button>
+                            );
+                          })}
+                    </div>
+                  </div>
+                  {/* Input row */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <input
+                      type="number"
+                      min={0}
+                      max={cartDiscountType === 'PERCENTAGE' ? 100 : undefined}
+                      step={cartDiscountType === 'PERCENTAGE' ? 1 : 1000}
+                      placeholder={
+                        cartDiscountType === 'PERCENTAGE' ? 'Masukkan %' : 'Masukkan Rp'
+                      }
+                      value={cartDiscountValue === 0 ? '' : cartDiscountValue}
+                      onChange={e => {
+                        let val = parseFloat(e.target.value) || 0;
+                        if (val < 0) val = 0;
+                        if (cartDiscountType === 'PERCENTAGE' && val > 100) val = 100;
+                        setCartDiscountValue(val);
+                      }}
+                      style={{
+                        flex: 1,
+                        minWidth: 0,
+                        padding: '6px 8px',
+                        borderRadius: 6,
+                        border: '1px solid var(--border-md)',
+                        background: 'var(--bg-elevated)',
+                        color: 'var(--text-1)',
+                        fontSize: '0.78rem',
+                        fontWeight: 600,
+                        outline: 'none',
+                      }}
+                    />
+                    {cartDiscountValue > 0 && (
+                      <button
+                        onClick={() => setCartDiscountValue(0)}
+                        style={{
+                          padding: '5px 10px',
+                          borderRadius: 5,
+                          fontSize: '0.68rem',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          border: 'none',
+                          background: 'rgba(239,68,68,0.1)',
+                          color: 'var(--accent-rd)',
+                          transition: 'all 0.12s ease',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        Hapus
+                      </button>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           )}
 
-          {/* Net subtotal after cart discount */}
+          {/* PPN */}
           <div className="cart-total-row">
             <span className="text-2">PPN</span>
             <span>{formatRp(taxAmt)}</span>
           </div>
+
+          {/* Grand total */}
           <div className="cart-total-row grand">
             <span>Total</span>
-            <span style={{ color: 'var(--accent-em)' }}>{formatRp(total)}</span>
+            <span style={{ color: 'var(--accent-em)', transition: 'color 0.2s ease' }}>
+              {formatRp(total)}
+            </span>
           </div>
+
+          {/* Savings banner */}
+          {totalDiscount > 0 && (
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 8,
+                padding: '8px 12px',
+                borderRadius: 8,
+                background: 'linear-gradient(135deg, rgba(16,185,129,0.1), rgba(16,185,129,0.04))',
+                border: '1px solid rgba(16,185,129,0.2)',
+              }}
+            >
+              <span
+                style={{
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  color: '#10b981',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 5,
+                }}
+              >
+                💰 Anda hemat
+              </span>
+              <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#10b981' }}>
+                {formatRp(totalDiscount)}
+              </span>
+            </div>
+          )}
 
 
           {/* Hold error */}

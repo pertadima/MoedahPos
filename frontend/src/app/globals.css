@@ -663,6 +663,22 @@ body {
   transform: none;
 }
 
+/* ── Discount UI (minimal – visual styles are inline in page.tsx) ─────── */
+
+/* Hide number input spinners globally in cart */
+.cart-item input[type='number']::-webkit-outer-spin-button,
+.cart-item input[type='number']::-webkit-inner-spin-button,
+.cart-footer input[type='number']::-webkit-outer-spin-button,
+.cart-footer input[type='number']::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.cart-item input[type='number'],
+.cart-footer input[type='number'] {
+  -moz-appearance: textfield;
+}
+
+
 /* ── Payment Modal ───────────────────────────────────────────────────────── */
 .modal-overlay {
   position: fixed;
