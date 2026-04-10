@@ -21,7 +21,12 @@ import { useAuth } from '@/lib/auth/AuthContext';
 import { reportsApi } from '@/lib/api/store-apis';
 import { transactionsApi } from '@/lib/api/transactions';
 import { formatRp, todayStr, thirtyDaysAgoStr, formatDate } from '@/lib/utils';
-import type { SalesSummaryResponse, SalesByProductRow, SalesSummaryRow, Transaction } from '@/types';
+import type {
+  SalesSummaryResponse,
+  SalesByProductRow,
+  SalesSummaryRow,
+  Transaction,
+} from '@/types';
 import {
   BarChart,
   Bar,
@@ -606,9 +611,7 @@ export default function UnifiedReportsPage() {
                             <td className="!text-right font-black text-accent-em">
                               {formatRp(r.total_sales ?? 0)}
                             </td>
-                            <td className="!text-right opacity-75">
-                              {formatRp(r.total_tax ?? 0)}
-                            </td>
+                            <td className="!text-right opacity-75">{formatRp(r.total_tax ?? 0)}</td>
                             <td className="!text-right opacity-75">
                               {formatRp(r.total_discount ?? 0)}
                             </td>
@@ -670,13 +673,18 @@ export default function UnifiedReportsPage() {
                                       </thead>
                                       <tbody>
                                         {transactions.map((tx, txIdx) => (
-                                          <tr key={`tx-${r.date}-${txIdx}`} className="border-b border-border hover:bg-surface-hv transition">
+                                          <tr
+                                            key={`tx-${r.date}-${txIdx}`}
+                                            className="border-b border-border hover:bg-surface-hv transition"
+                                          >
                                             <td className="font-mono text-[10px] opacity-75">
                                               {tx.id?.slice(0, 8) || 'N/A'}
                                             </td>
                                             <td className="text-[10px] opacity-75">
                                               {tx.transaction_timestamp
-                                                ? new Date(tx.transaction_timestamp).toLocaleTimeString('id-ID', {
+                                                ? new Date(
+                                                    tx.transaction_timestamp
+                                                  ).toLocaleTimeString('id-ID', {
                                                     hour: '2-digit',
                                                     minute: '2-digit',
                                                     hour12: false,
@@ -688,7 +696,9 @@ export default function UnifiedReportsPage() {
                                                 <div className="w-6 h-6 rounded-full bg-accent-em/20 text-accent-em flex items-center justify-center text-[9px] font-bold">
                                                   {tx.cashier_name?.charAt(0).toUpperCase() || 'A'}
                                                 </div>
-                                                <span className="opacity-75">{tx.cashier_name || 'N/A'}</span>
+                                                <span className="opacity-75">
+                                                  {tx.cashier_name || 'N/A'}
+                                                </span>
                                               </div>
                                             </td>
                                             <td className="text-[10px] opacity-75">
