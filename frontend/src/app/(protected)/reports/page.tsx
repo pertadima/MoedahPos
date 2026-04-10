@@ -331,7 +331,7 @@ export default function UnifiedReportsPage() {
     () =>
       (summary?.rows ?? [])
         .slice()
-        .reverse()
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
         .map((r: SalesSummaryRow) => ({ date: r.date.slice(5), sales: r.total_sales })),
     [summary]
   );
@@ -536,7 +536,7 @@ export default function UnifiedReportsPage() {
                   <tbody>
                     {(summary?.rows ?? [])
                       .slice()
-                      .reverse()
+                      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
                       .map((r, i) => (
                         <tr key={`${r.date}-${i}`}>
                           <td className="font-bold">{formatDate(r.date)}</td>
