@@ -240,8 +240,8 @@ func New(deps *Dependencies) http.Handler { //nolint:funlen // route wiring is i
 							r.Get("/", withPerm(deps, "reports.read", deps.ExpenseHandler.ListExpenses))
 							r.Post("/", withPerm(deps, "reports.read", deps.ExpenseHandler.CreateExpense))
 							r.Put("/{id}", withPerm(deps, "reports.read", deps.ExpenseHandler.UpdateExpense))
-							r.Put("/{id}", withPerm(deps, "reports.read", deps.ExpenseHandler.UpdateExpense))
 							r.Delete("/{id}", withPerm(deps, "reports.read", deps.ExpenseHandler.DeleteExpense))
+							r.Patch("/{id}/status", withPerm(deps, "reports.read", deps.ExpenseHandler.UpdateExpenseStatus))
 						})
 
 						// Stock Adjustments
