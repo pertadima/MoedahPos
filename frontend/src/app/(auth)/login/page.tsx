@@ -97,10 +97,10 @@ export default function LoginPage() {
               <h1
                 style={{ fontSize: '1.8rem', fontWeight: 800, color: '#1f2937', marginBottom: 8 }}
               >
-                Welcome Back
+                Selamat Datang Kembali
               </h1>
               <p style={{ color: '#6b7280', fontSize: '0.95rem' }}>
-                Enter your email and password to access your account.
+                Masukkan email dan kata sandi Anda untuk mengakses akun Anda.
               </p>
             </div>
 
@@ -161,7 +161,7 @@ export default function LoginPage() {
                     required
                     value={email}
                     onChange={e => setEmail(e.target.value)}
-                    placeholder="sellostore@company.com"
+                    placeholder="toko@perusahaan.com"
                     style={{
                       width: '100%',
                       padding: '11px 12px 11px 40px',
@@ -197,7 +197,7 @@ export default function LoginPage() {
                     marginBottom: 6,
                   }}
                 >
-                  Password
+                  Kata Sandi
                 </label>
                 <div style={{ position: 'relative' }}>
                   <Lock
@@ -215,7 +215,7 @@ export default function LoginPage() {
                     required
                     value={password}
                     onChange={e => setPassword(e.target.value)}
-                    placeholder="Sellostore."
+                    placeholder="Masukkan kata sandi Anda"
                     style={{
                       width: '100%',
                       padding: '11px 40px 11px 40px',
@@ -286,7 +286,7 @@ export default function LoginPage() {
                     userSelect: 'none',
                   }}
                 >
-                  Remember Me
+                  Ingat Saya
                 </label>
               </div>
 
@@ -328,7 +328,7 @@ export default function LoginPage() {
                 {loading ? (
                   <Loader2 size={18} style={{ animation: 'spin 1s linear infinite' }} />
                 ) : null}
-                {loading ? 'Signing in...' : 'Log In'}
+                {loading ? 'Masuk...' : 'Masuk'}
               </button>
             </form>
           </div>
@@ -365,8 +365,6 @@ export default function LoginPage() {
           animation: 'slideInRight 0.6s ease-out',
         }}
       >
-        
-
         {/* Content */}
         <div
           style={{
@@ -392,7 +390,7 @@ export default function LoginPage() {
           >
             <Image
               src="/dashboard.webp"
-              alt="Dashboard Preview"
+              alt="Pratinjau Dashboard"
               width={600}
               height={375}
               style={{
@@ -415,10 +413,10 @@ export default function LoginPage() {
                 lineHeight: 1.3,
               }}
             >
-              Manage your restaurant and sales efficiently.
+              Kelola restoran dan penjualan Anda dengan efisien.
             </h2>
             <p style={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.85rem', marginBottom: 0 }}>
-              Access your POS dashboard to manage orders, inventory, and sales.
+              Akses dashboard POS Anda untuk mengelola pesanan, inventori, dan penjualan.
             </p>
           </div>
         </div>
