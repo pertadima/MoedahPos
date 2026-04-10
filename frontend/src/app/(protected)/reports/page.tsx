@@ -569,12 +569,15 @@ export default function UnifiedReportsPage() {
                   <thead>
                     <tr>
                       <th className="w-[30px]"></th>
-                      <th className="w-[120px]">Tanggal</th>
-                      <th className="!text-right w-[100px]">Transaksi</th>
-                      <th className="!text-right w-[150px]">Omzet</th>
-                      <th className="!text-right w-[150px]">Laba Kotor</th>
-                      <th className="!text-right w-[150px]">Net Profit</th>
-                      <th className="!text-center w-[100px]">Margin</th>
+                      <th className="w-[100px]">Tanggal</th>
+                      <th className="!text-right w-[120px]">Total Sales</th>
+                      <th className="!text-right w-[110px]">Total Tax</th>
+                      <th className="!text-right w-[130px]">Total Diskon</th>
+                      <th className="!text-right w-[110px]">Total Net</th>
+                      <th className="!text-right w-[110px]">Total Cost</th>
+                      <th className="!text-right w-[120px]">Gross Profit</th>
+                      <th className="!text-right w-[130px]">Total Expense</th>
+                      <th className="!text-right w-[110px]">Net Profit</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -600,26 +603,37 @@ export default function UnifiedReportsPage() {
                               </button>
                             </td>
                             <td className="font-bold">{formatDate(r.date)}</td>
-                            <td className="!text-right">{r.transaction_count}</td>
                             <td className="!text-right font-black text-accent-em">
-                              {formatRp(r.total_sales)}
+                              {formatRp(r.total_sales ?? 0)}
+                            </td>
+                            <td className="!text-right opacity-75">
+                              {formatRp(r.total_tax ?? 0)}
+                            </td>
+                            <td className="!text-right opacity-75">
+                              {formatRp(r.total_discount ?? 0)}
+                            </td>
+                            <td className="!text-right font-semibold">
+                              {formatRp((r.total_sales ?? 0) - (r.total_discount ?? 0))}
+                            </td>
+                            <td className="!text-right opacity-75">
+                              {formatRp(r.total_cost ?? 0)}
                             </td>
                             <td
                               className={`!text-right font-semibold ${
-                                r.gross_profit >= 0 ? 'text-warning' : 'text-accent-rd'
+                                (r.gross_profit ?? 0) >= 0 ? 'text-warning' : 'text-accent-rd'
                               }`}
                             >
-                              {formatRp(r.gross_profit)}
+                              {formatRp(r.gross_profit ?? 0)}
+                            </td>
+                            <td className="!text-right opacity-75">
+                              {formatRp(r.total_expense ?? 0)}
                             </td>
                             <td
                               className={`!text-right font-bold ${
-                                r.net_profit >= 0 ? 'text-blue-500' : 'text-accent-rd'
+                                (r.net_profit ?? 0) >= 0 ? 'text-blue-500' : 'text-accent-rd'
                               }`}
                             >
-                              {formatRp(r.net_profit)}
-                            </td>
-                            <td className="!text-center">
-                              <ProfitMarginBadge margin={r.profit_margin ?? 0} />
+                              {formatRp(r.net_profit ?? 0)}
                             </td>
                           </tr>,
                         ];
