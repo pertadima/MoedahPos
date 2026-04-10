@@ -227,7 +227,14 @@ export default function IncomesPage() {
             }}
           >
             <div
-              style={{ fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-3)', letterSpacing: '0.07em', marginBottom: 4 }}
+              style={{
+                fontSize: '0.68rem',
+                fontWeight: 700,
+                textTransform: 'uppercase',
+                color: 'var(--text-3)',
+                letterSpacing: '0.07em',
+                marginBottom: 4,
+              }}
             >
               Total Periode Ini
             </div>
@@ -246,7 +253,15 @@ export default function IncomesPage() {
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
                 <span style={{ color: '#10b981' }}>{methodIcon(method)}</span>
-                <span style={{ fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-3)', letterSpacing: '0.07em' }}>
+                <span
+                  style={{
+                    fontSize: '0.68rem',
+                    fontWeight: 700,
+                    textTransform: 'uppercase',
+                    color: 'var(--text-3)',
+                    letterSpacing: '0.07em',
+                  }}
+                >
                   {methodLabel(method)}
                 </span>
               </div>
@@ -417,14 +432,24 @@ export default function IncomesPage() {
                             setEditTarget(inc);
                             setShowModal(true);
                           }}
-                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-3)' }}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            cursor: 'pointer',
+                            color: 'var(--text-3)',
+                          }}
                           title="Edit"
                         >
                           <Edit2 size={15} />
                         </button>
                         <button
                           onClick={() => handleDelete(inc.id)}
-                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444' }}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            cursor: 'pointer',
+                            color: '#ef4444',
+                          }}
                           title="Hapus"
                         >
                           <Trash2 size={15} />
@@ -506,7 +531,7 @@ function IncomeModal({
   const [err, setErr] = useState('');
 
   const [form, setForm] = useState({
-    category_id: income?.category_id ?? (categories[0]?.id ?? ''),
+    category_id: income?.category_id ?? categories[0]?.id ?? '',
     amount: income ? formatNumberInput(income.amount) : '',
     income_date: income?.income_date ?? new Date().toISOString().slice(0, 10),
     payment_method: (income?.payment_method ?? 'cash') as PaymentMethod,
@@ -588,7 +613,12 @@ function IncomeModal({
           </div>
           <button
             onClick={onClose}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-3)' }}
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              color: 'var(--text-3)',
+            }}
           >
             <X size={20} />
           </button>
@@ -672,8 +702,14 @@ function IncomeModal({
                     borderRadius: 8,
                     fontSize: '0.82rem',
                     fontWeight: 600,
-                    border: form.payment_method === m.value ? '2px solid #10b981' : '2px solid var(--border)',
-                    background: form.payment_method === m.value ? 'rgba(16,185,129,0.1)' : 'var(--bg-elevated)',
+                    border:
+                      form.payment_method === m.value
+                        ? '2px solid #10b981'
+                        : '2px solid var(--border)',
+                    background:
+                      form.payment_method === m.value
+                        ? 'rgba(16,185,129,0.1)'
+                        : 'var(--bg-elevated)',
                     color: form.payment_method === m.value ? '#10b981' : 'var(--text-2)',
                     cursor: 'pointer',
                     display: 'flex',
@@ -718,7 +754,13 @@ function IncomeModal({
               Batal
             </button>
             <button type="submit" className="btn btn-primary" disabled={saving}>
-              {saving ? <Loader2 size={16} className="loading-spin" /> : income ? 'Simpan Perubahan' : 'Tambah'}
+              {saving ? (
+                <Loader2 size={16} className="loading-spin" />
+              ) : income ? (
+                'Simpan Perubahan'
+              ) : (
+                'Tambah'
+              )}
             </button>
           </div>
         </form>

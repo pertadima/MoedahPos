@@ -324,4 +324,3 @@ export const incomesApi = {
     api.put<any>(`/stores/${storeId}/incomes/${id}`, body),
   delete: (storeId: string, id: string) => api.delete<any>(`/stores/${storeId}/incomes/${id}`),
 };
-
