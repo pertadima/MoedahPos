@@ -651,7 +651,7 @@ export default function UnifiedReportsPage() {
                             // Add a row with nested transaction table
                             rows.push(
                               <tr key={`nested-table-${r.date}`}>
-                                <td colSpan={7} className="p-0">
+                                <td colSpan={10} className="p-0">
                                   <div className="bg-surface overflow-hidden rounded">
                                     <table className="tbl text-xs w-full">
                                       <thead>
