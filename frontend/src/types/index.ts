@@ -86,6 +86,7 @@ export interface MenuItemIngredient {
   product_sku: string;
   unit: string;
   quantity: number;
+  cost_price: number;
 }
 
 export interface MenuItem {
@@ -96,6 +97,7 @@ export interface MenuItem {
   name: string;
   description: string;
   sell_price: number;
+  cost_price: number;
   tax_rate: number;
   image_url?: string;
   is_active: boolean;

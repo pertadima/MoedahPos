@@ -121,7 +121,7 @@ function makeFromMenu(item: MenuItem, qty = 1): PosCartItem {
     unit: 'porsi',
     description: '',
     sell_price: item.sell_price,
-    cost_price: 0,
+    cost_price: item.cost_price ?? 0,
     tax_rate: taxRate,
     is_active: true,
     store_id: item.store_id,
@@ -1662,6 +1662,9 @@ export default function POSPage() {
                       ? `= ${formatRp(item.discountValue)}`
                       : null;
               const itemError = discountErrors[item.product.id] ?? '';
+              const costPrice = item.product.cost_price ?? 0;
+              const costLabel = item.menuItemId ? 'HPP' : 'Harga Beli';
+              const isBelowCost = costPrice > 0 && item.unitPrice < costPrice;
 
               const pctPresets = [5, 10, 15, 20];
               const fixedPresets = [5000, 10000];
@@ -1695,6 +1698,13 @@ export default function POSPage() {
                 } else if (item.discountType === 'FIXED' && val > item.originalPrice) {
                   safeVal = item.originalPrice;
                   error = 'Diskon melebihi harga';
+                }
+                // Warn if final price would be below cost
+                const simFinal = item.discountType === 'PERCENTAGE'
+                  ? item.originalPrice * (1 - safeVal / 100)
+                  : item.originalPrice - safeVal;
+                if (costPrice > 0 && simFinal < costPrice && !error) {
+                  error = `⚠ Harga jual di bawah ${costLabel} (${formatRp(costPrice)})`;
                 }
                 setDiscountErrors(prev => ({ ...prev, [item.product.id]: error }));
                 dispatch({
@@ -1808,6 +1818,17 @@ export default function POSPage() {
                     <div style={{ fontSize: '0.72rem', color: 'var(--text-3)' }}>
                       {formatRp(item.unitPrice)} × {item.quantity}
                       {item.product.tax_rate > 0 && ` · PPN ${item.product.tax_rate}%`}
+                      {costPrice > 0 && (
+                        <span
+                          style={{
+                            marginLeft: 6,
+                            color: isBelowCost ? '#f87171' : 'var(--text-3)',
+                            fontWeight: isBelowCost ? 600 : 400,
+                          }}
+                        >
+                          · {costLabel}: {formatRp(costPrice)}
+                        </span>
+                      )}
                     </div>
                     {/* Discount trigger / badge */}
                     {isDiscounted && discBadge ? (

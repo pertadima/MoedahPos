@@ -45,6 +45,7 @@ type IngredientResponse struct {
 	ProductSKU  string  `json:"product_sku"`
 	Unit        string  `json:"unit"`
 	Quantity    float64 `json:"quantity"`
+	CostPrice   float64 `json:"cost_price"`
 }
 
 type CreateMenuItemRequest struct {
@@ -74,6 +75,7 @@ type MenuItemResponse struct {
 	Name         string               `json:"name"`
 	Description  string               `json:"description"`
 	SellPrice    float64              `json:"sell_price"`
+	CostPrice    float64              `json:"cost_price"`
 	TaxRate      float64              `json:"tax_rate"`
 	ImageURL     string               `json:"image_url,omitempty"`
 	IsActive     bool                 `json:"is_active"`

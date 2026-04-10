@@ -245,6 +245,23 @@ func toMenuItemResponse(item *domain.MenuItem) *dto.MenuItemResponse {
 	if item.Description != nil {
 		desc = *item.Description
 	}
+
+	// Compute BOM cost (HPP) from ingredients
+	var costPrice float64
+	ings := make([]dto.IngredientResponse, len(item.Ingredients))
+	for i, ing := range item.Ingredients {
+		costPrice += ing.CostPrice * ing.Quantity
+		ings[i] = dto.IngredientResponse{
+			ID:          ing.ID,
+			ProductID:   ing.ProductID,
+			ProductName: ing.ProductName,
+			ProductSKU:  ing.ProductSKU,
+			Unit:        ing.Unit,
+			Quantity:    ing.Quantity,
+			CostPrice:   ing.CostPrice,
+		}
+	}
+
 	r := &dto.MenuItemResponse{
 		ID:           item.ID,
 		StoreID:      item.StoreID,
@@ -253,25 +270,15 @@ func toMenuItemResponse(item *domain.MenuItem) *dto.MenuItemResponse {
 		Name:         item.Name,
 		Description:  desc,
 		SellPrice:    item.SellPrice,
+		CostPrice:    costPrice,
 		TaxRate:      item.TaxRate,
 		IsActive:     item.IsActive,
+		Ingredients:  ings,
 		CreatedAt:    item.CreatedAt.Format(time.RFC3339),
 		UpdatedAt:    item.UpdatedAt.Format(time.RFC3339),
 	}
 	if item.ImageURL != nil {
 		r.ImageURL = *item.ImageURL
 	}
-	ings := make([]dto.IngredientResponse, len(item.Ingredients))
-	for i, ing := range item.Ingredients {
-		ings[i] = dto.IngredientResponse{
-			ID:          ing.ID,
-			ProductID:   ing.ProductID,
-			ProductName: ing.ProductName,
-			ProductSKU:  ing.ProductSKU,
-			Unit:        ing.Unit,
-			Quantity:    ing.Quantity,
-		}
-	}
-	r.Ingredients = ings
 	return r
 }

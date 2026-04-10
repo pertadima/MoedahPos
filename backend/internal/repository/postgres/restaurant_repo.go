@@ -169,7 +169,7 @@ func (r *MenuItemRepo) loadIngredients(ctx context.Context, ids []string) (map[s
 	}
 	query, args, err := sqlx.In(`
 		SELECT mii.id, mii.menu_item_id, mii.product_id, mii.quantity,
-		       p.name AS product_name, p.sku AS product_sku, p.unit
+		       p.name AS product_name, p.sku AS product_sku, p.unit, p.cost_price
 		FROM menu_item_ingredients mii
 		JOIN products p ON p.id = mii.product_id AND p.deleted_at IS NULL
 		WHERE mii.menu_item_id IN (?)

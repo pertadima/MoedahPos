@@ -54,7 +54,8 @@ type MenuItemIngredient struct {
 	Quantity   float64 `db:"quantity"`
 
 	// Populated via JOIN
-	ProductName string `db:"product_name"`
-	ProductSKU  string `db:"product_sku"`
-	Unit        string `db:"unit"`
+	ProductName string  `db:"product_name"`
+	ProductSKU  string  `db:"product_sku"`
+	Unit        string  `db:"unit"`
+	CostPrice   float64 `db:"cost_price"`
 }
