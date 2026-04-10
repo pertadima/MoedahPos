@@ -575,14 +575,14 @@ export default function UnifiedReportsPage() {
                     <tr>
                       <th className="w-[30px]"></th>
                       <th className="w-[100px]">Tanggal</th>
-                      <th className="!text-right w-[120px]">Total Sales</th>
-                      <th className="!text-right w-[110px]">Total Tax</th>
+                      <th className="!text-right w-[120px]">Total Penjualan</th>
+                      <th className="!text-right w-[110px]">Total Pajak</th>
                       <th className="!text-right w-[130px]">Total Diskon</th>
                       <th className="!text-right w-[110px]">Total Net</th>
                       <th className="!text-right w-[110px]">Total Cost</th>
-                      <th className="!text-right w-[120px]">Gross Profit</th>
-                      <th className="!text-right w-[130px]">Total Expense</th>
-                      <th className="!text-right w-[110px]">Net Profit</th>
+                      <th className="!text-right w-[120px]">Laba Kotor</th>
+                      <th className="!text-right w-[130px]">Total Pengeluaran</th>
+                      <th className="!text-right w-[110px]">Laba Bersih</th>
                     </tr>
                   </thead>
                   <tbody>
