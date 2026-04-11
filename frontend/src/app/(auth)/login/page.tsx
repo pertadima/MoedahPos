@@ -388,18 +388,16 @@ export default function LoginPage() {
               maxWidth: 600,
             }}
           >
-            <Image
-              src="/dashboard.webp"
-              alt="Pratinjau Dashboard"
-              width={600}
-              height={375}
-              style={{
-                display: 'block',
-                width: '100%',
-                height: 'auto',
-              }}
-              priority
-            />
+            <div style={{ position: 'relative', width: '100%', aspectRatio: '800 / 400' }}>
+              <Image
+                src="/dashboard.webp"
+                alt="Pratinjau Dashboard"
+                fill
+                sizes="(max-width: 768px) 100vw, 800px"
+                style={{ objectFit: 'contain' }}
+                priority
+              />
+            </div>
           </div>
 
           {/* Text Below Image */}

@@ -22,7 +22,13 @@ import {
 import { usePermission } from '@/hooks/usePermission';
 import { usersAdminApi, rolesApi, storesApi } from '@/lib/api/store-apis';
 import { ApiError } from '@/lib/api/client';
-import type { UserAdmin, Role, UserStoreAssignment, Store as AppStore, PaginatedData } from '@/types';
+import type {
+  UserAdmin,
+  Role,
+  UserStoreAssignment,
+  Store as AppStore,
+  PaginatedData,
+} from '@/types';
 
 type CreateUserResponse = { id: string };
 type UsersListResponse = { data?: UserAdmin[]; meta?: { total?: number } };
