@@ -145,6 +145,29 @@ func (r *ReportRepo) SalesSummary(ctx context.Context, storeID string, from, to 
 			FROM expenses e
 			WHERE e.store_id = $1 AND e.expense_date >= $2 AND e.expense_date < $3
 			GROUP BY 1
+			UNION ALL
+			SELECT
+				TO_CHAR(pp.paid_at AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD') AS date,
+				SUM(pp.amount) AS total_expense
+			FROM po_payments pp
+			WHERE pp.store_id = $1
+			  AND pp.paid_at >= $2 AND pp.paid_at < $3
+			GROUP BY 1
+			UNION ALL
+			SELECT
+				TO_CHAR(pr.created_at AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD') AS date,
+				SUM(pr.amount_paid) AS total_expense
+			FROM payment_records pr
+			JOIN purchase_order_termins pot ON pot.id = pr.termin_id
+			JOIN purchase_orders po ON po.id = pot.po_id
+			WHERE po.store_id = $1
+			  AND pr.created_at >= $2 AND pr.created_at < $3
+			GROUP BY 1
+		),
+		exp_agg AS (
+			SELECT date, SUM(total_expense) AS total_expense
+			FROM exp
+			GROUP BY date
 		)
 		SELECT
 			COALESCE(s.date, e.date) AS date,
@@ -158,7 +181,7 @@ func (r *ReportRepo) SalesSummary(ctx context.Context, storeID string, from, to 
 			ROUND(COALESCE(e.total_expense, 0)::numeric, 2) AS total_expense,
 			ROUND((COALESCE(s.gross_profit, 0) - COALESCE(e.total_expense, 0))::numeric, 2) AS net_profit
 		FROM sales s
-		FULL OUTER JOIN exp e ON e.date = s.date
+		FULL OUTER JOIN exp_agg e ON e.date = s.date
 		ORDER BY 1 DESC`
 	var rows []dto.SalesSummaryRow
 	if err := r.db.SelectContext(ctx, &rows, q, storeID, from, to); err != nil {
@@ -249,6 +272,16 @@ func (r *ReportRepo) ProfitSummary(ctx context.Context, storeID string, from, to
 		"week":  "TO_CHAR(DATE_TRUNC('week', e.expense_date), 'YYYY-MM-DD')",
 		"month": "TO_CHAR(DATE_TRUNC('month', e.expense_date), 'YYYY-MM')",
 	}
+	poPaymentPeriodExpr := map[string]string{
+		"day":   "TO_CHAR(pp.paid_at AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD')",
+		"week":  "TO_CHAR(DATE_TRUNC('week', pp.paid_at AT TIME ZONE 'Asia/Jakarta'), 'YYYY-MM-DD')",
+		"month": "TO_CHAR(DATE_TRUNC('month', pp.paid_at AT TIME ZONE 'Asia/Jakarta'), 'YYYY-MM')",
+	}
+	terminPaymentPeriodExpr := map[string]string{
+		"day":   "TO_CHAR(pr.created_at AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD')",
+		"week":  "TO_CHAR(DATE_TRUNC('week', pr.created_at AT TIME ZONE 'Asia/Jakarta'), 'YYYY-MM-DD')",
+		"month": "TO_CHAR(DATE_TRUNC('month', pr.created_at AT TIME ZONE 'Asia/Jakarta'), 'YYYY-MM')",
+	}
 
 	expr, ok := periodExpr[groupBy]
 	if !ok {
@@ -257,6 +290,14 @@ func (r *ReportRepo) ProfitSummary(ctx context.Context, storeID string, from, to
 	expExpr, ok := expensePeriodExpr[groupBy]
 	if !ok {
 		expExpr = expensePeriodExpr["day"]
+	}
+	poPayExpr, ok := poPaymentPeriodExpr[groupBy]
+	if !ok {
+		poPayExpr = poPaymentPeriodExpr["day"]
+	}
+	terminPayExpr, ok := terminPaymentPeriodExpr[groupBy]
+	if !ok {
+		terminPayExpr = terminPaymentPeriodExpr["day"]
 	}
 
 	q := fmt.Sprintf(`
@@ -282,6 +323,29 @@ func (r *ReportRepo) ProfitSummary(ctx context.Context, storeID string, from, to
 			FROM expenses e
 			WHERE e.store_id = $1 AND e.expense_date >= $2 AND e.expense_date < $3
 			GROUP BY 1
+			UNION ALL
+			SELECT
+				%s AS period,
+				SUM(pp.amount) AS total_expense
+			FROM po_payments pp
+			WHERE pp.store_id = $1
+			  AND pp.paid_at >= $2 AND pp.paid_at < $3
+			GROUP BY 1
+			UNION ALL
+			SELECT
+				%s AS period,
+				SUM(pr.amount_paid) AS total_expense
+			FROM payment_records pr
+			JOIN purchase_order_termins pot ON pot.id = pr.termin_id
+			JOIN purchase_orders po ON po.id = pot.po_id
+			WHERE po.store_id = $1
+			  AND pr.created_at >= $2 AND pr.created_at < $3
+			GROUP BY 1
+		),
+		exp_agg AS (
+			SELECT period, SUM(total_expense) AS total_expense
+			FROM exp
+			GROUP BY period
 		)
 		SELECT
 			COALESCE(s.period, e.period) AS period,
@@ -294,8 +358,8 @@ func (r *ReportRepo) ProfitSummary(ctx context.Context, storeID string, from, to
 			     THEN ROUND(((COALESCE(s.total_sales, 0) - COALESCE(s.total_cost, 0) - COALESCE(e.total_expense, 0)) / COALESCE(s.total_sales, 0) * 100)::numeric, 1)
 			     ELSE 0 END AS profit_margin
 		FROM sales s
-		FULL OUTER JOIN exp e ON e.period = s.period
-		ORDER BY 1`, expr, expExpr)
+		FULL OUTER JOIN exp_agg e ON e.period = s.period
+		ORDER BY 1`, expr, expExpr, poPayExpr, terminPayExpr)
 
 	var rows []dto.ProfitPeriodRow
 	if err := r.db.SelectContext(ctx, &rows, q, storeID, from, to); err != nil {
