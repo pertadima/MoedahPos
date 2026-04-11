@@ -89,7 +89,7 @@ function ExpensesPage() {
   };
 
   return (
-    <div className="p-6 max-w-[1400px] w-full mx-auto">
+    <div className="w-full p-6">
       <div
         style={{
           display: 'flex',
@@ -99,14 +99,8 @@ function ExpensesPage() {
         }}
       >
         <div>
-          <h1
-            style={{
-              fontSize: '1.4rem',
-              fontWeight: 700,
-              margin: '0 0 4px',
-              color: 'var(--text-1)',
-            }}
-          >
+          <h1 className="page-title" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <Wallet size={22} style={{ color: 'var(--accent-em)' }} />
             Pengeluaran Operasional
           </h1>
           <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-3)' }}>

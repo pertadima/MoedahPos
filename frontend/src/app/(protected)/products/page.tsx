@@ -133,7 +133,7 @@ export default function ProductsPage() {
   const f = (k: string) => (e: any) => setFormData(d => ({ ...d, [k]: e.target.value }));
 
   return (
-    <div style={{ padding: 24 }}>
+    <div className="w-full p-6">
       <div
         style={{
           display: 'flex',
@@ -143,7 +143,10 @@ export default function ProductsPage() {
         }}
       >
         <div>
-          <h1 className="page-title">Produk</h1>
+          <h1 className="page-title" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <Package size={22} style={{ color: 'var(--accent-em)' }} />
+            Produk
+          </h1>
           <p className="page-subtitle">Kelola katalog produk {selectedStore?.store_name}</p>
         </div>
         {can('products.create') && (

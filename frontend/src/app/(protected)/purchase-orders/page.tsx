@@ -2216,7 +2216,7 @@ export default function PurchaseOrdersPage() {
     );
 
   return (
-    <div style={{ padding: 24 }}>
+    <div className="w-full p-6">
       {/* Header */}
       <div
         style={{
@@ -2227,7 +2227,10 @@ export default function PurchaseOrdersPage() {
         }}
       >
         <div>
-          <h1 className="page-title">Pembelian</h1>
+          <h1 className="page-title" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <ClipboardList size={22} style={{ color: 'var(--accent-em)' }} />
+            Pembelian
+          </h1>
           <p className="page-subtitle">{selectedStore.store_name}</p>
         </div>
         <button

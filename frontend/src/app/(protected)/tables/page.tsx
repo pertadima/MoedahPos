@@ -181,7 +181,7 @@ export default function TablesPage() {
   const occupied = tables.filter(t => t.status === 'occupied').length;
 
   return (
-    <div className="p-6 max-w-[1400px] w-full mx-auto">
+    <div className="w-full p-6">
       {/* Toast */}
       {toast && (
         <div

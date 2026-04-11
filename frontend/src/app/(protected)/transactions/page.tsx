@@ -831,10 +831,13 @@ export default function TransactionsPage() {
   }
 
   return (
-    <div style={{ padding: 24 }}>
+    <div className="w-full p-6">
       {/* ── Header ── */}
       <div style={{ marginBottom: 20 }}>
-        <h1 className="page-title">Riwayat Transaksi</h1>
+        <h1 className="page-title" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <Receipt size={22} style={{ color: 'var(--accent-em)' }} />
+          Riwayat Transaksi
+        </h1>
         <p className="page-subtitle">{selectedStore.store_name}</p>
       </div>
 

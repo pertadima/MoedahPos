@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Users, Plus, Pencil, Trash2, Loader2, X, Search } from 'lucide-react';
+import { Users, Truck, Plus, Pencil, Trash2, Loader2, X, Search } from 'lucide-react';
 import { usePermission } from '@/hooks/usePermission';
 import { suppliersApi } from '@/lib/api/store-apis';
 import type { Supplier } from '@/types';
@@ -79,7 +79,7 @@ export default function SuppliersPage() {
   const f = (k: string) => (e: any) => setForm(d => ({ ...d, [k]: e.target.value }));
 
   return (
-    <div style={{ padding: 24 }}>
+    <div className="w-full p-6">
       <div
         style={{
           display: 'flex',
@@ -89,7 +89,10 @@ export default function SuppliersPage() {
         }}
       >
         <div>
-          <h1 className="page-title">Supplier</h1>
+          <h1 className="page-title" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <Truck size={22} style={{ color: 'var(--accent-em)' }} />
+            Supplier
+          </h1>
           <p className="page-subtitle">Kelola daftar pemasok dan vendor</p>
         </div>
         {can('suppliers.create') && (

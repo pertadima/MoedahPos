@@ -154,10 +154,13 @@ export default function PriceHistoryPage() {
     );
 
   return (
-    <div style={{ padding: 24 }}>
+    <div className="w-full p-6">
       {/* Header */}
       <div style={{ marginBottom: 20 }}>
-        <h1 className="page-title">Riwayat Harga</h1>
+        <h1 className="page-title" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <History size={22} style={{ color: 'var(--accent-em)' }} />
+          Riwayat Harga
+        </h1>
         <p className="page-subtitle">
           {selectedStore.store_name} · {total} perubahan tercatat
         </p>

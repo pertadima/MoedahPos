@@ -13,6 +13,7 @@ import {
   Search,
   Check,
   Plus,
+  Package,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { stockApi } from '@/lib/api/store-apis';
@@ -415,7 +416,7 @@ export default function StockPage() {
   // ── Page ──────────────────────────────────────────────────────────────────
 
   return (
-    <div style={{ padding: 24 }}>
+    <div className="w-full p-6">
       {/* Header */}
       <div
         style={{
@@ -426,7 +427,10 @@ export default function StockPage() {
         }}
       >
         <div>
-          <h1 className="page-title">Manajemen Stok</h1>
+          <h1 className="page-title" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <Package size={22} style={{ color: 'var(--accent-em)' }} />
+            Manajemen Stok
+          </h1>
           <p className="page-subtitle">
             {selectedStore.store_name} · {levels.length} produk
             {lowCount > 0 ? ` · ⚠ ${lowCount} stok menipis` : ''}

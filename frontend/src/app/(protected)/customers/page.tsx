@@ -520,7 +520,7 @@ export default function CustomersPage() {
     );
 
   return (
-    <div style={{ padding: 24 }}>
+    <div className="w-full p-6">
       {/* Header */}
       <div
         style={{
@@ -531,7 +531,10 @@ export default function CustomersPage() {
         }}
       >
         <div>
-          <h1 className="page-title">Customer</h1>
+          <h1 className="page-title" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <Users size={22} style={{ color: 'var(--accent-em)' }} />
+            Customer
+          </h1>
           <p className="page-subtitle">
             {total} customer terdaftar · {selectedStore.store_name}
           </p>

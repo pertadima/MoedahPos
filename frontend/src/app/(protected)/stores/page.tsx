@@ -208,7 +208,7 @@ export default function StoresPage() {
   // ── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <div className="p-6 max-w-[1400px] w-full mx-auto">
+    <div className="w-full p-6">
       {/* Toast */}
       {toast && (
         <div

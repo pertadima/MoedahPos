@@ -894,7 +894,7 @@ export default function UsersPage() {
   const totalPages = Math.ceil(total / PER_PAGE);
 
   return (
-    <div style={{ padding: 24 }}>
+    <div className="w-full p-6">
       {/* ── Header ── */}
       <div
         style={{
@@ -905,7 +905,10 @@ export default function UsersPage() {
         }}
       >
         <div>
-          <h1 className="page-title">Manajemen Pengguna</h1>
+          <h1 className="page-title" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <Users size={22} style={{ color: 'var(--accent-em)' }} />
+            Manajemen Pengguna
+          </h1>
           <p className="page-subtitle">Kelola akun pengguna dan penugasan toko</p>
         </div>
         {can('users.create') && (

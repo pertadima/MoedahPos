@@ -13,6 +13,7 @@ import {
   ArrowUp,
   ArrowDown,
   Wallet,
+  LayoutDashboard,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { reportsApi, stockApi, purchaseOrdersApi } from '@/lib/api/store-apis';
@@ -212,10 +213,13 @@ export default function DashboardPage() {
   ];
 
   return (
-    <div style={{ padding: '24px' }}>
+    <div className="w-full p-6">
       {/* Header */}
       <div style={{ marginBottom: 24 }}>
-        <h1 className="page-title">Dashboard</h1>
+        <h1 className="page-title" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <LayoutDashboard size={22} style={{ color: 'var(--accent-em)' }} />
+          Dashboard
+        </h1>
         <p className="page-subtitle">
           {selectedStore.store_name} ·{' '}
           {new Date().toLocaleDateString('id-ID', {

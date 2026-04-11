@@ -166,7 +166,7 @@ export default function IncomesPage() {
   }
 
   return (
-    <div style={{ padding: '24px 32px' }}>
+    <div className="w-full p-6">
       {/* Header */}
       <div
         style={{

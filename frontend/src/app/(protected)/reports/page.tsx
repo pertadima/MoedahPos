@@ -411,10 +411,13 @@ export default function UnifiedReportsPage() {
   }
 
   return (
-    <div className="p-6 max-w-[1400px] mx-auto">
+    <div className="w-full p-6">
       <div className="flex justify-between items-start mb-6 flex-wrap gap-4">
         <div>
-          <h1 className="text-2xl font-black flex items-center gap-2">📊 Laporan & Keuangan</h1>
+          <h1 className="page-title" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <BarChart3 size={22} style={{ color: 'var(--accent-em)' }} />
+            Laporan & Keuangan
+          </h1>
           <p className="text-3 text-sm mt-1">
             {selectedStore.store_name} · Analisis performa & arus kas
           </p>
