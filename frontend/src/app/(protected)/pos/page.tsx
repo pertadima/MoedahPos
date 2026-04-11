@@ -803,6 +803,7 @@ export default function POSPage() {
               name: item.product_name,
               description: '',
               sell_price: item.unit_price,
+              cost_price: item.cost_price || 0,
               tax_rate: item.tax_rate,
               is_active: true,
               category_name: '',

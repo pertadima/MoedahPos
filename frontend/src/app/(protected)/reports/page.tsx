@@ -684,9 +684,9 @@ export default function UnifiedReportsPage() {
                                               {tx.id?.slice(0, 8) || 'N/A'}
                                             </td>
                                             <td className="text-[10px] opacity-75">
-                                              {tx.transaction_timestamp
+                                              {tx.created_at
                                                 ? new Date(
-                                                    tx.transaction_timestamp
+                                                    tx.created_at
                                                   ).toLocaleTimeString('id-ID', {
                                                     hour: '2-digit',
                                                     minute: '2-digit',
