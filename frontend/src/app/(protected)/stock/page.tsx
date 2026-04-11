@@ -291,8 +291,10 @@ export default function StockPage() {
         if (debouncedSearch && !formData.product_id) {
           params.append('search', debouncedSearch);
         }
-        const res = await api.get<Product[]>(`/stores/${storeId}/products?${params.toString()}`);
-        const prodData = Array.isArray(res?.data) ? res.data : (res?.data as any)?.data || [];
+        const res = await api.get<{ data: Product[] }>(
+          `/stores/${storeId}/products?${params.toString()}`
+        );
+        const prodData = Array.isArray(res?.data) ? res.data : res?.data?.data || [];
         setProducts(prodData);
       } catch (err) {
         console.error(err);

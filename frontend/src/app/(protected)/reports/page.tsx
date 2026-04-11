@@ -349,7 +349,7 @@ export default function UnifiedReportsPage() {
         if (!transactionsByDate[date] && !loadingTransactions.has(date)) {
           setLoadingTransactions(prev => new Set(prev).add(date));
           try {
-            const response = await transactionsApi.list(storeId!, {
+            const response = await transactionsApi.list(storeId || '', {
               date_from: date,
               date_to: date,
               per_page: 100,
@@ -573,7 +573,7 @@ export default function UnifiedReportsPage() {
                 <table className="tbl text-sm">
                   <thead>
                     <tr>
-                      <th className="w-[30px]"></th>
+                      <th className="w-[30px]" />
                       <th className="w-[100px]">Tanggal</th>
                       <th className="!text-right w-[120px]">Total Penjualan</th>
                       <th className="!text-right w-[110px]">Total Pajak</th>
@@ -589,7 +589,7 @@ export default function UnifiedReportsPage() {
                     {(summary?.rows ?? [])
                       .slice()
                       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-                      .flatMap((r, i) => {
+                      .flatMap(r => {
                         const isExpanded = expandedDates.has(r.date);
                         const isLoading = loadingTransactions.has(r.date);
                         const transactions = transactionsByDate[r.date] || [];
@@ -723,7 +723,7 @@ export default function UnifiedReportsPage() {
                                             </td>
                                             <td className="!text-center">
                                               <span className="inline-flex items-center gap-1 text-[9px] font-bold opacity-60">
-                                                <span className="w-2 h-2 rounded-full bg-green-500"></span>
+                                                <span className="w-2 h-2 rounded-full bg-green-500" />
                                                 Selesai
                                               </span>
                                             </td>
