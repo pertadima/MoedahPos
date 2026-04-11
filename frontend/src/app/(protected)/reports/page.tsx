@@ -46,6 +46,7 @@ import {
 
 type Tab = 'sales' | 'products' | 'profit' | 'cashflow' | 'valuation';
 type GroupBy = 'day' | 'week' | 'month';
+type ReportDataset = 'summary' | 'products' | 'profit' | 'cashflow' | 'valuation';
 
 interface CashFlowDayRow {
   date: string;
@@ -282,6 +283,30 @@ const TAB_CONFIG: { key: Tab; label: string; icon: React.ElementType }[] = [
   { key: 'valuation', label: 'Stok', icon: WarehouseIcon },
 ];
 
+const TAB_DATASETS: Record<Tab, ReportDataset[]> = {
+  sales: ['summary'],
+  products: ['summary', 'products'],
+  profit: ['summary', 'profit'],
+  cashflow: ['cashflow'],
+  valuation: ['valuation'],
+};
+
+const INITIAL_LOADING_STATE: Record<ReportDataset, boolean> = {
+  summary: false,
+  products: false,
+  profit: false,
+  cashflow: false,
+  valuation: false,
+};
+
+const INITIAL_LOADED_STATE: Record<ReportDataset, boolean> = {
+  summary: false,
+  products: false,
+  profit: false,
+  cashflow: false,
+  valuation: false,
+};
+
 export default function UnifiedReportsPage() {
   const { selectedStore } = useAuth();
   const storeId = selectedStore?.store_id;
@@ -290,7 +315,6 @@ export default function UnifiedReportsPage() {
   const [dateTo, setDateTo] = useState(todayStr());
   const [tab, setTab] = useState<Tab>('sales');
   const [groupBy, setGroupBy] = useState<GroupBy>('day');
-  const [loading, setLoading] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
@@ -302,41 +326,83 @@ export default function UnifiedReportsPage() {
   const [valuation, setValuation] = useState<StockValuationResponse | null>(null);
   const [profitData, setProfitData] = useState<ProfitSummaryResponse | null>(null);
   const [cfData, setCfData] = useState<CashFlowResponse | null>(null);
+  const [loadingState, setLoadingState] =
+    useState<Record<ReportDataset, boolean>>(INITIAL_LOADING_STATE);
+  const [loadedState, setLoadedState] =
+    useState<Record<ReportDataset, boolean>>(INITIAL_LOADED_STATE);
   const [expandedDates, setExpandedDates] = useState<Set<string>>(new Set());
   const [transactionsByDate, setTransactionsByDate] = useState<Record<string, Transaction[]>>({});
   const [loadingTransactions, setLoadingTransactions] = useState<Set<string>>(new Set());
 
-  const fetchAll = useCallback(async () => {
-    if (!storeId) return;
-    setLoading(true);
-    try {
-      const results = await Promise.allSettled([
-        reportsApi.salesSummary(storeId, dateFrom, dateTo),
-        reportsApi.byProduct(storeId, dateFrom, dateTo),
-        reportsApi.stockValuation(storeId),
-        reportsApi.profit(storeId, dateFrom, dateTo, groupBy),
-        reportsApi.cashFlow(storeId, dateFrom, dateTo),
-      ]);
+  const loadDataset = useCallback(
+    async (dataset: ReportDataset, force = false) => {
+      if (!storeId) return;
+      if (!force && (loadingState[dataset] || loadedState[dataset])) return;
 
-      if (results[0].status === 'fulfilled')
-        setSummary(results[0].value.data as SalesSummaryResponse);
-      if (results[1].status === 'fulfilled')
-        setByProduct(results[1].value.data as SalesByProductRow[]);
-      if (results[2].status === 'fulfilled')
-        setValuation(results[2].value.data as StockValuationResponse);
-      if (results[3].status === 'fulfilled')
-        setProfitData(results[3].value.data as ProfitSummaryResponse);
-      if (results[4].status === 'fulfilled') setCfData(results[4].value.data as CashFlowResponse);
-    } catch (err) {
-      console.error('Fetch error:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, [storeId, dateFrom, dateTo, groupBy]);
+      setLoadingState(prev => ({ ...prev, [dataset]: true }));
+      try {
+        if (dataset === 'summary') {
+          const response = await reportsApi.salesSummary(storeId, dateFrom, dateTo);
+          setSummary(response.data as SalesSummaryResponse);
+        } else if (dataset === 'products') {
+          const response = await reportsApi.byProduct(storeId, dateFrom, dateTo);
+          setByProduct(response.data as SalesByProductRow[]);
+        } else if (dataset === 'valuation') {
+          const response = await reportsApi.stockValuation(storeId);
+          setValuation(response.data as StockValuationResponse);
+        } else if (dataset === 'profit') {
+          const response = await reportsApi.profit(storeId, dateFrom, dateTo, groupBy);
+          setProfitData(response.data as ProfitSummaryResponse);
+        } else if (dataset === 'cashflow') {
+          const response = await reportsApi.cashFlow(storeId, dateFrom, dateTo);
+          setCfData(response.data as CashFlowResponse);
+        }
+
+        setLoadedState(prev => ({ ...prev, [dataset]: true }));
+      } catch (err) {
+        console.error(`Fetch error for ${dataset}:`, err);
+      } finally {
+        setLoadingState(prev => ({ ...prev, [dataset]: false }));
+      }
+    },
+    [storeId, dateFrom, dateTo, groupBy, loadingState, loadedState]
+  );
+
+  const ensureTabData = useCallback(
+    async (activeTab: Tab, force = false) => {
+      await Promise.all(TAB_DATASETS[activeTab].map(dataset => loadDataset(dataset, force)));
+    },
+    [loadDataset]
+  );
+
+  const refreshCurrentTab = useCallback(async () => {
+    if (!storeId) return;
+    await ensureTabData(tab, true);
+  }, [storeId, ensureTabData, tab]);
 
   useEffect(() => {
-    fetchAll();
-  }, [fetchAll, storeId]);
+    setSummary(null);
+    setByProduct([]);
+    setValuation(null);
+    setProfitData(null);
+    setCfData(null);
+    setLoadedState({ ...INITIAL_LOADED_STATE });
+    setLoadingState({ ...INITIAL_LOADING_STATE });
+    setExpandedDates(new Set());
+    setTransactionsByDate({});
+    setLoadingTransactions(new Set());
+  }, [storeId, dateFrom, dateTo]);
+
+  useEffect(() => {
+    setProfitData(null);
+    setLoadedState(prev => ({ ...prev, profit: false }));
+    setLoadingState(prev => ({ ...prev, profit: false }));
+  }, [groupBy]);
+
+  useEffect(() => {
+    if (!storeId) return;
+    ensureTabData(tab);
+  }, [ensureTabData, storeId, tab]);
 
   const toggleDateExpanded = useCallback(
     async (date: string) => {
@@ -398,6 +464,10 @@ export default function UnifiedReportsPage() {
     () => Object.entries(cfData?.cash_in_by_method ?? {}).sort((a, b) => b[1] - a[1]),
     [cfData]
   );
+  const activeTabDatasets = TAB_DATASETS[tab];
+  const isActiveTabLoading = activeTabDatasets.some(dataset => loadingState[dataset]);
+  const isTabReady = activeTabDatasets.every(dataset => loadedState[dataset]);
+  const showTabLoader = isActiveTabLoading && !isTabReady;
 
   if (!selectedStore) {
     return (
@@ -440,16 +510,36 @@ export default function UnifiedReportsPage() {
           />
           <button
             className="btn btn-primary btn-xs px-3 ml-2"
-            onClick={fetchAll}
-            disabled={loading}
+            onClick={refreshCurrentTab}
+            disabled={isActiveTabLoading}
           >
-            {loading ? <Loader2 size={12} className="loading-spin" /> : 'Update Laporan'}
+            {isActiveTabLoading ? (
+              <Loader2 size={12} className="loading-spin" />
+            ) : (
+              'Update Laporan'
+            )}
           </button>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-        {tab === 'cashflow' ? (
+        {showTabLoader ? (
+          Array.from({ length: 4 }).map((_, index) => (
+            <div
+              key={index}
+              className="card"
+              style={{
+                padding: '16px 20px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                minHeight: 112,
+              }}
+            >
+              <Loader2 size={20} className="loading-spin text-accent-em" />
+            </div>
+          ))
+        ) : tab === 'cashflow' ? (
           <>
             <UnifiedCard
               label="Cash IN"
@@ -522,13 +612,17 @@ export default function UnifiedReportsPage() {
               tab === key ? 'bg-accent-em text-white' : 'text-3 hover:bg-surface-hv'
             }`}
           >
-            <TabIcon size={12} />
+            {TAB_DATASETS[key].some(dataset => loadingState[dataset]) ? (
+              <Loader2 size={12} className="loading-spin" />
+            ) : (
+              <TabIcon size={12} />
+            )}
             {label}
           </button>
         ))}
       </div>
 
-      {loading ? (
+      {showTabLoader ? (
         <div className="flex justify-center py-32">
           <Loader2 size={32} className="loading-spin text-accent-em" />
         </div>
