@@ -20,7 +20,12 @@ import { usePermission } from '@/hooks/usePermission';
 import { menuItemsApi, categoriesApi } from '@/lib/api/store-apis';
 import { productsApi } from '@/lib/api/products';
 import type { MenuItem, Category, Product } from '@/types';
+import { ApiError } from '@/lib/api/client';
 import { formatRp } from '@/lib/utils';
+
+function getErrorMessage(error: unknown, fallback: string) {
+  return error instanceof ApiError ? error.message : fallback;
+}
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -196,14 +201,17 @@ export default function MenuItemsPage() {
       if (modal.mode === 'create') {
         await menuItemsApi.create(storeId, payload);
         showToast('Menu berhasil ditambahkan ✓', 'success');
-      } else {
-        await menuItemsApi.update(storeId, modal.item!.id, payload);
+      } else if (modal.item) {
+        await menuItemsApi.update(storeId, modal.item.id, payload);
         showToast('Menu berhasil diperbarui ✓', 'success');
+      } else {
+        setFormError('Menu tidak ditemukan');
+        return;
       }
       closeModal();
       fetchAll();
-    } catch (err: any) {
-      setFormError(err?.response?.data?.message ?? 'Terjadi kesalahan');
+    } catch (error) {
+      setFormError(getErrorMessage(error, 'Terjadi kesalahan'));
     } finally {
       setSubmitting(false);
     }
@@ -216,8 +224,8 @@ export default function MenuItemsPage() {
       showToast(`"${deleteConfirm.item.name}" dihapus`, 'success');
       setDeleteConfirm({ open: false });
       fetchAll();
-    } catch (err: any) {
-      showToast(err?.response?.data?.message ?? 'Gagal menghapus', 'error');
+    } catch (error) {
+      showToast(getErrorMessage(error, 'Gagal menghapus'), 'error');
     }
   };
 

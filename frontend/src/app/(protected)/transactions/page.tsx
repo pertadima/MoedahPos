@@ -20,7 +20,7 @@ import {
 import { useAuth } from '@/lib/auth/AuthContext';
 import { transactionsApi } from '@/lib/api/transactions';
 import { formatRp } from '@/lib/utils';
-import type { Transaction } from '@/types';
+import type { Transaction, PaginatedData } from '@/types';
 import { ApiError } from '@/lib/api/client';
 
 // ── Date helpers ──────────────────────────────────────────────────────────────
@@ -767,7 +767,7 @@ export default function TransactionsPage() {
           date_to: dateTo,
           status: statusFilter || undefined,
         });
-        const body = res.data as any;
+        const body = res.data as PaginatedData<Transaction>;
         setTxns(body.data ?? []);
         setMeta(body.meta ?? { page: p, per_page: 20, total: 0, total_pages: 1 });
         setPage(p);
@@ -783,7 +783,7 @@ export default function TransactionsPage() {
 
   useEffect(() => {
     load(1);
-  }, [storeId]);
+  }, [load]);
 
   // Apply preset → update dates
   const applyPreset = (p: Preset) => {
@@ -799,7 +799,11 @@ export default function TransactionsPage() {
     // Always fetch the full transaction to get items
     setDetailLoading(true);
     try {
-      const res = await transactionsApi.get(storeId!, txn.id);
+      if (!storeId) {
+        setDetail(txn);
+        return;
+      }
+      const res = await transactionsApi.get(storeId, txn.id);
       setDetail(res.data as Transaction);
     } catch {
       setDetail(txn); // fallback to list data

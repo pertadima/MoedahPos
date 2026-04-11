@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import {
   Search,
   Plus,
@@ -16,7 +16,7 @@ import { useAuth } from '@/lib/auth/AuthContext';
 import { usePermission } from '@/hooks/usePermission';
 import { productsApi } from '@/lib/api/products';
 import { formatRp } from '@/lib/utils';
-import type { Product, Category } from '@/types';
+import type { Product, Category, PaginatedData } from '@/types';
 import { ApiError } from '@/lib/api/client';
 
 export default function ProductsPage() {
@@ -45,26 +45,26 @@ export default function ProductsPage() {
 
   const storeId = selectedStore?.store_id;
 
-  const load = () => {
+  const load = useCallback(() => {
     if (!storeId) return;
     setLoading(true);
     productsApi
       .list(storeId, { page, per_page: 15, search: search || undefined })
       .then(res => {
-        const d = res.data as any;
+        const d = res.data as PaginatedData<Product>;
         setProducts(d.data ?? []);
         setTotalPages(d.meta?.total_pages ?? 1);
       })
       .catch(console.error)
       .finally(() => setLoading(false));
-  };
+  }, [page, search, storeId]);
 
   useEffect(() => {
     if (storeId) productsApi.listCategories(storeId).then(r => setCategories(r.data as Category[]));
   }, [storeId]);
   useEffect(() => {
     load();
-  }, [storeId, page, search]);
+  }, [load]);
 
   const openCreate = () => {
     setEditing(null);
@@ -130,7 +130,9 @@ export default function ProductsPage() {
     load();
   };
 
-  const f = (k: string) => (e: any) => setFormData(d => ({ ...d, [k]: e.target.value }));
+  const f =
+    (k: keyof typeof formData) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+      setFormData(d => ({ ...d, [k]: e.target.value }));
 
   return (
     <div className="w-full p-6">
@@ -341,7 +343,12 @@ export default function ProductsPage() {
               ].map(([k, l, t]) => (
                 <div key={k} className="input-group">
                   <label className="input-label">{l}</label>
-                  <input type={t} className="input" value={(formData as any)[k]} onChange={f(k)} />
+                  <input
+                    type={t}
+                    className="input"
+                    value={formData[k as keyof typeof formData]}
+                    onChange={f(k as keyof typeof formData)}
+                  />
                 </div>
               ))}
               <div className="input-group">

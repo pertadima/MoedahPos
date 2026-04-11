@@ -19,7 +19,14 @@ import { useAuth } from '@/lib/auth/AuthContext';
 import { reportsApi, stockApi, purchaseOrdersApi } from '@/lib/api/store-apis';
 import { transactionsApi } from '@/lib/api/transactions';
 import { formatRp, formatDateTime, thirtyDaysAgoStr, sevenDaysAgoStr, todayStr } from '@/lib/utils';
-import type { SalesSummaryResponse, Transaction, StockLevel } from '@/types';
+import type {
+  SalesSummaryResponse,
+  Transaction,
+  StockLevel,
+  SalesByProductRow,
+  ProfitSummaryResponse,
+  PaginatedData,
+} from '@/types';
 import {
   LineChart,
   Line,
@@ -34,21 +41,32 @@ import {
 } from 'recharts';
 
 export default function DashboardPage() {
+  type PayablesSummary = {
+    overdue_debt?: number;
+    due_soon_debt?: number;
+    future_debt?: number;
+  };
+  type CashierRevenueRow = {
+    cashier_name: string;
+    total_sales: number;
+    transaction_count: number;
+  };
+
   const router = useRouter();
   const { selectedStore } = useAuth();
   const [summary, setSummary] = useState<SalesSummaryResponse | null>(null);
   const [recentTxns, setRecentTxns] = useState<Transaction[]>([]);
   const [lowStock, setLowStock] = useState<StockLevel[]>([]);
-  const [payables, setPayables] = useState<any>(null);
-  const [profitData, setProfitData] = useState<any>(null);
+  const [payables, setPayables] = useState<PayablesSummary | null>(null);
+  const [profitData, setProfitData] = useState<ProfitSummaryResponse | null>(null);
   const [loading, setLoading] = useState(true);
 
   type TimeFilter = 'today' | '7days' | '30days';
   const [cashierFilter, setCashierFilter] = useState<TimeFilter>('30days');
-  const [cashierRevenue, setCashierRevenue] = useState<any[]>([]);
+  const [cashierRevenue, setCashierRevenue] = useState<CashierRevenueRow[]>([]);
 
   const [productFilter, setProductFilter] = useState<TimeFilter>('30days');
-  const [productData, setProductData] = useState<any[]>([]);
+  const [productData, setProductData] = useState<SalesByProductRow[]>([]);
 
   const loadCashierData = useCallback(() => {
     if (!selectedStore) return;
@@ -99,10 +117,10 @@ export default function DashboardPage() {
     ])
       .then(([s, t, st, p, pr]) => {
         setSummary(s.data as SalesSummaryResponse);
-        setRecentTxns((t.data as any).data ?? []);
+        setRecentTxns((t.data as PaginatedData<Transaction>).data ?? []);
         setLowStock(st.data as StockLevel[]);
-        setPayables(p.data);
-        setProfitData(pr.data);
+        setPayables(p.data as PayablesSummary);
+        setProfitData(pr.data as ProfitSummaryResponse);
       })
       .catch(console.error)
       .finally(() => setLoading(false));
@@ -374,9 +392,9 @@ export default function DashboardPage() {
                       color: 'var(--text-1)',
                       fontSize: 12,
                     }}
-                    formatter={(v: any, name: any, props: any) => [
+                    formatter={(v: number, _name: string, props: { payload?: CashierRevenueRow }) => [
                       formatRp(Number(v)),
-                      `Pendapatan (${props.payload.transaction_count} Trx)`,
+                      `Pendapatan (${props.payload?.transaction_count ?? 0} Trx)`,
                     ]}
                   />
                   <Bar dataKey="total_sales" radius={[4, 4, 0, 0]} maxBarSize={60}>

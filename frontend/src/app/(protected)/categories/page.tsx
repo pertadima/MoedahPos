@@ -17,7 +17,12 @@ import { useAuth } from '@/lib/auth/AuthContext';
 import { usePermission } from '@/hooks/usePermission';
 import { categoriesApi } from '@/lib/api/store-apis';
 import type { Category } from '@/types';
+import { ApiError } from '@/lib/api/client';
 import { formatDate } from '@/lib/utils';
+
+function getErrorMessage(error: unknown, fallback: string) {
+  return error instanceof ApiError ? error.message : fallback;
+}
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -54,9 +59,9 @@ export default function CategoriesPage() {
     setLoading(true);
     try {
       const res = await categoriesApi.list(storeId);
-      setCategories((res.data as any).data ?? res.data ?? []);
-    } catch {
-      showToast('Gagal memuat kategori', 'error');
+      setCategories(res.data);
+    } catch (error) {
+      showToast(getErrorMessage(error, 'Gagal memuat kategori'), 'error');
     } finally {
       setLoading(false);
     }
@@ -109,14 +114,17 @@ export default function CategoriesPage() {
       if (modal.mode === 'create') {
         await categoriesApi.create(storeId, payload);
         showToast('Kategori berhasil ditambahkan ✓', 'success');
-      } else {
-        await categoriesApi.update(storeId, modal.category!.id, payload);
+      } else if (modal.category) {
+        await categoriesApi.update(storeId, modal.category.id, payload);
         showToast('Kategori berhasil diperbarui ✓', 'success');
+      } else {
+        setFormError('Kategori tidak ditemukan');
+        return;
       }
       closeModal();
       fetchCategories();
-    } catch (err: any) {
-      setFormError(err?.response?.data?.message ?? 'Terjadi kesalahan');
+    } catch (error) {
+      setFormError(getErrorMessage(error, 'Terjadi kesalahan'));
     } finally {
       setSubmitting(false);
     }
@@ -135,8 +143,8 @@ export default function CategoriesPage() {
       showToast(`Kategori "${deleteConfirm.category.name}" dihapus`, 'success');
       cancelDelete();
       fetchCategories();
-    } catch (err: any) {
-      showToast(err?.response?.data?.message ?? 'Gagal menghapus kategori', 'error');
+    } catch (error) {
+      showToast(getErrorMessage(error, 'Gagal menghapus kategori'), 'error');
       cancelDelete();
     } finally {
       setDeleting(false);

@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { Wallet, Plus, Loader2, X, Calendar, Edit2, Trash2 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { expensesApi, recurringExpensesApi } from '@/lib/api/store-apis';
+import { ApiError } from '@/lib/api/client';
 import { formatRp, formatDate, parseNumberInput, formatNumberInput } from '@/lib/utils';
 import type { Expense, ExpenseCategory, RecurringExpense } from '@/types';
 
@@ -488,8 +489,8 @@ function ExpenseModal({
         await expensesApi.create(selectedStore.store_id, payload);
       }
       onSuccess();
-    } catch (error: any) {
-      setErr(error.message || 'Gagal menyimpan pengeluaran');
+    } catch (error) {
+      setErr(error instanceof ApiError ? error.message : 'Gagal menyimpan pengeluaran');
     } finally {
       setSaving(false);
     }
@@ -595,7 +596,12 @@ function ExpenseModal({
               className="input"
               style={{ width: '100%' }}
               value={form.payment_status}
-              onChange={e => setForm({ ...form, payment_status: e.target.value as any })}
+              onChange={e =>
+                setForm({
+                  ...form,
+                  payment_status: e.target.value as 'paid' | 'unpaid' | 'cancelled',
+                })
+              }
             >
               <option value="paid">Lunas</option>
               <option value="unpaid">Belum Dibayar</option>
@@ -889,8 +895,8 @@ function RecurringExpenseModal({
         await recurringExpensesApi.create(selectedStore.store_id, payload);
       }
       onSuccess();
-    } catch (error: any) {
-      setErr(error.message || 'Gagal menyimpan templat rutin');
+    } catch (error) {
+      setErr(error instanceof ApiError ? error.message : 'Gagal menyimpan templat rutin');
     } finally {
       setSaving(false);
     }
@@ -1013,7 +1019,9 @@ function RecurringExpenseModal({
                 className="input"
                 style={{ width: '100%' }}
                 value={form.interval}
-                onChange={e => setForm({ ...form, interval: e.target.value as any })}
+                onChange={e =>
+                  setForm({ ...form, interval: e.target.value as 'daily' | 'weekly' | 'monthly' })
+                }
                 required
               >
                 <option value="daily">Harian</option>

@@ -19,7 +19,7 @@ import { useAuth } from '@/lib/auth/AuthContext';
 import { usePermission } from '@/hooks/usePermission';
 import { customersApi } from '@/lib/api/store-apis';
 import { formatDate } from '@/lib/utils';
-import type { Customer } from '@/types';
+import type { Customer, PaginatedData } from '@/types';
 import { ApiError } from '@/lib/api/client';
 
 // ── Empty form ────────────────────────────────────────────────────────────────
@@ -56,8 +56,8 @@ function FormModal({ storeId, initial, onSuccess, onClose }: FormModalProps) {
     setSaving(true);
     setError('');
     try {
-      if (isEdit) {
-        await customersApi.update(storeId, initial!.id, form);
+      if (isEdit && initial) {
+        await customersApi.update(storeId, initial.id, form);
       } else {
         await customersApi.create(storeId, form);
       }
@@ -483,7 +483,7 @@ export default function CustomersPage() {
     customersApi
       .list(storeId, { page, per_page: PER_PAGE, search: search || undefined })
       .then(r => {
-        const d = r.data as any;
+        const d = r.data as PaginatedData<Customer>;
         setCustomers(d.data ?? []);
         setTotal(d.meta?.total ?? 0);
       })
@@ -728,23 +728,27 @@ export default function CustomersPage() {
 
       {/* Modals & Drawer */}
       {form === 'create' && (
-        <FormModal storeId={storeId!} onSuccess={onSuccess} onClose={() => setForm(null)} />
+        storeId ? <FormModal storeId={storeId} onSuccess={onSuccess} onClose={() => setForm(null)} /> : null
       )}
       {form && form !== 'create' && (
-        <FormModal
-          storeId={storeId!}
-          initial={form as Customer}
-          onSuccess={onSuccess}
-          onClose={() => setForm(null)}
-        />
+        storeId ? (
+          <FormModal
+            storeId={storeId}
+            initial={form as Customer}
+            onSuccess={onSuccess}
+            onClose={() => setForm(null)}
+          />
+        ) : null
       )}
       {deleting && (
-        <DeleteConfirm
-          customer={deleting}
-          storeId={storeId!}
-          onSuccess={onSuccess}
-          onClose={() => setDeleting(null)}
-        />
+        storeId ? (
+          <DeleteConfirm
+            customer={deleting}
+            storeId={storeId}
+            onSuccess={onSuccess}
+            onClose={() => setDeleting(null)}
+          />
+        ) : null
       )}
       {detail && (
         <DetailDrawer

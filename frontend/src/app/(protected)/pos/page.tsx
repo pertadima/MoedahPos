@@ -35,6 +35,8 @@ import type {
   Customer,
   RestaurantTable,
   DiscountType,
+  TransactionItem,
+  PaginatedData,
 } from '@/types';
 import { ApiError } from '@/lib/api/client';
 
@@ -43,6 +45,10 @@ import { ApiError } from '@/lib/api/client';
 // menuItemId is set for restaurant items.
 interface PosCartItem extends CartItem {
   menuItemId?: string;
+}
+
+interface AggregatedDraftItem extends TransactionItem {
+  parsedId: string;
 }
 
 type CartAction =
@@ -732,7 +738,7 @@ export default function POSPage() {
       setTablesLoading(true);
       Promise.all([tablesApi.list(storeId), menuItemsApi.list(storeId)])
         .then(([tRes, mRes]) => {
-          const tbls: RestaurantTable[] = (tRes.data as any) ?? [];
+          const tbls = tRes.data as RestaurantTable[];
           setTables(tbls.filter(t => t.is_active !== false));
           // For each table, check if there's an open draft (so we can show the order summary badge)
           tbls
@@ -745,7 +751,7 @@ export default function POSPage() {
                 /* ignore */
               }
             });
-          const items: MenuItem[] = (mRes.data as any) ?? [];
+          const items = mRes.data as MenuItem[];
           setMenuItems(items);
           const cats = Array.from(
             new Set(items.map(i => i.category_name ?? 'Lainnya').filter(Boolean))
@@ -763,7 +769,7 @@ export default function POSPage() {
         productsApi.listCategories(storeId),
       ])
         .then(([p, c]) => {
-          setProducts((p.data as any).data ?? []);
+          setProducts((p.data as PaginatedData<Product>).data ?? []);
           setCategories(c.data as Category[]);
         })
         .catch(console.error)
@@ -786,11 +792,12 @@ export default function POSPage() {
         setActiveDraft(draft);
         if (draft?.items) {
           // Restore cart from draft items (map back to PosCartItem & aggregate split rows)
-          const aggregatedItems = new Map<string, any>();
+          const aggregatedItems = new Map<string, AggregatedDraftItem>();
           draft.items.forEach(item => {
             const id = item.menu_item_id ?? item.product_id ?? item.id;
             if (aggregatedItems.has(id)) {
-              aggregatedItems.get(id).quantity += item.quantity;
+              const existing = aggregatedItems.get(id);
+              if (existing) existing.quantity += item.quantity;
             } else {
               aggregatedItems.set(id, { ...item, parsedId: id });
             }
@@ -838,7 +845,7 @@ export default function POSPage() {
     tablesApi
       .list(storeId)
       .then(res => {
-        const tbls: RestaurantTable[] = (res.data as any) ?? [];
+        const tbls = res.data as RestaurantTable[];
         setTables(tbls.filter(t => t.is_active !== false));
         tbls
           .filter(t => t.is_active !== false)
@@ -891,7 +898,15 @@ export default function POSPage() {
     } finally {
       setHoldLoading(false);
     }
-  }, [storeId, selectedTable, activeDraft, cart, handleBackToTables]);
+  }, [
+    storeId,
+    selectedTable,
+    activeDraft,
+    cart,
+    handleBackToTables,
+    cartDiscountType,
+    cartDiscountValue,
+  ]);
 
   // ── Filtered lists ──────────────────────────────────────────────────────────
   const filteredProducts = products.filter(p => {

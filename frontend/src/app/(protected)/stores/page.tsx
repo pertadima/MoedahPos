@@ -21,8 +21,13 @@ import {
 } from 'lucide-react';
 import { usePermission } from '@/hooks/usePermission';
 import { storesApi } from '@/lib/api/store-apis';
-import type { Store as StoreType } from '@/types';
+import type { Store as StoreType, PaginatedData } from '@/types';
+import { ApiError } from '@/lib/api/client';
 import { formatDate } from '@/lib/utils';
+
+function getErrorMessage(error: unknown, fallback: string) {
+  return error instanceof ApiError ? error.message : fallback;
+}
 
 // ── Form defaults ─────────────────────────────────────────────────────────────
 
@@ -82,12 +87,11 @@ export default function StoresPage() {
     setLoading(true);
     try {
       const res = await storesApi.list({ page, per_page: perPage, search: search || undefined });
-      // Response: { success: true, data: Store[], meta: { total, page, ... } }
-      const body = res.data as any;
+      const body = res.data as PaginatedData<StoreType>;
       setStores(body?.data ?? []);
       setTotal(body?.meta?.total ?? 0);
-    } catch {
-      showToast('Gagal memuat data toko', 'error');
+    } catch (error) {
+      showToast(getErrorMessage(error, 'Gagal memuat data toko'), 'error');
     } finally {
       setLoading(false);
     }
@@ -155,14 +159,17 @@ export default function StoresPage() {
       if (modal.mode === 'create') {
         await storesApi.create(payload);
         showToast('Toko berhasil ditambahkan ✓', 'success');
-      } else {
-        await storesApi.update(modal.store!.id, { ...payload, is_active: modal.store!.is_active });
+      } else if (modal.store) {
+        await storesApi.update(modal.store.id, { ...payload, is_active: modal.store.is_active });
         showToast('Toko berhasil diperbarui ✓', 'success');
+      } else {
+        setFormError('Toko tidak ditemukan');
+        return;
       }
       closeModal();
       fetchStores();
-    } catch (err: any) {
-      setFormError(err?.response?.data?.message ?? 'Terjadi kesalahan');
+    } catch (error) {
+      setFormError(getErrorMessage(error, 'Terjadi kesalahan'));
     } finally {
       setSubmitting(false);
     }
@@ -197,8 +204,8 @@ export default function StoresPage() {
       showToast(`Toko "${deleteConfirm.store.name}" dihapus`, 'success');
       setDeleteConfirm({ open: false });
       fetchStores();
-    } catch (err: any) {
-      showToast(err?.response?.data?.message ?? 'Gagal menghapus', 'error');
+    } catch (error) {
+      showToast(getErrorMessage(error, 'Gagal menghapus'), 'error');
       setDeleteConfirm({ open: false });
     }
   };

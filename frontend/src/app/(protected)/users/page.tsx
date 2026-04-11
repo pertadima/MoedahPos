@@ -22,7 +22,11 @@ import {
 import { usePermission } from '@/hooks/usePermission';
 import { usersAdminApi, rolesApi, storesApi } from '@/lib/api/store-apis';
 import { ApiError } from '@/lib/api/client';
-import type { UserAdmin, Role, UserStoreAssignment } from '@/types';
+import type { UserAdmin, Role, UserStoreAssignment, Store, PaginatedData } from '@/types';
+
+type CreateUserResponse = { id: string };
+type UsersListResponse = { data?: UserAdmin[]; meta?: { total?: number } };
+type RolesResponse = { data?: Role[] };
 
 // ── Role badge ────────────────────────────────────────────────────────────────
 const ROLE_COLORS: Record<string, string> = {
@@ -301,7 +305,7 @@ function UserFormModal({
           email: form.email,
           password: form.password,
           stores: form.stores,
-        })) as any;
+        })) as CreateUserResponse;
         if (form.stores.length > 0) {
           await usersAdminApi.setStores(created.id, form.stores);
         }
@@ -841,7 +845,7 @@ export default function UsersPage() {
           include_inactive: includeInactive,
           page: p,
           per_page: PER_PAGE,
-        })) as any;
+        })) as UsersListResponse;
         setUsers(body.data ?? []);
         setTotal(body.meta?.total ?? 0);
         setPage(p);
@@ -856,31 +860,29 @@ export default function UsersPage() {
 
   useEffect(() => {
     load(1);
-  }, []);
+  }, [load]);
 
   // Fetch roles and stores once
   useEffect(() => {
     rolesApi
       .list()
       .then(body => {
-        const d = body as any;
+        const d = body as RolesResponse;
         setRoles(d.data ?? []);
       })
       .catch(() => {});
     storesApi
       .list()
       .then(body => {
-        // /stores returns { success: true, data: { data: [...stores] } }
-        const d = body as any;
-        const list: any[] = d?.data?.data ?? d?.data ?? [];
-        setAllStores(list.map((s: any) => ({ id: s.id, name: s.name })));
+        const list = (body.data as PaginatedData<Store>).data ?? [];
+        setAllStores(list.map(s => ({ id: s.id, name: s.name })));
       })
       .catch(() => {});
   }, []);
 
   const openDetail = async (u: UserAdmin) => {
     try {
-      const user = (await usersAdminApi.get(u.id)) as any;
+      const user = (await usersAdminApi.get(u.id)) as UserAdmin;
       setDetail(user);
     } catch {
       setDetail(u);

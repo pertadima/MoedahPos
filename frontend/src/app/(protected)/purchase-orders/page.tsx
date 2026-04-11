@@ -445,6 +445,18 @@ interface POPayment {
   paid_at: string;
 }
 
+interface SavedPOItem {
+  product_id: string;
+  product_name?: string;
+  product_sku?: string;
+  unit?: string;
+  quantity: number;
+  unit_cost: number;
+}
+
+type PurchaseOrderListResponse = { data?: PurchaseOrder[] };
+type SupplierListResponse = { data?: Supplier[] };
+
 // ── PayStatus badge ───────────────────────────────────────────────────────────
 function PayStatusBadge({ status }: { status: string }) {
   const cfg = PAY_STATUS_CFG[status as keyof typeof PAY_STATUS_CFG] ?? PAY_STATUS_CFG.unpaid;
@@ -514,7 +526,7 @@ function TerminPanel({ po, storeId, onOpenDoc, onUpdate }: TerminPanelProps) {
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     load();
-  }, [storeId, po.id]);
+  }, [load]);
 
   const togglePay = (id: string) =>
     setExpandedPayments(prev => {
@@ -1287,8 +1299,8 @@ interface PayModalProps {
   onCancel: () => void;
 }
 function PayModal({ po, storeId, onSuccess, onCancel }: PayModalProps) {
-  const amountDue =
-    (po as any).amount_due ?? (po.total_amount ?? 0) - ((po as any).amount_paid ?? 0);
+  const amountPaid = po.amount_paid ?? 0;
+  const amountDue = po.amount_due ?? (po.total_amount ?? 0) - amountPaid;
   const [amount, setAmount] = useState(String(amountDue > 0 ? amountDue.toFixed(0) : ''));
   const [note, setNote] = useState('');
   const [saving, setSaving] = useState(false);
@@ -1359,7 +1371,7 @@ function PayModal({ po, storeId, onSuccess, onCancel }: PayModalProps) {
           >
             <span style={{ color: 'var(--text-3)' }}>Sudah dibayar</span>
             <span style={{ color: '#10b981', fontWeight: 600 }}>
-              {formatRp((po as any).amount_paid ?? 0)}
+              {formatRp(amountPaid)}
             </span>
           </div>
           <div
@@ -1721,9 +1733,9 @@ function PODetailDrawer({
   onOpenDoc,
   onUpdate,
 }: PODetailDrawerProps) {
-  const payStatus = (po as any).payment_status ?? 'unpaid';
-  const amountPaid = (po as any).amount_paid ?? 0;
-  const amountDue = (po as any).amount_due ?? po.total_amount - amountPaid;
+  const payStatus = po.payment_status ?? 'unpaid';
+  const amountPaid = po.amount_paid ?? 0;
+  const amountDue = po.amount_due ?? po.total_amount - amountPaid;
 
   return (
     <>
@@ -1788,8 +1800,8 @@ function PODetailDrawer({
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
             {[
               { icon: Hash, label: 'Nomor PO', val: po.po_number },
-              { icon: User, label: 'Supplier', val: (po as any).supplier_name ?? '—' },
-              { icon: User, label: 'Dibuat Oleh', val: (po as any).ordered_by_name ?? '—' },
+              { icon: User, label: 'Supplier', val: po.supplier_name ?? '—' },
+              { icon: User, label: 'Dibuat Oleh', val: po.ordered_by_name ?? '—' },
               { icon: Calendar, label: 'Tanggal Buat', val: formatDate(po.created_at) },
             ].map(({ icon: Icon, label, val }) => (
               <div
@@ -2006,7 +2018,7 @@ export default function PurchaseOrdersPage() {
       purchaseOrdersApi.payableSummary(storeId),
     ])
       .then(([posRes, payRes]) => {
-        setOrders((posRes.data as any).data ?? []);
+        setOrders((posRes.data as PurchaseOrderListResponse).data ?? []);
         setPayable(payRes.data as PayableSummary);
       })
       .catch(console.error)
@@ -2021,14 +2033,14 @@ export default function PurchaseOrdersPage() {
     const saved = sessionStorage.getItem('openCreatePOWithItems');
     if (saved) {
       try {
-        const parsed = JSON.parse(saved);
+        const parsed = JSON.parse(saved) as SavedPOItem[];
         if (Array.isArray(parsed) && parsed.length > 0) {
           // Seed the product cache so the form items display their names correctly
           setProducts(prevProducts => {
             const next = new Map(prevProducts);
             parsed
-              .filter((it: any) => it.product_id && it.product_name)
-              .forEach((it: any) => {
+              .filter(it => it.product_id && it.product_name)
+              .forEach(it => {
                 if (!next.has(it.product_id)) {
                   next.set(it.product_id, {
                     id: it.product_id,
@@ -2051,7 +2063,7 @@ export default function PurchaseOrdersPage() {
 
           setForm(f => ({
             ...f,
-            items: parsed.map((it: any) => ({
+            items: parsed.map(it => ({
               product_id: it.product_id,
               quantity: it.quantity,
               unit_cost: it.unit_cost,
@@ -2073,7 +2085,7 @@ export default function PurchaseOrdersPage() {
   useEffect(() => {
     if (!storeId) return;
     Promise.all([suppliersApi.list({ per_page: 100 }), storesApi.get(storeId)]).then(([s, st]) => {
-      setSuppliers((s.data as any).data ?? []);
+      setSuppliers((s.data as SupplierListResponse).data ?? []);
       setStoreDetail(st.data as Store);
     });
   }, [storeId]);
@@ -2082,7 +2094,7 @@ export default function PurchaseOrdersPage() {
     const saved = sessionStorage.getItem('openCreatePOWithItems');
     if (saved) {
       try {
-        const parsed = JSON.parse(saved);
+        const parsed = JSON.parse(saved) as SavedPOItem[];
         if (Array.isArray(parsed) && parsed.length > 0) {
           setForm(f => ({
             ...f,
@@ -2107,17 +2119,18 @@ export default function PurchaseOrdersPage() {
 
   const openDetail = useCallback(
     async (po: PurchaseOrder) => {
+      if (!storeId) return;
       setDetailPO(po);
       setPayments([]);
       try {
         const [r, pmts] = await Promise.all([
-          purchaseOrdersApi.get(storeId!, po.id),
+          purchaseOrdersApi.get(storeId, po.id),
           po.status === 'received'
-            ? purchaseOrdersApi.listPayments(storeId!, po.id)
-            : Promise.resolve({ data: [] }),
+            ? purchaseOrdersApi.listPayments(storeId, po.id)
+            : Promise.resolve({ data: [] as POPayment[] }),
         ]);
         setDetailPO(r.data as PurchaseOrder);
-        setPayments((pmts.data as any) ?? []);
+        setPayments((pmts.data as POPayment[]) ?? []);
       } catch (e) {
         console.error(e);
       }
@@ -2127,10 +2140,11 @@ export default function PurchaseOrdersPage() {
 
   const openInvoice = useCallback(
     async (po: PurchaseOrder) => {
+      if (!storeId) return;
       let fullPO = po;
       if (!po.items?.length) {
         try {
-          const r = await purchaseOrdersApi.get(storeId!, po.id);
+          const r = await purchaseOrdersApi.get(storeId, po.id);
           fullPO = r.data as PurchaseOrder;
         } catch (e) {
           console.error(e);
@@ -2144,7 +2158,7 @@ export default function PurchaseOrdersPage() {
   const executeAction = async () => {
     if (!confirm || !storeId) return;
     setConfirmLoading(true);
-    const fns: Record<ActionType, () => Promise<any>> = {
+    const fns: Record<ActionType, () => Promise<unknown>> = {
       submit: () => purchaseOrdersApi.submit(storeId, confirm.po.id),
       receive: () => purchaseOrdersApi.receive(storeId, confirm.po.id),
       cancel: () => purchaseOrdersApi.cancel(storeId, confirm.po.id),
@@ -2489,7 +2503,7 @@ export default function PurchaseOrdersPage() {
                           <div style={{ background: 'var(--bg-card)' }}>
                             <TerminPanel
                               po={po}
-                              storeId={storeId!}
+                              storeId={storeId ?? ''}
                               onOpenDoc={type =>
                                 window.open(
                                   `/purchase-orders/${po.id}/document?type=${type}`,
@@ -2514,7 +2528,7 @@ export default function PurchaseOrdersPage() {
       {detailPO && (
         <PODetailDrawer
           po={detailPO}
-          storeId={storeId!}
+          storeId={storeId ?? ''}
           payments={payments}
           onClose={() => setDetailPO(null)}
           onInvoice={() => openInvoice(detailPO)}
@@ -2535,7 +2549,7 @@ export default function PurchaseOrdersPage() {
       {payingPO && (
         <PayModal
           po={payingPO}
-          storeId={storeId!}
+          storeId={storeId ?? ''}
           onSuccess={handlePaySuccess}
           onCancel={() => setPayingPO(null)}
         />
@@ -2651,7 +2665,7 @@ export default function PurchaseOrdersPage() {
                         }}
                       >
                         <ProductSearchSelect
-                          storeId={storeId!}
+                          storeId={storeId ?? ''}
                           value={item.product_id}
                           selectedName={
                             item.product_name ||

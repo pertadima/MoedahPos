@@ -16,6 +16,11 @@ import { useAuth } from '@/lib/auth/AuthContext';
 import { usePermission } from '@/hooks/usePermission';
 import { tablesApi } from '@/lib/api/store-apis';
 import type { RestaurantTable, TableStatus } from '@/types';
+import { ApiError } from '@/lib/api/client';
+
+function getErrorMessage(error: unknown, fallback: string) {
+  return error instanceof ApiError ? error.message : fallback;
+}
 
 // ── Status helpers ─────────────────────────────────────────────────────────────
 
@@ -62,9 +67,9 @@ export default function TablesPage() {
     setLoading(true);
     try {
       const res = await tablesApi.list(storeId);
-      setTables((res.data as any).data ?? res.data ?? []);
-    } catch {
-      showToast('Gagal memuat data meja', 'error');
+      setTables(res.data);
+    } catch (error) {
+      showToast(getErrorMessage(error, 'Gagal memuat data meja'), 'error');
     } finally {
       setLoading(false);
     }
@@ -114,14 +119,17 @@ export default function TablesPage() {
       if (modal.mode === 'create') {
         await tablesApi.create(storeId, payload);
         showToast('Meja berhasil ditambahkan ✓', 'success');
-      } else {
-        await tablesApi.update(storeId, modal.table!.id, payload);
+      } else if (modal.table) {
+        await tablesApi.update(storeId, modal.table.id, payload);
         showToast('Meja berhasil diperbarui ✓', 'success');
+      } else {
+        setFormError('Meja tidak ditemukan');
+        return;
       }
       closeModal();
       fetchTables();
-    } catch (err: any) {
-      setFormError(err?.response?.data?.message ?? 'Terjadi kesalahan');
+    } catch (error) {
+      setFormError(getErrorMessage(error, 'Terjadi kesalahan'));
     } finally {
       setSubmitting(false);
     }
@@ -147,8 +155,8 @@ export default function TablesPage() {
       showToast(`Meja ${deleteConfirm.table.table_number} dihapus`, 'success');
       setDeleteConfirm({ open: false });
       fetchTables();
-    } catch (err: any) {
-      showToast(err?.response?.data?.message ?? 'Gagal menghapus', 'error');
+    } catch (error) {
+      showToast(getErrorMessage(error, 'Gagal menghapus'), 'error');
     }
   };
 

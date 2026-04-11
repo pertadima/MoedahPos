@@ -1,12 +1,14 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Users, Truck, Plus, Pencil, Trash2, Loader2, X, Search } from 'lucide-react';
 import { usePermission } from '@/hooks/usePermission';
 import { suppliersApi } from '@/lib/api/store-apis';
 import type { Supplier } from '@/types';
 import { formatDate } from '@/lib/utils';
 import { ApiError } from '@/lib/api/client';
+
+type SupplierListResponse = { data?: Supplier[] };
 
 export default function SuppliersPage() {
   const { can } = usePermission();
@@ -25,17 +27,17 @@ export default function SuppliersPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
-  const load = () => {
+  const load = useCallback(() => {
     setLoading(true);
     suppliersApi
       .list({ per_page: 100, search: search || undefined })
-      .then(r => setSuppliers((r.data as any).data ?? []))
+      .then(r => setSuppliers((r.data as SupplierListResponse).data ?? []))
       .catch(console.error)
       .finally(() => setLoading(false));
-  };
+  }, [search]);
   useEffect(() => {
     load();
-  }, [search]);
+  }, [load]);
 
   const openCreate = () => {
     setEditing(null);
@@ -76,7 +78,9 @@ export default function SuppliersPage() {
     load();
   };
 
-  const f = (k: string) => (e: any) => setForm(d => ({ ...d, [k]: e.target.value }));
+  const f =
+    (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+      setForm(d => ({ ...d, [k]: e.target.value }));
 
   return (
     <div className="w-full p-6">
@@ -233,8 +237,8 @@ export default function SuppliersPage() {
                   <input
                     className="input"
                     type={k === 'email' ? 'email' : 'text'}
-                    value={(form as any)[k]}
-                    onChange={f(k)}
+                    value={form[k as keyof typeof form]}
+                    onChange={f(k as keyof typeof form)}
                   />
                 </div>
               ))}
