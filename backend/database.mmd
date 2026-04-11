@@ -156,6 +156,8 @@ erDiagram
         UUID table_id FK
         VARCHAR order_type
         UUID customer_id FK
+        VARCHAR cart_discount_type
+        NUMERIC cart_discount_value
     }
     transaction_items {
         UUID id PK
@@ -172,6 +174,10 @@ erDiagram
         NUMERIC cost_price
         VARCHAR status
         TIMESTAMPTZ completed_at
+        NUMERIC original_price
+        VARCHAR discount_type
+        NUMERIC discount_value
+        NUMERIC cart_discount_allocated
     }
     restaurant_tables {
         UUID id PK
@@ -325,6 +331,25 @@ erDiagram
         UUID batch_id FK
         NUMERIC deducted_qty
     }
+    income_categories {
+        UUID id PK
+        VARCHAR name
+        TEXT description
+        TIMESTAMPTZ created_at
+    }
+    incomes {
+        UUID id PK
+        UUID store_id FK
+        UUID category_id FK
+        DECIMAL amount
+        DATE income_date
+        VARCHAR payment_method
+        VARCHAR reference
+        TEXT notes
+        UUID created_by FK
+        TIMESTAMPTZ created_at
+        TIMESTAMPTZ updated_at
+    }
     users ||--o{ user_stores : "assigned to stores"
     stores ||--o{ user_stores : "has users"
     roles ||--o{ user_stores : "assigned roles"
@@ -383,3 +408,6 @@ erDiagram
     stock_batches ||--o{ stock_adjustment_batches : "affected by"
     roles ||--o{ role_permissions : "has permissions"
     permissions ||--o{ role_permissions : "assigned to roles"
+    income_categories ||--o{ incomes : "categorizes"
+    stores ||--o{ incomes : "has incomes"
+    users ||--o{ incomes : "creates"
