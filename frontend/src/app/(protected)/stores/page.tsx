@@ -22,12 +22,7 @@ import {
 import { usePermission } from '@/hooks/usePermission';
 import { storesApi } from '@/lib/api/store-apis';
 import type { Store as StoreType, PaginatedData } from '@/types';
-import { ApiError } from '@/lib/api/client';
-import { formatDate } from '@/lib/utils';
-
-function getErrorMessage(error: unknown, fallback: string) {
-  return error instanceof ApiError ? error.message : fallback;
-}
+import { formatDate, getErrorMessage } from '@/lib/utils';
 
 // ── Form defaults ─────────────────────────────────────────────────────────────
 

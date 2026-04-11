@@ -1,5 +1,6 @@
 import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { ApiError } from '@/lib/api/client';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -93,4 +94,8 @@ export function parseNumberInput(value: string): number {
   const numString = value.replace(/\D/g, '');
   if (!numString) return 0;
   return Number(numString);
+}
+
+export function getErrorMessage(error: unknown, fallback: string): string {
+  return error instanceof ApiError ? error.message : fallback;
 }

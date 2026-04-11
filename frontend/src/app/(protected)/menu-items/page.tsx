@@ -20,12 +20,7 @@ import { usePermission } from '@/hooks/usePermission';
 import { menuItemsApi, categoriesApi } from '@/lib/api/store-apis';
 import { productsApi } from '@/lib/api/products';
 import type { MenuItem, Category, Product } from '@/types';
-import { ApiError } from '@/lib/api/client';
-import { formatRp } from '@/lib/utils';
-
-function getErrorMessage(error: unknown, fallback: string) {
-  return error instanceof ApiError ? error.message : fallback;
-}
+import { formatRp, getErrorMessage } from '@/lib/utils';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 

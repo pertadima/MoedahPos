@@ -16,11 +16,7 @@ import { useAuth } from '@/lib/auth/AuthContext';
 import { usePermission } from '@/hooks/usePermission';
 import { tablesApi } from '@/lib/api/store-apis';
 import type { RestaurantTable, TableStatus } from '@/types';
-import { ApiError } from '@/lib/api/client';
-
-function getErrorMessage(error: unknown, fallback: string) {
-  return error instanceof ApiError ? error.message : fallback;
-}
+import { getErrorMessage } from '@/lib/utils';
 
 // ── Status helpers ─────────────────────────────────────────────────────────────
 
