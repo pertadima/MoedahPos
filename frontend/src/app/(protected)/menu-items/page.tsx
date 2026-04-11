@@ -248,7 +248,7 @@ export default function MenuItemsPage() {
   // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
-    <div style={{ padding: 24, maxWidth: '100%', margin: '0 auto' }}>
+    <div className="p-6 max-w-[1400px] w-full mx-auto">
       {toast && (
         <div
           style={{

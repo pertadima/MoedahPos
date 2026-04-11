@@ -89,7 +89,7 @@ function ExpensesPage() {
   };
 
   return (
-    <div style={{ padding: '24px 32px', maxWidth: '100%', margin: '0 auto' }}>
+    <div className="p-6 max-w-[1400px] w-full mx-auto">
       <div
         style={{
           display: 'flex',
