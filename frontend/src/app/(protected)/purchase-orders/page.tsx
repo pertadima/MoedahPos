@@ -20,6 +20,7 @@ import {
   AlertCircle,
   BadgeCheck,
   Clock,
+  Eye,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { purchaseOrdersApi, suppliersApi, storesApi } from '@/lib/api/store-apis';
@@ -2341,18 +2342,16 @@ export default function PurchaseOrdersPage() {
                   <Fragment key={po.id}>
                     <tr
                       style={{
-                        cursor: 'pointer',
                         background: isExpanded ? 'var(--bg-elevated)' : 'transparent',
                       }}
                     >
                       <td
                         onClick={() => setExpandedRow(isExpanded ? null : po.id)}
-                        style={{ textAlign: 'center' }}
+                        style={{ textAlign: 'center', cursor: 'pointer' }}
                       >
                         {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
                       </td>
                       <td
-                        onClick={() => openDetail(po)}
                         style={{
                           fontFamily: 'monospace',
                           fontWeight: 700,
@@ -2361,10 +2360,10 @@ export default function PurchaseOrdersPage() {
                       >
                         {po.po_number}
                       </td>
-                      <td onClick={() => openDetail(po)} style={{ color: 'var(--text-2)' }}>
+                      <td style={{ color: 'var(--text-2)' }}>
                         {po.supplier_name ?? '—'}
                       </td>
-                      <td onClick={() => openDetail(po)}>
+                      <td>
                         <span
                           style={{
                             background: 'var(--bg-elevated)',
@@ -2377,18 +2376,15 @@ export default function PurchaseOrdersPage() {
                           {po.total_items ?? po.items?.length ?? 0} item
                         </span>
                       </td>
-                      <td
-                        onClick={() => openDetail(po)}
-                        style={{ fontWeight: 700, color: 'var(--accent-em)' }}
-                      >
+                      <td style={{ fontWeight: 700, color: 'var(--accent-em)' }}>
                         {formatRp(po.total_amount)}
                       </td>
-                      <td onClick={() => openDetail(po)}>
+                      <td>
                         <span className={`badge ${STATUS_BADGE[po.status]}`}>
                           {STATUS_LABEL[po.status]}
                         </span>
                       </td>
-                      <td onClick={() => openDetail(po)}>
+                      <td>
                         {po.status === 'received' ? (
                           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                             <PayStatusBadge status={ps} />
@@ -2404,7 +2400,7 @@ export default function PurchaseOrdersPage() {
                           <span style={{ color: 'var(--text-3)', fontSize: '0.78rem' }}>—</span>
                         )}
                       </td>
-                      <td onClick={() => openDetail(po)}>
+                      <td>
                         {po.next_deadline ? (
                           <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#dc2626' }}>
                             {formatDate(po.next_deadline)}
@@ -2413,14 +2409,22 @@ export default function PurchaseOrdersPage() {
                           <span style={{ color: 'var(--text-3)', fontSize: '0.78rem' }}>—</span>
                         )}
                       </td>
-                      <td
-                        onClick={() => openDetail(po)}
-                        style={{ color: 'var(--text-3)', fontSize: '0.8rem' }}
-                      >
+                      <td style={{ color: 'var(--text-3)', fontSize: '0.8rem' }}>
                         {formatDate(po.created_at)}
                       </td>
                       <td>
                         <div style={{ display: 'flex', gap: 4 }}>
+                          <button
+                            className="btn btn-ghost btn-sm"
+                            onClick={e => {
+                              e.stopPropagation();
+                              openDetail(po);
+                            }}
+                            title="Lihat detail"
+                            aria-label={`Lihat detail pembelian ${po.po_number}`}
+                          >
+                            <Eye size={13} />
+                          </button>
                           {po.status === 'draft' && (
                             <button
                               className="btn btn-secondary btn-sm"
