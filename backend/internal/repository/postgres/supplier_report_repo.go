@@ -258,49 +258,72 @@ func (r *ReportRepo) StockValuation(ctx context.Context, storeID string) ([]dto.
 	return rows, nil
 }
 
-// ProfitSummary returns profit grouped by the given period expression.
-// groupBy must be a trusted pg expression (e.g. "day" | "week" | "month").
-func (r *ReportRepo) ProfitSummary(ctx context.Context, storeID string, from, to time.Time, groupBy string) ([]dto.ProfitPeriodRow, error) {
-	// Safe allowlist — never interpolated from user input directly
-	periodExpr := map[string]string{
+type profitPeriodExpressions struct {
+	sales          string
+	expenses       string
+	poPayments     string
+	terminPayments string
+}
+
+func salesProfitPeriodExpr(groupBy string) string {
+	exprs := map[string]string{
 		"day":   "TO_CHAR(t.created_at AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD')",
 		"week":  "TO_CHAR(DATE_TRUNC('week', t.created_at AT TIME ZONE 'Asia/Jakarta'), 'YYYY-MM-DD')",
 		"month": "TO_CHAR(DATE_TRUNC('month', t.created_at AT TIME ZONE 'Asia/Jakarta'), 'YYYY-MM')",
 	}
-	expensePeriodExpr := map[string]string{
+	if expr, ok := exprs[groupBy]; ok {
+		return expr
+	}
+	return exprs["day"]
+}
+
+func expenseProfitPeriodExpr(groupBy string) string {
+	exprs := map[string]string{
 		"day":   "TO_CHAR(e.expense_date, 'YYYY-MM-DD')",
 		"week":  "TO_CHAR(DATE_TRUNC('week', e.expense_date), 'YYYY-MM-DD')",
 		"month": "TO_CHAR(DATE_TRUNC('month', e.expense_date), 'YYYY-MM')",
 	}
-	poPaymentPeriodExpr := map[string]string{
+	if expr, ok := exprs[groupBy]; ok {
+		return expr
+	}
+	return exprs["day"]
+}
+
+func poPaymentProfitPeriodExpr(groupBy string) string {
+	exprs := map[string]string{
 		"day":   "TO_CHAR(pp.paid_at AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD')",
 		"week":  "TO_CHAR(DATE_TRUNC('week', pp.paid_at AT TIME ZONE 'Asia/Jakarta'), 'YYYY-MM-DD')",
 		"month": "TO_CHAR(DATE_TRUNC('month', pp.paid_at AT TIME ZONE 'Asia/Jakarta'), 'YYYY-MM')",
 	}
-	terminPaymentPeriodExpr := map[string]string{
+	if expr, ok := exprs[groupBy]; ok {
+		return expr
+	}
+	return exprs["day"]
+}
+
+func terminPaymentProfitPeriodExpr(groupBy string) string {
+	exprs := map[string]string{
 		"day":   "TO_CHAR(pr.created_at AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD')",
 		"week":  "TO_CHAR(DATE_TRUNC('week', pr.created_at AT TIME ZONE 'Asia/Jakarta'), 'YYYY-MM-DD')",
 		"month": "TO_CHAR(DATE_TRUNC('month', pr.created_at AT TIME ZONE 'Asia/Jakarta'), 'YYYY-MM')",
 	}
+	if expr, ok := exprs[groupBy]; ok {
+		return expr
+	}
+	return exprs["day"]
+}
 
-	expr, ok := periodExpr[groupBy]
-	if !ok {
-		expr = periodExpr["day"]
+func profitSummaryExprs(groupBy string) profitPeriodExpressions {
+	return profitPeriodExpressions{
+		sales:          salesProfitPeriodExpr(groupBy),
+		expenses:       expenseProfitPeriodExpr(groupBy),
+		poPayments:     poPaymentProfitPeriodExpr(groupBy),
+		terminPayments: terminPaymentProfitPeriodExpr(groupBy),
 	}
-	expExpr, ok := expensePeriodExpr[groupBy]
-	if !ok {
-		expExpr = expensePeriodExpr["day"]
-	}
-	poPayExpr, ok := poPaymentPeriodExpr[groupBy]
-	if !ok {
-		poPayExpr = poPaymentPeriodExpr["day"]
-	}
-	terminPayExpr, ok := terminPaymentPeriodExpr[groupBy]
-	if !ok {
-		terminPayExpr = terminPaymentPeriodExpr["day"]
-	}
+}
 
-	q := fmt.Sprintf(`
+func buildProfitSummaryQuery(exprs profitPeriodExpressions) string {
+	return fmt.Sprintf(`
 		WITH sales AS (
 			SELECT
 				%s AS period,
@@ -359,8 +382,18 @@ func (r *ReportRepo) ProfitSummary(ctx context.Context, storeID string, from, to
 			     ELSE 0 END AS profit_margin
 		FROM sales s
 		FULL OUTER JOIN exp_agg e ON e.period = s.period
-		ORDER BY 1`, expr, expExpr, poPayExpr, terminPayExpr)
+		ORDER BY 1`,
+		exprs.sales,
+		exprs.expenses,
+		exprs.poPayments,
+		exprs.terminPayments,
+	)
+}
 
+// ProfitSummary returns profit grouped by the given period expression.
+// groupBy must be a trusted pg expression (e.g. "day" | "week" | "month").
+func (r *ReportRepo) ProfitSummary(ctx context.Context, storeID string, from, to time.Time, groupBy string) ([]dto.ProfitPeriodRow, error) {
+	q := buildProfitSummaryQuery(profitSummaryExprs(groupBy))
 	var rows []dto.ProfitPeriodRow
 	if err := r.db.SelectContext(ctx, &rows, q, storeID, from, to); err != nil {
 		return nil, fmt.Errorf("ReportRepo.ProfitSummary: %w", err)
