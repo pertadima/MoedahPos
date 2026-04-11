@@ -685,13 +685,14 @@ export default function UnifiedReportsPage() {
                                             </td>
                                             <td className="text-[10px] opacity-75">
                                               {tx.created_at
-                                                ? new Date(
-                                                    tx.created_at
-                                                  ).toLocaleTimeString('id-ID', {
-                                                    hour: '2-digit',
-                                                    minute: '2-digit',
-                                                    hour12: false,
-                                                  })
+                                                ? new Date(tx.created_at).toLocaleTimeString(
+                                                    'id-ID',
+                                                    {
+                                                      hour: '2-digit',
+                                                      minute: '2-digit',
+                                                      hour12: false,
+                                                    }
+                                                  )
                                                 : 'N/A'}
                                             </td>
                                             <td className="text-[10px]">

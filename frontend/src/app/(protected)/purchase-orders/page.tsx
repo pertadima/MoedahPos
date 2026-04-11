@@ -2360,9 +2360,7 @@ export default function PurchaseOrdersPage() {
                       >
                         {po.po_number}
                       </td>
-                      <td style={{ color: 'var(--text-2)' }}>
-                        {po.supplier_name ?? '—'}
-                      </td>
+                      <td style={{ color: 'var(--text-2)' }}>{po.supplier_name ?? '—'}</td>
                       <td>
                         <span
                           style={{
