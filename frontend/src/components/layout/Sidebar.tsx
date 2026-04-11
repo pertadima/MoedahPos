@@ -245,59 +245,19 @@ export default function Sidebar() {
     .filter(Boolean) as NavGroup[];
 
   return (
-    <aside
-      className={`sidebar ${isCollapsed ? 'sidebar-collapsed' : 'sidebar-expanded'}`}
-      style={{
-        width: isCollapsed ? 64 : 240,
-        transition: 'width 0.3s ease-in-out',
-      }}
-    >
-      {/* Logo */}
-      <div className="sidebar-logo">
-        {isCollapsed ? (
-          <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
-            <button
-              onClick={toggleCollapsed}
-              className="btn btn-ghost btn-sm"
-              title={isCollapsed ? 'Perluas sidebar' : 'Ciutkan sidebar'}
-              style={{ padding: '6px 8px', borderRadius: 8, border: '1px solid var(--border-md)' }}
-              aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            >
-              {isCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
-            </button>
-          </div>
-        ) : (
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              width: '100%',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <Image
-                src={isDark ? '/logo-icon-dark.svg' : '/logo-icon-light.svg'}
-                alt="Moedah"
-                width={32}
-                height={36}
-                style={{ objectFit: 'contain', flexShrink: 0 }}
-                priority
-              />
-            </div>
-            <div style={{ display: 'flex', gap: 4 }}>
-              <button
-                onClick={toggleTheme}
-                className="btn btn-ghost btn-sm"
-                title={isDark ? 'Ganti ke mode terang' : 'Ganti ke mode gelap'}
-                style={{
-                  padding: '6px 8px',
-                  borderRadius: 8,
-                  border: '1px solid var(--border-md)',
-                }}
-              >
-                {isDark ? <Sun size={14} /> : <Moon size={14} />}
-              </button>
+    <>
+      <div
+        className={`sidebar-overlay-backdrop ${!isCollapsed ? 'open' : ''}`}
+        onClick={toggleCollapsed}
+      />
+      <aside
+        className={`sidebar ${isCollapsed ? 'sidebar-collapsed' : 'sidebar-expanded open'}`}
+        style={{ transition: 'width 0.3s ease-in-out, transform 0.3s ease-in-out' }}
+      >
+        {/* Logo */}
+        <div className="sidebar-logo">
+          {isCollapsed ? (
+            <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
               <button
                 onClick={toggleCollapsed}
                 className="btn btn-ghost btn-sm"
@@ -312,211 +272,258 @@ export default function Sidebar() {
                 {isCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
               </button>
             </div>
-          </div>
-        )}
-      </div>
-
-      {/* Store Selector */}
-      {stores.length > 0 && !isCollapsed && (
-        <div style={{ padding: '10px 12px 8px', borderBottom: '1px solid var(--border)' }}>
-          <div
-            style={{
-              fontSize: '0.68rem',
-              color: 'var(--text-3)',
-              marginBottom: 5,
-              textTransform: 'uppercase',
-              letterSpacing: '0.06em',
-            }}
-          >
-            Toko Aktif
-          </div>
-          <div style={{ position: 'relative' }}>
-            <select
-              value={selectedStore?.store_id ?? ''}
-              onChange={e => selectStore(e.target.value)}
+          ) : (
+            <div
               style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
                 width: '100%',
-                background: 'var(--bg-elevated)',
-                border: '1px solid var(--border-md)',
-                borderRadius: 7,
-                padding: '6px 10px',
-                color: 'var(--text-1)',
-                fontSize: '0.8rem',
-                cursor: 'pointer',
-                outline: 'none',
               }}
             >
-              {!selectedStore && <option value="">— Pilih Toko —</option>}
-              {stores.map(s => (
-                <option key={s.store_id} value={s.store_id}>
-                  {s.store_name}
-                </option>
-              ))}
-            </select>
-          </div>
-          {selectedStore && (
-            <div style={{ display: 'flex', gap: 6, marginTop: 5, alignItems: 'center' }}>
-              <div style={{ fontSize: '0.7rem', color: 'var(--accent-em)' }}>
-                {selectedStore.role}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Image
+                  src={isDark ? '/logo-icon-dark.svg' : '/logo-icon-light.svg'}
+                  alt="Moedah"
+                  width={32}
+                  height={36}
+                  style={{ objectFit: 'contain', flexShrink: 0 }}
+                  priority
+                />
               </div>
-              <div
-                style={{
-                  fontSize: '0.62rem',
-                  padding: '1px 5px',
-                  borderRadius: 4,
-                  fontWeight: 600,
-                  background: isRestaurant ? 'rgba(251,146,60,0.15)' : 'rgba(16,185,129,0.12)',
-                  color: isRestaurant ? '#fb923c' : 'var(--accent-em)',
-                }}
-              >
-                {isRestaurant ? '🍽️ Restaurant' : '🏪 Retail'}
+              <div style={{ display: 'flex', gap: 4 }}>
+                <button
+                  onClick={toggleTheme}
+                  className="btn btn-ghost btn-sm"
+                  title={isDark ? 'Ganti ke mode terang' : 'Ganti ke mode gelap'}
+                  style={{
+                    padding: '6px 8px',
+                    borderRadius: 8,
+                    border: '1px solid var(--border-md)',
+                  }}
+                >
+                  {isDark ? <Sun size={14} /> : <Moon size={14} />}
+                </button>
+                <button
+                  onClick={toggleCollapsed}
+                  className="btn btn-ghost btn-sm"
+                  title={isCollapsed ? 'Perluas sidebar' : 'Ciutkan sidebar'}
+                  style={{
+                    padding: '6px 8px',
+                    borderRadius: 8,
+                    border: '1px solid var(--border-md)',
+                  }}
+                  aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+                >
+                  {isCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
+                </button>
               </div>
             </div>
           )}
         </div>
-      )}
 
-      {/* Grouped Navigation */}
-      <nav className="sidebar-nav" style={{ flex: 1, overflowY: 'auto' }}>
-        {finalGroups.map(group => (
-          <div key={group.label} style={{ marginBottom: 4 }}>
-            {/* Group label */}
-            {!isCollapsed && (
-              <div
-                style={{
-                  fontSize: '0.62rem',
-                  fontWeight: 700,
-                  letterSpacing: '0.09em',
-                  textTransform: 'uppercase',
-                  color: 'var(--text-3)',
-                  padding: '10px 14px 4px',
-                  opacity: isCollapsed ? 0 : 1,
-                  transition: 'opacity 0.2s ease-in-out',
-                }}
-              >
-                {group.label}
-              </div>
-            )}
-
-            {/* Group items */}
-            {group.items.map(({ href, icon: Icon, label }) => {
-              const active =
-                pathname === href || (href !== '/dashboard' && pathname.startsWith(href + '/'));
-              return (
-                <Link
-                  key={href}
-                  href={href}
-                  className={`nav-item ${active ? 'active' : ''}`}
-                  title={isCollapsed ? label : undefined}
-                  style={{
-                    justifyContent: isCollapsed ? 'center' : 'flex-start',
-                    padding: isCollapsed ? '12px 8px' : '12px 14px',
-                  }}
-                >
-                  <Icon size={15} />
-                  {!isCollapsed && (
-                    <span
-                      style={{
-                        marginLeft: 8,
-                        opacity: isCollapsed ? 0 : 1,
-                        transition: 'opacity 0.2s ease-in-out',
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
-                      {label}
-                    </span>
-                  )}
-                </Link>
-              );
-            })}
-          </div>
-        ))}
-      </nav>
-
-      {/* User Profile + Logout */}
-      <div style={{ padding: '12px', borderTop: '1px solid var(--border)' }}>
-        {user && (
-          <div
-            style={{
-              display: 'flex',
-              alignItems: isCollapsed ? 'center' : 'flex-start',
-              justifyContent: isCollapsed ? 'center' : 'flex-start',
-              gap: 8,
-              marginBottom: 8,
-              cursor: isCollapsed ? 'pointer' : 'default',
-            }}
-            title={isCollapsed ? `${user.name}\n${user.email}` : undefined}
-          >
+        {/* Store Selector */}
+        {stores.length > 0 && !isCollapsed && (
+          <div style={{ padding: '10px 12px 8px', borderBottom: '1px solid var(--border)' }}>
             <div
               style={{
-                width: 32,
-                height: 32,
-                borderRadius: '50%',
-                flexShrink: 0,
-                background: 'linear-gradient(135deg, var(--accent-in), var(--accent-em))',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '0.8rem',
-                fontWeight: 700,
-                color: '#fff',
+                fontSize: '0.68rem',
+                color: 'var(--text-3)',
+                marginBottom: 5,
+                textTransform: 'uppercase',
+                letterSpacing: '0.06em',
               }}
             >
-              {user.name.charAt(0).toUpperCase()}
+              Toko Aktif
             </div>
-            {!isCollapsed && (
-              <div
+            <div style={{ position: 'relative' }}>
+              <select
+                value={selectedStore?.store_id ?? ''}
+                onChange={e => selectStore(e.target.value)}
                 style={{
-                  overflow: 'hidden',
-                  opacity: isCollapsed ? 0 : 1,
-                  transition: 'opacity 0.2s ease-in-out',
+                  width: '100%',
+                  background: 'var(--bg-elevated)',
+                  border: '1px solid var(--border-md)',
+                  borderRadius: 7,
+                  padding: '6px 10px',
+                  color: 'var(--text-1)',
+                  fontSize: '0.8rem',
+                  cursor: 'pointer',
+                  outline: 'none',
                 }}
               >
-                <div
-                  style={{
-                    fontSize: '0.8rem',
-                    fontWeight: 600,
-                    color: 'var(--text-1)',
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                  }}
-                >
-                  {user.name}
+                {!selectedStore && <option value="">— Pilih Toko —</option>}
+                {stores.map(s => (
+                  <option key={s.store_id} value={s.store_id}>
+                    {s.store_name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            {selectedStore && (
+              <div style={{ display: 'flex', gap: 6, marginTop: 5, alignItems: 'center' }}>
+                <div style={{ fontSize: '0.7rem', color: 'var(--accent-em)' }}>
+                  {selectedStore.role}
                 </div>
                 <div
                   style={{
-                    fontSize: '0.7rem',
-                    color: 'var(--text-3)',
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
+                    fontSize: '0.62rem',
+                    padding: '1px 5px',
+                    borderRadius: 4,
+                    fontWeight: 600,
+                    background: isRestaurant ? 'rgba(251,146,60,0.15)' : 'rgba(16,185,129,0.12)',
+                    color: isRestaurant ? '#fb923c' : 'var(--accent-em)',
                   }}
                 >
-                  {user.email}
+                  {isRestaurant ? '🍽️ Restaurant' : '🏪 Retail'}
                 </div>
               </div>
             )}
           </div>
         )}
-        {/* Logout row */}
-        <div style={{ display: 'flex', gap: 6 }}>
-          <button
-            onClick={logout}
-            className="btn btn-ghost btn-sm"
-            title={isCollapsed ? 'Keluar' : undefined}
-            style={{
-              flex: 1,
-              justifyContent: isCollapsed ? 'center' : 'flex-start',
-              gap: 8,
-              padding: isCollapsed ? '6px 8px' : '6px 12px',
-            }}
-          >
-            <LogOut size={14} />
-            {!isCollapsed && <span>Keluar</span>}
-          </button>
+
+        {/* Grouped Navigation */}
+        <nav className="sidebar-nav" style={{ flex: 1, overflowY: 'auto' }}>
+          {finalGroups.map(group => (
+            <div key={group.label} style={{ marginBottom: 4 }}>
+              {/* Group label */}
+              {!isCollapsed && (
+                <div
+                  style={{
+                    fontSize: '0.62rem',
+                    fontWeight: 700,
+                    letterSpacing: '0.09em',
+                    textTransform: 'uppercase',
+                    color: 'var(--text-3)',
+                    padding: '10px 14px 4px',
+                    opacity: isCollapsed ? 0 : 1,
+                    transition: 'opacity 0.2s ease-in-out',
+                  }}
+                >
+                  {group.label}
+                </div>
+              )}
+
+              {/* Group items */}
+              {group.items.map(({ href, icon: Icon, label }) => {
+                const active =
+                  pathname === href || (href !== '/dashboard' && pathname.startsWith(href + '/'));
+                return (
+                  <Link
+                    key={href}
+                    href={href}
+                    className={`nav-item ${active ? 'active' : ''}`}
+                    title={isCollapsed ? label : undefined}
+                    style={{
+                      justifyContent: isCollapsed ? 'center' : 'flex-start',
+                      padding: isCollapsed ? '12px 8px' : '12px 14px',
+                    }}
+                  >
+                    <Icon size={15} />
+                    {!isCollapsed && (
+                      <span
+                        style={{
+                          marginLeft: 8,
+                          opacity: isCollapsed ? 0 : 1,
+                          transition: 'opacity 0.2s ease-in-out',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {label}
+                      </span>
+                    )}
+                  </Link>
+                );
+              })}
+            </div>
+          ))}
+        </nav>
+
+        {/* User Profile + Logout */}
+        <div style={{ padding: '12px', borderTop: '1px solid var(--border)' }}>
+          {user && (
+            <div
+              style={{
+                display: 'flex',
+                alignItems: isCollapsed ? 'center' : 'flex-start',
+                justifyContent: isCollapsed ? 'center' : 'flex-start',
+                gap: 8,
+                marginBottom: 8,
+                cursor: isCollapsed ? 'pointer' : 'default',
+              }}
+              title={isCollapsed ? `${user.name}\n${user.email}` : undefined}
+            >
+              <div
+                style={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: '50%',
+                  flexShrink: 0,
+                  background: 'linear-gradient(135deg, var(--accent-in), var(--accent-em))',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '0.8rem',
+                  fontWeight: 700,
+                  color: '#fff',
+                }}
+              >
+                {user.name.charAt(0).toUpperCase()}
+              </div>
+              {!isCollapsed && (
+                <div
+                  style={{
+                    overflow: 'hidden',
+                    opacity: isCollapsed ? 0 : 1,
+                    transition: 'opacity 0.2s ease-in-out',
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: '0.8rem',
+                      fontWeight: 600,
+                      color: 'var(--text-1)',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                    }}
+                  >
+                    {user.name}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: '0.7rem',
+                      color: 'var(--text-3)',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                    }}
+                  >
+                    {user.email}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+          {/* Logout row */}
+          <div style={{ display: 'flex', gap: 6 }}>
+            <button
+              onClick={logout}
+              className="btn btn-ghost btn-sm"
+              title={isCollapsed ? 'Keluar' : undefined}
+              style={{
+                flex: 1,
+                justifyContent: isCollapsed ? 'center' : 'flex-start',
+                gap: 8,
+                padding: isCollapsed ? '6px 8px' : '6px 12px',
+              }}
+            >
+              <LogOut size={14} />
+              {!isCollapsed && <span>Keluar</span>}
+            </button>
+          </div>
         </div>
-      </div>
-    </aside>
+      </aside>
+    </>
   );
 }

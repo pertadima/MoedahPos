@@ -2,14 +2,14 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Menu } from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { SidebarProvider, useSidebar } from '@/lib/context/SidebarContext';
 import Sidebar from '@/components/layout/Sidebar';
 
 function LayoutContent({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
-  const { isCollapsed } = useSidebar();
+  const { isCollapsed, toggleCollapsed } = useSidebar();
   const router = useRouter();
 
   useEffect(() => {
@@ -38,14 +38,23 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
     return null;
   }
 
-  const sidebarWidth = isCollapsed ? 64 : 240;
-
   return (
-    <div style={{ display: 'flex' }}>
+    <div style={{ display: 'flex', width: '100%' }}>
       <Sidebar />
       <div
-        style={{ flex: 1, marginLeft: sidebarWidth, transition: 'margin-left 0.3s ease-in-out' }}
+        className={`main-layout ${isCollapsed ? 'collapsed' : 'expanded'}`}
+        style={{ flex: 1, width: '100%' }}
       >
+        <div className="lg:hidden flex items-center p-3 border-b border-[var(--border-md)] bg-[var(--bg-card)] sticky top-0 z-20">
+          <button
+            onClick={toggleCollapsed}
+            className="btn btn-ghost btn-sm"
+            style={{ padding: '6px' }}
+          >
+            <Menu size={20} />
+          </button>
+          <span style={{ marginLeft: '12px', fontWeight: 600, fontSize: '0.9rem' }}>MoedahPOS</span>
+        </div>
         {children}
       </div>
     </div>

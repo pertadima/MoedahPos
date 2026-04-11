@@ -670,6 +670,7 @@ export default function POSPage() {
   // Discount panel expand/collapse state
   const [expandedDiscountId, setExpandedDiscountId] = useState<string | null>(null);
   const [cartDiscountOpen, setCartDiscountOpen] = useState(false);
+  const [isMobileCartOpen, setIsMobileCartOpen] = useState(false);
   const [discountErrors, setDiscountErrors] = useState<Record<string, string>>({});
   const autoCollapseRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -1448,8 +1449,28 @@ export default function POSPage() {
         )}
       </div>
 
+      {/* Mobile Floating Cart Button */}
+      {!isMobileCartOpen && (
+        <div className="md:hidden fixed bottom-4 left-4 right-4 z-40">
+          <button
+            className="checkout-btn"
+            style={{
+              width: '100%',
+              padding: '14px',
+              borderRadius: '12px',
+              boxShadow: '0 8px 30px rgba(8,132,246,0.4)',
+              justifyContent: 'center',
+            }}
+            onClick={() => setIsMobileCartOpen(true)}
+          >
+            <ShoppingBag size={18} />
+            {isRestaurant ? 'Pesanan' : 'Keranjang'} ({itemCount}) - {formatRp(total)}
+          </button>
+        </div>
+      )}
+
       {/* ── RIGHT: Cart ── */}
-      <div className="pos-cart">
+      <div className={`pos-cart ${isMobileCartOpen ? 'open' : ''}`}>
         <div className="cart-header">
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -1459,6 +1480,12 @@ export default function POSPage() {
               </span>
               {itemCount > 0 && <span className="badge badge-green">{itemCount} item</span>}
             </div>
+            <button
+              className="btn btn-ghost btn-sm md:hidden"
+              onClick={() => setIsMobileCartOpen(false)}
+            >
+              <X size={18} />
+            </button>
             {cart.length > 0 && (
               <button className="btn btn-ghost btn-sm" onClick={() => dispatch({ type: 'CLEAR' })}>
                 <Trash2 size={13} /> Kosongkan
