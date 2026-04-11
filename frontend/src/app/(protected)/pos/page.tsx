@@ -49,6 +49,7 @@ interface PosCartItem extends CartItem {
 
 interface AggregatedDraftItem extends TransactionItem {
   parsedId: string;
+  cost_price?: number;
 }
 
 type CartAction =

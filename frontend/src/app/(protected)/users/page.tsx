@@ -22,7 +22,7 @@ import {
 import { usePermission } from '@/hooks/usePermission';
 import { usersAdminApi, rolesApi, storesApi } from '@/lib/api/store-apis';
 import { ApiError } from '@/lib/api/client';
-import type { UserAdmin, Role, UserStoreAssignment, Store, PaginatedData } from '@/types';
+import type { UserAdmin, Role, UserStoreAssignment, Store as AppStore, PaginatedData } from '@/types';
 
 type CreateUserResponse = { id: string };
 type UsersListResponse = { data?: UserAdmin[]; meta?: { total?: number } };
@@ -300,14 +300,15 @@ function UserFormModal({
     setLoading(true);
     try {
       if (mode === 'create') {
-        const created = (await usersAdminApi.create({
+        const created = await usersAdminApi.create({
           name: form.name,
           email: form.email,
           password: form.password,
           stores: form.stores,
-        })) as CreateUserResponse;
+        });
+        const createdUser = created.data as CreateUserResponse;
         if (form.stores.length > 0) {
-          await usersAdminApi.setStores(created.id, form.stores);
+          await usersAdminApi.setStores(createdUser.id, form.stores);
         }
       } else if (user) {
         await usersAdminApi.update(user.id, { name: form.name, email: form.email });
@@ -874,7 +875,7 @@ export default function UsersPage() {
     storesApi
       .list()
       .then(body => {
-        const list = (body.data as PaginatedData<Store>).data ?? [];
+        const list = (body.data as PaginatedData<AppStore>).data ?? [];
         setAllStores(list.map(s => ({ id: s.id, name: s.name })));
       })
       .catch(() => {});
@@ -882,7 +883,7 @@ export default function UsersPage() {
 
   const openDetail = async (u: UserAdmin) => {
     try {
-      const user = (await usersAdminApi.get(u.id)) as UserAdmin;
+      const user = (await usersAdminApi.get(u.id)).data as UserAdmin;
       setDetail(user);
     } catch {
       setDetail(u);
