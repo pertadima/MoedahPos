@@ -727,29 +727,29 @@ export default function CustomersPage() {
       </div>
 
       {/* Modals & Drawer */}
-      {form === 'create' && (
-        storeId ? <FormModal storeId={storeId} onSuccess={onSuccess} onClose={() => setForm(null)} /> : null
-      )}
-      {form && form !== 'create' && (
-        storeId ? (
+      {form === 'create' &&
+        (storeId ? (
+          <FormModal storeId={storeId} onSuccess={onSuccess} onClose={() => setForm(null)} />
+        ) : null)}
+      {form &&
+        form !== 'create' &&
+        (storeId ? (
           <FormModal
             storeId={storeId}
             initial={form as Customer}
             onSuccess={onSuccess}
             onClose={() => setForm(null)}
           />
-        ) : null
-      )}
-      {deleting && (
-        storeId ? (
+        ) : null)}
+      {deleting &&
+        (storeId ? (
           <DeleteConfirm
             customer={deleting}
             storeId={storeId}
             onSuccess={onSuccess}
             onClose={() => setDeleting(null)}
           />
-        ) : null
-      )}
+        ) : null)}
       {detail && (
         <DetailDrawer
           customer={detail}

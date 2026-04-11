@@ -1370,9 +1370,7 @@ function PayModal({ po, storeId, onSuccess, onCancel }: PayModalProps) {
             }}
           >
             <span style={{ color: 'var(--text-3)' }}>Sudah dibayar</span>
-            <span style={{ color: '#10b981', fontWeight: 600 }}>
-              {formatRp(amountPaid)}
-            </span>
+            <span style={{ color: '#10b981', fontWeight: 600 }}>{formatRp(amountPaid)}</span>
           </div>
           <div
             style={{

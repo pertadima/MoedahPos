@@ -513,11 +513,7 @@ export default function UnifiedReportsPage() {
             onClick={refreshCurrentTab}
             disabled={isActiveTabLoading}
           >
-            {isActiveTabLoading ? (
-              <Loader2 size={12} className="loading-spin" />
-            ) : (
-              'Update Laporan'
-            )}
+            {isActiveTabLoading ? <Loader2 size={12} className="loading-spin" /> : 'Update Laporan'}
           </button>
         </div>
       </div>

@@ -392,10 +392,13 @@ export default function DashboardPage() {
                       color: 'var(--text-1)',
                       fontSize: 12,
                     }}
-                    formatter={(v: number, _name: string, props: { payload?: CashierRevenueRow }) => [
-                      formatRp(Number(v)),
-                      `Pendapatan (${props.payload?.transaction_count ?? 0} Trx)`,
-                    ]}
+                    formatter={(value, _name, item) => {
+                      const row = item?.payload as CashierRevenueRow | undefined;
+                      return [
+                        formatRp(Number(value)),
+                        `Pendapatan (${row?.transaction_count ?? 0} Trx)`,
+                      ];
+                    }}
                   />
                   <Bar dataKey="total_sales" radius={[4, 4, 0, 0]} maxBarSize={60}>
                     {cashierRevenue.map((_, index) => {
