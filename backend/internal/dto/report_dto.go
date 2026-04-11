@@ -129,5 +129,5 @@ type CashFlowResponse struct {
 	// Breakdown totals
 	TotalSalesIn float64          `json:"total_sales_in"`
 	TotalOtherIn float64          `json:"total_other_in"`
-	Rows           []CashFlowDayRow   `json:"rows"`
+	Rows         []CashFlowDayRow `json:"rows"`
 }

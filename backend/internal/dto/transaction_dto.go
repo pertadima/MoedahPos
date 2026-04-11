@@ -4,14 +4,14 @@ package dto
 
 // CreateTransactionRequest is the input for POST /stores/:storeId/transactions.
 type CreateTransactionRequest struct {
-	CustomerName       string        `json:"customer_name"        validate:"max=100"`
-	CustomerPhone      string        `json:"customer_phone"       validate:"max=20"`
-	PaymentMethod      string        `json:"payment_method"       validate:"required,oneof=cash card qris transfer"`
-	PaymentAmount      float64       `json:"payment_amount"       validate:"required,min=0"`
-	Notes              string        `json:"notes"                validate:"max=500"`
-	Items              []TxItemInput `json:"items"                validate:"required,min=1,dive"`
-	CartDiscountType   string        `json:"cart_discount_type"   validate:"omitempty,oneof=PERCENTAGE FIXED"`
-	CartDiscountValue  float64       `json:"cart_discount_value"  validate:"min=0"`
+	CustomerName      string        `json:"customer_name"        validate:"max=100"`
+	CustomerPhone     string        `json:"customer_phone"       validate:"max=20"`
+	PaymentMethod     string        `json:"payment_method"       validate:"required,oneof=cash card qris transfer"`
+	PaymentAmount     float64       `json:"payment_amount"       validate:"required,min=0"`
+	Notes             string        `json:"notes"                validate:"max=500"`
+	Items             []TxItemInput `json:"items"                validate:"required,min=1,dive"`
+	CartDiscountType  string        `json:"cart_discount_type"   validate:"omitempty,oneof=PERCENTAGE FIXED"`
+	CartDiscountValue float64       `json:"cart_discount_value"  validate:"min=0"`
 }
 
 // TxItemInput is a single line in a sale request.
@@ -21,9 +21,9 @@ type TxItemInput struct {
 	ProductID     string  `json:"product_id"    validate:"omitempty,uuid"`
 	MenuItemID    string  `json:"menu_item_id"  validate:"omitempty,uuid"`
 	Quantity      float64 `json:"quantity"      validate:"required,gt=0"`
-	DiscountPct   float64 `json:"discount_pct"  validate:"min=0,max=100"`         // legacy: PERCENTAGE type
+	DiscountPct   float64 `json:"discount_pct"  validate:"min=0,max=100"`                             // legacy: PERCENTAGE type
 	DiscountType  string  `json:"discount_type" validate:"omitempty,oneof=PERCENTAGE FIXED OVERRIDE"` // overrides discount_pct
-	DiscountValue float64 `json:"discount_value" validate:"min=0"`                 // value for FIXED/OVERRIDE/PERCENTAGE
+	DiscountValue float64 `json:"discount_value" validate:"min=0"`                                    // value for FIXED/OVERRIDE/PERCENTAGE
 }
 
 // ─── Draft Order (Restaurant Table Orders) ────────────────────────────────────

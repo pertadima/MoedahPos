@@ -133,7 +133,6 @@ func distributeCartDiscount(
 	return
 }
 
-
 // TransactionService implements cashier checkout logic.
 type TransactionService struct {
 	txnRepo      repository.TransactionRepository
@@ -416,6 +415,76 @@ func (s *TransactionService) VoidTransaction(ctx context.Context, id, userID str
 
 // ─── Draft / Table Order Methods ──────────────────────────────────────────────
 
+// processMenuItem handles the menu item line in buildItems.
+func (s *TransactionService) processMenuItem(ctx context.Context, _ string, item dto.TxItemInput, menuItem *domain.MenuItem) (domain.CreateTransactionItemInput, float64, float64, float64, error) {
+	discType := item.DiscountType
+	discValue := item.DiscountValue
+	if discType == "" {
+		discType = discountTypePercentage
+		discValue = item.DiscountPct
+	}
+
+	finalPrice, _, lineNet, lineTax, lineSubtotal := computeItemPricing(
+		menuItem.SellPrice, item.Quantity, menuItem.TaxRate, discType, discValue)
+
+	var menuCost float64
+	for _, ing := range menuItem.Ingredients {
+		ingProduct, _ := s.productRepo.FindByID(ctx, ing.ProductID)
+		if ingProduct != nil {
+			menuCost += ingProduct.CostPrice * ing.Quantity
+		}
+	}
+
+	mid := item.MenuItemID
+	discountAmt := (menuItem.SellPrice - finalPrice) * item.Quantity
+
+	return domain.CreateTransactionItemInput{
+		MenuItemID:    &mid,
+		ProductName:   menuItem.Name,
+		SKU:           "MENU-" + item.MenuItemID[:8],
+		Quantity:      item.Quantity,
+		OriginalPrice: menuItem.SellPrice,
+		UnitPrice:     finalPrice,
+		CostPrice:     menuCost,
+		DiscountPct:   item.DiscountPct,
+		DiscountType:  discType,
+		DiscountValue: discValue,
+		TaxRate:       menuItem.TaxRate,
+		Subtotal:      lineSubtotal,
+	}, discountAmt, lineNet, lineTax, nil
+}
+
+// processProduct handles the product line in buildItems.
+func (s *TransactionService) processProduct(_ context.Context, item dto.TxItemInput, product *domain.Product) (domain.CreateTransactionItemInput, float64, float64, float64, error) {
+	discType := item.DiscountType
+	discValue := item.DiscountValue
+	if discType == "" {
+		discType = discountTypePercentage
+		discValue = item.DiscountPct
+	}
+
+	finalPrice, _, lineNet, lineTax, lineSubtotal := computeItemPricing(
+		product.SellPrice, item.Quantity, product.TaxRate, discType, discValue)
+
+	pid := item.ProductID
+	discountAmt := (product.SellPrice - finalPrice) * item.Quantity
+
+	return domain.CreateTransactionItemInput{
+		ProductID:     &pid,
+		ProductName:   product.Name,
+		SKU:           product.SKU,
+		Quantity:      item.Quantity,
+		OriginalPrice: product.SellPrice,
+		UnitPrice:     finalPrice,
+		CostPrice:     product.CostPrice,
+		DiscountPct:   item.DiscountPct,
+		DiscountType:  discType,
+		DiscountValue: discValue,
+		TaxRate:       product.TaxRate,
+		Subtotal:      lineSubtotal,
+	}, discountAmt, lineNet, lineTax, nil
+}
+
 // buildItems resolves and prices items from TxItemInput — shared by Checkout and CreateDraft.
 func (s *TransactionService) buildItems(ctx context.Context, storeID string, reqItems []dto.TxItemInput, _ bool,
 ) ([]domain.CreateTransactionItemInput, float64, float64, float64, error) {
@@ -423,76 +492,33 @@ func (s *TransactionService) buildItems(ctx context.Context, storeID string, req
 	var subtotal, discountAmt, taxAmt float64
 
 	for _, item := range reqItems {
-			if item.MenuItemID != "" {
-				menuItem, err := s.menuItemRepo.FindByID(ctx, item.MenuItemID)
-				if err != nil || menuItem == nil || menuItem.StoreID != storeID {
-					return nil, 0, 0, 0, fmt.Errorf("menu item %s not found", item.MenuItemID)
-				}
-				discType := item.DiscountType
-				discValue := item.DiscountValue
-				if discType == "" {
-					discType = discountTypePercentage
-					discValue = item.DiscountPct
-				}
-				finalPrice, _, lineNet, lineTax, lineSubtotal := computeItemPricing(
-					menuItem.SellPrice, item.Quantity, menuItem.TaxRate, discType, discValue)
-				subtotal += lineNet
-				discountAmt += (menuItem.SellPrice - finalPrice) * item.Quantity
-				taxAmt += lineTax
-				var menuCost float64
-				for _, ing := range menuItem.Ingredients {
-					ingProduct, _ := s.productRepo.FindByID(ctx, ing.ProductID)
-					if ingProduct != nil {
-						menuCost += ingProduct.CostPrice * ing.Quantity
-					}
-				}
-				mid := item.MenuItemID
-				inputItems = append(inputItems, domain.CreateTransactionItemInput{
-					MenuItemID:    &mid,
-					ProductName:   menuItem.Name,
-					SKU:           "MENU-" + item.MenuItemID[:8],
-					Quantity:      item.Quantity,
-					OriginalPrice: menuItem.SellPrice,
-					UnitPrice:     finalPrice,
-					CostPrice:     menuCost,
-					DiscountPct:   item.DiscountPct,
-					DiscountType:  discType,
-					DiscountValue: discValue,
-					TaxRate:       menuItem.TaxRate,
-					Subtotal:      lineSubtotal,
-				})
-			} else {
-				product, err := s.productRepo.FindByID(ctx, item.ProductID)
-				if err != nil || product == nil || product.StoreID != storeID {
-					return nil, 0, 0, 0, fmt.Errorf("%w: product %s", ErrProductNotFound, item.ProductID)
-				}
-				discType := item.DiscountType
-				discValue := item.DiscountValue
-				if discType == "" {
-					discType = discountTypePercentage
-					discValue = item.DiscountPct
-				}
-				finalPrice, _, lineNet, lineTax, lineSubtotal := computeItemPricing(
-					product.SellPrice, item.Quantity, product.TaxRate, discType, discValue)
-				subtotal += lineNet
-				discountAmt += (product.SellPrice - finalPrice) * item.Quantity
-				taxAmt += lineTax
-				pid := item.ProductID
-				inputItems = append(inputItems, domain.CreateTransactionItemInput{
-					ProductID:     &pid,
-					ProductName:   product.Name,
-					SKU:           product.SKU,
-					Quantity:      item.Quantity,
-					OriginalPrice: product.SellPrice,
-					UnitPrice:     finalPrice,
-					CostPrice:     product.CostPrice,
-					DiscountPct:   item.DiscountPct,
-					DiscountType:  discType,
-					DiscountValue: discValue,
-					TaxRate:       product.TaxRate,
-					Subtotal:      lineSubtotal,
-				})
+		if item.MenuItemID != "" {
+			menuItem, err := s.menuItemRepo.FindByID(ctx, item.MenuItemID)
+			if err != nil || menuItem == nil || menuItem.StoreID != storeID {
+				return nil, 0, 0, 0, fmt.Errorf("menu item %s not found", item.MenuItemID)
 			}
+			itemInput, itemDisc, itemNet, itemTax, err := s.processMenuItem(ctx, storeID, item, menuItem)
+			if err != nil {
+				return nil, 0, 0, 0, err
+			}
+			inputItems = append(inputItems, itemInput)
+			subtotal += itemNet
+			discountAmt += itemDisc
+			taxAmt += itemTax
+		} else {
+			product, err := s.productRepo.FindByID(ctx, item.ProductID)
+			if err != nil || product == nil || product.StoreID != storeID {
+				return nil, 0, 0, 0, fmt.Errorf("%w: product %s", ErrProductNotFound, item.ProductID)
+			}
+			itemInput, itemDisc, itemNet, itemTax, err := s.processProduct(ctx, item, product)
+			if err != nil {
+				return nil, 0, 0, 0, err
+			}
+			inputItems = append(inputItems, itemInput)
+			subtotal += itemNet
+			discountAmt += itemDisc
+			taxAmt += itemTax
+		}
 	}
 	return inputItems, subtotal, discountAmt, taxAmt, nil
 }
@@ -710,4 +736,3 @@ func toTransactionResponse(t *domain.Transaction) *dto.TransactionResponse {
 		UpdatedAt:         t.UpdatedAt.Format(time.RFC3339),
 	}
 }
-

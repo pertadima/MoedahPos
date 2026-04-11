@@ -175,4 +175,3 @@ func (s *ReportService) CashFlow(ctx context.Context, filter dto.ReportFilter) (
 		Rows:           rows,
 	}, nil
 }
-

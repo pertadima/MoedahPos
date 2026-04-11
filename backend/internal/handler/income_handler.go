@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -128,7 +129,7 @@ func (h *IncomeHandler) UpdateIncome(w http.ResponseWriter, r *http.Request) {
 	inc, err := h.incomeSvc.UpdateIncome(r.Context(), id, storeID, &req)
 	if err != nil {
 		h.log.Error().Err(err).Msg("update income failed")
-		if err == service.ErrIncomeNotFound {
+		if errors.Is(err, service.ErrIncomeNotFound) {
 			response.NotFound(w, "Income")
 			return
 		}
@@ -149,7 +150,7 @@ func (h *IncomeHandler) DeleteIncome(w http.ResponseWriter, r *http.Request) {
 
 	if err := h.incomeSvc.DeleteIncome(r.Context(), id, storeID); err != nil {
 		h.log.Error().Err(err).Msg("delete income failed")
-		if err == service.ErrIncomeNotFound {
+		if errors.Is(err, service.ErrIncomeNotFound) {
 			response.NotFound(w, "Income")
 			return
 		}
