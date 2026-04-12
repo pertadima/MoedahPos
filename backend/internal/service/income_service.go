@@ -28,12 +28,13 @@ type incomeRepo interface {
 
 // IncomeService implements business logic for non-POS income entries.
 type IncomeService struct {
-	repo incomeRepo
-	log  zerolog.Logger
+	repo        incomeRepo
+	activitySvc *ActivityLogService
+	log         zerolog.Logger
 }
 
-func NewIncomeService(repo incomeRepo, log zerolog.Logger) *IncomeService {
-	return &IncomeService{repo: repo, log: log}
+func NewIncomeService(repo incomeRepo, activitySvc *ActivityLogService, log zerolog.Logger) *IncomeService {
+	return &IncomeService{repo: repo, activitySvc: activitySvc, log: log}
 }
 
 // ── Categories ────────────────────────────────────────────────────────────────
@@ -97,6 +98,24 @@ func (s *IncomeService) CreateIncome(ctx context.Context, storeID, userID string
 	if err != nil {
 		return nil, fmt.Errorf("creating income: %w", err)
 	}
+
+	categoryName := ""
+	if inc.CategoryName != "" {
+		categoryName = inc.CategoryName
+	}
+
+	// Determine username and avoid logging un-authenticated background usage if possible
+	logUserID := "SYSTEM"
+	if userID != "" {
+		logUserID = userID
+	}
+
+	s.activitySvc.LogActivity(ctx, logUserID, storeID, domain.ActionIncomeCreate, domain.ModuleIncome, inc.ID, map[string]interface{}{
+		"category":       categoryName,
+		"amount":         req.Amount,
+		"payment_method": req.PaymentMethod,
+	})
+
 	s.log.Info().Str("income_id", inc.ID).Float64("amount", inc.Amount).Msg("income created")
 	return toIncomeResponse(inc), nil
 }
@@ -146,16 +165,36 @@ func (s *IncomeService) UpdateIncome(ctx context.Context, id, storeID string, re
 	if updated == nil {
 		return nil, ErrIncomeNotFound
 	}
+	
+	// Assuming no user ID pass, use "SYSTEM" or maybe we should add userID to UpdateIncome method
+	// As currently UpdateIncome does not receive userID, I will use a dummy UserID to satisfy LogActivity for now.
+	// We can update the parameter if strictly required later.
+	s.activitySvc.LogActivity(ctx, "SYSTEM", storeID, domain.ActionIncomeUpdate, domain.ModuleIncome, updated.ID, map[string]interface{}{
+		"category":       updated.CategoryName,
+		"amount":         updated.Amount,
+		"payment_method": updated.PaymentMethod,
+	})
+
 	return toIncomeResponse(updated), nil
 }
 
 func (s *IncomeService) DeleteIncome(ctx context.Context, id, storeID string) error {
+	inc, errGet := s.repo.FindByID(ctx, id)
+
 	if err := s.repo.Delete(ctx, id, storeID); err != nil {
 		if err.Error() == "income not found" {
 			return ErrIncomeNotFound
 		}
 		return fmt.Errorf("deleting income: %w", err)
 	}
+
+	if errGet == nil && inc != nil {
+		s.activitySvc.LogActivity(ctx, "SYSTEM", storeID, domain.ActionIncomeDelete, domain.ModuleIncome, id, map[string]interface{}{
+			"category": inc.CategoryName,
+			"amount":   inc.Amount,
+		})
+	}
+	
 	return nil
 }
 

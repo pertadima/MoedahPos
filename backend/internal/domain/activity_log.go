@@ -16,6 +16,19 @@ const (
 	ActionDiscountCart      ActionType = "DISCOUNT_CART"
 	ActionPriceOverride     ActionType = "PRICE_OVERRIDE"
 	ActionStockAdjustment   ActionType = "STOCK_ADJUSTMENT"
+
+	// Financial Activities
+	ActionPurchaseOrderCreate  ActionType = "PURCHASE_ORDER_CREATE"
+	ActionPurchaseOrderUpdate  ActionType = "PURCHASE_ORDER_UPDATE"
+	ActionPurchaseOrderPayment ActionType = "PURCHASE_ORDER_PAYMENT"
+
+	ActionIncomeCreate ActionType = "INCOME_CREATE"
+	ActionIncomeUpdate ActionType = "INCOME_UPDATE"
+	ActionIncomeDelete ActionType = "INCOME_DELETE"
+
+	ActionExpenseCreate ActionType = "EXPENSE_CREATE"
+	ActionExpenseUpdate ActionType = "EXPENSE_UPDATE"
+	ActionExpenseDelete ActionType = "EXPENSE_DELETE"
 )
 
 type ActivityModule string
@@ -25,6 +38,9 @@ const (
 	ModuleTransaction ActivityModule = "TRANSACTION"
 	ModuleDiscount    ActivityModule = "DISCOUNT"
 	ModuleInventory   ActivityModule = "INVENTORY"
+	ModulePurchase    ActivityModule = "PURCHASE"
+	ModuleIncome      ActivityModule = "INCOME"
+	ModuleExpense     ActivityModule = "EXPENSE"
 )
 
 type ActivityLog struct {

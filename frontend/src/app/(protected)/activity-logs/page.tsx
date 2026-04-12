@@ -37,6 +37,9 @@ const MODULE_ICONS: Record<string, React.ReactNode> = {
   TRANSACTION: <CreditCard size={16} className="text-emerald-500" />,
   DISCOUNT: <AlertCircle size={16} className="text-amber-500" />,
   INVENTORY: <Package size={16} className="text-indigo-500" />,
+  PURCHASE: <Package size={16} className="text-purple-500" />,
+  INCOME: <LogIn size={16} className="text-emerald-500" />,
+  EXPENSE: <CreditCard size={16} className="text-rose-500" />,
 };
 
 const ACTION_LABELS: Record<string, { label: string; color: string }> = {
@@ -48,7 +51,43 @@ const ACTION_LABELS: Record<string, { label: string; color: string }> = {
   DISCOUNT_CART: { label: 'Diskon Keranjang', color: 'var(--accent-am)' },
   PRICE_OVERRIDE: { label: 'Override Harga', color: 'var(--accent-rd)' },
   STOCK_ADJUSTMENT: { label: 'Penyesuaian Stok', color: 'var(--accent-in)' },
+  PURCHASE_ORDER_CREATE: { label: 'PO Baru', color: '#8b5cf6' },
+  PURCHASE_ORDER_UPDATE: { label: 'PO Diperbarui', color: '#a78bfa' },
+  PURCHASE_ORDER_PAYMENT: { label: 'Pembayaran PO', color: '#10b981' },
+  INCOME_CREATE: { label: 'Pemasukan Baru', color: '#10b981' },
+  INCOME_UPDATE: { label: 'Update Pemasukan', color: '#34d399' },
+  INCOME_DELETE: { label: 'Hapus Pemasukan', color: '#ef4444' },
+  EXPENSE_CREATE: { label: 'Pengeluaran Baru', color: '#ef4444' },
+  EXPENSE_UPDATE: { label: 'Update Pengeluaran', color: '#f87171' },
+  EXPENSE_DELETE: { label: 'Hapus Pengeluaran', color: '#ef4444' },
 };
+
+function formatRp(val: number) {
+  return new Intl.NumberFormat('id-ID', {
+    style: 'currency',
+    currency: 'IDR',
+    minimumFractionDigits: 0,
+  }).format(val);
+}
+
+function getReadableDescription(log: ActivityLog): string | null {
+  const meta: any = log.metadata || {};
+  switch (log.action_type) {
+    case 'PURCHASE_ORDER_CREATE':
+      return `Membuat Purchase Order ${meta.po_number || ''} supplier ${meta.supplier_name || '-'} (${meta.total_amount ? formatRp(meta.total_amount) : ''})`;
+    case 'PURCHASE_ORDER_PAYMENT':
+      return `Mencatat pembayaran ${meta.payment_amount ? formatRp(meta.payment_amount) : ''} untuk PO ${meta.po_number || ''}`;
+    case 'INCOME_CREATE':
+      return `Menambah pemasukan ${meta.amount ? formatRp(meta.amount) : ''} (${meta.category || ''})`;
+    case 'EXPENSE_CREATE':
+      return `Mencatat pengeluaran ${meta.amount ? formatRp(meta.amount) : ''} (${meta.category || ''})`;
+    case 'INCOME_DELETE':
+      return `Menghapus pemasukan ${meta.amount ? formatRp(meta.amount) : ''} (${meta.category || ''})`;
+    case 'EXPENSE_DELETE':
+      return `Menghapus pengeluaran ${meta.amount ? formatRp(meta.amount) : ''} (${meta.category || ''})`;
+  }
+  return null;
+}
 
 // ── Components ───────────────────────────────────────────────────────────────
 
@@ -121,6 +160,9 @@ function LogRow({ log }: { log: ActivityLog }) {
           >
             {action.label}
           </span>
+          {getReadableDescription(log) && (
+            <div className="text-xs text-gray-500 mt-2">{getReadableDescription(log)}</div>
+          )}
         </td>
         <td className="p-4 py-5">
           <div className="flex items-center justify-end">
@@ -298,6 +340,9 @@ export default function ActivityLogPage() {
               <option value="TRANSACTION">Transaction</option>
               <option value="DISCOUNT">Discount</option>
               <option value="INVENTORY">Inventory</option>
+              <option value="PURCHASE">Purchase Orders</option>
+              <option value="INCOME">Income</option>
+              <option value="EXPENSE">Expense</option>
             </select>
           </div>
           <div className="space-y-2">

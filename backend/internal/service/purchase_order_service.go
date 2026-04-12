@@ -28,6 +28,7 @@ type PurchaseOrderService struct {
 	productRepo     repository.ProductRepository
 	paymentRepo     repository.POPaymentRepository
 	priceHistorySvc *PriceHistoryService
+	activitySvc     *ActivityLogService
 	log             zerolog.Logger
 }
 
@@ -36,9 +37,10 @@ func NewPurchaseOrderService(
 	productRepo repository.ProductRepository,
 	paymentRepo repository.POPaymentRepository,
 	priceHistorySvc *PriceHistoryService,
+	activitySvc *ActivityLogService,
 	log zerolog.Logger,
 ) *PurchaseOrderService {
-	return &PurchaseOrderService{poRepo: poRepo, productRepo: productRepo, paymentRepo: paymentRepo, priceHistorySvc: priceHistorySvc, log: log}
+	return &PurchaseOrderService{poRepo: poRepo, productRepo: productRepo, paymentRepo: paymentRepo, priceHistorySvc: priceHistorySvc, activitySvc: activitySvc, log: log}
 }
 
 func (s *PurchaseOrderService) ListPOs(ctx context.Context, filter dto.POListFilter) ([]*dto.POResponse, dto.PaginationMeta, error) {
@@ -93,6 +95,18 @@ func (s *PurchaseOrderService) CreatePO(ctx context.Context, storeID string, req
 	if err != nil {
 		return nil, fmt.Errorf("creating PO: %w", err)
 	}
+
+	supplierName := ""
+	if req.SupplierID != nil && po.SupplierName != nil {
+		supplierName = *po.SupplierName
+	}
+	s.activitySvc.LogActivity(ctx, userID, storeID, domain.ActionPurchaseOrderCreate, domain.ModulePurchase, po.ID, map[string]interface{}{
+		"po_number":     po.PONumber,
+		"supplier_name": supplierName,
+		"total_amount":  totalAmt,
+		"items_count":   len(items),
+	})
+
 	s.log.Info().Str("po_id", po.ID).Str("po_number", po.PONumber).Msg("PO created")
 	return toPOResponse(po), nil
 }
@@ -328,6 +342,13 @@ func (s *PurchaseOrderService) CreatePayment(ctx context.Context, poID, storeID,
 	if err != nil {
 		return nil, fmt.Errorf("recording payment: %w", err)
 	}
+
+	s.activitySvc.LogActivity(ctx, userID, storeID, domain.ActionPurchaseOrderPayment, domain.ModulePurchase, po.ID, map[string]interface{}{
+		"po_number":      po.PONumber,
+		"payment_amount": req.Amount,
+		"payment_method": "CASH", // Usually cash here unless specified in POPaymentRequest
+	})
+
 	return toPaymentResponse(out), nil
 }
 

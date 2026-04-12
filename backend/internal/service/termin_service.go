@@ -38,6 +38,7 @@ type TerminService struct {
 	paymentRepo repository.PaymentRecordRepository
 	poRepo      repository.PurchaseOrderRepository
 	storeRepo   repository.StoreRepository
+	activitySvc *ActivityLogService
 	log         zerolog.Logger
 }
 
@@ -47,6 +48,7 @@ func NewTerminService(
 	paymentRepo repository.PaymentRecordRepository,
 	poRepo repository.PurchaseOrderRepository,
 	storeRepo repository.StoreRepository,
+	activitySvc *ActivityLogService,
 	log zerolog.Logger,
 ) *TerminService {
 	return &TerminService{
@@ -54,6 +56,7 @@ func NewTerminService(
 		paymentRepo: paymentRepo,
 		poRepo:      poRepo,
 		storeRepo:   storeRepo,
+		activitySvc: activitySvc,
 		log:         log,
 	}
 }
@@ -174,6 +177,20 @@ func (s *TerminService) RecordPayment(ctx context.Context, terminID, userID stri
 	if err := s.terminRepo.UpdateStatus(ctx, terminID); err != nil {
 		s.log.Warn().Err(err).Str("termin_id", terminID).Msg("failed to update termin status after payment")
 	}
+
+	po, poErr := s.poRepo.FindByID(ctx, termin.POID)
+	poNumber := "Unknown PO"
+	storeID := ""
+	if poErr == nil && po != nil {
+		poNumber = po.PONumber
+		storeID = po.StoreID
+	}
+
+	s.activitySvc.LogActivity(ctx, userID, storeID, domain.ActionPurchaseOrderPayment, domain.ModulePurchase, termin.POID, map[string]interface{}{
+		"po_number":      poNumber,
+		"payment_amount": req.AmountPaid,
+		"payment_method": req.PaymentMethod,
+	})
 
 	s.log.Info().
 		Str("termin_id", terminID).

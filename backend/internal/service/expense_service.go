@@ -14,11 +14,12 @@ import (
 
 type ExpenseService struct {
 	expenseRepo *postgres.ExpenseRepo
+	activitySvc *ActivityLogService
 	log         zerolog.Logger
 }
 
-func NewExpenseService(expenseRepo *postgres.ExpenseRepo, log zerolog.Logger) *ExpenseService {
-	return &ExpenseService{expenseRepo: expenseRepo, log: log}
+func NewExpenseService(expenseRepo *postgres.ExpenseRepo, activitySvc *ActivityLogService, log zerolog.Logger) *ExpenseService {
+	return &ExpenseService{expenseRepo: expenseRepo, activitySvc: activitySvc, log: log}
 }
 
 // ── Categories ────────────────────────────────────────────────────────────────
@@ -77,6 +78,21 @@ func (s *ExpenseService) CreateExpense(ctx context.Context, storeID, userID stri
 	if err != nil {
 		return nil, fmt.Errorf("creating expense: %w", err)
 	}
+
+	categoryName := ""
+	if e.CategoryName != "" {
+		categoryName = e.CategoryName
+	}
+	logUserID := "SYSTEM"
+	if userID != "" {
+		logUserID = userID
+	}
+
+	s.activitySvc.LogActivity(ctx, logUserID, storeID, domain.ActionExpenseCreate, domain.ModuleExpense, e.ID, map[string]interface{}{
+		"category": categoryName,
+		"amount":   req.Amount,
+	})
+
 	return s.toExpenseResponse(e), nil
 }
 
@@ -114,12 +130,27 @@ func (s *ExpenseService) UpdateExpense(ctx context.Context, id, storeID string, 
 	if e == nil {
 		return nil, fmt.Errorf("expense not found")
 	}
+
+	s.activitySvc.LogActivity(ctx, "SYSTEM", storeID, domain.ActionExpenseUpdate, domain.ModuleExpense, e.ID, map[string]interface{}{
+		"category": e.CategoryName,
+		"amount":   e.Amount,
+	})
+
 	return s.toExpenseResponse(e), nil
 }
 
 func (s *ExpenseService) DeleteExpense(ctx context.Context, id, storeID string) error {
+	e, errGet := s.expenseRepo.GetByID(ctx, id, storeID)
+
 	if err := s.expenseRepo.Delete(ctx, id, storeID); err != nil {
 		return fmt.Errorf("deleting expense: %w", err)
+	}
+
+	if errGet == nil && e != nil {
+		s.activitySvc.LogActivity(ctx, "SYSTEM", storeID, domain.ActionExpenseDelete, domain.ModuleExpense, id, map[string]interface{}{
+			"category": e.CategoryName,
+			"amount":   e.Amount,
+		})
 	}
 	return nil
 }
