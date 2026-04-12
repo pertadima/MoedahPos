@@ -92,9 +92,21 @@ function getReadableDescription(log: ActivityLog): string | null {
 // ── Components ───────────────────────────────────────────────────────────────
 
 function MetadataViewer({ data }: { data: any }) {
-  if (!data) return <span style={{ color: 'var(--text-3)', fontStyle: 'italic' }}>No metadata</span>;
+  if (!data)
+    return <span style={{ color: 'var(--text-3)', fontStyle: 'italic' }}>No metadata</span>;
   return (
-    <pre style={{ padding: 16, background: 'var(--bg-elevated)', color: 'var(--accent-in)', borderRadius: 8, fontSize: '0.75rem', overflowX: 'auto', fontFamily: 'monospace', border: '1px solid var(--border)' }}>
+    <pre
+      style={{
+        padding: 16,
+        background: 'var(--bg-elevated)',
+        color: 'var(--accent-in)',
+        borderRadius: 8,
+        fontSize: '0.75rem',
+        overflowX: 'auto',
+        fontFamily: 'monospace',
+        border: '1px solid var(--border)',
+      }}
+    >
       {JSON.stringify(data, null, 2)}
     </pre>
   );
@@ -109,7 +121,15 @@ function LogRow({ log }: { log: ActivityLog }) {
       <tr onClick={() => setExpanded(!expanded)} style={{ cursor: 'pointer' }}>
         <td>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div style={{ background: 'var(--bg-card)', padding: 8, borderRadius: 8, border: '1px solid var(--border)', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
+            <div
+              style={{
+                background: 'var(--bg-card)',
+                padding: 8,
+                borderRadius: 8,
+                border: '1px solid var(--border)',
+                boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+              }}
+            >
               <Clock size={16} style={{ color: 'var(--text-3)' }} />
             </div>
             <div>
@@ -119,7 +139,15 @@ function LogRow({ log }: { log: ActivityLog }) {
                   minute: '2-digit',
                 })}
               </div>
-              <div style={{ fontSize: '0.625rem', color: 'var(--text-3)', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              <div
+                style={{
+                  fontSize: '0.625rem',
+                  color: 'var(--text-3)',
+                  fontWeight: 500,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                }}
+              >
                 {new Date(log.created_at).toLocaleDateString('id-ID', {
                   day: 'numeric',
                   month: 'short',
@@ -130,7 +158,21 @@ function LogRow({ log }: { log: ActivityLog }) {
         </td>
         <td>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(8,132,246,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--brand)', fontWeight: 700, fontSize: '0.75rem', textTransform: 'uppercase' }}>
+            <div
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: '50%',
+                background: 'rgba(8,132,246,0.1)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'var(--brand)',
+                fontWeight: 700,
+                fontSize: '0.75rem',
+                textTransform: 'uppercase',
+              }}
+            >
               {log.user_name.charAt(0)}
             </div>
             <span style={{ fontSize: '0.875rem', fontWeight: 500 }}>{log.user_name}</span>
@@ -141,7 +183,15 @@ function LogRow({ log }: { log: ActivityLog }) {
             <div style={{ padding: 6, borderRadius: 6, background: 'var(--bg-elevated)' }}>
               {MODULE_ICONS[log.module] || <Info size={14} />}
             </div>
-            <span style={{ fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-2)' }}>
+            <span
+              style={{
+                fontSize: '0.75rem',
+                fontWeight: 600,
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                color: 'var(--text-2)',
+              }}
+            >
               {log.module}
             </span>
           </div>
@@ -163,7 +213,9 @@ function LogRow({ log }: { log: ActivityLog }) {
             {action.label}
           </span>
           {getReadableDescription(log) && (
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-3)', marginTop: 8 }}>{getReadableDescription(log)}</div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-3)', marginTop: 8 }}>
+              {getReadableDescription(log)}
+            </div>
           )}
         </td>
         <td style={{ textAlign: 'right' }}>
@@ -181,12 +233,37 @@ function LogRow({ log }: { log: ActivityLog }) {
           <td colSpan={5} style={{ padding: 0, borderBottom: '1px solid var(--border)' }}>
             <div style={{ padding: 24, background: 'var(--bg-elevated)' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-2)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    fontSize: '0.75rem',
+                    fontWeight: 700,
+                    color: 'var(--text-2)',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.1em',
+                  }}
+                >
                   <Info size={12} /> Metadata Details
                 </div>
                 <MetadataViewer data={log.metadata} />
                 {log.reference_id && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.6875rem', color: 'var(--text-2)', fontFamily: 'monospace', background: 'var(--bg-card)', padding: '6px 12px', borderRadius: 6, border: '1px solid var(--border)', width: 'fit-content' }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                      fontSize: '0.6875rem',
+                      color: 'var(--text-2)',
+                      fontFamily: 'monospace',
+                      background: 'var(--bg-card)',
+                      padding: '6px 12px',
+                      borderRadius: 6,
+                      border: '1px solid var(--border)',
+                      width: 'fit-content',
+                    }}
+                  >
                     REFERENCE ID:{' '}
                     <span style={{ fontWeight: 700, color: 'var(--text-1)' }}>
                       {log.reference_id}
@@ -269,7 +346,14 @@ export default function ActivityLogPage() {
   return (
     <div className="w-full p-6">
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32 }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: 32,
+        }}
+      >
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           <div style={{ background: 'var(--accent-em)', padding: 12, borderRadius: 16 }}>
             <ShieldCheck size={28} color="#fff" />
@@ -288,14 +372,49 @@ export default function ActivityLogPage() {
 
       {/* Filters Card */}
       <div className="card" style={{ padding: 24, marginBottom: 32 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 24, color: 'var(--brand)' }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            marginBottom: 24,
+            color: 'var(--brand)',
+          }}
+        >
           <Filter size={18} />
-          <span style={{ fontWeight: 700, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Filter Audit</span>
+          <span
+            style={{
+              fontWeight: 700,
+              fontSize: '0.75rem',
+              textTransform: 'uppercase',
+              letterSpacing: '0.1em',
+            }}
+          >
+            Filter Audit
+          </span>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 24, marginBottom: 16 }}>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+            gap: 24,
+            marginBottom: 16,
+          }}
+        >
           <div className="input-group">
-            <label className="input-label" style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.6875rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            <label
+              className="input-label"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                fontSize: '0.6875rem',
+                fontWeight: 800,
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+              }}
+            >
               <CalendarDays size={12} /> Dari Tanggal
             </label>
             <input
@@ -307,7 +426,18 @@ export default function ActivityLogPage() {
             />
           </div>
           <div className="input-group">
-            <label className="input-label" style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.6875rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            <label
+              className="input-label"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                fontSize: '0.6875rem',
+                fontWeight: 800,
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+              }}
+            >
               <CalendarDays size={12} /> Sampai Tanggal
             </label>
             <input
@@ -319,7 +449,18 @@ export default function ActivityLogPage() {
             />
           </div>
           <div className="input-group">
-            <label className="input-label" style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.6875rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            <label
+              className="input-label"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                fontSize: '0.6875rem',
+                fontWeight: 800,
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+              }}
+            >
               <UserIcon size={12} /> Pengguna
             </label>
             <select
@@ -371,33 +512,109 @@ export default function ActivityLogPage() {
       </div>
 
       {/* Table Section */}
-      <div className="card" style={{ overflow: 'hidden', minHeight: 400, display: 'flex', flexDirection: 'column' }}>
+      <div
+        className="card"
+        style={{ overflow: 'hidden', minHeight: 400, display: 'flex', flexDirection: 'column' }}
+      >
         {loading && logs.length === 0 ? (
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 80 }}>
-            <Loader2 size={32} className="loading-spin" style={{ color: 'var(--brand)', marginBottom: 16 }} />
-            <p style={{ color: 'var(--text-3)', fontWeight: 700, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+          <div
+            style={{
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: 80,
+            }}
+          >
+            <Loader2
+              size={32}
+              className="loading-spin"
+              style={{ color: 'var(--brand)', marginBottom: 16 }}
+            />
+            <p
+              style={{
+                color: 'var(--text-3)',
+                fontWeight: 700,
+                fontSize: '0.75rem',
+                textTransform: 'uppercase',
+                letterSpacing: '0.1em',
+              }}
+            >
               Memuat Log...
             </p>
           </div>
         ) : error ? (
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 80, textAlign: 'center' }}>
-            <div style={{ padding: 16, background: 'rgba(239, 68, 68, 0.1)', borderRadius: 16, marginBottom: 16, color: 'var(--accent-rd)' }}>
+          <div
+            style={{
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: 80,
+              textAlign: 'center',
+            }}
+          >
+            <div
+              style={{
+                padding: 16,
+                background: 'rgba(239, 68, 68, 0.1)',
+                borderRadius: 16,
+                marginBottom: 16,
+                color: 'var(--accent-rd)',
+              }}
+            >
               <AlertCircle size={32} />
             </div>
-            <h3 style={{ fontSize: '1.125rem', fontWeight: 700, color: 'var(--text-1)', marginBottom: 4 }}>
+            <h3
+              style={{
+                fontSize: '1.125rem',
+                fontWeight: 700,
+                color: 'var(--text-1)',
+                marginBottom: 4,
+              }}
+            >
               Gagal Memuat Data
             </h3>
-            <p style={{ color: 'var(--text-2)', fontSize: '0.875rem', marginBottom: 24 }}>{error}</p>
+            <p style={{ color: 'var(--text-2)', fontSize: '0.875rem', marginBottom: 24 }}>
+              {error}
+            </p>
             <button onClick={() => loadLogs(1)} className="btn btn-secondary">
               Coba Lagi
             </button>
           </div>
         ) : logs.length === 0 ? (
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 80, textAlign: 'center' }}>
-            <div style={{ padding: 16, background: 'var(--bg-elevated)', borderRadius: 16, marginBottom: 16, color: 'var(--text-3)' }}>
+          <div
+            style={{
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: 80,
+              textAlign: 'center',
+            }}
+          >
+            <div
+              style={{
+                padding: 16,
+                background: 'var(--bg-elevated)',
+                borderRadius: 16,
+                marginBottom: 16,
+                color: 'var(--text-3)',
+              }}
+            >
               <Search size={32} />
             </div>
-            <h3 style={{ fontSize: '1.125rem', fontWeight: 700, color: 'var(--text-1)', marginBottom: 4 }}>
+            <h3
+              style={{
+                fontSize: '1.125rem',
+                fontWeight: 700,
+                color: 'var(--text-1)',
+                marginBottom: 4,
+              }}
+            >
               Log Tidak Ditemukan
             </h3>
             <p style={{ color: 'var(--text-2)', fontSize: '0.875rem' }}>
@@ -427,10 +644,21 @@ export default function ActivityLogPage() {
 
             {/* Pagination */}
             {meta.total_pages > 1 && (
-              <div style={{ padding: 24, borderTop: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--bg-card)' }}>
+              <div
+                style={{
+                  padding: 24,
+                  borderTop: '1px solid var(--border)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  background: 'var(--bg-card)',
+                }}
+              >
                 <div style={{ fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-2)' }}>
-                  Menampilkan <span style={{ color: 'var(--text-1)', fontWeight: 600 }}>{logs.length}</span>{' '}
-                  dari <span style={{ color: 'var(--text-1)', fontWeight: 600 }}>{meta.total}</span> log
+                  Menampilkan{' '}
+                  <span style={{ color: 'var(--text-1)', fontWeight: 600 }}>{logs.length}</span>{' '}
+                  dari <span style={{ color: 'var(--text-1)', fontWeight: 600 }}>{meta.total}</span>{' '}
+                  log
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <button
@@ -440,7 +668,14 @@ export default function ActivityLogPage() {
                   >
                     <ChevronLeft size={16} />
                   </button>
-                  <div style={{ padding: '0 16px', fontSize: '0.875rem', fontWeight: 700, color: 'var(--text-1)' }}>
+                  <div
+                    style={{
+                      padding: '0 16px',
+                      fontSize: '0.875rem',
+                      fontWeight: 700,
+                      color: 'var(--text-1)',
+                    }}
+                  >
                     Halaman {page} dari {meta.total_pages}
                   </div>
                   <button

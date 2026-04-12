@@ -247,7 +247,8 @@ func main() { //nolint:funlen // seeder bootstrap is inherently long
 		{uuid.NewString(), "Cabang Bandung", "Jl. Dago No. 88, Bandung", "022-7778899", "02.123.456.7-002.000", "retail"},
 		{uuid.NewString(), "Rumah Makan Padang Saiyo", "Jl. Minangkabau No. 17, Jakarta Selatan", "021-7779988", "02.456.789.1-003.000", "restaurant"},
 	}
-	for _, s := range storeList {
+	var mainStoreID, branchStoreID string
+	for i, s := range storeList {
 		_, err = db.ExecContext(ctx, `
 			INSERT INTO stores (id, name, address, phone, tax_number, currency, store_type, is_active)
 			VALUES ($1, $2, $3, $4, $5, 'IDR', $6, true)
@@ -257,11 +258,20 @@ func main() { //nolint:funlen // seeder bootstrap is inherently long
 				is_active=true, deleted_at=NULL
 		`, s.ID, s.Name, s.Address, s.Phone, s.TaxNum, s.StoreType)
 		must(err)
+
+		var actualID string
+		must(db.QueryRowContext(ctx, "SELECT id FROM stores WHERE name = $1", s.Name).Scan(&actualID))
+
+		switch i {
+		case 0:
+			mainStoreID = actualID
+		case 1:
+			branchStoreID = actualID
+		case 2:
+			padangStoreID = actualID
+		}
 		log.Printf("   ✓ Store: %s (%s)", s.Name, s.StoreType)
 	}
-	mainStoreID := storeList[0].ID
-	branchStoreID := storeList[1].ID
-	padangStoreID = storeList[2].ID
 
 	// ── User ↔ Store Memberships ───────────────────────────────────────────────
 	memberships := []struct{ Email, StoreID, Role string }{
