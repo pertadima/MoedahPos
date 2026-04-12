@@ -8,6 +8,7 @@ import { ApiError } from '@/lib/api/client';
 import type { Category } from '@/types';
 
 export interface FullCategory extends Category {
+  description: string;
   is_active: boolean;
   updated_at: string;
 }

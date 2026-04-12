@@ -9,6 +9,7 @@ import type { Category } from '@/types';
 
 // Extend Category type to include the fields we added
 export interface FullCategory extends Category {
+  description: string;
   is_active: boolean;
   updated_at: string;
 }
