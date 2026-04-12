@@ -369,7 +369,7 @@ func (s *PurchaseOrderService) allocateGlobalPaymentToTermins(ctx context.Contex
 		if remainingAmt <= 0 {
 			break
 		}
-		
+
 		amountDue := t.Amount - t.AmountPaid
 		if amountDue <= 0 {
 			continue
@@ -388,7 +388,7 @@ func (s *PurchaseOrderService) allocateGlobalPaymentToTermins(ctx context.Contex
 			Notes:         "Auto-allocated from global PO Payment",
 			RecordedBy:    &userID,
 		})
-		
+
 		if err != nil {
 			s.log.Error().Err(err).Str("termin_id", t.ID).Msg("failed to create termin payment record from global allocation")
 		} else {

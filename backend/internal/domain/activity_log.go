@@ -44,13 +44,13 @@ const (
 )
 
 type ActivityLog struct {
-	ID	string	`db:"id" json:"id"`
-	UserID	string	`db:"user_id" json:"user_id"`
-	UserName	string	`db:"user_name" json:"user_name,omitempty"`
-	StoreID	*string	`db:"store_id" json:"store_id"`
-	ActionType	ActionType	`db:"action_type" json:"action_type"`
-	Module	ActivityModule	`db:"module" json:"module"`
-	ReferenceID	*string	`db:"reference_id" json:"reference_id"`
-	Metadata	json.RawMessage	`db:"metadata" json:"metadata"`
-	CreatedAt	time.Time	`db:"created_at" json:"created_at"`
+	ID          string          `db:"id" json:"id"`
+	UserID      string          `db:"user_id" json:"user_id"`
+	UserName    string          `db:"user_name" json:"user_name,omitempty"`
+	StoreID     *string         `db:"store_id" json:"store_id"`
+	ActionType  ActionType      `db:"action_type" json:"action_type"`
+	Module      ActivityModule  `db:"module" json:"module"`
+	ReferenceID *string         `db:"reference_id" json:"reference_id"`
+	Metadata    json.RawMessage `db:"metadata" json:"metadata"`
+	CreatedAt   time.Time       `db:"created_at" json:"created_at"`
 }

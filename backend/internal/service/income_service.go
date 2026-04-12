@@ -194,7 +194,7 @@ func (s *IncomeService) DeleteIncome(ctx context.Context, id, storeID string) er
 			"amount":   inc.Amount,
 		})
 	}
-	
+
 	return nil
 }
 

@@ -164,7 +164,7 @@ var catalogLargeRetail = []ProductSeed{
 
 // ── Main ────────────────────────────────────────────────────────────────────── d
 
-func main() { //nolint:funlen // seeder bootstrap is inherently long
+func main() { //nolint:funlen,cyclop // seeder bootstrap is inherently long
 	reset := flag.Bool("reset", false, "Truncate all demo tables before seeding")
 	resetRestaurant := flag.Bool("reset-restaurant", false, "Truncate only restaurant store data before seeding")
 	flag.Parse()
