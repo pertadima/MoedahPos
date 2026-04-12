@@ -2342,6 +2342,7 @@ export default function PurchaseOrdersPage() {
                 <th>Hutang</th>
                 <th>Deadline</th>
                 <th>Dibuat</th>
+                <th>Dibuat Oleh</th>
                 <th>Aksi</th>
               </tr>
             </thead>
@@ -2421,6 +2422,9 @@ export default function PurchaseOrdersPage() {
                       </td>
                       <td style={{ color: 'var(--text-3)', fontSize: '0.8rem' }}>
                         {formatDate(po.created_at)}
+                      </td>
+                      <td style={{ color: 'var(--text-3)', fontSize: '0.8rem' }}>
+                        {po.ordered_by_name || '—'}
                       </td>
                       <td>
                         <div style={{ display: 'flex', gap: 4 }}>
