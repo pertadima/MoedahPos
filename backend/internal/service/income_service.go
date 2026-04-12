@@ -165,7 +165,7 @@ func (s *IncomeService) UpdateIncome(ctx context.Context, id, storeID string, re
 	if updated == nil {
 		return nil, ErrIncomeNotFound
 	}
-	
+
 	// Assuming no user ID pass, use "SYSTEM" or maybe we should add userID to UpdateIncome method
 	// As currently UpdateIncome does not receive userID, I will use a dummy UserID to satisfy LogActivity for now.
 	// We can update the parameter if strictly required later.

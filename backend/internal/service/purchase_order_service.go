@@ -24,23 +24,27 @@ var (
 
 // PurchaseOrderService implements PO lifecycle business logic.
 type PurchaseOrderService struct {
-	poRepo          repository.PurchaseOrderRepository
-	productRepo     repository.ProductRepository
-	paymentRepo     repository.POPaymentRepository
-	priceHistorySvc *PriceHistoryService
-	activitySvc     *ActivityLogService
-	log             zerolog.Logger
+	poRepo            repository.PurchaseOrderRepository
+	productRepo       repository.ProductRepository
+	paymentRepo       repository.POPaymentRepository
+	terminRepo        repository.TerminRepository
+	paymentRecordRepo repository.PaymentRecordRepository
+	priceHistorySvc   *PriceHistoryService
+	activitySvc       *ActivityLogService
+	log               zerolog.Logger
 }
 
 func NewPurchaseOrderService(
 	poRepo repository.PurchaseOrderRepository,
 	productRepo repository.ProductRepository,
 	paymentRepo repository.POPaymentRepository,
+	terminRepo repository.TerminRepository,
+	paymentRecordRepo repository.PaymentRecordRepository,
 	priceHistorySvc *PriceHistoryService,
 	activitySvc *ActivityLogService,
 	log zerolog.Logger,
 ) *PurchaseOrderService {
-	return &PurchaseOrderService{poRepo: poRepo, productRepo: productRepo, paymentRepo: paymentRepo, priceHistorySvc: priceHistorySvc, activitySvc: activitySvc, log: log}
+	return &PurchaseOrderService{poRepo: poRepo, productRepo: productRepo, paymentRepo: paymentRepo, terminRepo: terminRepo, paymentRecordRepo: paymentRecordRepo, priceHistorySvc: priceHistorySvc, activitySvc: activitySvc, log: log}
 }
 
 func (s *PurchaseOrderService) ListPOs(ctx context.Context, filter dto.POListFilter) ([]*dto.POResponse, dto.PaginationMeta, error) {
@@ -349,7 +353,50 @@ func (s *PurchaseOrderService) CreatePayment(ctx context.Context, poID, storeID,
 		"payment_method": "CASH", // Usually cash here unless specified in POPaymentRequest
 	})
 
+	s.allocateGlobalPaymentToTermins(ctx, poID, userID, req.Amount)
+
 	return toPaymentResponse(out), nil
+}
+
+func (s *PurchaseOrderService) allocateGlobalPaymentToTermins(ctx context.Context, poID, userID string, amount float64) {
+	termins, errTermin := s.terminRepo.FindByPO(ctx, poID)
+	if errTermin != nil || len(termins) == 0 {
+		return
+	}
+
+	remainingAmt := amount
+	for _, t := range termins {
+		if remainingAmt <= 0 {
+			break
+		}
+		
+		amountDue := t.Amount - t.AmountPaid
+		if amountDue <= 0 {
+			continue
+		}
+
+		payAmt := amountDue
+		if remainingAmt < payAmt {
+			payAmt = remainingAmt
+		}
+
+		_, err := s.paymentRecordRepo.Create(ctx, domain.PaymentRecord{
+			TerminID:      t.ID,
+			AmountPaid:    payAmt,
+			PaymentDate:   time.Now(),
+			PaymentMethod: "cash",
+			Notes:         "Auto-allocated from global PO Payment",
+			RecordedBy:    &userID,
+		})
+		
+		if err != nil {
+			s.log.Error().Err(err).Str("termin_id", t.ID).Msg("failed to create termin payment record from global allocation")
+		} else {
+			_ = s.terminRepo.UpdateStatus(ctx, t.ID)
+		}
+
+		remainingAmt -= payAmt
+	}
 }
 
 // ListPayments returns all payments for a PO.
