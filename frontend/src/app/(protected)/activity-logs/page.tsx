@@ -20,7 +20,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthContext';
-import { activityLogsApi, ActivityLog } from '@/lib/api/activity-logs';
+import { activityLogsApi, type ActivityLog } from '@/lib/api/activity-logs';
 import { storesApi } from '@/lib/api/store-apis';
 import type { PaginatedData, User } from '@/types';
 import { ApiError } from '@/lib/api/client';
