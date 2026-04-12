@@ -412,19 +412,43 @@ func uniqueCategories(catalog []ProductSeed) []string {
 
 // seedCategories upserts categories for a store and returns name→id map.
 func seedCategories(ctx context.Context, db *sqlx.DB, storeID string, names []string) map[string]string {
+	// First, dynamically clean up any previously duplicated categories for this store.
+	// We safely re-point existing products to the single surviving category to prevent FK violation.
+	// Executed as individual statements so the constraint checker acknowledges the UPDATE before the DELETE.
+	_, _ = db.ExecContext(ctx, `
+		WITH duplicates AS (
+			SELECT MIN(id) as keep_id, store_id, name
+			FROM categories WHERE store_id = $1 GROUP BY store_id, name HAVING COUNT(*) > 1
+		)
+		UPDATE products p
+		SET category_id = d.keep_id
+		FROM categories c
+		JOIN duplicates d ON c.name = d.name AND c.store_id = d.store_id AND c.id != d.keep_id
+		WHERE p.category_id = c.id;
+	`, storeID)
+
+	_, _ = db.ExecContext(ctx, `
+		WITH duplicates AS (
+			SELECT MIN(id) as keep_id, store_id, name
+			FROM categories WHERE store_id = $1 GROUP BY store_id, name HAVING COUNT(*) > 1
+		)
+		DELETE FROM categories c
+		USING duplicates d
+		WHERE c.name = d.name AND c.store_id = d.store_id AND c.id != d.keep_id;
+	`, storeID)
+
 	ids := map[string]string{}
 	for _, n := range names {
-		id := uuid.NewString()
-		_, err := db.ExecContext(ctx, `
-			INSERT INTO categories (id, store_id, name)
-			VALUES ($1, $2, $3) ON CONFLICT DO NOTHING
-		`, id, storeID, n)
-		must(err)
-		// read back actual id (may already exist)
 		var actual string
-		must(db.QueryRowContext(ctx,
-			`SELECT id FROM categories WHERE store_id=$1 AND name=$2`, storeID, n,
-		).Scan(&actual))
+		err := db.QueryRowContext(ctx, `SELECT id FROM categories WHERE store_id=$1 AND name=$2 LIMIT 1`, storeID, n).Scan(&actual)
+		if err != nil { // Sql.ErrNoRows
+			actual = uuid.NewString()
+			_, err = db.ExecContext(ctx, `
+				INSERT INTO categories (id, store_id, name)
+				VALUES ($1, $2, $3)
+			`, actual, storeID, n)
+			must(err)
+		}
 		ids[n] = actual
 	}
 	return ids
@@ -617,11 +641,15 @@ func seedTransactions(ctx context.Context, db *sqlx.DB, storeID, cashierID strin
 // resetData deletes all demo tables (preserves roles/permissions/migrations).
 func resetData(ctx context.Context, db *sqlx.DB) {
 	tables := []string{
+		"activity_logs",
+		"stock_adjustment_batches", "stock_adjustments",
+		"payment_records", "purchase_order_termins", "po_payments", "purchase_order_items", "purchase_orders",
 		"transaction_items", "transactions",
 		"menu_item_ingredients", "menu_items",
+		"recurring_expenses", "expenses", "expense_categories",
+		"incomes", "income_categories",
 		"restaurant_tables",
 		"stock_movements", "stock_batches", "stock_levels",
-		"payment_records", "purchase_order_termins", "po_payments", "purchase_order_items", "purchase_orders",
 		"price_history", "customers",
 		"products", "categories",
 		"user_stores", "suppliers",
@@ -638,16 +666,27 @@ func resetData(ctx context.Context, db *sqlx.DB) {
 // resetStoreData deletes all data specifically for one store.
 func resetStoreData(ctx context.Context, db *sqlx.DB, storeID string) {
 	queries := []string{
+		"DELETE FROM activity_logs WHERE store_id = $1",
+		"DELETE FROM stock_adjustment_batches WHERE adjustment_id IN (SELECT id FROM stock_adjustments WHERE store_id = $1)",
+		"DELETE FROM stock_adjustments WHERE store_id = $1",
 		"DELETE FROM transaction_items WHERE transaction_id IN (SELECT id FROM transactions WHERE store_id = $1)",
 		"DELETE FROM transactions WHERE store_id = $1",
 		"DELETE FROM stock_movements WHERE store_id = $1",
 		"DELETE FROM stock_batches WHERE store_id = $1",
 		"DELETE FROM stock_levels WHERE store_id = $1",
+		"DELETE FROM payment_records WHERE po_id IN (SELECT id FROM purchase_orders WHERE store_id = $1)",
+		"DELETE FROM purchase_order_termins WHERE purchase_order_id IN (SELECT id FROM purchase_orders WHERE store_id = $1)",
+		"DELETE FROM po_payments WHERE purchase_order_id IN (SELECT id FROM purchase_orders WHERE store_id = $1)",
 		"DELETE FROM purchase_order_items WHERE po_id IN (SELECT id FROM purchase_orders WHERE store_id = $1)",
 		"DELETE FROM purchase_orders WHERE store_id = $1",
 		"DELETE FROM menu_item_ingredients WHERE menu_item_id IN (SELECT id FROM menu_items WHERE store_id = $1)",
 		"DELETE FROM menu_items WHERE store_id = $1",
 		"DELETE FROM restaurant_tables WHERE store_id = $1",
+		"DELETE FROM expenses WHERE category_id IN (SELECT id FROM expense_categories WHERE store_id = $1)",
+		"DELETE FROM expense_categories WHERE store_id = $1",
+		"DELETE FROM recurring_expenses WHERE store_id = $1",
+		"DELETE FROM incomes WHERE category_id IN (SELECT id FROM income_categories WHERE store_id = $1)",
+		"DELETE FROM income_categories WHERE store_id = $1",
 		"DELETE FROM products WHERE store_id = $1",
 		"DELETE FROM categories WHERE store_id = $1",
 	}

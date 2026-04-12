@@ -17,6 +17,7 @@ import {
   Clock,
   ChevronDown,
   ChevronUp,
+  Loader2,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { activityLogsApi, ActivityLog } from '@/lib/api/activity-logs';
