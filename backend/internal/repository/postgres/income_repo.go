@@ -21,8 +21,12 @@ func NewIncomeRepo(db *sqlx.DB) *IncomeRepo { return &IncomeRepo{db: db} }
 
 // ─── Categories ───────────────────────────────────────────────────────────────
 
-func (r *IncomeRepo) ListCategories(ctx context.Context) ([]*domain.IncomeCategory, error) {
-	const q = `SELECT id, name, description, created_at FROM income_categories ORDER BY name ASC`
+func (r *IncomeRepo) ListCategories(ctx context.Context, includeDeleted bool) ([]*domain.IncomeCategory, error) {
+	q := `SELECT id, name, description, is_active, created_at, updated_at FROM income_categories`
+	if !includeDeleted {
+		q += ` WHERE deleted_at IS NULL AND is_active = true`
+	}
+	q += ` ORDER BY name ASC`
 	var cats []*domain.IncomeCategory
 	if err := r.db.SelectContext(ctx, &cats, q); err != nil {
 		return nil, fmt.Errorf("IncomeRepo.ListCategories: %w", err)
@@ -34,12 +38,55 @@ func (r *IncomeRepo) CreateCategory(ctx context.Context, cat *domain.IncomeCateg
 	const q = `
 		INSERT INTO income_categories (name, description)
 		VALUES ($1, $2)
-		RETURNING id, name, description, created_at`
+		RETURNING id, name, description, is_active, created_at, updated_at`
 	row := &domain.IncomeCategory{}
 	if err := r.db.QueryRowxContext(ctx, q, cat.Name, cat.Description).StructScan(row); err != nil {
 		return nil, fmt.Errorf("IncomeRepo.CreateCategory: %w", err)
 	}
 	return row, nil
+}
+
+func (r *IncomeRepo) GetCategoryByID(ctx context.Context, id string) (*domain.IncomeCategory, error) {
+	const q = `SELECT id, name, description, is_active, created_at, updated_at FROM income_categories WHERE id = $1`
+	row := &domain.IncomeCategory{}
+	if err := r.db.QueryRowxContext(ctx, q, id).StructScan(row); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("IncomeRepo.GetCategoryByID: %w", err)
+	}
+	return row, nil
+}
+
+func (r *IncomeRepo) UpdateCategory(ctx context.Context, id string, name, desc string, isActive bool) (*domain.IncomeCategory, error) {
+	const q = `
+		UPDATE income_categories
+		SET name = $1, description = $2, is_active = $3, updated_at = NOW()
+		WHERE id = $4 AND deleted_at IS NULL
+		RETURNING id, name, description, is_active, created_at, updated_at`
+	row := &domain.IncomeCategory{}
+	if err := r.db.QueryRowxContext(ctx, q, name, desc, isActive, id).StructScan(row); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("IncomeRepo.UpdateCategory: %w", err)
+	}
+	return row, nil
+}
+
+func (r *IncomeRepo) SoftDeleteCategory(ctx context.Context, id string) error {
+	const q = `
+		UPDATE income_categories
+		SET deleted_at = NOW(), is_active = false, updated_at = NOW()
+		WHERE id = $1 AND deleted_at IS NULL`
+	res, err := r.db.ExecContext(ctx, q, id)
+	if err != nil {
+		return fmt.Errorf("IncomeRepo.SoftDeleteCategory: %w", err)
+	}
+	if n, _ := res.RowsAffected(); n == 0 {
+		return fmt.Errorf("category not found or already deleted")
+	}
+	return nil
 }
 
 // ─── Incomes ──────────────────────────────────────────────────────────────────

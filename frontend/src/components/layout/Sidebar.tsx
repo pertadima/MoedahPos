@@ -206,6 +206,18 @@ const baseGroups: NavGroup[] = [
     items: [
       { href: '/stores', icon: Store, label: 'Toko', adminOnly: true },
       { href: '/users', icon: UserCog, label: 'Pengguna', adminOnly: true },
+      {
+        href: '/settings/income-categories',
+        icon: Tag,
+        label: 'Kategori Pemasukan',
+        adminOnly: true,
+      },
+      {
+        href: '/settings/expense-categories',
+        icon: Tag,
+        label: 'Kategori Pengeluaran',
+        adminOnly: true,
+      },
     ],
   },
 ];

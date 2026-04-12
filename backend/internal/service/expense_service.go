@@ -24,8 +24,8 @@ func NewExpenseService(expenseRepo *postgres.ExpenseRepo, activitySvc *ActivityL
 
 // ── Categories ────────────────────────────────────────────────────────────────
 
-func (s *ExpenseService) ListCategories(ctx context.Context) ([]dto.ExpenseCategoryResponse, error) {
-	cats, err := s.expenseRepo.ListCategories(ctx)
+func (s *ExpenseService) ListCategories(ctx context.Context, includeDeleted bool) ([]dto.ExpenseCategoryResponse, error) {
+	cats, err := s.expenseRepo.ListCategories(ctx, includeDeleted)
 	if err != nil {
 		return nil, fmt.Errorf("listing expense categories: %w", err)
 	}
@@ -36,7 +36,9 @@ func (s *ExpenseService) ListCategories(ctx context.Context) ([]dto.ExpenseCateg
 			ID:          c.ID,
 			Name:        c.Name,
 			Description: c.Description,
+			IsActive:    c.IsActive,
 			CreatedAt:   c.CreatedAt.Format(time.RFC3339),
+			UpdatedAt:   c.UpdatedAt.Format(time.RFC3339),
 		})
 	}
 	return resp, nil
@@ -54,8 +56,32 @@ func (s *ExpenseService) CreateCategory(ctx context.Context, req *dto.CreateExpe
 		ID:          c.ID,
 		Name:        c.Name,
 		Description: c.Description,
+		IsActive:    c.IsActive,
 		CreatedAt:   c.CreatedAt.Format(time.RFC3339),
+		UpdatedAt:   c.UpdatedAt.Format(time.RFC3339),
 	}, nil
+}
+
+func (s *ExpenseService) UpdateCategory(ctx context.Context, id string, req *dto.UpdateExpenseCategoryRequest) (*dto.ExpenseCategoryResponse, error) {
+	c, err := s.expenseRepo.UpdateCategory(ctx, id, req.Name, req.Description, req.IsActive)
+	if err != nil {
+		return nil, fmt.Errorf("updating expense category: %w", err)
+	}
+	if c == nil {
+		return nil, fmt.Errorf("expense category not found")
+	}
+	return &dto.ExpenseCategoryResponse{
+		ID:          c.ID,
+		Name:        c.Name,
+		Description: c.Description,
+		IsActive:    c.IsActive,
+		CreatedAt:   c.CreatedAt.Format(time.RFC3339),
+		UpdatedAt:   c.UpdatedAt.Format(time.RFC3339),
+	}, nil
+}
+
+func (s *ExpenseService) SoftDeleteCategory(ctx context.Context, id string) error {
+	return s.expenseRepo.SoftDeleteCategory(ctx, id)
 }
 
 // ── Expenses ──────────────────────────────────────────────────────────────────

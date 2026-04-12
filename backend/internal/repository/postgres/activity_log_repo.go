@@ -41,28 +41,28 @@ func (r *ActivityLogRepo) FindAll(ctx context.Context, storeID string, filter dt
 	// If storeID is provided, filter by it. BUT global auth events might have NULL store_id.
 	// However, usually we view logs within a store context.
 	if storeID != "" {
-		where = append(where, "(store_id = :store_id OR store_id IS NULL)")
+		where = append(where, "(al.store_id = :store_id OR al.store_id IS NULL)")
 		args["store_id"] = storeID
 	}
 
 	if filter.UserID != "" {
-		where = append(where, "user_id = :user_id")
+		where = append(where, "al.user_id = :user_id")
 		args["user_id"] = filter.UserID
 	}
 	if filter.Module != "" {
-		where = append(where, "module = :module")
+		where = append(where, "al.module = :module")
 		args["module"] = filter.Module
 	}
 	if filter.ActionType != "" {
-		where = append(where, "action_type = :action_type")
+		where = append(where, "al.action_type = :action_type")
 		args["action_type"] = filter.ActionType
 	}
 	if filter.StartDate != "" {
-		where = append(where, "created_at >= :start_date")
+		where = append(where, "al.created_at >= :start_date")
 		args["start_date"] = filter.StartDate
 	}
 	if filter.EndDate != "" {
-		where = append(where, "created_at <= :end_date")
+		where = append(where, "al.created_at <= :end_date")
 		args["end_date"] = filter.EndDate
 	}
 
@@ -70,7 +70,7 @@ func (r *ActivityLogRepo) FindAll(ctx context.Context, storeID string, filter dt
 
 	// Count total
 	var total int
-	countQuery := fmt.Sprintf("SELECT COUNT(*) FROM activity_logs WHERE %s", whereClause)
+	countQuery := fmt.Sprintf("SELECT COUNT(*) FROM activity_logs al WHERE %s", whereClause)
 	nstmt, err := r.db.PrepareNamedContext(ctx, countQuery)
 	if err != nil {
 		return nil, 0, fmt.Errorf("preparing count query: %w", err)

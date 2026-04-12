@@ -19,8 +19,12 @@ func NewExpenseRepo(db *sqlx.DB) *ExpenseRepo { return &ExpenseRepo{db: db} }
 
 // ── Categories ────────────────────────────────────────────────────────────────
 
-func (r *ExpenseRepo) ListCategories(ctx context.Context) ([]*domain.ExpenseCategory, error) {
-	const q = `SELECT id, name, description, created_at FROM expense_categories ORDER BY name ASC`
+func (r *ExpenseRepo) ListCategories(ctx context.Context, includeDeleted bool) ([]*domain.ExpenseCategory, error) {
+	q := `SELECT id, name, description, is_active, created_at, updated_at FROM expense_categories`
+	if !includeDeleted {
+		q += ` WHERE deleted_at IS NULL AND is_active = true`
+	}
+	q += ` ORDER BY name ASC`
 	var rows []*domain.ExpenseCategory
 	if err := r.db.SelectContext(ctx, &rows, q); err != nil {
 		return nil, fmt.Errorf("ExpenseRepo.ListCategories: %w", err)
@@ -32,7 +36,7 @@ func (r *ExpenseRepo) CreateCategory(ctx context.Context, c *domain.ExpenseCateg
 	const q = `
 		INSERT INTO expense_categories (name, description)
 		VALUES ($1, $2)
-		RETURNING id, name, description, created_at`
+		RETURNING id, name, description, is_active, created_at, updated_at`
 	row := &domain.ExpenseCategory{}
 	if err := r.db.QueryRowxContext(ctx, q, c.Name, c.Description).StructScan(row); err != nil {
 		return nil, fmt.Errorf("ExpenseRepo.CreateCategory: %w", err)
@@ -41,7 +45,7 @@ func (r *ExpenseRepo) CreateCategory(ctx context.Context, c *domain.ExpenseCateg
 }
 
 func (r *ExpenseRepo) GetCategoryByID(ctx context.Context, id string) (*domain.ExpenseCategory, error) {
-	const q = `SELECT id, name, description, created_at FROM expense_categories WHERE id = $1`
+	const q = `SELECT id, name, description, is_active, created_at, updated_at FROM expense_categories WHERE id = $1`
 	row := &domain.ExpenseCategory{}
 	if err := r.db.QueryRowxContext(ctx, q, id).StructScan(row); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -50,6 +54,37 @@ func (r *ExpenseRepo) GetCategoryByID(ctx context.Context, id string) (*domain.E
 		return nil, fmt.Errorf("ExpenseRepo.GetCategoryByID: %w", err)
 	}
 	return row, nil
+}
+
+func (r *ExpenseRepo) UpdateCategory(ctx context.Context, id string, name, desc string, isActive bool) (*domain.ExpenseCategory, error) {
+	const q = `
+		UPDATE expense_categories
+		SET name = $1, description = $2, is_active = $3, updated_at = NOW()
+		WHERE id = $4 AND deleted_at IS NULL
+		RETURNING id, name, description, is_active, created_at, updated_at`
+	row := &domain.ExpenseCategory{}
+	if err := r.db.QueryRowxContext(ctx, q, name, desc, isActive, id).StructScan(row); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil // not found or deleted
+		}
+		return nil, fmt.Errorf("ExpenseRepo.UpdateCategory: %w", err)
+	}
+	return row, nil
+}
+
+func (r *ExpenseRepo) SoftDeleteCategory(ctx context.Context, id string) error {
+	const q = `
+		UPDATE expense_categories
+		SET deleted_at = NOW(), is_active = false, updated_at = NOW()
+		WHERE id = $1 AND deleted_at IS NULL`
+	res, err := r.db.ExecContext(ctx, q, id)
+	if err != nil {
+		return fmt.Errorf("ExpenseRepo.SoftDeleteCategory: %w", err)
+	}
+	if n, _ := res.RowsAffected(); n == 0 {
+		return fmt.Errorf("category not found or already deleted")
+	}
+	return nil
 }
 
 // ── Expenses ──────────────────────────────────────────────────────────────────

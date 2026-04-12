@@ -21,6 +21,16 @@ type CreateExpenseCategoryRequest struct {
 	Description string `json:"description"`
 }
 
+type UpdateExpenseCategoryRequest struct {
+	Name        string `json:"name" validate:"required"`
+	Description string `json:"description"`
+	IsActive    bool   `json:"is_active"`
+}
+
+type ExpenseCategoryListFilter struct {
+	IncludeDeleted bool `query:"include_deleted"`
+}
+
 type ExpenseListFilter struct {
 	PaginationQuery
 	StoreID    string `json:"-"` // injected by middleware
@@ -47,7 +57,9 @@ type ExpenseCategoryResponse struct {
 	ID          string `json:"id"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
+	IsActive    bool   `json:"is_active"`
 	CreatedAt   string `json:"created_at"`
+	UpdatedAt   string `json:"updated_at"`
 }
 
 type UpdateExpenseStatusRequest struct {

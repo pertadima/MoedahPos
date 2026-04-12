@@ -17,8 +17,11 @@ var ErrIncomeNotFound = errors.New("income not found")
 
 // incomeRepo is the minimal interface the IncomeService needs.
 type incomeRepo interface {
-	ListCategories(ctx context.Context) ([]*domain.IncomeCategory, error)
+	ListCategories(ctx context.Context, includeDeleted bool) ([]*domain.IncomeCategory, error)
+	GetCategoryByID(ctx context.Context, id string) (*domain.IncomeCategory, error)
 	CreateCategory(ctx context.Context, cat *domain.IncomeCategory) (*domain.IncomeCategory, error)
+	UpdateCategory(ctx context.Context, id string, name, desc string, isActive bool) (*domain.IncomeCategory, error)
+	SoftDeleteCategory(ctx context.Context, id string) error
 	Create(ctx context.Context, inc *domain.Income) (*domain.Income, error)
 	FindAll(ctx context.Context, f dto.IncomeListFilter) ([]*domain.Income, int, error)
 	FindByID(ctx context.Context, id string) (*domain.Income, error)
@@ -39,8 +42,8 @@ func NewIncomeService(repo incomeRepo, activitySvc *ActivityLogService, log zero
 
 // ── Categories ────────────────────────────────────────────────────────────────
 
-func (s *IncomeService) ListCategories(ctx context.Context) ([]*dto.IncomeCategoryResponse, error) {
-	cats, err := s.repo.ListCategories(ctx)
+func (s *IncomeService) ListCategories(ctx context.Context, includeDeleted bool) ([]*dto.IncomeCategoryResponse, error) {
+	cats, err := s.repo.ListCategories(ctx, includeDeleted)
 	if err != nil {
 		return nil, fmt.Errorf("listing income categories: %w", err)
 	}
@@ -61,6 +64,21 @@ func (s *IncomeService) CreateCategory(ctx context.Context, req *dto.CreateIncom
 		return nil, fmt.Errorf("creating income category: %w", err)
 	}
 	return toIncomeCategoryResponse(cat), nil
+}
+
+func (s *IncomeService) UpdateCategory(ctx context.Context, id string, req *dto.UpdateIncomeCategoryRequest) (*dto.IncomeCategoryResponse, error) {
+	cat, err := s.repo.UpdateCategory(ctx, id, req.Name, req.Description, req.IsActive)
+	if err != nil {
+		return nil, fmt.Errorf("updating income category: %w", err)
+	}
+	if cat == nil {
+		return nil, fmt.Errorf("income category not found")
+	}
+	return toIncomeCategoryResponse(cat), nil
+}
+
+func (s *IncomeService) SoftDeleteCategory(ctx context.Context, id string) error {
+	return s.repo.SoftDeleteCategory(ctx, id)
 }
 
 // ── Incomes ───────────────────────────────────────────────────────────────────
@@ -205,7 +223,9 @@ func toIncomeCategoryResponse(c *domain.IncomeCategory) *dto.IncomeCategoryRespo
 		ID:          c.ID,
 		Name:        c.Name,
 		Description: c.Description,
+		IsActive:    c.IsActive,
 		CreatedAt:   c.CreatedAt.Format(time.RFC3339),
+		UpdatedAt:   c.UpdatedAt.Format(time.RFC3339),
 	}
 }
 
