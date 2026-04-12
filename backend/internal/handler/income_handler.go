@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/rs/zerolog"
@@ -31,7 +32,8 @@ func NewIncomeHandler(incomeSvc *service.IncomeService, validate *validator.Vali
 
 // GET /income-categories
 func (h *IncomeHandler) ListCategories(w http.ResponseWriter, r *http.Request) {
-	cats, err := h.incomeSvc.ListCategories(r.Context())
+	includeDeleted, _ := strconv.ParseBool(r.URL.Query().Get("include_deleted"))
+	cats, err := h.incomeSvc.ListCategories(r.Context(), includeDeleted)
 	if err != nil {
 		h.log.Error().Err(err).Msg("list income categories failed")
 		response.InternalError(w)
@@ -58,6 +60,47 @@ func (h *IncomeHandler) CreateCategory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	response.Created(w, cat)
+}
+
+// PUT /income-categories/:id
+func (h *IncomeHandler) UpdateCategory(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	var req dto.UpdateIncomeCategoryRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		response.Error(w, http.StatusBadRequest, "Invalid request payload")
+		return
+	}
+	if errs := h.validate.ValidateStruct(req); errs != nil {
+		response.ValidationError(w, errs)
+		return
+	}
+
+	cat, err := h.incomeSvc.UpdateCategory(r.Context(), id, &req)
+	if err != nil {
+		h.log.Error().Err(err).Msg("update income category failed")
+		if strings.Contains(err.Error(), "not found") {
+			response.NotFound(w, "Category")
+			return
+		}
+		response.InternalError(w)
+		return
+	}
+	response.Success(w, cat)
+}
+
+// DELETE /income-categories/:id
+func (h *IncomeHandler) DeleteCategory(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	if err := h.incomeSvc.SoftDeleteCategory(r.Context(), id); err != nil {
+		h.log.Error().Err(err).Msg("delete income category failed")
+		if strings.Contains(err.Error(), "not found") {
+			response.NotFound(w, "Category")
+			return
+		}
+		response.InternalError(w)
+		return
+	}
+	response.JSON(w, http.StatusOK, map[string]interface{}{"success": true, "message": "Category deleted"})
 }
 
 // ── Incomes ───────────────────────────────────────────────────────────────────

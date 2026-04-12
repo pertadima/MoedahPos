@@ -26,15 +26,15 @@ pages.forEach(p => {
   const paddingMatch = content.match(/padding:\s*['"]?([^'"}]+)['"]?/);
   const classMatch = content.match(/className="([^"]*p-[^"]*)"/);
   const titleMatch = content.match(/<h1[^>]*>(.*?)<\/h1>/);
-  
+
   const h1Content = titleMatch ? titleMatch[1].trim() : 'NO H1';
   let padding = 'NONE';
   if (classMatch) {
-     padding = classMatch[1];
+    padding = classMatch[1];
   } else if (paddingMatch) {
-     padding = paddingMatch[1];
+    padding = paddingMatch[1];
   }
-  
+
   console.log(`\nFile: ${p}`);
   console.log(`Padding/Class: ${padding}`);
   console.log(`Title: ${h1Content.substring(0, 80)}`);

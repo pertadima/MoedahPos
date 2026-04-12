@@ -30,7 +30,8 @@ func NewExpenseHandler(expenseSvc *service.ExpenseService, validate *validator.V
 // ── Categories ────────────────────────────────────────────────────────────────
 
 func (h *ExpenseHandler) ListCategories(w http.ResponseWriter, r *http.Request) {
-	cats, err := h.expenseSvc.ListCategories(r.Context())
+	includeDeleted, _ := strconv.ParseBool(r.URL.Query().Get("include_deleted"))
+	cats, err := h.expenseSvc.ListCategories(r.Context(), includeDeleted)
 	if err != nil {
 		h.log.Error().Err(err).Msg("list expense categories failed")
 		response.InternalError(w)
@@ -57,6 +58,45 @@ func (h *ExpenseHandler) CreateCategory(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	response.Created(w, cat)
+}
+
+func (h *ExpenseHandler) UpdateCategory(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	var req dto.UpdateExpenseCategoryRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		response.Error(w, http.StatusBadRequest, "Invalid request payload")
+		return
+	}
+	if errs := h.validate.ValidateStruct(req); errs != nil {
+		response.ValidationError(w, errs)
+		return
+	}
+
+	cat, err := h.expenseSvc.UpdateCategory(r.Context(), id, &req)
+	if err != nil {
+		h.log.Error().Err(err).Msg("update expense category failed")
+		if strings.Contains(err.Error(), "not found") {
+			response.NotFound(w, "Category")
+			return
+		}
+		response.InternalError(w)
+		return
+	}
+	response.Success(w, cat)
+}
+
+func (h *ExpenseHandler) DeleteCategory(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	if err := h.expenseSvc.SoftDeleteCategory(r.Context(), id); err != nil {
+		h.log.Error().Err(err).Msg("delete expense category failed")
+		if strings.Contains(err.Error(), "not found") {
+			response.NotFound(w, "Category")
+			return
+		}
+		response.InternalError(w)
+		return
+	}
+	response.JSON(w, http.StatusOK, map[string]interface{}{"success": true, "message": "Category deleted"})
 }
 
 // ── Expenses ──────────────────────────────────────────────────────────────────

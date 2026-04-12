@@ -102,14 +102,26 @@ func New(deps *Dependencies) http.Handler { //nolint:funlen // route wiring is i
 				r.Delete("/{supplierId}", withPerm(deps, "suppliers.delete", deps.SupplierHandler.Delete))
 			})
 
+			// ── Categories ────────────────────────────────────────────────────────
+			// GET accessible to all authenticated, others require SuperAdmin
 			r.Route("/expense-categories", func(r chi.Router) {
 				r.Get("/", deps.ExpenseHandler.ListCategories)
-				r.Post("/", deps.ExpenseHandler.CreateCategory)
+				r.Group(func(r chi.Router) {
+					r.Use(middleware.RequireSuperAdmin(deps.DB))
+					r.Post("/", deps.ExpenseHandler.CreateCategory)
+					r.Put("/{id}", deps.ExpenseHandler.UpdateCategory)
+					r.Delete("/{id}", deps.ExpenseHandler.DeleteCategory)
+				})
 			})
 
 			r.Route("/income-categories", func(r chi.Router) {
 				r.Get("/", deps.IncomeHandler.ListCategories)
-				r.Post("/", deps.IncomeHandler.CreateCategory)
+				r.Group(func(r chi.Router) {
+					r.Use(middleware.RequireSuperAdmin(deps.DB))
+					r.Post("/", deps.IncomeHandler.CreateCategory)
+					r.Put("/{id}", deps.IncomeHandler.UpdateCategory)
+					r.Delete("/{id}", deps.IncomeHandler.DeleteCategory)
+				})
 			})
 
 			// ── Admin: User & Role management ─────────────────────────────────

@@ -4,10 +4,13 @@ import "time"
 
 // IncomeCategory is a classification for non-POS cash inflows.
 type IncomeCategory struct {
-	ID          string    `db:"id"`
-	Name        string    `db:"name"`
-	Description *string   `db:"description"`
-	CreatedAt   time.Time `db:"created_at"`
+	ID          string     `db:"id"`
+	Name        string     `db:"name"`
+	Description *string    `db:"description"`
+	IsActive    bool       `db:"is_active"`
+	CreatedAt   time.Time  `db:"created_at"`
+	UpdatedAt   time.Time  `db:"updated_at"`
+	DeletedAt   *time.Time `db:"deleted_at"`
 }
 
 // Income records a single non-POS cash inflow for a store.

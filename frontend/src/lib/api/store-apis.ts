@@ -252,8 +252,14 @@ export const rolesApi = {
 };
 
 export const expensesApi = {
-  listCategories: () => api.get<any>('/expense-categories'),
+  listCategories: (params?: { include_deleted?: boolean }) => {
+    const q = new URLSearchParams();
+    if (params?.include_deleted) q.set('include_deleted', 'true');
+    return api.get<any>(`/expense-categories?${q}`);
+  },
   createCategory: (body: object) => api.post<any>('/expense-categories', body),
+  updateCategory: (id: string, body: object) => api.put<any>(`/expense-categories/${id}`, body),
+  deleteCategory: (id: string) => api.delete<any>(`/expense-categories/${id}`),
   list: (
     storeId: string,
     params?: {
@@ -300,8 +306,14 @@ export const recurringExpensesApi = {
 };
 
 export const incomesApi = {
-  listCategories: () => api.get<any>('/income-categories'),
+  listCategories: (params?: { include_deleted?: boolean }) => {
+    const q = new URLSearchParams();
+    if (params?.include_deleted) q.set('include_deleted', 'true');
+    return api.get<any>(`/income-categories?${q}`);
+  },
   createCategory: (body: object) => api.post<any>('/income-categories', body),
+  updateCategory: (id: string, body: object) => api.put<any>(`/income-categories/${id}`, body),
+  deleteCategory: (id: string) => api.delete<any>(`/income-categories/${id}`),
   list: (
     storeId: string,
     params?: {
