@@ -25,27 +25,30 @@ var (
 
 // AuthService implements authentication business logic.
 type AuthService struct {
-	userRepo   repository.UserRepository
-	tokenRepo  repository.RefreshTokenRepository
-	jwtMgr     *jwt.Manager
-	bcryptCost int
-	log        zerolog.Logger
+	userRepo    repository.UserRepository
+	tokenRepo   repository.RefreshTokenRepository
+	activitySvc *ActivityLogService
+	jwtMgr      *jwt.Manager
+	bcryptCost  int
+	log         zerolog.Logger
 }
 
 // NewAuthService creates a new AuthService.
 func NewAuthService(
 	userRepo repository.UserRepository,
 	tokenRepo repository.RefreshTokenRepository,
+	activitySvc *ActivityLogService,
 	jwtMgr *jwt.Manager,
 	bcryptCost int,
 	log zerolog.Logger,
 ) *AuthService {
 	return &AuthService{
-		userRepo:   userRepo,
-		tokenRepo:  tokenRepo,
-		jwtMgr:     jwtMgr,
-		bcryptCost: bcryptCost,
-		log:        log,
+		userRepo:    userRepo,
+		tokenRepo:   tokenRepo,
+		activitySvc: activitySvc,
+		jwtMgr:      jwtMgr,
+		bcryptCost:  bcryptCost,
+		log:         log,
 	}
 }
 
@@ -126,6 +129,10 @@ func (s *AuthService) Login(ctx context.Context, req *dto.LoginRequest) (*dto.Lo
 
 	s.log.Info().Str("user_id", user.ID).Msg("user logged in")
 
+	s.activitySvc.LogActivity(ctx, user.ID, "", domain.ActionAuthLogin, domain.ModuleAuth, "", map[string]interface{}{
+		"email": user.Email,
+	})
+
 	return &dto.LoginResponse{
 		AccessToken:  accessToken,
 		RefreshToken: rawRefresh,
@@ -183,6 +190,9 @@ func (s *AuthService) Logout(ctx context.Context, userID string) error {
 		return fmt.Errorf("revoking tokens: %w", err)
 	}
 	s.log.Info().Str("user_id", userID).Msg("user logged out")
+
+	s.activitySvc.LogActivity(ctx, userID, "", domain.ActionAuthLogout, domain.ModuleAuth, "", nil)
+
 	return nil
 }
 

@@ -139,7 +139,8 @@ type TransactionService struct {
 	productRepo  repository.ProductRepository
 	stockRepo    repository.StockRepository
 	menuItemRepo repository.MenuItemRepository
-	batchSvc     *BatchStockService // FIFO batch deduction
+	batchSvc     *BatchStockService // FIFO deduction
+	activitySvc  *ActivityLogService
 	log          zerolog.Logger
 }
 
@@ -149,9 +150,18 @@ func NewTransactionService(
 	stockRepo repository.StockRepository,
 	menuItemRepo repository.MenuItemRepository,
 	batchSvc *BatchStockService,
+	activitySvc *ActivityLogService,
 	log zerolog.Logger,
 ) *TransactionService {
-	return &TransactionService{txnRepo: txnRepo, productRepo: productRepo, stockRepo: stockRepo, menuItemRepo: menuItemRepo, batchSvc: batchSvc, log: log}
+	return &TransactionService{
+		txnRepo:      txnRepo,
+		productRepo:  productRepo,
+		stockRepo:    stockRepo,
+		menuItemRepo: menuItemRepo,
+		batchSvc:     batchSvc,
+		activitySvc:  activitySvc,
+		log:          log,
+	}
 }
 
 // Checkout processes a sale: validates stock, calculates totals, persists atomically.
@@ -365,6 +375,41 @@ func (s *TransactionService) Checkout(ctx context.Context, storeID string, req *
 	}
 
 	s.log.Info().Str("txn_id", txn.ID).Float64("total", total).Msg("transaction completed")
+
+	// Log Activity
+	metadata := map[string]interface{}{
+		"total_amount":   total,
+		"payment_method": req.PaymentMethod,
+		"item_count":     len(req.Items),
+	}
+	if req.CartDiscountValue > 0 {
+		metadata["cart_discount"] = map[string]interface{}{
+			"type":  req.CartDiscountType,
+			"value": req.CartDiscountValue,
+		}
+	}
+	s.activitySvc.LogActivity(ctx, cashierID, storeID, domain.ActionTransactionCreate, domain.ModuleTransaction, txn.ID, metadata)
+
+	// Log specific discount/override actions
+	if req.CartDiscountValue > 0 {
+		s.activitySvc.LogActivity(ctx, cashierID, storeID, domain.ActionDiscountCart, domain.ModuleDiscount, txn.ID, metadata["cart_discount"])
+	}
+
+	for _, item := range req.Items {
+		if item.DiscountType != "" && item.DiscountValue > 0 {
+			action := domain.ActionDiscountItem
+			if item.DiscountType == "OVERRIDE" {
+				action = domain.ActionPriceOverride
+			}
+			s.activitySvc.LogActivity(ctx, cashierID, storeID, action, domain.ModuleDiscount, txn.ID, map[string]interface{}{
+				"product_id":     item.ProductID,
+				"menu_item_id":   item.MenuItemID,
+				"discount_type":  item.DiscountType,
+				"discount_value": item.DiscountValue,
+			})
+		}
+	}
+
 	return toTransactionResponse(txn), nil
 }
 
@@ -410,6 +455,11 @@ func (s *TransactionService) VoidTransaction(ctx context.Context, id, userID str
 		return fmt.Errorf("voiding transaction: %w", err)
 	}
 	s.log.Info().Str("txn_id", id).Str("voided_by", userID).Msg("transaction voided")
+
+	s.activitySvc.LogActivity(ctx, userID, txn.StoreID, domain.ActionTransactionCancel, domain.ModuleTransaction, id, map[string]interface{}{
+		"original_total": txn.Total,
+	})
+
 	return nil
 }
 
@@ -658,6 +708,16 @@ func (s *TransactionService) PayDraft(ctx context.Context, storeID, txnID, cashi
 	}
 
 	s.log.Info().Str("txn_id", txnID).Float64("total", existing.Total).Msg("draft paid")
+
+	// Log Activity
+	metadata := map[string]interface{}{
+		"total_amount":   existing.Total,
+		"payment_method": req.PaymentMethod,
+		"item_count":     len(existing.Items),
+		"from_draft":     true,
+	}
+	s.activitySvc.LogActivity(ctx, cashierID, storeID, domain.ActionTransactionCreate, domain.ModuleTransaction, txnID, metadata)
+
 	return toTransactionResponse(txn), nil
 }
 

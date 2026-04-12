@@ -87,15 +87,17 @@ func main() {
 	expenseRepo := postgres.NewExpenseRepo(sqlxDB)
 	stockAdjustmentRepo := postgres.NewStockAdjustmentRepo(sqlxDB)
 	incomeRepo := postgres.NewIncomeRepo(sqlxDB)
+	activityLogRepo := postgres.NewActivityLogRepo(sqlxDB)
 
 	// ── Services ──────────────────────────────────────────────────────────────
-	authSvc := service.NewAuthService(userRepo, refreshTokenRepo, jwtMgr, cfg.Bcrypt.Cost, log)
+	batchSvc := service.NewBatchStockService(batchRepo, log) // FIFO batch inventory
+	activityLogSvc := service.NewActivityLogService(activityLogRepo, log)
+	authSvc := service.NewAuthService(userRepo, refreshTokenRepo, activityLogSvc, jwtMgr, cfg.Bcrypt.Cost, log)
 	storeSvc := service.NewStoreService(storeRepo, userRepo, log)
 	priceHistorySvc := service.NewPriceHistoryService(priceHistoryRepo, log)
 	productSvc := service.NewProductService(productRepo, categoryRepo, stockRepo, priceHistorySvc, log)
 	stockSvc := service.NewStockService(stockRepo, productRepo, log)
-	batchSvc := service.NewBatchStockService(batchRepo, log) // FIFO batch inventory
-	transactionSvc := service.NewTransactionService(transactionRepo, productRepo, stockRepo, menuItemRepo, batchSvc, log)
+	transactionSvc := service.NewTransactionService(transactionRepo, productRepo, stockRepo, menuItemRepo, batchSvc, activityLogSvc, log)
 	poSvc := service.NewPurchaseOrderService(poRepo, productRepo, poPaymentRepo, priceHistorySvc, log)
 	supplierSvc := service.NewSupplierService(supplierRepo, log)
 	reportSvc := service.NewReportService(reportRepo, log)
@@ -105,7 +107,7 @@ func main() {
 	userAdminSvc := service.NewUserAdminService(userRepo, roleRepo, cfg.Bcrypt.Cost, log)
 	terminSvc := service.NewTerminService(terminRepo, paymentRecordRepo, poRepo, storeRepo, log)
 	expenseSvc := service.NewExpenseService(expenseRepo, log)
-	stockAdjustmentSvc := service.NewStockAdjustmentService(stockAdjustmentRepo)
+	stockAdjustmentSvc := service.NewStockAdjustmentService(stockAdjustmentRepo, activityLogSvc)
 	incomeSvc := service.NewIncomeService(incomeRepo, log)
 
 	// ── Handlers ──────────────────────────────────────────────────────────────
@@ -126,6 +128,7 @@ func main() {
 	expenseHandler := handler.NewExpenseHandler(expenseSvc, validate, log)
 	stockAdjustmentHandler := handler.NewStockAdjustmentHandler(stockAdjustmentSvc, validate, &log)
 	incomeHandler := handler.NewIncomeHandler(incomeSvc, validate, log)
+	activityLogHandler := handler.NewActivityLogHandler(activityLogSvc, log)
 
 	// ── Router ────────────────────────────────────────────────────────────────
 	r := router.New(&router.Dependencies{
@@ -147,6 +150,7 @@ func main() {
 		ExpenseHandler:         expenseHandler,
 		StockAdjustmentHandler: stockAdjustmentHandler,
 		IncomeHandler:          incomeHandler,
+		ActivityLogHandler:     activityLogHandler,
 		RoleStore:              roleStore,
 		DB:                     sqlxDB,
 		Log:                    log,

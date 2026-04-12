@@ -27,6 +27,7 @@ import {
   ChevronLeft,
   ChevronRight,
   ArrowDownToLine,
+  ShieldCheck,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { useTheme } from '@/lib/theme/ThemeContext';
@@ -72,7 +73,8 @@ type Permission =
   | 'users.read'
   | 'users.create'
   | 'users.update'
-  | 'users.delete';
+  | 'users.delete'
+  | 'reports.audit';
 
 type RoleName = 'superadmin' | 'admin' | 'manager' | 'cashier' | 'staff';
 
@@ -93,6 +95,7 @@ const ROLE_PERMISSIONS: Record<RoleName, Set<Permission>> = {
     'users.create',
     'users.update',
     'users.delete',
+    'reports.audit',
   ]),
   admin: new Set<Permission>([
     'products.read',
@@ -110,6 +113,7 @@ const ROLE_PERMISSIONS: Record<RoleName, Set<Permission>> = {
     'users.create',
     'users.update',
     'users.delete',
+    'reports.audit',
   ]),
   manager: new Set<Permission>([
     'products.read',
@@ -121,6 +125,7 @@ const ROLE_PERMISSIONS: Record<RoleName, Set<Permission>> = {
     'suppliers.read',
     'sales.create',
     'sales.read',
+    'reports.audit',
   ]),
   cashier: new Set<Permission>(['products.read', 'stock.read', 'sales.create', 'sales.read']),
   staff: new Set<Permission>(['products.read', 'stock.read', 'sales.read']),
@@ -188,6 +193,12 @@ const baseGroups: NavGroup[] = [
       { href: '/incomes', icon: ArrowDownToLine, label: 'Pemasukan', permission: 'reports.read' },
       { href: '/expenses', icon: Wallet, label: 'Pengeluaran', permission: 'reports.read' },
       { href: '/reports', icon: BarChart3, label: 'Laporan', permission: 'reports.read' },
+      {
+        href: '/activity-logs',
+        icon: ShieldCheck,
+        label: 'Activity Log',
+        permission: 'reports.audit',
+      },
     ],
   },
   {

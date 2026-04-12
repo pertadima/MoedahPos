@@ -51,6 +51,7 @@ type Dependencies struct {
 	ExpenseHandler         *handler.ExpenseHandler
 	StockAdjustmentHandler *handler.StockAdjustmentHandler
 	IncomeHandler          *handler.IncomeHandler
+	ActivityLogHandler     *handler.ActivityLogHandler
 
 	// Shared
 	RoleStore *rbac.RoleStore
@@ -254,6 +255,11 @@ func New(deps *Dependencies) http.Handler { //nolint:funlen // route wiring is i
 						r.Route("/adjustments", func(r chi.Router) {
 							r.Get("/", withPerm(deps, "stock.read", deps.StockAdjustmentHandler.GetHistory))
 							r.Post("/", withPerm(deps, "stock.update", deps.StockAdjustmentHandler.Create))
+						})
+
+						// Activity Logs
+						r.Route("/activity-logs", func(r chi.Router) {
+							r.Get("/", withPerm(deps, "reports.audit", deps.ActivityLogHandler.List))
 						})
 
 						// Recurring Expenses

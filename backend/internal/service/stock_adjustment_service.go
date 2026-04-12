@@ -9,11 +9,12 @@ import (
 )
 
 type StockAdjustmentService struct {
-	repo *postgres.StockAdjustmentRepo
+	repo        *postgres.StockAdjustmentRepo
+	activitySvc *ActivityLogService
 }
 
-func NewStockAdjustmentService(repo *postgres.StockAdjustmentRepo) *StockAdjustmentService {
-	return &StockAdjustmentService{repo: repo}
+func NewStockAdjustmentService(repo *postgres.StockAdjustmentRepo, activitySvc *ActivityLogService) *StockAdjustmentService {
+	return &StockAdjustmentService{repo: repo, activitySvc: activitySvc}
 }
 
 func (s *StockAdjustmentService) CreateAdjustment(ctx context.Context, storeID, userID string, input domain.CreateAdjustmentInput) error {
@@ -32,7 +33,18 @@ func (s *StockAdjustmentService) CreateAdjustment(ctx context.Context, storeID, 
 		return fmt.Errorf("notes are required for manual corrections")
 	}
 
-	return s.repo.CreateAdjustment(ctx, storeID, userID, input)
+	if err := s.repo.CreateAdjustment(ctx, storeID, userID, input); err != nil {
+		return err
+	}
+
+	s.activitySvc.LogActivity(ctx, userID, storeID, domain.ActionStockAdjustment, domain.ModuleInventory, input.ProductID, map[string]interface{}{
+		"quantity": input.Quantity,
+		"type":     input.Type, // IN / OUT
+		"reason":   input.Reason,
+		"notes":    input.Notes,
+	})
+
+	return nil
 }
 
 func (s *StockAdjustmentService) GetAdjustmentHistory(ctx context.Context, storeID string, productID *string) ([]*domain.StockAdjustment, error) {

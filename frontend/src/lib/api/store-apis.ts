@@ -39,6 +39,7 @@ export const storesApi = {
     }
   ) => api.put<Store>(`/stores/${id}`, payload),
   softDelete: (id: string) => api.delete(`/stores/${id}`),
+  listMembers: (storeId: string) => api.get<PaginatedData<any>>(`/stores/${storeId}/members`),
 };
 
 export const categoriesApi = {
