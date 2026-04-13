@@ -1380,7 +1380,7 @@ export default function POSPage() {
                     <button
                       className="btn btn-primary btn-sm"
                       style={{
-                        marginTop: 8,
+                        marginTop: 'auto',
                         width: '100%',
                         justifyContent: 'center',
                         fontSize: '0.75rem',
@@ -1460,7 +1460,7 @@ export default function POSPage() {
                     <button
                       className="btn btn-primary btn-sm"
                       style={{
-                        marginTop: 8,
+                        marginTop: 'auto',
                         width: '100%',
                         justifyContent: 'center',
                         fontSize: '0.75rem',

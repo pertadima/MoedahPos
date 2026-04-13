@@ -401,10 +401,10 @@ export default function Sidebar() {
                     title={isCollapsed ? label : undefined}
                     style={{
                       justifyContent: isCollapsed ? 'center' : 'flex-start',
-                      padding: isCollapsed ? '10px 8px' : '9px 12px',
+                      padding: isCollapsed ? '12px 0' : undefined,
                     }}
                   >
-                    <Icon size={16} strokeWidth={active ? 2.2 : 1.75} />
+                    <Icon size={14} strokeWidth={active ? 2.5 : 2} />
                     {!isCollapsed && (
                       <span
                         style={{

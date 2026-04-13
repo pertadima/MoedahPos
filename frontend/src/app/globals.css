@@ -233,7 +233,7 @@ body {
   .card {
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: 16px;
+    border-radius: 8px;
     box-shadow: var(--shadow-sm);
     transition:
       box-shadow 0.2s ease,
@@ -245,7 +245,7 @@ body {
   .card-elevated {
     background: var(--bg-elevated);
     border: 1px solid var(--border);
-    border-radius: 16px;
+    border-radius: 8px;
     box-shadow: var(--shadow-md);
   }
 }
@@ -254,7 +254,7 @@ body {
 @layer components {
   .btn {
     @apply inline-flex items-center justify-center gap-1.5
-           rounded-xl font-medium text-sm
+           rounded-lg font-medium text-sm
            cursor-pointer select-none whitespace-nowrap;
     padding: 0.5rem 1rem;
     border: none;
@@ -343,24 +343,24 @@ body {
   .btn-lg {
     padding: 0.75rem 1.5rem;
     font-size: 1rem;
-    border-radius: 14px;
+    border-radius: 8px;
   }
   .btn-sm {
     padding: 0.3rem 0.7rem;
     font-size: 0.8rem;
-    border-radius: 8px;
+    border-radius: 6px;
   }
   .btn-xs {
     padding: 0.2rem 0.5rem;
     font-size: 0.75rem;
-    border-radius: 6px;
+    border-radius: 4px;
   }
 }
 
 /* ── 9. Inputs ────────────────────────────────────────────────────────────── */
 @layer components {
   .input {
-    @apply w-full rounded-xl text-sm outline-none;
+    @apply w-full rounded-lg text-sm outline-none;
     background: var(--bg-card);
     border: 1px solid var(--border-md);
     color: var(--text-1);
@@ -538,21 +538,21 @@ body {
 
   /* Section label */
   .nav-section {
-    font-size: 0.62rem;
+    font-size: 0.65rem;
     font-weight: 700;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--text-3);
-    padding: 12px 10px 4px;
+    padding: 18px 14px 6px;
   }
 
   /* Nav item */
   .nav-item {
-    @apply flex items-center gap-2.5 rounded-xl
+    @apply flex items-center gap-2.5 rounded-lg
            font-medium text-sm
            cursor-pointer no-underline;
     color: var(--text-2);
-    padding: 9px 12px;
+    padding: 12px 14px;
     transition:
       background-color 0.15s ease,
       color 0.12s ease;
@@ -625,7 +625,7 @@ body {
 .stat-card {
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: 16px;
+  border-radius: 8px;
   padding: 20px 22px;
   box-shadow: var(--shadow-sm);
   @apply flex items-start gap-4;
@@ -638,7 +638,7 @@ body {
   transform: translateY(-1px);
 }
 .stat-icon {
-  @apply flex items-center justify-center flex-shrink-0 rounded-2xl;
+  @apply flex items-center justify-center flex-shrink-0 rounded-lg;
   width: 46px;
   height: 46px;
 }
@@ -743,7 +743,7 @@ body {
 .product-card {
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: 14px;
+  border-radius: 8px;
   padding: 14px 12px;
   cursor: pointer;
   box-shadow: var(--shadow-xs);
@@ -773,7 +773,7 @@ body {
 }
 
 .product-icon {
-  @apply flex items-center justify-center rounded-xl;
+  @apply flex items-center justify-center rounded-lg;
   width: 40px;
   height: 40px;
   font-size: 1.3rem;
@@ -940,7 +940,7 @@ body {
 .modal-box {
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: 20px;
+  border-radius: 12px;
   padding: 28px;
   @apply w-full overflow-y-auto;
   max-width: 420px;
