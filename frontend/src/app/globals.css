@@ -419,15 +419,21 @@ body {
   flex-shrink: 0;
 }
 .stat-val {
-  font-size: 1.5rem;
+  font-size: 1.25rem;
   font-weight: 700;
   color: var(--text-1);
   line-height: 1.2;
   margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .stat-label {
-  font-size: 0.8rem;
-  color: var(--text-2);
+  font-size: 0.75rem;
+  color: var(--text-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .stat-change {
   font-size: 0.78rem;

@@ -263,9 +263,15 @@ export default function DashboardPage() {
             <div className="stat-icon" style={{ background: bg }}>
               <Icon size={20} style={{ color }} />
             </div>
-            <div>
-              <div className="stat-label">{label}</div>
-              <div className="stat-val" style={{ color: alert ? '#f59e0b' : undefined }}>
+            <div style={{ minWidth: 0, flex: 1 }}>
+              <div className="stat-label" title={label}>
+                {label}
+              </div>
+              <div
+                className="stat-val"
+                style={{ color: alert ? '#f59e0b' : undefined }}
+                title={value}
+              >
                 {value}
               </div>
             </div>
