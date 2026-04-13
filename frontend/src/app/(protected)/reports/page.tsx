@@ -1088,15 +1088,14 @@ export default function UnifiedReportsPage() {
                 </div>
               </div>
               <div className="card overflow-hidden">
-                <table className="tbl text-sm">
+                <table className="tbl text-sm w-full">
                   <thead>
                     <tr>
                       <th className="w-[30px]" />
-                      <th className="w-[120px]">Tanggal</th>
-                      <th className="!text-right w-[150px]">Masuk</th>
-                      <th className="!text-right w-[150px]">Keluar</th>
-                      <th className="!text-right w-[150px]">Net</th>
-                      <th>Metode Kas Masuk</th>
+                      <th>Tanggal</th>
+                      <th className="!text-right">Masuk</th>
+                      <th className="!text-right">Keluar</th>
+                      <th className="!text-right">Net</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1119,21 +1118,16 @@ export default function UnifiedReportsPage() {
                               </button>
                             </td>
                             <td className="font-bold">{formatDate(r.date)}</td>
-                            <td className="!text-right text-accent-em font-bold">
+                            <td className="!text-right text-accent-em font-bold whitespace-nowrap">
                               {formatRp(r.cash_in)}
                             </td>
-                            <td className="!text-right text-accent-rd">{formatRp(r.cash_out)}</td>
+                            <td className="!text-right text-accent-rd whitespace-nowrap">{formatRp(r.cash_out)}</td>
                             <td
-                              className={`!text-right font-black ${
+                              className={`!text-right font-black whitespace-nowrap ${
                                 r.net_cash >= 0 ? 'text-blue-500' : 'text-accent-rd'
                               }`}
                             >
                               {formatRp(r.net_cash)}
-                            </td>
-                            <td className="text-[10px] opacity-60">
-                              {Object.entries(r.cash_in_by_method)
-                                .map(([m, a]) => `${methodLabel(m)}: ${formatRp(a)}`)
-                                .join(' · ')}
                             </td>
                           </tr>
                         ];
@@ -1142,7 +1136,7 @@ export default function UnifiedReportsPage() {
                           if (isLoading) {
                             rows.push(
                               <tr key={`cf-loading-${r.date}`}>
-                                <td colSpan={6} className="text-center py-4">
+                                <td colSpan={5} className="text-center py-4">
                                   <Loader2 size={16} className="loading-spin mx-auto" />
                                 </td>
                               </tr>
@@ -1150,17 +1144,17 @@ export default function UnifiedReportsPage() {
                           } else if (details.length > 0) {
                             rows.push(
                               <tr key={`cf-detail-${r.date}`}>
-                                <td colSpan={6} className="p-0 border-y border-border">
+                                <td colSpan={5} className="p-0 border-y border-border">
                                   <div className="bg-surface-hv p-2">
                                     <table className="w-full text-xs text-left">
                                       <thead>
                                         <tr className="border-b border-border/50 text-[10px] uppercase text-3">
                                           <th className="py-1 px-2 font-semibold w-[60px]">Waktu</th>
-                                          <th className="py-1 px-2 font-semibold w-[140px]">Kategori</th>
-                                          <th className="py-1 px-2 font-semibold">Keterangan</th>
-                                          <th className="py-1 px-2 font-semibold w-[100px]">Metode</th>
-                                          <th className="py-1 px-2 font-semibold !text-right w-[120px]">Masuk</th>
-                                          <th className="py-1 px-2 font-semibold !text-right w-[120px]">Keluar</th>
+                                          <th className="py-1 px-2 font-semibold">Kategori</th>
+                                          <th className="py-1 px-2 font-semibold w-full">Keterangan</th>
+                                          <th className="py-1 px-2 font-semibold whitespace-nowrap">Metode</th>
+                                          <th className="py-1 px-2 font-semibold !text-right whitespace-nowrap">Masuk</th>
+                                          <th className="py-1 px-2 font-semibold !text-right whitespace-nowrap">Keluar</th>
                                         </tr>
                                       </thead>
                                       <tbody className="divide-y divide-border/30">
@@ -1184,11 +1178,11 @@ export default function UnifiedReportsPage() {
                                                 <div className="font-semibold">{ent.label}</div>
                                                 {ent.notes && <div className="text-[10px] opacity-60 italic max-w-sm truncate" title={ent.notes}>{ent.notes}</div>}
                                               </td>
-                                              <td className="py-1.5 px-2 opacity-80">{methodLabel(ent.payment_method)}</td>
-                                              <td className="py-1.5 px-2 !text-right font-bold text-accent-em">
+                                              <td className="py-1.5 px-2 opacity-80 whitespace-nowrap">{methodLabel(ent.payment_method)}</td>
+                                              <td className="py-1.5 px-2 !text-right font-bold text-accent-em whitespace-nowrap">
                                                 {isIn ? `+${formatRp(ent.amount)}` : '-'}
                                               </td>
-                                              <td className="py-1.5 px-2 !text-right font-bold text-accent-rd">
+                                              <td className="py-1.5 px-2 !text-right font-bold text-accent-rd whitespace-nowrap">
                                                 {!isIn ? `-${formatRp(ent.amount)}` : '-'}
                                               </td>
                                             </tr>
@@ -1203,7 +1197,7 @@ export default function UnifiedReportsPage() {
                           } else {
                             rows.push(
                               <tr key={`cf-empty-${r.date}`}>
-                                <td colSpan={6} className="text-center py-4 text-xs opacity-50">
+                                <td colSpan={5} className="text-center py-4 text-xs opacity-50">
                                   No transaction details
                                 </td>
                               </tr>
