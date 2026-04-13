@@ -1108,9 +1108,6 @@ export default function UnifiedReportsPage() {
                         const isLoading = loadingCfDetail.has(r.date);
                         const details = cashFlowDetailByDate[r.date] || [];
 
-                        const inEntries = details.filter(d => d.type === 'SALE' || d.type === 'INCOME');
-                        const outEntries = details.filter(d => d.type === 'EXPENSE' || d.type === 'PO_PAYMENT');
-
                         const rows: React.ReactNode[] = [
                           <tr key={`${r.date}-${i}`}>
                             <td className="text-center">
@@ -1153,69 +1150,52 @@ export default function UnifiedReportsPage() {
                           } else if (details.length > 0) {
                             rows.push(
                               <tr key={`cf-detail-${r.date}`}>
-                                <td colSpan={6} className="p-0">
-                                  <div className="bg-surface overflow-hidden rounded border-y border-border">
-                                    <div className="flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-border">
-                                      {/* MASUK */}
-                                      <div className="flex-1 p-4">
-                                        <h4 className="flex items-center gap-2 font-bold mb-3 text-accent-em text-xs uppercase tracking-wider">
-                                          <TrendingUp size={14} /> Transaksi Masuk
-                                        </h4>
-                                        {inEntries.length > 0 ? (
-                                          <div className="flex flex-col gap-2">
-                                            {inEntries.map((ent, idx) => (
-                                              <div key={idx} className="flex justify-between items-center text-xs bg-surface-hv p-2 rounded">
-                                                <div>
-                                                  <div className="font-semibold">{ent.label}</div>
-                                                  <div className="flex items-center gap-2 mt-0.5 text-[9px] opacity-60">
-                                                    <span className="font-mono">{ent.timestamp.slice(11, 16)}</span>
-                                                    <span>·</span>
-                                                    <span className="uppercase">{ent.type}</span>
-                                                    <span>·</span>
-                                                    <span>{methodLabel(ent.payment_method)}</span>
-                                                  </div>
+                                <td colSpan={6} className="p-0 border-y border-border">
+                                  <div className="bg-surface-hv p-2">
+                                    <table className="w-full text-xs text-left">
+                                      <thead>
+                                        <tr className="border-b border-border/50 text-[10px] uppercase text-3">
+                                          <th className="py-1 px-2 font-semibold w-[60px]">Waktu</th>
+                                          <th className="py-1 px-2 font-semibold w-[140px]">Kategori</th>
+                                          <th className="py-1 px-2 font-semibold">Keterangan</th>
+                                          <th className="py-1 px-2 font-semibold w-[100px]">Metode</th>
+                                          <th className="py-1 px-2 font-semibold !text-right w-[120px]">Masuk</th>
+                                          <th className="py-1 px-2 font-semibold !text-right w-[120px]">Keluar</th>
+                                        </tr>
+                                      </thead>
+                                      <tbody className="divide-y divide-border/30">
+                                        {details.map((ent, idx) => {
+                                          const isIn = ent.type === 'SALE' || ent.type === 'INCOME';
+                                          const catBadge = ent.category ? (
+                                            <span className="bg-surface border border-border px-1.5 py-0.5 rounded leading-none inline-block max-w-[100px] truncate" title={ent.category}>
+                                              {ent.category}
+                                            </span>
+                                          ) : null;
+                                          return (
+                                            <tr key={idx} className="hover:bg-surface transition-colors">
+                                              <td className="py-1.5 px-2 font-mono opacity-80 whitespace-nowrap">{ent.timestamp.slice(11, 16)}</td>
+                                              <td className="py-1.5 px-2">
+                                                <div className="flex items-center gap-1.5">
+                                                  {catBadge}
+                                                  <span className="opacity-70 text-[9px] uppercase tracking-wider">{ent.type}</span>
                                                 </div>
-                                                <div className="font-bold text-accent-em">
-                                                  +{formatRp(ent.amount)}
-                                                </div>
-                                              </div>
-                                            ))}
-                                          </div>
-                                        ) : (
-                                          <div className="text-xs opacity-50 text-center py-4">Tidak ada data</div>
-                                        )}
-                                      </div>
-                                      
-                                      {/* KELUAR */}
-                                      <div className="flex-1 p-4">
-                                        <h4 className="flex items-center gap-2 font-bold mb-3 text-accent-rd text-xs uppercase tracking-wider">
-                                          <TrendingDown size={14} /> Transaksi Keluar
-                                        </h4>
-                                        {outEntries.length > 0 ? (
-                                          <div className="flex flex-col gap-2">
-                                            {outEntries.map((ent, idx) => (
-                                              <div key={idx} className="flex justify-between items-center text-xs bg-surface-hv p-2 rounded border-l-2 border-accent-rd">
-                                                <div>
-                                                  <div className="font-semibold">{ent.label}</div>
-                                                  <div className="flex items-center gap-2 mt-0.5 text-[9px] opacity-60">
-                                                    <span className="font-mono">{ent.timestamp.slice(11, 16)}</span>
-                                                    <span>·</span>
-                                                    <span className="uppercase">{ent.type}</span>
-                                                    <span>·</span>
-                                                    <span>{methodLabel(ent.payment_method)}</span>
-                                                  </div>
-                                                </div>
-                                                <div className="font-bold text-accent-rd">
-                                                  -{formatRp(ent.amount)}
-                                                </div>
-                                              </div>
-                                            ))}
-                                          </div>
-                                        ) : (
-                                          <div className="text-xs opacity-50 text-center py-4">Tidak ada data</div>
-                                        )}
-                                      </div>
-                                    </div>
+                                              </td>
+                                              <td className="py-1.5 px-2">
+                                                <div className="font-semibold">{ent.label}</div>
+                                                {ent.notes && <div className="text-[10px] opacity-60 italic max-w-sm truncate" title={ent.notes}>{ent.notes}</div>}
+                                              </td>
+                                              <td className="py-1.5 px-2 opacity-80">{methodLabel(ent.payment_method)}</td>
+                                              <td className="py-1.5 px-2 !text-right font-bold text-accent-em">
+                                                {isIn ? `+${formatRp(ent.amount)}` : '-'}
+                                              </td>
+                                              <td className="py-1.5 px-2 !text-right font-bold text-accent-rd">
+                                                {!isIn ? `-${formatRp(ent.amount)}` : '-'}
+                                              </td>
+                                            </tr>
+                                          );
+                                        })}
+                                      </tbody>
+                                    </table>
                                   </div>
                                 </td>
                               </tr>

@@ -328,6 +328,8 @@ export interface CashFlowDetailEntry {
   label: string;
   amount: number;
   payment_method: string;
+  category?: string;
+  notes?: string;
   timestamp: string;
 }
 

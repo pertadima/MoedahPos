@@ -573,6 +573,8 @@ func (r *ReportRepo) CashFlowDetail(ctx context.Context, storeID string, from, t
 			'Penjualan #' || LEFT(id::text, 8) AS label,
 			ROUND(total::numeric, 2) AS amount,
 			payment_method,
+			NULL AS category,
+			NULL AS notes,
 			TO_CHAR(created_at AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD HH24:MI:SS') AS timestamp
 		FROM transactions
 		WHERE store_id = $1 AND status = 'completed'
@@ -582,23 +584,29 @@ func (r *ReportRepo) CashFlowDetail(ctx context.Context, storeID string, from, t
 
 		SELECT
 			'INCOME' AS type,
-			COALESCE(notes, 'Pemasukan') AS label,
-			ROUND(amount::numeric, 2) AS amount,
-			payment_method,
-			TO_CHAR(created_at AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD HH24:MI:SS') AS timestamp
-		FROM incomes
-		WHERE store_id = $1 AND income_date >= $2::date AND income_date < $3::date
+			COALESCE(i.notes, 'Pemasukan') AS label,
+			ROUND(i.amount::numeric, 2) AS amount,
+			i.payment_method,
+			c.name AS category,
+			i.notes AS notes,
+			TO_CHAR(i.created_at AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD HH24:MI:SS') AS timestamp
+		FROM incomes i
+		LEFT JOIN income_categories c ON c.id = i.category_id
+		WHERE i.store_id = $1 AND i.income_date >= $2::date AND i.income_date < $3::date
 
 		UNION ALL
 
 		SELECT
 			'EXPENSE' AS type,
-			COALESCE(notes, 'Pengeluaran') AS label,
-			ROUND(amount::numeric, 2) AS amount,
+			COALESCE(e.notes, 'Pengeluaran') AS label,
+			ROUND(e.amount::numeric, 2) AS amount,
 			'cash' AS payment_method,
-			TO_CHAR(created_at AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD HH24:MI:SS') AS timestamp
-		FROM expenses
-		WHERE store_id = $1 AND payment_status = 'paid' AND expense_date >= $2::date AND expense_date < $3::date
+			c.name AS category,
+			e.notes AS notes,
+			TO_CHAR(e.created_at AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD HH24:MI:SS') AS timestamp
+		FROM expenses e
+		LEFT JOIN expense_categories c ON c.id = e.category_id
+		WHERE e.store_id = $1 AND e.payment_status = 'paid' AND e.expense_date >= $2::date AND e.expense_date < $3::date
 
 		UNION ALL
 
@@ -607,6 +615,8 @@ func (r *ReportRepo) CashFlowDetail(ctx context.Context, storeID string, from, t
 			'Pembayaran PO #' || po.po_number AS label,
 			ROUND(pp.amount::numeric, 2) AS amount,
 			'cash' AS payment_method,
+			NULL AS category,
+			pp.note AS notes,
 			TO_CHAR(pp.paid_at AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD HH24:MI:SS') AS timestamp
 		FROM po_payments pp
 		JOIN purchase_orders po ON po.id = pp.po_id
@@ -619,6 +629,8 @@ func (r *ReportRepo) CashFlowDetail(ctx context.Context, storeID string, from, t
 			'Pembayaran Termin PO #' || pot.termin_number || ' - ' || po.po_number AS label,
 			ROUND(pr.amount_paid::numeric, 2) AS amount,
 			pr.payment_method,
+			NULL AS category,
+			pr.notes AS notes,
 			TO_CHAR(pr.created_at AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD HH24:MI:SS') AS timestamp
 		FROM payment_records pr
 		JOIN purchase_order_termins pot ON pot.id = pr.termin_id

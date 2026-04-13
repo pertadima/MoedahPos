@@ -138,5 +138,7 @@ type CashFlowDetailEntry struct {
 	Label         string  `json:"label" db:"label"`
 	Amount        float64 `json:"amount" db:"amount"`
 	PaymentMethod string  `json:"payment_method" db:"payment_method"`
+	Category      *string `json:"category" db:"category"`
+	Notes         *string `json:"notes" db:"notes"`
 	Timestamp     string  `json:"timestamp" db:"timestamp"`
 }
