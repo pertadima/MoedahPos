@@ -109,12 +109,13 @@ func NewMenuItemRepo(db *sqlx.DB) *MenuItemRepo { return &MenuItemRepo{db: db} }
 func (r *MenuItemRepo) FindAllByStore(ctx context.Context, storeID string) ([]*domain.MenuItem, error) {
 	const q = `
 		SELECT mi.id, mi.store_id, mi.category_id, mi.name, mi.description,
-		       mi.sell_price, mi.tax_rate, mi.image_url, mi.is_active,
+		       mi.sell_price, mi.use_global_tax, mi.tax_percentage, mi.image_url, mi.is_active,
 		       mi.packaging_cost, mi.overhead_cost, mi.labor_cost,
 		       mi.created_at, mi.updated_at, mi.deleted_at,
-		       c.name AS category_name
+		       c.name AS category_name, s.default_tax_percentage AS store_default_tax
 		FROM menu_items mi
 		LEFT JOIN categories c ON c.id = mi.category_id AND c.deleted_at IS NULL
+		INNER JOIN stores s ON s.id = mi.store_id
 		WHERE mi.store_id = $1 AND mi.deleted_at IS NULL
 		ORDER BY mi.name ASC`
 	var items []*domain.MenuItem
@@ -143,12 +144,13 @@ func (r *MenuItemRepo) FindAllByStore(ctx context.Context, storeID string) ([]*d
 func (r *MenuItemRepo) FindByID(ctx context.Context, id string) (*domain.MenuItem, error) {
 	const q = `
 		SELECT mi.id, mi.store_id, mi.category_id, mi.name, mi.description,
-		       mi.sell_price, mi.tax_rate, mi.image_url, mi.is_active,
+		       mi.sell_price, mi.use_global_tax, mi.tax_percentage, mi.image_url, mi.is_active,
 		       mi.packaging_cost, mi.overhead_cost, mi.labor_cost,
 		       mi.created_at, mi.updated_at, mi.deleted_at,
-		       c.name AS category_name
+		       c.name AS category_name, s.default_tax_percentage AS store_default_tax
 		FROM menu_items mi
 		LEFT JOIN categories c ON c.id = mi.category_id AND c.deleted_at IS NULL
+		INNER JOIN stores s ON s.id = mi.store_id
 		WHERE mi.id = $1 AND mi.deleted_at IS NULL`
 	item := &domain.MenuItem{}
 	if err := r.db.QueryRowxContext(ctx, q, id).StructScan(item); err != nil {
@@ -193,14 +195,14 @@ func (r *MenuItemRepo) loadIngredients(ctx context.Context, ids []string) (map[s
 
 func (r *MenuItemRepo) Create(ctx context.Context, item *domain.MenuItem) (*domain.MenuItem, error) {
 	const q = `
-		INSERT INTO menu_items (store_id, category_id, name, description, sell_price, tax_rate, packaging_cost, overhead_cost, labor_cost, image_url, is_active)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, true)
-		RETURNING id, store_id, category_id, name, description, sell_price, tax_rate, packaging_cost, overhead_cost, labor_cost, image_url,
+		INSERT INTO menu_items (store_id, category_id, name, description, sell_price, use_global_tax, tax_percentage, packaging_cost, overhead_cost, labor_cost, image_url, is_active)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, true)
+		RETURNING id, store_id, category_id, name, description, sell_price, use_global_tax, tax_percentage, packaging_cost, overhead_cost, labor_cost, image_url,
 		          is_active, created_at, updated_at, deleted_at`
 	row := &domain.MenuItem{}
 	err := r.db.QueryRowxContext(ctx, q,
 		item.StoreID, item.CategoryID, item.Name, item.Description,
-		item.SellPrice, item.TaxRate, item.PackagingCost, item.OverheadCost, item.LaborCost, item.ImageURL,
+		item.SellPrice, item.UseGlobalTax, item.TaxPercentage, item.PackagingCost, item.OverheadCost, item.LaborCost, item.ImageURL,
 	).StructScan(row)
 	if err != nil {
 		return nil, fmt.Errorf("MenuItemRepo.Create: %w", err)
@@ -211,15 +213,15 @@ func (r *MenuItemRepo) Create(ctx context.Context, item *domain.MenuItem) (*doma
 func (r *MenuItemRepo) Update(ctx context.Context, item *domain.MenuItem) (*domain.MenuItem, error) {
 	const q = `
 		UPDATE menu_items
-		SET category_id=$1, name=$2, description=$3, sell_price=$4, tax_rate=$5,
-		    packaging_cost=$6, overhead_cost=$7, labor_cost=$8,
-		    image_url=$9, is_active=$10, updated_at=NOW()
-		WHERE id=$11 AND deleted_at IS NULL
-		RETURNING id, store_id, category_id, name, description, sell_price, tax_rate, packaging_cost, overhead_cost, labor_cost, image_url,
+		SET category_id=$1, name=$2, description=$3, sell_price=$4, use_global_tax=$5, tax_percentage=$6,
+		    packaging_cost=$7, overhead_cost=$8, labor_cost=$9,
+		    image_url=$10, is_active=$11, updated_at=NOW()
+		WHERE id=$12 AND deleted_at IS NULL
+		RETURNING id, store_id, category_id, name, description, sell_price, use_global_tax, tax_percentage, packaging_cost, overhead_cost, labor_cost, image_url,
 		          is_active, created_at, updated_at, deleted_at`
 	row := &domain.MenuItem{}
 	err := r.db.QueryRowxContext(ctx, q,
-		item.CategoryID, item.Name, item.Description, item.SellPrice, item.TaxRate,
+		item.CategoryID, item.Name, item.Description, item.SellPrice, item.UseGlobalTax, item.TaxPercentage,
 		item.PackagingCost, item.OverheadCost, item.LaborCost,
 		item.ImageURL, item.IsActive, item.ID,
 	).StructScan(row)

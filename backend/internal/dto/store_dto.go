@@ -4,38 +4,41 @@ package dto
 
 // CreateStoreRequest is the input for POST /stores.
 type CreateStoreRequest struct {
-	Name      string `json:"name"       validate:"required,min=2,max=100"`
-	Address   string `json:"address"    validate:"max=500"`
-	Phone     string `json:"phone"      validate:"max=20"`
-	TaxNumber string `json:"tax_number" validate:"max=50"`
-	Currency  string `json:"currency"   validate:"len=3"`
-	StoreType string `json:"store_type" validate:"oneof=retail restaurant"`
+	Name                 string  `json:"name"       validate:"required,min=2,max=100"`
+	Address              string  `json:"address"    validate:"max=500"`
+	Phone                string  `json:"phone"      validate:"max=20"`
+	TaxNumber            string  `json:"tax_number" validate:"max=50"`
+	Currency             string  `json:"currency"   validate:"len=3"`
+	StoreType            string  `json:"store_type" validate:"oneof=retail restaurant"`
+	DefaultTaxPercentage float64 `json:"default_tax_percentage" validate:"min=0,max=100"`
 }
 
 // UpdateStoreRequest is the input for PUT /stores/:id.
 type UpdateStoreRequest struct {
-	Name      string `json:"name"       validate:"required,min=2,max=100"`
-	Address   string `json:"address"    validate:"max=500"`
-	Phone     string `json:"phone"      validate:"max=20"`
-	TaxNumber string `json:"tax_number" validate:"max=50"`
-	Currency  string `json:"currency"   validate:"len=3"`
-	StoreType string `json:"store_type" validate:"oneof=retail restaurant"`
-	IsActive  *bool  `json:"is_active"`
+	Name                 string  `json:"name"       validate:"required,min=2,max=100"`
+	Address              string  `json:"address"    validate:"max=500"`
+	Phone                string  `json:"phone"      validate:"max=20"`
+	TaxNumber            string  `json:"tax_number" validate:"max=50"`
+	Currency             string  `json:"currency"   validate:"len=3"`
+	StoreType            string  `json:"store_type" validate:"oneof=retail restaurant"`
+	DefaultTaxPercentage float64 `json:"default_tax_percentage" validate:"min=0,max=100"`
+	IsActive             *bool   `json:"is_active"`
 }
 
 // StoreResponse is the shape returned for a single store.
 type StoreResponse struct {
-	ID        string  `json:"id"`
-	Name      string  `json:"name"`
-	Address   string  `json:"address"`
-	Phone     string  `json:"phone"`
-	TaxNumber string  `json:"tax_number"`
-	Currency  string  `json:"currency"`
-	StoreType string  `json:"store_type"`
-	IsActive  bool    `json:"is_active"`
-	CreatedAt string  `json:"created_at"`
-	UpdatedAt string  `json:"updated_at"`
-	DeletedAt *string `json:"deleted_at,omitempty"`
+	ID                   string  `json:"id"`
+	Name                 string  `json:"name"`
+	Address              string  `json:"address"`
+	Phone                string  `json:"phone"`
+	TaxNumber            string  `json:"tax_number"`
+	Currency             string  `json:"currency"`
+	StoreType            string  `json:"store_type"`
+	DefaultTaxPercentage float64 `json:"default_tax_percentage"`
+	IsActive             bool    `json:"is_active"`
+	CreatedAt            string  `json:"created_at"`
+	UpdatedAt            string  `json:"updated_at"`
+	DeletedAt            *string `json:"deleted_at,omitempty"`
 }
 
 // StoreListFilter holds query params for the store list endpoint.

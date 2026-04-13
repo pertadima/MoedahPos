@@ -28,14 +28,15 @@ type RestaurantTable struct {
 // MenuItem is a composed dish (recipe) sold as one unit in a restaurant.
 // Its stock impact is defined by MenuItemIngredients.
 type MenuItem struct {
-	ID          string     `db:"id"`
-	StoreID     string     `db:"store_id"`
-	CategoryID  *string    `db:"category_id"`
-	Name        string     `db:"name"`
-	Description *string    `db:"description"`
-	SellPrice   float64    `db:"sell_price"`
-	TaxRate     float64    `db:"tax_rate"`
-	ImageURL    *string    `db:"image_url"`
+	ID            string     `db:"id"`
+	StoreID       string     `db:"store_id"`
+	CategoryID    *string    `db:"category_id"`
+	Name          string     `db:"name"`
+	Description   *string    `db:"description"`
+	SellPrice     float64    `db:"sell_price"`
+	UseGlobalTax  bool       `db:"use_global_tax"`
+	TaxPercentage *float64   `db:"tax_percentage"`
+	ImageURL      *string    `db:"image_url"`
 	IsActive      bool       `db:"is_active"`
 	PackagingCost float64    `db:"packaging_cost"`
 	OverheadCost  float64    `db:"overhead_cost"`
@@ -45,8 +46,20 @@ type MenuItem struct {
 	DeletedAt     *time.Time `db:"deleted_at"`
 
 	// Populated via JOIN
-	CategoryName *string              `db:"category_name"`
-	Ingredients  []MenuItemIngredient `db:"-"`
+	CategoryName    *string              `db:"category_name"`
+	StoreDefaultTax float64              `db:"store_default_tax"`
+	Ingredients     []MenuItemIngredient `db:"-"`
+}
+
+// EffectiveTaxRate returns the actual tax percentage based on global vs override setting.
+func (m *MenuItem) EffectiveTaxRate() float64 {
+	if m.UseGlobalTax {
+		return m.StoreDefaultTax
+	}
+	if m.TaxPercentage != nil {
+		return *m.TaxPercentage
+	}
+	return 0
 }
 
 // MenuItemIngredient is one ingredient in a menu item's recipe.

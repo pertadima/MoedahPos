@@ -49,11 +49,12 @@ type IngredientResponse struct {
 }
 
 type CreateMenuItemRequest struct {
-	CategoryID  *string           `json:"category_id"`
-	Name        string            `json:"name"        validate:"required,max=200"`
-	Description string            `json:"description"`
+	CategoryID    *string           `json:"category_id"`
+	Name          string            `json:"name"        validate:"required,max=200"`
+	Description   string            `json:"description"`
 	SellPrice     float64           `json:"sell_price"  validate:"min=0"`
-	TaxRate       float64           `json:"tax_rate"    validate:"min=0,max=100"`
+	UseGlobalTax  *bool             `json:"use_global_tax"`
+	TaxPercentage *float64          `json:"tax_percentage" validate:"omitempty,min=0,max=100"`
 	PackagingCost float64           `json:"packaging_cost" validate:"min=0"`
 	OverheadCost  float64           `json:"overhead_cost"  validate:"min=0"`
 	LaborCost     float64           `json:"labor_cost"     validate:"min=0"`
@@ -61,11 +62,12 @@ type CreateMenuItemRequest struct {
 }
 
 type UpdateMenuItemRequest struct {
-	CategoryID  *string           `json:"category_id"`
-	Name        string            `json:"name"        validate:"required,max=200"`
-	Description string            `json:"description"`
+	CategoryID    *string           `json:"category_id"`
+	Name          string            `json:"name"        validate:"required,max=200"`
+	Description   string            `json:"description"`
 	SellPrice     float64           `json:"sell_price"  validate:"min=0"`
-	TaxRate       float64           `json:"tax_rate"    validate:"min=0,max=100"`
+	UseGlobalTax  *bool             `json:"use_global_tax"`
+	TaxPercentage *float64          `json:"tax_percentage" validate:"omitempty,min=0,max=100"`
 	PackagingCost float64           `json:"packaging_cost" validate:"min=0"`
 	OverheadCost  float64           `json:"overhead_cost"  validate:"min=0"`
 	LaborCost     float64           `json:"labor_cost"     validate:"min=0"`
@@ -74,22 +76,24 @@ type UpdateMenuItemRequest struct {
 }
 
 type MenuItemResponse struct {
-	ID           string               `json:"id"`
-	StoreID      string               `json:"store_id"`
-	CategoryID   *string              `json:"category_id,omitempty"`
-	CategoryName *string              `json:"category_name,omitempty"`
-	Name         string               `json:"name"`
-	Description  string               `json:"description"`
-	SellPrice      float64               `json:"sell_price"`
-	CostPrice      float64               `json:"cost_price"`
-	IngredientCost float64               `json:"ingredient_cost"`
-	PackagingCost  float64               `json:"packaging_cost"`
-	OverheadCost   float64               `json:"overhead_cost"`
-	LaborCost      float64               `json:"labor_cost"`
-	TaxRate        float64               `json:"tax_rate"`
-	ImageURL       string                `json:"image_url,omitempty"`
-	IsActive       bool                  `json:"is_active"`
-	Ingredients    []IngredientResponse  `json:"ingredients"`
-	CreatedAt      string                `json:"created_at"`
-	UpdatedAt    string               `json:"updated_at"`
+	ID             string               `json:"id"`
+	StoreID        string               `json:"store_id"`
+	CategoryID     *string              `json:"category_id,omitempty"`
+	CategoryName   *string              `json:"category_name,omitempty"`
+	Name           string               `json:"name"`
+	Description    string               `json:"description"`
+	SellPrice      float64              `json:"sell_price"`
+	CostPrice      float64              `json:"cost_price"`
+	IngredientCost float64              `json:"ingredient_cost"`
+	PackagingCost  float64              `json:"packaging_cost"`
+	OverheadCost   float64              `json:"overhead_cost"`
+	LaborCost      float64              `json:"labor_cost"`
+	UseGlobalTax   bool                 `json:"use_global_tax"`
+	TaxPercentage  *float64             `json:"tax_percentage"`
+	TaxRate        float64              `json:"tax_rate"` // computed effective rate for POS
+	ImageURL       string               `json:"image_url,omitempty"`
+	IsActive       bool                 `json:"is_active"`
+	Ingredients    []IngredientResponse `json:"ingredients"`
+	CreatedAt      string               `json:"created_at"`
+	UpdatedAt      string               `json:"updated_at"`
 }

@@ -23,11 +23,11 @@ func NewStoreRepo(db *sqlx.DB) *StoreRepo { return &StoreRepo{db: db} }
 
 func (r *StoreRepo) Create(ctx context.Context, s *domain.Store) (*domain.Store, error) {
 	const q = `
-		INSERT INTO stores (name, address, phone, tax_number, currency, store_type)
-		VALUES ($1, $2, $3, $4, $5, $6)
-		RETURNING id, name, address, phone, tax_number, currency, store_type, is_active, created_at, updated_at, deleted_at`
+		INSERT INTO stores (name, address, phone, tax_number, currency, store_type, default_tax_percentage)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
+		RETURNING id, name, address, phone, tax_number, currency, store_type, default_tax_percentage, is_active, created_at, updated_at, deleted_at`
 	row := &domain.Store{}
-	err := r.db.QueryRowxContext(ctx, q, s.Name, s.Address, s.Phone, s.TaxNumber, s.Currency, s.StoreType).StructScan(row)
+	err := r.db.QueryRowxContext(ctx, q, s.Name, s.Address, s.Phone, s.TaxNumber, s.Currency, s.StoreType, s.DefaultTaxPercentage).StructScan(row)
 	if err != nil {
 		return nil, fmt.Errorf("StoreRepo.Create: %w", err)
 	}
@@ -62,7 +62,7 @@ func (r *StoreRepo) FindAll(ctx context.Context, filter dto.StoreListFilter) ([]
 	// Data
 	args = append(args, filter.PerPage, filter.Offset())
 	dataQ := fmt.Sprintf(`
-		SELECT id, name, address, phone, tax_number, currency, store_type, is_active, created_at, updated_at, deleted_at
+		SELECT id, name, address, phone, tax_number, currency, store_type, default_tax_percentage, is_active, created_at, updated_at, deleted_at
 		FROM stores s %s
 		ORDER BY s.created_at DESC
 		LIMIT $%d OFFSET $%d`, where, i, i+1)
@@ -76,7 +76,7 @@ func (r *StoreRepo) FindAll(ctx context.Context, filter dto.StoreListFilter) ([]
 
 func (r *StoreRepo) FindByID(ctx context.Context, id string) (*domain.Store, error) {
 	const q = `
-		SELECT id, name, address, phone, tax_number, currency, store_type, is_active, created_at, updated_at, deleted_at
+		SELECT id, name, address, phone, tax_number, currency, store_type, default_tax_percentage, is_active, created_at, updated_at, deleted_at
 		FROM stores WHERE id = $1 AND deleted_at IS NULL`
 	s := &domain.Store{}
 	if err := r.db.QueryRowxContext(ctx, q, id).StructScan(s); err != nil {
@@ -91,11 +91,11 @@ func (r *StoreRepo) FindByID(ctx context.Context, id string) (*domain.Store, err
 func (r *StoreRepo) Update(ctx context.Context, s *domain.Store) (*domain.Store, error) {
 	const q = `
 		UPDATE stores
-		SET name=$1, address=$2, phone=$3, tax_number=$4, currency=$5, store_type=$6, is_active=$7, updated_at=NOW()
-		WHERE id=$8 AND deleted_at IS NULL
-		RETURNING id, name, address, phone, tax_number, currency, store_type, is_active, created_at, updated_at, deleted_at`
+		SET name=$1, address=$2, phone=$3, tax_number=$4, currency=$5, store_type=$6, default_tax_percentage=$7, is_active=$8, updated_at=NOW()
+		WHERE id=$9 AND deleted_at IS NULL
+		RETURNING id, name, address, phone, tax_number, currency, store_type, default_tax_percentage, is_active, created_at, updated_at, deleted_at`
 	row := &domain.Store{}
-	err := r.db.QueryRowxContext(ctx, q, s.Name, s.Address, s.Phone, s.TaxNumber, s.Currency, s.StoreType, s.IsActive, s.ID).StructScan(row)
+	err := r.db.QueryRowxContext(ctx, q, s.Name, s.Address, s.Phone, s.TaxNumber, s.Currency, s.StoreType, s.DefaultTaxPercentage, s.IsActive, s.ID).StructScan(row)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil

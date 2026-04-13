@@ -33,6 +33,7 @@ interface StoreForm {
   tax_number: string;
   currency: string;
   store_type: 'retail' | 'restaurant';
+  default_tax_percentage: number | '';
 }
 
 const emptyForm = (): StoreForm => ({
@@ -42,6 +43,7 @@ const emptyForm = (): StoreForm => ({
   tax_number: '',
   currency: 'IDR',
   store_type: 'retail',
+  default_tax_percentage: 0,
 });
 
 const STORE_TYPE_CONFIG = {
@@ -125,6 +127,7 @@ export default function StoresPage() {
       tax_number: s.tax_number,
       currency: s.currency,
       store_type: (s.store_type as 'retail' | 'restaurant') || 'retail',
+      default_tax_percentage: s.default_tax_percentage ?? 0,
     });
     setFormError('');
     setModal({ open: true, mode: 'edit', store: s });
@@ -149,6 +152,7 @@ export default function StoresPage() {
       tax_number: form.tax_number,
       currency: form.currency || 'IDR',
       store_type: form.store_type,
+      default_tax_percentage: Number(form.default_tax_percentage) || 0,
     };
     try {
       if (modal.mode === 'create') {
@@ -181,6 +185,7 @@ export default function StoresPage() {
         tax_number: s.tax_number,
         currency: s.currency,
         store_type: s.store_type ?? 'retail',
+        default_tax_percentage: s.default_tax_percentage,
         is_active: !s.is_active,
       });
       showToast(`${s.name} ${!s.is_active ? 'diaktifkan' : 'dinonaktifkan'}`, 'success');
@@ -780,6 +785,50 @@ export default function StoresPage() {
                   value={form.tax_number}
                   onChange={e => setForm(f => ({ ...f, tax_number: e.target.value }))}
                 />
+              </div>
+
+              {/* Default PPN */}
+              <div style={{ marginBottom: 20 }}>
+                <label
+                  style={{
+                    display: 'block',
+                    fontSize: '0.8rem',
+                    fontWeight: 600,
+                    marginBottom: 5,
+                    color: 'var(--text-2)',
+                  }}
+                >
+                  Default PPN Toko (%)
+                </label>
+                <div style={{ position: 'relative' }}>
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="0.01"
+                    className="input"
+                    placeholder="Contoh: 11"
+                    value={form.default_tax_percentage}
+                    onChange={e =>
+                      setForm(f => ({
+                        ...f,
+                        default_tax_percentage: e.target.value === '' ? '' : Number(e.target.value),
+                      }))
+                    }
+                  />
+                  <span
+                    style={{
+                      position: 'absolute',
+                      right: 14,
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      color: 'var(--text-3)',
+                      fontSize: '0.85rem',
+                    }}
+                  >
+                    %
+                  </span>
+                </div>
               </div>
 
               {formError && (

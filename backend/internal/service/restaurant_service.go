@@ -137,13 +137,19 @@ func (s *MenuItemService) List(ctx context.Context, storeID string) ([]*dto.Menu
 
 func (s *MenuItemService) Create(ctx context.Context, storeID string, req *dto.CreateMenuItemRequest) (*dto.MenuItemResponse, error) {
 	desc := req.Description
+	useGlobalTax := true
+	if req.UseGlobalTax != nil {
+		useGlobalTax = *req.UseGlobalTax
+	}
+
 	item := &domain.MenuItem{
 		StoreID:       storeID,
 		CategoryID:    req.CategoryID,
 		Name:          req.Name,
 		Description:   &desc,
 		SellPrice:     req.SellPrice,
-		TaxRate:       req.TaxRate,
+		UseGlobalTax:  useGlobalTax,
+		TaxPercentage: req.TaxPercentage,
 		PackagingCost: req.PackagingCost,
 		OverheadCost:  req.OverheadCost,
 		LaborCost:     req.LaborCost,
@@ -187,7 +193,12 @@ func (s *MenuItemService) Update(ctx context.Context, id string, req *dto.Update
 	existing.Name = req.Name
 	existing.Description = &desc
 	existing.SellPrice = req.SellPrice
-	existing.TaxRate = req.TaxRate
+	if req.UseGlobalTax != nil {
+		existing.UseGlobalTax = *req.UseGlobalTax
+	} else {
+		existing.UseGlobalTax = true // default fallback
+	}
+	existing.TaxPercentage = req.TaxPercentage
 	existing.PackagingCost = req.PackagingCost
 	existing.OverheadCost = req.OverheadCost
 	existing.LaborCost = req.LaborCost
@@ -283,7 +294,9 @@ func toMenuItemResponse(item *domain.MenuItem) *dto.MenuItemResponse {
 		PackagingCost:  item.PackagingCost,
 		OverheadCost:   item.OverheadCost,
 		LaborCost:      item.LaborCost,
-		TaxRate:        item.TaxRate,
+		UseGlobalTax:   item.UseGlobalTax,
+		TaxPercentage:  item.TaxPercentage,
+		TaxRate:        item.EffectiveTaxRate(),
 		IsActive:       item.IsActive,
 		Ingredients:    ings,
 		CreatedAt:      item.CreatedAt.Format(time.RFC3339),

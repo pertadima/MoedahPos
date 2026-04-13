@@ -39,6 +39,7 @@ export interface Store {
   tax_number: string;
   currency: string;
   store_type: 'retail' | 'restaurant';
+  default_tax_percentage: number;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -102,6 +103,8 @@ export interface MenuItem {
   packaging_cost?: number;
   overhead_cost?: number;
   labor_cost?: number;
+  use_global_tax?: boolean;
+  tax_percentage?: number | null;
   tax_rate: number;
   image_url?: string;
   is_active: boolean;

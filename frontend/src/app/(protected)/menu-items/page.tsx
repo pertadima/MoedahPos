@@ -35,7 +35,8 @@ interface FormState {
   name: string;
   description: string;
   category_id: string;
-  tax_rate: string;
+  use_global_tax: boolean;
+  tax_percentage: string;
   packaging_cost: string;
   overhead_cost: string;
   labor_cost: string;
@@ -47,7 +48,8 @@ const emptyForm = (): FormState => ({
   description: '',
   category_id: '',
   sell_price: '',
-  tax_rate: '0',
+  use_global_tax: true,
+  tax_percentage: '',
   packaging_cost: '0',
   overhead_cost: '0',
   labor_cost: '0',
@@ -128,7 +130,11 @@ export default function MenuItemsPage() {
       description: item.description,
       category_id: item.category_id ?? '',
       sell_price: String(item.sell_price),
-      tax_rate: String(item.tax_rate),
+      use_global_tax: item.use_global_tax ?? true,
+      tax_percentage:
+        item.tax_percentage !== null && item.tax_percentage !== undefined
+          ? String(item.tax_percentage)
+          : '',
       packaging_cost: String(item.packaging_cost ?? 0),
       overhead_cost: String(item.overhead_cost ?? 0),
       labor_cost: String(item.labor_cost ?? 0),
@@ -198,7 +204,8 @@ export default function MenuItemsPage() {
       description: form.description,
       category_id: form.category_id || undefined,
       sell_price: parseFloat(form.sell_price) || 0,
-      tax_rate: parseFloat(form.tax_rate) || 0,
+      use_global_tax: form.use_global_tax,
+      tax_percentage: form.use_global_tax ? null : parseFloat(form.tax_percentage) || 0,
       packaging_cost: parseFloat(form.packaging_cost) || 0,
       overhead_cost: parseFloat(form.overhead_cost) || 0,
       labor_cost: parseFloat(form.labor_cost) || 0,
@@ -576,24 +583,47 @@ export default function MenuItemsPage() {
                 <div>
                   <label
                     style={{
-                      display: 'block',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
                       fontSize: '0.8rem',
                       fontWeight: 600,
-                      marginBottom: 5,
+                      marginBottom: form.use_global_tax ? 15 : 5,
                       color: 'var(--text-2)',
+                      cursor: 'pointer',
                     }}
                   >
-                    Pajak (%)
+                    <input
+                      type="checkbox"
+                      checked={form.use_global_tax}
+                      onChange={e => setForm(f => ({ ...f, use_global_tax: e.target.checked }))}
+                    />
+                    Gunakan PPN default toko
                   </label>
-                  <input
-                    className="input"
-                    type="number"
-                    min={0}
-                    max={100}
-                    placeholder="10"
-                    value={form.tax_rate}
-                    onChange={e => setForm(f => ({ ...f, tax_rate: e.target.value }))}
-                  />
+                  {!form.use_global_tax && (
+                    <>
+                      <label
+                        style={{
+                          display: 'block',
+                          fontSize: '0.8rem',
+                          fontWeight: 600,
+                          marginBottom: 5,
+                          color: 'var(--text-2)',
+                        }}
+                      >
+                        Custom PPN (%)
+                      </label>
+                      <input
+                        className="input"
+                        type="number"
+                        min={0}
+                        max={100}
+                        placeholder="10"
+                        value={form.tax_percentage}
+                        onChange={e => setForm(f => ({ ...f, tax_percentage: e.target.value }))}
+                      />
+                    </>
+                  )}
                 </div>
               </div>
 
@@ -828,7 +858,11 @@ export default function MenuItemsPage() {
                         type="text"
                         placeholder="0"
                         onFocus={e => e.target.select()}
-                        value={form.packaging_cost ? Number(form.packaging_cost).toLocaleString('id-ID') : ''}
+                        value={
+                          form.packaging_cost
+                            ? Number(form.packaging_cost).toLocaleString('id-ID')
+                            : ''
+                        }
                         onChange={e => {
                           const val = e.target.value.replace(/[^0-9]/g, '');
                           setForm(f => ({ ...f, packaging_cost: val }));
@@ -852,7 +886,11 @@ export default function MenuItemsPage() {
                         type="text"
                         placeholder="0"
                         onFocus={e => e.target.select()}
-                        value={form.overhead_cost ? Number(form.overhead_cost).toLocaleString('id-ID') : ''}
+                        value={
+                          form.overhead_cost
+                            ? Number(form.overhead_cost).toLocaleString('id-ID')
+                            : ''
+                        }
                         onChange={e => {
                           const val = e.target.value.replace(/[^0-9]/g, '');
                           setForm(f => ({ ...f, overhead_cost: val }));
@@ -876,7 +914,9 @@ export default function MenuItemsPage() {
                         type="text"
                         placeholder="0"
                         onFocus={e => e.target.select()}
-                        value={form.labor_cost ? Number(form.labor_cost).toLocaleString('id-ID') : ''}
+                        value={
+                          form.labor_cost ? Number(form.labor_cost).toLocaleString('id-ID') : ''
+                        }
                         onChange={e => {
                           const val = e.target.value.replace(/[^0-9]/g, '');
                           setForm(f => ({ ...f, labor_cost: val }));
@@ -1006,10 +1046,12 @@ export default function MenuItemsPage() {
                           <span
                             key={totalHpp}
                             className="animate-hpp"
-                            style={{ 
-                              fontWeight: 700, 
+                            style={{
+                              fontWeight: 700,
                               color: 'var(--text-1)',
-                              animation: isHppIncreased ? 'bumpRed 0.8s ease' : 'bumpNormal 0.4s ease'
+                              animation: isHppIncreased
+                                ? 'bumpRed 0.8s ease'
+                                : 'bumpNormal 0.4s ease',
                             }}
                           >
                             {formatRp(totalHpp)}
@@ -1068,10 +1110,12 @@ export default function MenuItemsPage() {
                               borderRadius: 6,
                               border: '1px solid var(--border-md)',
                               background: 'var(--bg-base)',
-                              color: 'var(--text-1)'
+                              color: 'var(--text-1)',
                             }}
                             onFocus={e => e.target.select()}
-                            value={form.sell_price ? Number(form.sell_price).toLocaleString('id-ID') : ''}
+                            value={
+                              form.sell_price ? Number(form.sell_price).toLocaleString('id-ID') : ''
+                            }
                             onChange={e => {
                               const val = e.target.value.replace(/[^0-9]/g, '');
                               setForm(f => ({ ...f, sell_price: val }));

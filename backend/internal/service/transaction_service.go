@@ -206,7 +206,7 @@ func (s *TransactionService) Checkout(ctx context.Context, storeID string, req *
 			}
 
 			finalPrice, _, lineNet, lineTax, lineSubtotal := computeItemPricing(
-				menuItem.SellPrice, item.Quantity, menuItem.TaxRate, discType, discValue)
+				menuItem.SellPrice, item.Quantity, menuItem.EffectiveTaxRate(), discType, discValue)
 
 			subtotal += lineNet
 			discountAmt += (menuItem.SellPrice - finalPrice) * item.Quantity
@@ -233,7 +233,7 @@ func (s *TransactionService) Checkout(ctx context.Context, storeID string, req *
 				DiscountPct:   item.DiscountPct,
 				DiscountType:  discType,
 				DiscountValue: discValue,
-				TaxRate:       menuItem.TaxRate,
+				TaxRate:       menuItem.EffectiveTaxRate(),
 				Subtotal:      lineSubtotal,
 				MenuItemID:    &mid,
 			})
@@ -475,7 +475,7 @@ func (s *TransactionService) processMenuItem(ctx context.Context, _ string, item
 	}
 
 	finalPrice, _, lineNet, lineTax, lineSubtotal := computeItemPricing(
-		menuItem.SellPrice, item.Quantity, menuItem.TaxRate, discType, discValue)
+		menuItem.SellPrice, item.Quantity, menuItem.EffectiveTaxRate(), discType, discValue)
 
 	var menuCost float64
 	for _, ing := range menuItem.Ingredients {
@@ -499,7 +499,7 @@ func (s *TransactionService) processMenuItem(ctx context.Context, _ string, item
 		DiscountPct:   item.DiscountPct,
 		DiscountType:  discType,
 		DiscountValue: discValue,
-		TaxRate:       menuItem.TaxRate,
+		TaxRate:       menuItem.EffectiveTaxRate(),
 		Subtotal:      lineSubtotal,
 	}, discountAmt, lineNet, lineTax, nil
 }
