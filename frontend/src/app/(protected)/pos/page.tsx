@@ -1025,7 +1025,6 @@ export default function POSPage() {
     return (
       <div
         style={{
-          marginLeft: 220,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -1034,7 +1033,7 @@ export default function POSPage() {
       >
         <div className="empty-state">
           <ShoppingCart size={40} />
-          <p>Pilih toko di sidebar untuk memulai</p>
+          <p className="type-body-sm">Pilih toko di sidebar untuk memulai</p>
         </div>
       </div>
     );
@@ -1044,24 +1043,15 @@ export default function POSPage() {
   if (isRestaurant && !selectedTable && !isTakeAway) {
     return (
       <>
-        <div style={{ marginLeft: 0, padding: '24px 28px', minHeight: '100vh' }}>
+        <div style={{ padding: '24px 28px', minHeight: '100vh' }}>
           {/* Header */}
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              marginBottom: 24,
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <UtensilsCrossed size={22} style={{ color: 'var(--brand)' }} />
-              <div>
-                <h1 style={{ fontSize: '1.3rem', fontWeight: 800, margin: 0 }}>Pilih Meja</h1>
-                <p style={{ color: 'var(--text-2)', fontSize: '0.85rem', margin: 0 }}>
-                  {selectedStore.store_name}
-                </p>
-              </div>
+          <div className="flex items-center justify-between" style={{ marginBottom: 28 }}>
+            <div>
+              <h1 className="page-title">
+                <UtensilsCrossed size={20} style={{ color: 'var(--brand)' }} />
+                Pilih Meja
+              </h1>
+              <p className="page-subtitle">{selectedStore.store_name}</p>
             </div>
 
             {/* Take Away shortcut button */}
@@ -1072,23 +1062,18 @@ export default function POSPage() {
                 setError('');
                 setHoldError('');
               }}
+              className="btn"
               style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                background: 'linear-gradient(135deg, rgba(255,167,36,0.15), rgba(255,167,36,0.05))',
-                border: '1.5px solid rgba(255,167,36,0.5)',
+                background: 'rgba(245,158,11,0.10)',
+                border: '1.5px solid rgba(245,158,11,0.35)',
+                color: '#d97706',
+                fontWeight: 600,
+                gap: 6,
+                padding: '8px 16px',
                 borderRadius: 12,
-                padding: '10px 18px',
-                cursor: 'pointer',
-                fontWeight: 700,
-                fontSize: '0.9rem',
-                color: '#FFA724',
-                boxShadow: '0 2px 12px rgba(255,167,36,0.15)',
-                transition: 'all 0.18s',
               }}
             >
-              <ShoppingBag size={16} />
+              <ShoppingBag size={15} />
               Take Away
             </button>
           </div>
@@ -1223,58 +1208,64 @@ export default function POSPage() {
     <div className="pos-layout">
       {/* ── LEFT: Catalog ── */}
       <div className="pos-catalog">
-        {/* Mode badge + table back button (restaurant only) */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+        {/* ── Catalog header row: mode badge + search ── */}
+        <div className="flex items-center gap-2" style={{ marginBottom: 10 }}>
           {isRestaurant && (selectedTable || isTakeAway) && (
             <button
               onClick={handleBackToTables}
               className="btn btn-ghost btn-sm"
-              style={{ padding: '4px 8px', gap: 4 }}
+              style={{ padding: '5px 8px', gap: 4, flexShrink: 0 }}
             >
-              <ArrowLeft size={13} /> Meja
+              <ArrowLeft size={14} />
+              <span style={{ fontSize: '0.8rem' }}>Meja</span>
             </button>
           )}
-          <div
+          {/* Mode badge */}
+          <span
             style={{
               display: 'inline-flex',
               alignItems: 'center',
               gap: 5,
-              padding: '4px 10px',
-              borderRadius: 8,
+              padding: '4px 12px',
+              borderRadius: 100,
               fontSize: '0.75rem',
               fontWeight: 600,
-              background: isRestaurant ? 'rgba(251,146,60,0.12)' : 'rgba(16,185,129,0.12)',
-              color: isRestaurant ? '#fb923c' : '#10b981',
+              flexShrink: 0,
+              background: isRestaurant ? 'rgba(251,146,60,0.10)' : 'rgba(8,132,246,0.10)',
+              color: isRestaurant ? '#fb923c' : '#0884f6',
+              border: isRestaurant
+                ? '1px solid rgba(251,146,60,0.25)'
+                : '1px solid rgba(8,132,246,0.20)',
             }}
           >
-            {isRestaurant ? <UtensilsCrossed size={13} /> : <ShoppingBag size={13} />}
+            {isRestaurant ? <UtensilsCrossed size={12} /> : <ShoppingBag size={12} />}
             {isRestaurant
               ? isTakeAway
-                ? 'Take Away — Pesanan'
-                : `Meja ${selectedTable?.table_number ?? ''} — Pesanan`
-              : 'Mode Retail — Produk'}
+                ? 'Take Away'
+                : `Meja ${selectedTable?.table_number ?? ''}`
+              : 'Retail'}
+          </span>
+          {/* Search — takes remaining space */}
+          <div style={{ flex: 1, position: 'relative' }}>
+            <Search
+              size={15}
+              style={{
+                position: 'absolute',
+                left: 11,
+                top: '50%',
+                transform: 'translateY(-50%)',
+                color: 'var(--text-3)',
+                pointerEvents: 'none',
+              }}
+            />
+            <input
+              className="input"
+              style={{ paddingLeft: 34 }}
+              placeholder={isRestaurant ? 'Cari menu...' : 'Cari produk atau SKU...'}
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+            />
           </div>
-        </div>
-
-        {/* Search */}
-        <div style={{ position: 'relative', marginBottom: 10 }}>
-          <Search
-            size={16}
-            style={{
-              position: 'absolute',
-              left: 12,
-              top: '50%',
-              transform: 'translateY(-50%)',
-              color: 'var(--text-3)',
-            }}
-          />
-          <input
-            className="input"
-            style={{ paddingLeft: 36 }}
-            placeholder={isRestaurant ? 'Cari menu...' : 'Cari produk atau SKU...'}
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-          />
         </div>
 
         {/* Category Tabs */}
@@ -1353,13 +1344,14 @@ export default function POSPage() {
                     className="product-card"
                     onClick={() => dispatch({ type: 'ADD_MENU', item: m })}
                   >
+                    {/* In-cart quantity badge */}
                     {inCart && (
                       <div
                         style={{
                           position: 'absolute',
-                          top: 6,
-                          right: 6,
-                          background: '#fb923c',
+                          top: 8,
+                          right: 8,
+                          background: 'var(--brand)',
                           color: '#fff',
                           borderRadius: '50%',
                           width: 20,
@@ -1367,8 +1359,9 @@ export default function POSPage() {
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          fontSize: '0.7rem',
+                          fontSize: '0.68rem',
                           fontWeight: 700,
+                          boxShadow: '0 2px 6px rgba(8,132,246,0.4)',
                         }}
                       >
                         {inCart.quantity}
@@ -1378,27 +1371,28 @@ export default function POSPage() {
                     <div className="product-name">{m.name}</div>
                     {m.category_name && <div className="product-sku">{m.category_name}</div>}
                     <div className="product-price">{formatRp(m.sell_price)}</div>
-                    {m.description && (
-                      <div
-                        style={{
-                          fontSize: '0.68rem',
-                          color: 'var(--text-3)',
-                          lineHeight: 1.3,
-                          marginTop: 2,
-                          overflow: 'hidden',
-                          display: '-webkit-box',
-                          WebkitLineClamp: 2,
-                          WebkitBoxOrient: 'vertical',
-                        }}
-                      >
-                        {m.description}
-                      </div>
-                    )}
                     {m.ingredients && m.ingredients.length > 0 && (
-                      <div style={{ fontSize: '0.65rem', color: 'var(--text-3)', marginTop: 3 }}>
+                      <div className="product-sku" style={{ marginTop: 2 }}>
                         🧂 {m.ingredients.length} bahan
                       </div>
                     )}
+                    {/* Add to cart button */}
+                    <button
+                      className="btn btn-primary btn-sm"
+                      style={{
+                        marginTop: 'auto',
+                        width: '100%',
+                        justifyContent: 'center',
+                        fontSize: '0.75rem',
+                      }}
+                      onClick={e => {
+                        e.stopPropagation();
+                        dispatch({ type: 'ADD_MENU', item: m });
+                      }}
+                    >
+                      <Plus size={13} />
+                      Tambah
+                    </button>
                   </div>
                 );
               })}
@@ -1421,13 +1415,14 @@ export default function POSPage() {
                   className={`product-card ${outOfStock ? 'out-of-stock' : ''}`}
                   onClick={() => !outOfStock && dispatch({ type: 'ADD_PRODUCT', product: p })}
                 >
+                  {/* In-cart quantity badge */}
                   {inCart && (
                     <div
                       style={{
                         position: 'absolute',
-                        top: 6,
-                        right: 6,
-                        background: 'var(--accent-em)',
+                        top: 8,
+                        right: 8,
+                        background: 'var(--brand)',
                         color: '#fff',
                         borderRadius: '50%',
                         width: 20,
@@ -1435,8 +1430,9 @@ export default function POSPage() {
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        fontSize: '0.7rem',
+                        fontSize: '0.68rem',
                         fontWeight: 700,
+                        boxShadow: '0 2px 6px rgba(8,132,246,0.4)',
                       }}
                     >
                       {inCart.quantity}
@@ -1459,6 +1455,25 @@ export default function POSPage() {
                       </span>
                     )}
                   </div>
+                  {/* Add to cart button */}
+                  {!outOfStock && (
+                    <button
+                      className="btn btn-primary btn-sm"
+                      style={{
+                        marginTop: 'auto',
+                        width: '100%',
+                        justifyContent: 'center',
+                        fontSize: '0.75rem',
+                      }}
+                      onClick={e => {
+                        e.stopPropagation();
+                        dispatch({ type: 'ADD_PRODUCT', product: p });
+                      }}
+                    >
+                      <Plus size={13} />
+                      Tambah
+                    </button>
+                  )}
                 </div>
               );
             })}
@@ -1489,25 +1504,36 @@ export default function POSPage() {
       {/* ── RIGHT: Cart ── */}
       <div className={`pos-cart ${isMobileCartOpen ? 'open' : ''}`}>
         <div className="cart-header">
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <ShoppingCart size={18} style={{ color: 'var(--accent-em)' }} />
-              <span style={{ fontWeight: 700, fontSize: '0.95rem' }}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <ShoppingCart size={17} style={{ color: 'var(--brand)' }} />
+              <span style={{ fontWeight: 700, fontSize: '0.9375rem', color: 'var(--text-1)' }}>
                 {isRestaurant ? 'Pesanan' : 'Keranjang'}
               </span>
-              {itemCount > 0 && <span className="badge badge-green">{itemCount} item</span>}
+              {itemCount > 0 && (
+                <span className="badge badge-blue" style={{ fontVariantNumeric: 'tabular-nums' }}>
+                  {itemCount}
+                </span>
+              )}
             </div>
-            <button
-              className="btn btn-ghost btn-sm md:hidden"
-              onClick={() => setIsMobileCartOpen(false)}
-            >
-              <X size={18} />
-            </button>
-            {cart.length > 0 && (
-              <button className="btn btn-ghost btn-sm" onClick={() => dispatch({ type: 'CLEAR' })}>
-                <Trash2 size={13} /> Kosongkan
+            <div className="flex items-center gap-1">
+              <button
+                className="btn btn-ghost btn-sm md:hidden"
+                onClick={() => setIsMobileCartOpen(false)}
+              >
+                <X size={16} />
               </button>
-            )}
+              {cart.length > 0 && (
+                <button
+                  className="btn btn-ghost btn-sm"
+                  style={{ color: 'var(--accent-rd)', fontSize: '0.75rem', gap: 4 }}
+                  onClick={() => dispatch({ type: 'CLEAR' })}
+                >
+                  <Trash2 size={12} />
+                  Kosongkan
+                </button>
+              )}
+            </div>
           </div>
         </div>
         {/* ── Customer Picker — inside cart, always visible ── */}
@@ -2136,18 +2162,15 @@ export default function POSPage() {
         </div>
 
         <div className="cart-footer">
-          {/* subtotal before cart discount */}
+          {/* Subtotal before cart discount */}
           <div className="cart-total-row">
-            <span className="text-2">Subtotal Item</span>
+            <span style={{ color: 'var(--text-2)', fontSize: '0.8125rem' }}>Subtotal</span>
             <span>{formatRp(subtotalAfterItems)}</span>
           </div>
 
           {/* Item-level discount row */}
           {totalItemDiscount > 0 && (
-            <div
-              className="cart-total-row"
-              style={{ color: 'var(--accent-rd)', fontSize: '0.82rem' }}
-            >
+            <div className="cart-total-row" style={{ color: 'var(--accent-rd)' }}>
               <span>Diskon Item</span>
               <span>-{formatRp(totalItemDiscount)}</span>
             </div>
@@ -2392,16 +2415,14 @@ export default function POSPage() {
 
           {/* PPN */}
           <div className="cart-total-row">
-            <span className="text-2">PPN</span>
+            <span style={{ color: 'var(--text-2)', fontSize: '0.8125rem' }}>PPN</span>
             <span>{formatRp(taxAmt)}</span>
           </div>
 
           {/* Grand total */}
           <div className="cart-total-row grand">
             <span>Total</span>
-            <span style={{ color: 'var(--accent-em)', transition: 'color 0.2s ease' }}>
-              {formatRp(total)}
-            </span>
+            <span style={{ color: 'var(--brand)' }}>{formatRp(total)}</span>
           </div>
 
           {/* Savings banner */}

@@ -145,15 +145,16 @@ export default function DashboardPage() {
     loadData();
   }, [loadData]);
 
+  /* ── Empty / loading states ─────────────────────────────────────────────── */
   if (!selectedStore) {
     return (
-      <div style={{ padding: 32 }}>
-        <div className="empty-state card" style={{ padding: 40 }}>
+      <div className="p-8">
+        <div className="card empty-state" style={{ padding: 48 }}>
           <Package size={40} style={{ color: 'var(--text-3)' }} />
-          <p style={{ fontWeight: 600, color: 'var(--text-2)' }}>Pilih toko terlebih dahulu</p>
-          <p style={{ fontSize: '0.85rem' }}>
-            Gunakan selector toko di sidebar untuk memilih toko.
+          <p className="type-subheading" style={{ marginTop: 8 }}>
+            Pilih toko terlebih dahulu
           </p>
+          <p className="type-body-sm">Gunakan selector toko di sidebar untuk memilih toko.</p>
         </div>
       </div>
     );
@@ -163,18 +164,18 @@ export default function DashboardPage() {
     return (
       <div
         style={{
-          padding: 32,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          minHeight: 300,
+          minHeight: '60vh',
         }}
       >
-        <Loader2 size={28} className="loading-spin" style={{ color: 'var(--accent-em)' }} />
+        <Loader2 size={28} className="loading-spin" style={{ color: 'var(--brand)' }} />
       </div>
     );
   }
 
+  /* ── Derived data ─────────────────────────────────────────────────────────── */
   const chartData = (summary?.rows ?? [])
     .slice()
     .reverse()
@@ -197,49 +198,61 @@ export default function DashboardPage() {
       value: formatRp(summary?.total_sales ?? 0),
       icon: TrendingUp,
       color: '#10b981',
-      bg: 'rgba(16,185,129,0.12)',
+      bg: 'rgba(16,185,129,0.10)',
     },
     {
       label: 'Total Transaksi (30 hari)',
       value: (summary?.total_transactions ?? 0).toLocaleString('id-ID'),
       icon: ShoppingBag,
       color: '#6366f1',
-      bg: 'rgba(99,102,241,0.12)',
+      bg: 'rgba(99,102,241,0.10)',
     },
     {
       label: 'Stok Menipis',
       value: lowStock.length.toString(),
       icon: AlertTriangle,
       color: '#f59e0b',
-      bg: 'rgba(245,158,11,0.12)',
+      bg: 'rgba(245,158,11,0.10)',
       alert: lowStock.length > 0,
     },
     {
       label: 'Penjualan Hari Ini',
       value: formatRp(summary?.rows?.[0]?.total_sales ?? 0),
       icon: ArrowUpRight,
-      color: '#10b981',
-      bg: 'rgba(16,185,129,0.12)',
+      color: '#0884f6',
+      bg: 'rgba(8,132,246,0.10)',
     },
     {
       label: 'Laba Bersih (30 hari)',
       value: formatRp(profitData?.net_profit ?? 0),
       icon: Wallet,
-      color: '#3b82f6',
-      bg: 'rgba(59,130,246,0.12)',
+      color: '#8b5cf6',
+      bg: 'rgba(139,92,246,0.10)',
     },
   ];
 
+  /* ── Shared recharts style ─────────────────────────────────────────────── */
+  const tooltipStyle = {
+    background: 'var(--bg-card)',
+    border: '1px solid var(--border-md)',
+    borderRadius: 10,
+    color: 'var(--text-1)',
+    fontSize: 12,
+    boxShadow: 'var(--shadow-md)',
+  };
+  const axisTickStyle = { fill: 'var(--text-3)', fontSize: 11 };
+
+  /* ── Render ────────────────────────────────────────────────────────────── */
   return (
-    <div className="w-full p-6">
-      {/* Header */}
-      <div style={{ marginBottom: 24 }}>
-        <h1 className="page-title" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <LayoutDashboard size={22} style={{ color: 'var(--accent-em)' }} />
+    <div className="w-full" style={{ padding: '24px 28px 40px', maxWidth: 1400, margin: '0 auto' }}>
+      {/* ── Page Header ── */}
+      <div style={{ marginBottom: 28 }}>
+        <h1 className="page-title">
+          <LayoutDashboard size={20} style={{ color: 'var(--brand)' }} />
           Dashboard
         </h1>
         <p className="page-subtitle">
-          {selectedStore.store_name} ·{' '}
+          {selectedStore.store_name} &middot;{' '}
           {new Date().toLocaleDateString('id-ID', {
             weekday: 'long',
             day: 'numeric',
@@ -249,7 +262,7 @@ export default function DashboardPage() {
         </p>
       </div>
 
-      {/* Stat Cards */}
+      {/* ── Stat Cards ── */}
       <div
         style={{
           display: 'grid',
@@ -269,7 +282,7 @@ export default function DashboardPage() {
               </div>
               <div
                 className="stat-val"
-                style={{ color: alert ? '#f59e0b' : undefined }}
+                style={{ color: alert ? '#f59e0b' : 'var(--text-1)' }}
                 title={value}
               >
                 {value}
@@ -279,30 +292,32 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      {/* Charts + Tables */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 16 }}>
+      {/* ── Charts + Right Sidebar ── */}
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: '1fr 320px',
+          gap: 16,
+          alignItems: 'start',
+        }}
+      >
         {/* Left column */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          {/* Sales Chart */}
-          <div className="card" style={{ padding: '20px' }}>
-            <div style={{ marginBottom: 16 }}>
-              <div style={{ fontWeight: 700, fontSize: '0.95rem' }}>Tren Penjualan (30 hari)</div>
-              <div className="text-3" style={{ fontSize: '0.8rem' }}>
+          {/* Sales trend chart */}
+          <div className="card" style={{ padding: 22 }}>
+            <div style={{ marginBottom: 18 }}>
+              <div className="type-subheading">Tren Penjualan (30 hari)</div>
+              <div className="type-caption" style={{ marginTop: 2 }}>
                 Total dalam Rupiah
               </div>
             </div>
             {chartData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={220}>
+              <ResponsiveContainer debounce={300} width="100%" height={220}>
                 <LineChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                  <XAxis
-                    dataKey="date"
-                    tick={{ fill: 'var(--text-3)', fontSize: 11 }}
-                    axisLine={false}
-                    tickLine={false}
-                  />
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+                  <XAxis dataKey="date" tick={axisTickStyle} axisLine={false} tickLine={false} />
                   <YAxis
-                    tick={{ fill: 'var(--text-3)', fontSize: 11 }}
+                    tick={axisTickStyle}
                     axisLine={false}
                     tickLine={false}
                     tickFormatter={v =>
@@ -310,22 +325,16 @@ export default function DashboardPage() {
                     }
                   />
                   <Tooltip
-                    contentStyle={{
-                      background: 'var(--bg-elevated)',
-                      border: '1px solid var(--border-md)',
-                      borderRadius: 8,
-                      color: 'var(--text-1)',
-                      fontSize: 12,
-                    }}
+                    contentStyle={tooltipStyle}
                     formatter={(v: unknown) => [formatRp(Number(v)), 'Penjualan']}
                   />
                   <Line
                     type="monotone"
                     dataKey="sales"
-                    stroke="#10b981"
-                    strokeWidth={2}
+                    stroke="#0884f6"
+                    strokeWidth={2.5}
                     dot={false}
-                    activeDot={{ r: 4 }}
+                    activeDot={{ r: 5, fill: '#0884f6' }}
                   />
                 </LineChart>
               </ResponsiveContainer>
@@ -337,25 +346,25 @@ export default function DashboardPage() {
             )}
           </div>
 
-          {/* Cashier Revenue Chart */}
-          <div className="card" style={{ padding: '20px' }}>
+          {/* Cashier revenue bar chart */}
+          <div className="card" style={{ padding: 22 }}>
             <div
               style={{
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'flex-start',
-                marginBottom: 16,
+                marginBottom: 18,
               }}
             >
               <div>
-                <div style={{ fontWeight: 700, fontSize: '0.95rem' }}>Pendapatan per Kasir</div>
-                <div className="text-3" style={{ fontSize: '0.8rem' }}>
+                <div className="type-subheading">Pendapatan per Kasir</div>
+                <div className="type-caption" style={{ marginTop: 2 }}>
                   Berdasarkan Transaksi Selesai
                 </div>
               </div>
               <select
                 className="input"
-                style={{ width: 'auto', padding: '4px 8px', fontSize: '0.8rem' }}
+                style={{ width: 'auto', padding: '5px 10px', fontSize: '0.8rem' }}
                 value={cashierFilter}
                 onChange={e => setCashierFilter(e.target.value as TimeFilter)}
               >
@@ -365,24 +374,20 @@ export default function DashboardPage() {
               </select>
             </div>
             {cashierRevenue.length > 0 ? (
-              <ResponsiveContainer width="100%" height={260}>
+              <ResponsiveContainer debounce={300} width="100%" height={240}>
                 <BarChart
                   data={cashierRevenue}
-                  margin={{ left: -20, right: 10, top: 10, bottom: 0 }}
+                  margin={{ left: -20, right: 10, top: 8, bottom: 0 }}
                 >
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    stroke="rgba(255,255,255,0.05)"
-                    vertical={false}
-                  />
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
                   <XAxis
                     dataKey="cashier_name"
-                    tick={{ fill: 'var(--text-3)', fontSize: 11 }}
+                    tick={axisTickStyle}
                     axisLine={false}
                     tickLine={false}
                   />
                   <YAxis
-                    tick={{ fill: 'var(--text-3)', fontSize: 11 }}
+                    tick={axisTickStyle}
                     axisLine={false}
                     tickLine={false}
                     tickFormatter={v =>
@@ -390,14 +395,8 @@ export default function DashboardPage() {
                     }
                   />
                   <Tooltip
-                    cursor={{ fill: 'rgba(255,255,255,0.05)' }}
-                    contentStyle={{
-                      background: 'var(--bg-elevated)',
-                      border: '1px solid var(--border-md)',
-                      borderRadius: 8,
-                      color: 'var(--text-1)',
-                      fontSize: 12,
-                    }}
+                    cursor={{ fill: 'var(--bg-elevated)' }}
+                    contentStyle={tooltipStyle}
                     formatter={(value, _name, item) => {
                       const row = item?.payload as CashierRevenueRow | undefined;
                       return [
@@ -406,14 +405,14 @@ export default function DashboardPage() {
                       ];
                     }}
                   />
-                  <Bar dataKey="total_sales" radius={[4, 4, 0, 0]} maxBarSize={60}>
+                  <Bar dataKey="total_sales" radius={[6, 6, 0, 0]} maxBarSize={52}>
                     {cashierRevenue.map((_, index) => {
                       const colors = [
+                        '#0884f6',
                         '#10b981',
-                        '#3b82f6',
-                        '#f43f5e',
                         '#f59e0b',
                         '#8b5cf6',
+                        '#f43f5e',
                         '#06b6d4',
                       ];
                       return <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />;
@@ -422,32 +421,32 @@ export default function DashboardPage() {
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <div className="empty-state" style={{ height: 260 }}>
+              <div className="empty-state" style={{ height: 240 }}>
                 <Users size={32} style={{ color: 'var(--text-3)' }} />
                 <p>Belum ada data kasir untuk periode ini</p>
               </div>
             )}
           </div>
 
-          {/* Most & Least Selling Products */}
-          <div className="card" style={{ padding: '20px' }}>
+          {/* Product performance */}
+          <div className="card" style={{ padding: 22 }}>
             <div
               style={{
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'flex-start',
-                marginBottom: 16,
+                marginBottom: 18,
               }}
             >
               <div>
-                <div style={{ fontWeight: 700, fontSize: '0.95rem' }}>Performa Produk</div>
-                <div className="text-3" style={{ fontSize: '0.8rem' }}>
-                  Produk paling laku & kurang laku
+                <div className="type-subheading">Performa Produk</div>
+                <div className="type-caption" style={{ marginTop: 2 }}>
+                  Produk paling laku &amp; kurang laku
                 </div>
               </div>
               <select
                 className="input"
-                style={{ width: 'auto', padding: '4px 8px', fontSize: '0.8rem' }}
+                style={{ width: 'auto', padding: '5px 10px', fontSize: '0.8rem' }}
                 value={productFilter}
                 onChange={e => setProductFilter(e.target.value as TimeFilter)}
               >
@@ -458,38 +457,40 @@ export default function DashboardPage() {
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
-              {/* Top Products */}
+              {/* Top products */}
               <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
-                  <ArrowUp size={16} style={{ color: 'var(--accent-em)' }} />
-                  <span style={{ fontWeight: 600, fontSize: '0.85rem' }}>Top 3 Terlaris</span>
+                <div className="flex items-center gap-1.5" style={{ marginBottom: 12 }}>
+                  <ArrowUp size={15} style={{ color: '#10b981' }} />
+                  <span className="type-body-sm" style={{ fontWeight: 600 }}>
+                    Top 3 Terlaris
+                  </span>
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <div className="flex flex-col gap-2">
                   {topProducts.length > 0 ? (
                     topProducts.map((p, i) => (
                       <div
                         key={`${p.product_id}-${i}`}
+                        className="flex justify-between items-center"
                         style={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
                           padding: '8px 0',
                           borderBottom: '1px solid var(--border)',
                         }}
                       >
                         <div>
-                          <div style={{ fontSize: '0.8rem', fontWeight: 600 }}>
+                          <div
+                            className="type-body-sm"
+                            style={{ fontWeight: 600, color: 'var(--text-1)' }}
+                          >
                             {p.product_name}
                           </div>
-                          <div className="text-3" style={{ fontSize: '0.72rem' }}>
-                            {p.total_quantity} terjual
-                          </div>
+                          <div className="type-caption">{p.total_quantity} terjual</div>
                         </div>
                         <div
                           style={{
                             fontSize: '0.82rem',
                             fontWeight: 700,
-                            color: 'var(--accent-em)',
+                            color: 'var(--brand)',
+                            fontVariantNumeric: 'tabular-nums',
                           }}
                         >
                           {formatRp(p.total_revenue)}
@@ -497,47 +498,55 @@ export default function DashboardPage() {
                       </div>
                     ))
                   ) : (
-                    <div className="text-3" style={{ fontSize: '0.8rem', fontStyle: 'italic' }}>
+                    <div className="type-caption" style={{ fontStyle: 'italic' }}>
                       Belum ada data...
                     </div>
                   )}
                 </div>
               </div>
 
-              {/* Bottom Products */}
+              {/* Bottom products */}
               <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
-                  <ArrowDown size={16} style={{ color: '#f43f5e' }} />
-                  <span style={{ fontWeight: 600, fontSize: '0.85rem' }}>Top 3 Kurang Laku</span>
+                <div className="flex items-center gap-1.5" style={{ marginBottom: 12 }}>
+                  <ArrowDown size={15} style={{ color: '#f43f5e' }} />
+                  <span className="type-body-sm" style={{ fontWeight: 600 }}>
+                    Top 3 Kurang Laku
+                  </span>
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <div className="flex flex-col gap-2">
                   {bottomProducts.length > 0 ? (
                     bottomProducts.map((p, i) => (
                       <div
                         key={`${p.product_id}-${i}`}
+                        className="flex justify-between items-center"
                         style={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
                           padding: '8px 0',
                           borderBottom: '1px solid var(--border)',
                         }}
                       >
                         <div>
-                          <div style={{ fontSize: '0.8rem', fontWeight: 600 }}>
+                          <div
+                            className="type-body-sm"
+                            style={{ fontWeight: 600, color: 'var(--text-1)' }}
+                          >
                             {p.product_name}
                           </div>
-                          <div className="text-3" style={{ fontSize: '0.72rem' }}>
-                            {p.total_quantity} terjual
-                          </div>
+                          <div className="type-caption">{p.total_quantity} terjual</div>
                         </div>
-                        <div style={{ fontSize: '0.82rem', fontWeight: 700 }}>
+                        <div
+                          style={{
+                            fontSize: '0.82rem',
+                            fontWeight: 700,
+                            color: 'var(--text-2)',
+                            fontVariantNumeric: 'tabular-nums',
+                          }}
+                        >
                           {formatRp(p.total_revenue)}
                         </div>
                       </div>
                     ))
                   ) : (
-                    <div className="text-3" style={{ fontSize: '0.8rem', fontStyle: 'italic' }}>
+                    <div className="type-caption" style={{ fontStyle: 'italic' }}>
                       Belum ada data...
                     </div>
                   )}
@@ -547,51 +556,36 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Right column */}
+        {/* ── Right column ── */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          {/* Low Stock Alert */}
+          {/* Low stock alert */}
           {lowStock.length > 0 && (
-            <div className="card" style={{ padding: 16, borderColor: 'rgba(245,158,11,0.3)' }}>
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  marginBottom: 12,
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <div className="card" style={{ padding: 18, borderColor: 'rgba(245,158,11,0.25)' }}>
+              <div className="flex justify-between items-center" style={{ marginBottom: 14 }}>
+                <div className="flex items-center gap-2">
                   <AlertTriangle size={15} style={{ color: '#f59e0b' }} />
-                  <span style={{ fontWeight: 600, fontSize: '0.85rem', color: '#fbbf24' }}>
+                  <span style={{ fontWeight: 600, fontSize: '0.85rem', color: '#d97706' }}>
                     Stok Menipis ({lowStock.length})
                   </span>
                 </div>
                 <button
                   onClick={handleCreatePO}
                   className="btn btn-primary btn-sm"
-                  style={{ fontSize: '0.7rem', padding: '4px 10px', minHeight: 'unset' }}
+                  style={{ fontSize: '0.72rem', padding: '4px 10px' }}
                 >
                   + Buat PO
                 </button>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {lowStock.slice(0, 4).map(s => (
-                  <div
-                    key={s.product_id}
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      fontSize: '0.8rem',
-                    }}
-                  >
+              <div className="flex flex-col gap-2.5">
+                {lowStock.slice(0, 5).map(s => (
+                  <div key={s.product_id} className="flex justify-between items-center">
                     <span
+                      className="type-body-sm"
                       style={{
-                        color: 'var(--text-1)',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
                         whiteSpace: 'nowrap',
-                        maxWidth: '65%',
+                        maxWidth: '60%',
                       }}
                     >
                       {s.product_name}
@@ -605,63 +599,62 @@ export default function DashboardPage() {
             </div>
           )}
 
-          {/* PO Debt summary */}
-          <div className="card" style={{ padding: 16 }}>
-            <div style={{ fontWeight: 700, fontSize: '0.85rem', marginBottom: 12 }}>
+          {/* Purchase payables summary */}
+          <div className="card" style={{ padding: 18 }}>
+            <div className="type-subheading" style={{ marginBottom: 14 }}>
               Hutang Pembelian
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem' }}>
-                <span style={{ color: 'var(--text-2)' }}>Jatuh Tempo (Lewat)</span>
+            <div className="flex flex-col gap-3">
+              <div className="flex justify-between items-center">
+                <span className="type-body-sm">Jatuh Tempo (Lewat)</span>
                 <span className="badge badge-red">{formatRp(payables?.overdue_debt || 0)}</span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem' }}>
-                <span style={{ color: 'var(--text-2)' }}>Segera Tempo (7 Hari)</span>
+              <div className="flex justify-between items-center">
+                <span className="type-body-sm">Segera Tempo (7 Hari)</span>
                 <span className="badge badge-amber">{formatRp(payables?.due_soon_debt || 0)}</span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem' }}>
-                <span style={{ color: 'var(--text-2)' }}>Akan Datang</span>
-                <span className="badge badge-gray" style={{ color: 'var(--text-2)' }}>
-                  {formatRp(payables?.future_debt || 0)}
-                </span>
+              <div className="flex justify-between items-center">
+                <span className="type-body-sm">Akan Datang</span>
+                <span className="badge badge-gray">{formatRp(payables?.future_debt || 0)}</span>
               </div>
             </div>
           </div>
 
-          {/* Recent Transactions */}
-          <div className="card" style={{ padding: 16, flex: 1 }}>
-            <div style={{ fontWeight: 700, fontSize: '0.85rem', marginBottom: 12 }}>
+          {/* Recent transactions */}
+          <div className="card" style={{ padding: 18, flex: 1 }}>
+            <div className="type-subheading" style={{ marginBottom: 14 }}>
               Transaksi Terakhir
             </div>
             {recentTxns.length === 0 ? (
               <div className="empty-state" style={{ padding: '20px 0' }}>
                 <ShoppingBag size={24} />
-                <p style={{ fontSize: '0.8rem' }}>Belum ada transaksi</p>
+                <p className="type-body-sm">Belum ada transaksi</p>
               </div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div className="flex flex-col">
                 {recentTxns.map(t => (
                   <div
                     key={t.id}
+                    className="flex justify-between items-center"
                     style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      padding: '8px 0',
+                      padding: '10px 0',
                       borderBottom: '1px solid var(--border)',
                     }}
                   >
                     <div>
-                      <div style={{ fontSize: '0.8rem', fontWeight: 600 }}>
+                      <div className="type-body-sm" style={{ fontWeight: 600 }}>
                         {t.customer_name || 'Pelanggan'}
                       </div>
-                      <div className="text-3" style={{ fontSize: '0.72rem' }}>
-                        {formatDateTime(t.created_at)}
-                      </div>
+                      <div className="type-caption">{formatDateTime(t.created_at)}</div>
                     </div>
                     <div style={{ textAlign: 'right' }}>
                       <div
-                        style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--accent-em)' }}
+                        style={{
+                          fontSize: '0.82rem',
+                          fontWeight: 700,
+                          color: 'var(--brand)',
+                          fontVariantNumeric: 'tabular-nums',
+                        }}
                       >
                         {formatRp(t.total)}
                       </div>
