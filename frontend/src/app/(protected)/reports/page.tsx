@@ -26,6 +26,7 @@ import type {
   SalesByProductRow,
   SalesSummaryRow,
   Transaction,
+  CashFlowDetailEntry,
 } from '@/types';
 import {
   BarChart,
@@ -333,6 +334,8 @@ export default function UnifiedReportsPage() {
   const [expandedDates, setExpandedDates] = useState<Set<string>>(new Set());
   const [transactionsByDate, setTransactionsByDate] = useState<Record<string, Transaction[]>>({});
   const [loadingTransactions, setLoadingTransactions] = useState<Set<string>>(new Set());
+  const [cashFlowDetailByDate, setCashFlowDetailByDate] = useState<Record<string, CashFlowDetailEntry[]>>({});
+  const [loadingCfDetail, setLoadingCfDetail] = useState<Set<string>>(new Set());
 
   const loadDataset = useCallback(
     async (dataset: ReportDataset, force = false) => {
@@ -391,6 +394,8 @@ export default function UnifiedReportsPage() {
     setExpandedDates(new Set());
     setTransactionsByDate({});
     setLoadingTransactions(new Set());
+    setCashFlowDetailByDate({});
+    setLoadingCfDetail(new Set());
   }, [storeId, dateFrom, dateTo]);
 
   useEffect(() => {
@@ -439,6 +444,38 @@ export default function UnifiedReportsPage() {
       }
     },
     [expandedDates, transactionsByDate, loadingTransactions, storeId]
+  );
+
+  const toggleCfDateExpanded = useCallback(
+    async (date: string) => {
+      const now = new Set(expandedDates);
+      if (now.has(date)) {
+        now.delete(date);
+        setExpandedDates(now);
+      } else {
+        if (!cashFlowDetailByDate[date] && !loadingCfDetail.has(date)) {
+          setLoadingCfDetail(prev => new Set(prev).add(date));
+          try {
+            const response = await reportsApi.cashFlowDetail(storeId || '', date);
+            setCashFlowDetailByDate(prev => ({
+              ...prev,
+              [date]: response.data || [],
+            }));
+          } catch (err) {
+            console.error(`Failed to load cash flow detail for ${date}:`, err);
+          } finally {
+            setLoadingCfDetail(prev => {
+              const updated = new Set(prev);
+              updated.delete(date);
+              return updated;
+            });
+          }
+        }
+        now.add(date);
+        setExpandedDates(now);
+      }
+    },
+    [expandedDates, cashFlowDetailByDate, loadingCfDetail, storeId]
   );
 
   const salesDataForChart = useMemo(
@@ -1054,6 +1091,7 @@ export default function UnifiedReportsPage() {
                 <table className="tbl text-sm">
                   <thead>
                     <tr>
+                      <th className="w-[30px]" />
                       <th className="w-[120px]">Tanggal</th>
                       <th className="!text-right w-[150px]">Masuk</th>
                       <th className="!text-right w-[150px]">Keluar</th>
@@ -1065,27 +1103,136 @@ export default function UnifiedReportsPage() {
                     {(cfData?.rows ?? [])
                       .slice()
                       .reverse()
-                      .map((r, i) => (
-                        <tr key={`${r.date}-${i}`}>
-                          <td className="font-bold">{formatDate(r.date)}</td>
-                          <td className="!text-right text-accent-em font-bold">
-                            {formatRp(r.cash_in)}
-                          </td>
-                          <td className="!text-right text-accent-rd">{formatRp(r.cash_out)}</td>
-                          <td
-                            className={`!text-right font-black ${
-                              r.net_cash >= 0 ? 'text-blue-500' : 'text-accent-rd'
-                            }`}
-                          >
-                            {formatRp(r.net_cash)}
-                          </td>
-                          <td className="text-[10px] opacity-60">
-                            {Object.entries(r.cash_in_by_method)
-                              .map(([m, a]) => `${methodLabel(m)}: ${formatRp(a)}`)
-                              .join(' · ')}
-                          </td>
-                        </tr>
-                      ))}
+                      .flatMap((r, i) => {
+                        const isExpanded = expandedDates.has(r.date);
+                        const isLoading = loadingCfDetail.has(r.date);
+                        const details = cashFlowDetailByDate[r.date] || [];
+
+                        const inEntries = details.filter(d => d.type === 'SALE' || d.type === 'INCOME');
+                        const outEntries = details.filter(d => d.type === 'EXPENSE' || d.type === 'PO_PAYMENT');
+
+                        const rows: React.ReactNode[] = [
+                          <tr key={`${r.date}-${i}`}>
+                            <td className="text-center">
+                              <button
+                                onClick={() => toggleCfDateExpanded(r.date)}
+                                className="p-1 hover:bg-surface-hv rounded transition"
+                              >
+                                {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                              </button>
+                            </td>
+                            <td className="font-bold">{formatDate(r.date)}</td>
+                            <td className="!text-right text-accent-em font-bold">
+                              {formatRp(r.cash_in)}
+                            </td>
+                            <td className="!text-right text-accent-rd">{formatRp(r.cash_out)}</td>
+                            <td
+                              className={`!text-right font-black ${
+                                r.net_cash >= 0 ? 'text-blue-500' : 'text-accent-rd'
+                              }`}
+                            >
+                              {formatRp(r.net_cash)}
+                            </td>
+                            <td className="text-[10px] opacity-60">
+                              {Object.entries(r.cash_in_by_method)
+                                .map(([m, a]) => `${methodLabel(m)}: ${formatRp(a)}`)
+                                .join(' · ')}
+                            </td>
+                          </tr>
+                        ];
+
+                        if (isExpanded) {
+                          if (isLoading) {
+                            rows.push(
+                              <tr key={`cf-loading-${r.date}`}>
+                                <td colSpan={6} className="text-center py-4">
+                                  <Loader2 size={16} className="loading-spin mx-auto" />
+                                </td>
+                              </tr>
+                            );
+                          } else if (details.length > 0) {
+                            rows.push(
+                              <tr key={`cf-detail-${r.date}`}>
+                                <td colSpan={6} className="p-0">
+                                  <div className="bg-surface overflow-hidden rounded border-y border-border">
+                                    <div className="flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-border">
+                                      {/* MASUK */}
+                                      <div className="flex-1 p-4">
+                                        <h4 className="flex items-center gap-2 font-bold mb-3 text-accent-em text-xs uppercase tracking-wider">
+                                          <TrendingUp size={14} /> Transaksi Masuk
+                                        </h4>
+                                        {inEntries.length > 0 ? (
+                                          <div className="flex flex-col gap-2">
+                                            {inEntries.map((ent, idx) => (
+                                              <div key={idx} className="flex justify-between items-center text-xs bg-surface-hv p-2 rounded">
+                                                <div>
+                                                  <div className="font-semibold">{ent.label}</div>
+                                                  <div className="flex items-center gap-2 mt-0.5 text-[9px] opacity-60">
+                                                    <span className="font-mono">{ent.timestamp.slice(11, 16)}</span>
+                                                    <span>·</span>
+                                                    <span className="uppercase">{ent.type}</span>
+                                                    <span>·</span>
+                                                    <span>{methodLabel(ent.payment_method)}</span>
+                                                  </div>
+                                                </div>
+                                                <div className="font-bold text-accent-em">
+                                                  +{formatRp(ent.amount)}
+                                                </div>
+                                              </div>
+                                            ))}
+                                          </div>
+                                        ) : (
+                                          <div className="text-xs opacity-50 text-center py-4">Tidak ada data</div>
+                                        )}
+                                      </div>
+                                      
+                                      {/* KELUAR */}
+                                      <div className="flex-1 p-4">
+                                        <h4 className="flex items-center gap-2 font-bold mb-3 text-accent-rd text-xs uppercase tracking-wider">
+                                          <TrendingDown size={14} /> Transaksi Keluar
+                                        </h4>
+                                        {outEntries.length > 0 ? (
+                                          <div className="flex flex-col gap-2">
+                                            {outEntries.map((ent, idx) => (
+                                              <div key={idx} className="flex justify-between items-center text-xs bg-surface-hv p-2 rounded border-l-2 border-accent-rd">
+                                                <div>
+                                                  <div className="font-semibold">{ent.label}</div>
+                                                  <div className="flex items-center gap-2 mt-0.5 text-[9px] opacity-60">
+                                                    <span className="font-mono">{ent.timestamp.slice(11, 16)}</span>
+                                                    <span>·</span>
+                                                    <span className="uppercase">{ent.type}</span>
+                                                    <span>·</span>
+                                                    <span>{methodLabel(ent.payment_method)}</span>
+                                                  </div>
+                                                </div>
+                                                <div className="font-bold text-accent-rd">
+                                                  -{formatRp(ent.amount)}
+                                                </div>
+                                              </div>
+                                            ))}
+                                          </div>
+                                        ) : (
+                                          <div className="text-xs opacity-50 text-center py-4">Tidak ada data</div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </div>
+                                </td>
+                              </tr>
+                            );
+                          } else {
+                            rows.push(
+                              <tr key={`cf-empty-${r.date}`}>
+                                <td colSpan={6} className="text-center py-4 text-xs opacity-50">
+                                  No transaction details
+                                </td>
+                              </tr>
+                            );
+                          }
+                        }
+
+                        return rows;
+                      })}
                   </tbody>
                 </table>
               </div>

@@ -565,3 +565,71 @@ func (r *ReportRepo) CashFlowSummary(ctx context.Context, storeID string, from, 
 	}
 	return mergeCashFlowRows(inRows, outRows, incomeRows), nil
 }
+
+func (r *ReportRepo) CashFlowDetail(ctx context.Context, storeID string, from, to time.Time) ([]dto.CashFlowDetailEntry, error) {
+	const q = `
+		SELECT
+			'SALE' AS type,
+			'Penjualan #' || LEFT(id::text, 8) AS label,
+			ROUND(total::numeric, 2) AS amount,
+			payment_method,
+			TO_CHAR(created_at AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD HH24:MI:SS') AS timestamp
+		FROM transactions
+		WHERE store_id = $1 AND status = 'completed'
+		  AND created_at >= $2 AND created_at < $3
+
+		UNION ALL
+
+		SELECT
+			'INCOME' AS type,
+			COALESCE(notes, 'Pemasukan') AS label,
+			ROUND(amount::numeric, 2) AS amount,
+			payment_method,
+			TO_CHAR(created_at AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD HH24:MI:SS') AS timestamp
+		FROM incomes
+		WHERE store_id = $1 AND income_date >= $2::date AND income_date < $3::date
+
+		UNION ALL
+
+		SELECT
+			'EXPENSE' AS type,
+			COALESCE(notes, 'Pengeluaran') AS label,
+			ROUND(amount::numeric, 2) AS amount,
+			'cash' AS payment_method,
+			TO_CHAR(created_at AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD HH24:MI:SS') AS timestamp
+		FROM expenses
+		WHERE store_id = $1 AND payment_status = 'paid' AND expense_date >= $2::date AND expense_date < $3::date
+
+		UNION ALL
+
+		SELECT
+			'PO_PAYMENT' AS type,
+			'Pembayaran PO #' || po.po_number AS label,
+			ROUND(pp.amount::numeric, 2) AS amount,
+			'cash' AS payment_method,
+			TO_CHAR(pp.paid_at AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD HH24:MI:SS') AS timestamp
+		FROM po_payments pp
+		JOIN purchase_orders po ON po.id = pp.po_id
+		WHERE pp.store_id = $1 AND pp.paid_at >= $2 AND pp.paid_at < $3
+
+		UNION ALL
+
+		SELECT
+			'PO_PAYMENT' AS type,
+			'Pembayaran Termin PO #' || pot.termin_number || ' - ' || po.po_number AS label,
+			ROUND(pr.amount_paid::numeric, 2) AS amount,
+			pr.payment_method,
+			TO_CHAR(pr.created_at AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD HH24:MI:SS') AS timestamp
+		FROM payment_records pr
+		JOIN purchase_order_termins pot ON pot.id = pr.termin_id
+		JOIN purchase_orders po ON po.id = pot.po_id
+		WHERE po.store_id = $1 AND pr.created_at >= $2 AND pr.created_at < $3
+
+		ORDER BY timestamp ASC`
+
+	var rows []dto.CashFlowDetailEntry
+	if err := r.db.SelectContext(ctx, &rows, q, storeID, from, to); err != nil {
+		return nil, fmt.Errorf("ReportRepo.CashFlowDetail: %w", err)
+	}
+	return rows, nil
+}

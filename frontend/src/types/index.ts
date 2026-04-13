@@ -323,6 +323,14 @@ export interface ProfitSummaryResponse {
   profit_margin: number;
 }
 
+export interface CashFlowDetailEntry {
+  type: 'SALE' | 'INCOME' | 'EXPENSE' | 'PO_PAYMENT';
+  label: string;
+  amount: number;
+  payment_method: string;
+  timestamp: string;
+}
+
 // ── Cart ──────────────────────────────────────────────────────────────────────
 export type DiscountType = 'PERCENTAGE' | 'FIXED' | 'OVERRIDE';
 

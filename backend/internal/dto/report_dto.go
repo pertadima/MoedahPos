@@ -131,3 +131,12 @@ type CashFlowResponse struct {
 	TotalOtherIn float64          `json:"total_other_in"`
 	Rows         []CashFlowDayRow `json:"rows"`
 }
+
+// CashFlowDetailEntry represents an individual transaction affecting cash flow.
+type CashFlowDetailEntry struct {
+	Type          string  `json:"type" db:"type"` // SALE, INCOME, EXPENSE, PO_PAYMENT
+	Label         string  `json:"label" db:"label"`
+	Amount        float64 `json:"amount" db:"amount"`
+	PaymentMethod string  `json:"payment_method" db:"payment_method"`
+	Timestamp     string  `json:"timestamp" db:"timestamp"`
+}

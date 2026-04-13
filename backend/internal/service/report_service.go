@@ -175,3 +175,24 @@ func (s *ReportService) CashFlow(ctx context.Context, filter dto.ReportFilter) (
 		Rows:           rows,
 	}, nil
 }
+
+// CashFlowDetail returns a detailed list of transactions for a specific date.
+func (s *ReportService) CashFlowDetail(ctx context.Context, storeID string, dateStr string) ([]dto.CashFlowDetailEntry, error) {
+	layout := "2006-01-02"
+	now := time.Now().UTC()
+	from := now.Truncate(24 * time.Hour)
+	to := from.AddDate(0, 0, 1)
+
+	if dateStr != "" {
+		if t, err := time.Parse(layout, dateStr); err == nil {
+			from = t
+			to = t.AddDate(0, 0, 1)
+		}
+	}
+
+	rows, err := s.reportRepo.CashFlowDetail(ctx, storeID, from, to)
+	if err != nil {
+		return nil, fmt.Errorf("cash flow detail: %w", err)
+	}
+	return rows, nil
+}

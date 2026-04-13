@@ -252,6 +252,7 @@ func New(deps *Dependencies) http.Handler { //nolint:funlen // route wiring is i
 							r.Get("/stock-valuation", withPerm(deps, "reports.read", deps.ReportHandler.StockValuation))
 							r.Get("/profit", withPerm(deps, "reports.read", deps.ReportHandler.ProfitSummary))
 							r.Get("/cash-flow", withPerm(deps, "reports.read", deps.ReportHandler.CashFlow))
+							r.Get("/cash-flow/detail", withPerm(deps, "reports.read", deps.ReportHandler.CashFlowDetail))
 						})
 
 						// Expenses

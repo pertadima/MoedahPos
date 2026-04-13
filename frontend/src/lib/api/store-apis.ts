@@ -172,6 +172,11 @@ export const reportsApi = {
     if (dateTo) q.set('date_to', dateTo);
     return api.get<any>(`/stores/${storeId}/reports/cash-flow?${q}`);
   },
+  cashFlowDetail: (storeId: string, date?: string) => {
+    const q = new URLSearchParams();
+    if (date) q.set('date', date);
+    return api.get<any>(`/stores/${storeId}/reports/cash-flow/detail?${q}`);
+  },
 };
 
 export const priceHistoryApi = {
