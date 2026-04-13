@@ -1,59 +1,84 @@
 @import 'tailwindcss';
 
-/* ── Design Tokens ───────────────────────────────────────────────────────── */
-:root {
-  /* Backgrounds */
-  --bg-base: #060b18;
-  --bg-card: #0b1225;
-  --bg-elevated: #101929;
-  --bg-hover: #162038;
+/* ── 1. Wire dark: variant to class="dark" on <html> ─────────────────────── */
+@custom-variant dark (&:where(.dark, .dark *));
 
-  /* Brand palette */
-  --brand: #0884f6; /* Moedah primary blue              */
-  --brand-dk: #0670d4; /* darker blue – hover states       */
-  --brand-lt: #3fa3ff; /* lighter blue – subtle highlights */
-
-  --accent-em: #0884f6; /* primary actions (CTA, active nav)  */
-  --accent-em-dk: #0670d4;
-  --accent-in: #0884f6; /* management actions – same brand    */
-  --accent-in-dk: #0670d4;
-  --accent-am: #ffa724; /* amber/orange – warnings, highlights */
-  --accent-rd: #ef4444; /* red – danger / void               */
-
-  /* Text */
-  --text-1: #f1f5f9;
-  --text-2: #94a3b8;
-  --text-3: #64748b;
-
-  /* Borders */
-  --border: rgba(255, 255, 255, 0.07);
-  --border-md: rgba(255, 255, 255, 0.12);
-}
-
+/* ── 2. Design Token Palette ─────────────────────────────────────────────── */
+/*
+   Brand:   primary #0884F6  · accent #FFA724
+   Surface: Tailwind neutral scale (light = slate, dark = slate-900 tier)
+   Semantic: success #10b981  · warning #f59e0b  · danger #ef4444
+*/
 @theme inline {
+  /* Brand */
+  --color-primary: #0884f6;
+  --color-primary-hover: #0670d4;
+  --color-primary-light: #3fa3ff;
+  --color-accent: #ffa724;
+  --color-accent-hover: #e8951f;
+
+  /* Semantic */
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-danger: #ef4444;
+
+  /* Neutral scale (maps to Tailwind's slate palette) */
+  --color-neutral-50: #f8fafc;
+  --color-neutral-100: #f1f5f9;
+  --color-neutral-200: #e2e8f0;
+  --color-neutral-300: #cbd5e1;
+  --color-neutral-400: #94a3b8;
+  --color-neutral-500: #64748b;
+  --color-neutral-600: #475569;
+  --color-neutral-700: #334155;
+  --color-neutral-800: #1e293b;
+  --color-neutral-850: #172032;
+  --color-neutral-900: #0f172a;
+  --color-neutral-950: #060b18;
+
+  /* Foreground/background aliases (used by bg-background, text-foreground) */
   --color-background: var(--bg-base);
   --color-foreground: var(--text-1);
-
-  --color-brand: var(--brand);
-  --color-brand-dk: var(--brand-dk);
-  --color-brand-lt: var(--brand-lt);
-
-  --color-accent-em: var(--accent-em);
-  --color-accent-in: var(--accent-in);
-  --color-accent-am: var(--accent-am);
-  --color-accent-rd: var(--accent-rd);
-
-  --color-text-1: var(--text-1);
-  --color-text-2: var(--text-2);
-  --color-text-3: var(--text-3);
 }
 
-/* ── Light Mode Overrides ────────────────────────────────────────────────── */
-[data-theme='light'] {
+/* ── 3. CSS Custom Properties ─────────────────────────────────────────────── */
+/*   :root = LIGHT mode defaults                                               */
+:root {
+  /* Surfaces */
   --bg-base: #f0f4f9;
   --bg-card: #ffffff;
   --bg-elevated: #e8eef6;
   --bg-hover: #dde6f0;
+
+  /* Brand */
+  --brand: #0884f6;
+  --brand-dk: #0670d4;
+  --brand-lt: #3fa3ff;
+
+  /* Accent aliases (kept for legacy inline styles) */
+  --accent-em: #0884f6;
+  --accent-em-dk: #0670d4;
+  --accent-in: #0884f6;
+  --accent-in-dk: #0670d4;
+  --accent-am: #ffa724;
+  --accent-rd: #dc2626;
+
+  /* Text */
+  --text-1: #0f172a;
+  --text-2: #475569;
+  --text-3: #94a3b8;
+
+  /* Borders */
+  --border: rgba(0, 0, 0, 0.08);
+  --border-md: rgba(0, 0, 0, 0.14);
+}
+
+/*   .dark = DARK mode overrides                                               */
+.dark {
+  --bg-base: #060b18;
+  --bg-card: #0b1225;
+  --bg-elevated: #101929;
+  --bg-hover: #162038;
 
   --brand: #0884f6;
   --brand-dk: #0670d4;
@@ -64,17 +89,56 @@
   --accent-in: #0884f6;
   --accent-in-dk: #0670d4;
   --accent-am: #ffa724;
-  --accent-rd: #dc2626;
+  --accent-rd: #ef4444;
 
+  --text-1: #f1f5f9;
+  --text-2: #94a3b8;
+  --text-3: #64748b;
+
+  --border: rgba(255, 255, 255, 0.07);
+  --border-md: rgba(255, 255, 255, 0.12);
+}
+
+/* Legacy data-theme attribute support — mirrors .dark overrides */
+[data-theme='dark'] {
+  --bg-base: #060b18;
+  --bg-card: #0b1225;
+  --bg-elevated: #101929;
+  --bg-hover: #162038;
+  --brand: #0884f6;
+  --brand-dk: #0670d4;
+  --brand-lt: #3fa3ff;
+  --accent-em: #0884f6;
+  --accent-in: #0884f6;
+  --accent-am: #ffa724;
+  --accent-rd: #ef4444;
+  --text-1: #f1f5f9;
+  --text-2: #94a3b8;
+  --text-3: #64748b;
+  --border: rgba(255, 255, 255, 0.07);
+  --border-md: rgba(255, 255, 255, 0.12);
+}
+
+[data-theme='light'] {
+  --bg-base: #f0f4f9;
+  --bg-card: #ffffff;
+  --bg-elevated: #e8eef6;
+  --bg-hover: #dde6f0;
+  --brand: #0884f6;
+  --brand-dk: #0670d4;
+  --brand-lt: #3fa3ff;
+  --accent-em: #0884f6;
+  --accent-in: #0884f6;
+  --accent-am: #ffa724;
+  --accent-rd: #dc2626;
   --text-1: #0f172a;
   --text-2: #475569;
   --text-3: #94a3b8;
-
-  --border: rgba(0, 0, 0, 0.07);
-  --border-md: rgba(0, 0, 0, 0.12);
+  --border: rgba(0, 0, 0, 0.08);
+  --border-md: rgba(0, 0, 0, 0.14);
 }
 
-/* Smooth theme transitions */
+/* ── 4. Smooth Theme Transitions ─────────────────────────────────────────── */
 html {
   transition:
     background-color 0.25s ease,
@@ -89,7 +153,7 @@ html {
     color 0.15s ease;
 }
 
-/* ── Base ─────────────────────────────────────────────────────────────────── */
+/* ── 5. Base ──────────────────────────────────────────────────────────────── */
 *,
 *::before,
 *::after {
@@ -104,11 +168,16 @@ body {
 body {
   background: var(--bg-base);
   color: var(--text-1);
-  font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+  font-family:
+    'Inter',
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
-/* ── Scrollbar ───────────────────────────────────────────────────────────── */
+/* ── 6. Scrollbar ─────────────────────────────────────────────────────────── */
 ::-webkit-scrollbar {
   width: 5px;
   height: 5px;
@@ -117,262 +186,276 @@ body {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(148, 163, 184, 0.25);
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.22);
+  background: rgba(148, 163, 184, 0.4);
 }
 
-/* ── Glass Card ──────────────────────────────────────────────────────────── */
-.card {
-  background: var(--bg-card);
-  border: 1px solid transparent;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  border-radius: 12px;
-}
-.card-elevated {
-  background: var(--bg-elevated);
-  border: 1px solid transparent;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
-  border-radius: 12px;
-}
-
-/* ── Buttons ─────────────────────────────────────────────────────────────── */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
-  font-weight: 500;
-  font-size: 0.875rem;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  border: none;
-  outline: none;
-  white-space: nowrap;
-}
-.btn:active {
-  transform: scale(0.97);
-}
-.btn-primary {
-  background: var(--accent-em);
-  color: #fff;
-}
-.btn-primary:hover {
-  background: var(--accent-em-dk);
-}
-.btn-secondary {
-  background: var(--bg-elevated);
-  color: var(--text-1);
-  border: 1px solid var(--border-md);
-}
-.btn-secondary:hover {
-  background: var(--bg-hover);
-}
-.btn-danger {
-  background: var(--accent-rd);
-  color: #fff;
-}
-.btn-danger:hover {
-  background: #dc2626;
-}
-.btn-indigo {
-  background: var(--accent-in);
-  color: #fff;
-}
-.btn-indigo:hover {
-  background: var(--accent-in-dk);
-}
-.btn-ghost {
-  background: transparent;
-  color: var(--text-2);
-}
-.btn-ghost:hover {
-  background: var(--bg-elevated);
-  color: var(--text-1);
-}
-.btn-lg {
-  padding: 0.75rem 1.5rem;
-  font-size: 1rem;
-  border-radius: 10px;
-}
-.btn-sm {
-  padding: 0.35rem 0.75rem;
-  font-size: 0.8rem;
-  border-radius: 6px;
-}
-.btn:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-  transform: none;
+/* ── 7. Card ──────────────────────────────────────────────────────────────── */
+@layer components {
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-md);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+    border-radius: 12px;
+  }
+  .card-elevated {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-md);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+    border-radius: 12px;
+  }
 }
 
-/* ── Input ───────────────────────────────────────────────────────────────── */
-.input {
-  width: 100%;
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-md);
-  border-radius: 8px;
-  padding: 0.55rem 0.875rem;
-  color: var(--text-1);
-  font-size: 0.875rem;
-  transition: border-color 0.15s;
-  outline: none;
-}
-.input::placeholder {
-  color: var(--text-3);
-}
-.input:focus {
-  border-color: var(--brand);
-  box-shadow: 0 0 0 3px rgba(8, 132, 246, 0.15);
-}
-.input-group {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-.input-label {
-  font-size: 0.8rem;
-  color: var(--text-2);
-  font-weight: 500;
+/* ── 8. Buttons ───────────────────────────────────────────────────────────── */
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-1.5
+           rounded-lg font-medium text-sm
+           cursor-pointer select-none whitespace-nowrap
+           transition-all duration-150;
+    padding: 0.5rem 1rem;
+    border: none;
+    outline: none;
+  }
+  .btn:active {
+    transform: scale(0.97);
+  }
+  .btn:disabled {
+    @apply opacity-45 cursor-not-allowed;
+    transform: none;
+  }
+
+  /* Primary — brand blue, works in both modes */
+  .btn-primary {
+    @apply bg-primary text-white
+           hover:bg-primary-hover;
+  }
+
+  /* Secondary — neutral surface with border */
+  .btn-secondary {
+    background: var(--bg-elevated);
+    color: var(--text-1);
+    border: 1px solid var(--border-md);
+  }
+  .btn-secondary:hover {
+    background: var(--bg-hover);
+  }
+
+  /* Danger — red */
+  .btn-danger {
+    @apply bg-danger text-white hover:brightness-90;
+  }
+
+  /* Indigo / alias — same as primary for this brand */
+  .btn-indigo {
+    @apply bg-primary text-white hover:bg-primary-hover;
+  }
+
+  /* Ghost — transparent, subtle hover */
+  .btn-ghost {
+    @apply bg-transparent;
+    color: var(--text-2);
+  }
+  .btn-ghost:hover {
+    background: var(--bg-elevated);
+    color: var(--text-1);
+  }
+
+  /* Sizes */
+  .btn-lg {
+    @apply px-6 py-3 text-base rounded-xl;
+  }
+  .btn-sm {
+    padding: 0.35rem 0.75rem;
+    font-size: 0.8rem;
+    border-radius: 6px;
+  }
+  .btn-xs {
+    padding: 0.2rem 0.55rem;
+    font-size: 0.75rem;
+    border-radius: 5px;
+  }
 }
 
-/* ── Badge ───────────────────────────────────────────────────────────────── */
-.badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 8px;
-  border-radius: 100px;
-  font-size: 0.72rem;
-  font-weight: 600;
-  white-space: nowrap;
-}
-.badge-green {
-  background: rgba(8, 132, 246, 0.15);
-  color: #3fa3ff;
-}
-.badge-red {
-  background: rgba(239, 68, 68, 0.15);
-  color: #f87171;
-}
-.badge-amber {
-  background: rgba(255, 167, 36, 0.15);
-  color: #ffa724;
-}
-.badge-blue {
-  background: rgba(8, 132, 246, 0.15);
-  color: #3fa3ff;
-}
-.badge-gray {
-  background: rgba(148, 163, 184, 0.1);
-  color: #94a3b8;
+/* ── 9. Inputs ────────────────────────────────────────────────────────────── */
+@layer components {
+  .input {
+    @apply w-full rounded-lg text-sm outline-none
+           transition-colors duration-150;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-md);
+    color: var(--text-1);
+    padding: 0.55rem 0.875rem;
+  }
+  .input::placeholder {
+    color: var(--text-3);
+  }
+  .input:focus {
+    border-color: #0884f6;
+    box-shadow: 0 0 0 3px rgba(8, 132, 246, 0.15);
+  }
+
+  /* Subtle variant (used in reports filter bar) */
+  .input-subtle {
+    @apply rounded text-sm outline-none bg-transparent;
+    color: var(--text-1);
+    border: none;
+  }
+  .input-subtle:focus {
+    outline: none;
+    box-shadow: none;
+  }
+
+  .input-group {
+    @apply flex flex-col gap-1;
+  }
+  .input-label {
+    font-size: 0.8rem;
+    color: var(--text-2);
+    font-weight: 500;
+  }
 }
 
-/* ── Table ───────────────────────────────────────────────────────────────── */
-.tbl {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.875rem;
-}
-.tbl th {
-  color: var(--text-3);
-  font-weight: 500;
-  font-size: 0.78rem;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  padding: 10px 14px;
-  text-align: left;
-  border-bottom: 1px solid var(--border);
-}
-.tbl td {
-  padding: 12px 14px;
-  border-bottom: 1px solid var(--border);
-  color: var(--text-1);
-}
-.tbl tr:last-child td {
-  border-bottom: none;
-}
-.tbl tbody tr:hover td {
-  background: var(--bg-elevated);
+/* ── 10. Badges ───────────────────────────────────────────────────────────── */
+@layer components {
+  .badge {
+    @apply inline-flex items-center
+           rounded-full font-semibold whitespace-nowrap;
+    padding: 2px 8px;
+    font-size: 0.72rem;
+  }
+
+  /* Accessible semantic badges — sufficient contrast in light & dark */
+  .badge-green {
+    @apply bg-primary/10 text-primary-light dark:bg-primary/20 dark:text-primary-light;
+  }
+  .badge-blue {
+    @apply bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light;
+  }
+  .badge-red {
+    background: rgba(239, 68, 68, 0.12);
+    color: #dc2626;
+  }
+  .dark .badge-red {
+    background: rgba(239, 68, 68, 0.18);
+    color: #f87171;
+  }
+  .badge-amber {
+    background: rgba(245, 158, 11, 0.12);
+    color: #b45309;
+  }
+  .dark .badge-amber {
+    background: rgba(255, 167, 36, 0.15);
+    color: #ffa724;
+  }
+  .badge-gray {
+    background: rgba(100, 116, 139, 0.12);
+    color: var(--text-2);
+  }
 }
 
-/* ── Sidebar ─────────────────────────────────────────────────────────────── */
-.sidebar {
-  height: 100vh;
-  position: fixed;
-  left: 0;
-  top: 0;
-  background: var(--bg-card);
-  border-right: 1px solid var(--border);
-  display: flex;
-  flex-direction: column;
-  z-index: 40;
-  overflow-y: auto;
-}
-.sidebar-expanded {
-  width: 240px;
-  min-width: 240px;
-}
-.sidebar-collapsed {
-  width: 64px;
-  min-width: 64px;
-}
-.sidebar-logo {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 18px 16px 16px;
-  border-bottom: 1px solid var(--border);
-  min-height: 64px;
-}
-.sidebar-nav {
-  flex: 1;
-  padding: 12px 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.nav-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 9px 10px;
-  border-radius: 8px;
-  color: var(--text-2);
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.15s;
-  text-decoration: none;
-}
-.nav-item:hover {
-  background: var(--bg-elevated);
-  color: var(--text-1);
-}
-.nav-item.active {
-  background: rgba(8, 132, 246, 0.14);
-  color: #0884f6;
-}
-.nav-item.active svg {
-  color: #0884f6;
-}
-.nav-section {
-  font-size: 0.7rem;
-  color: var(--text-3);
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  padding: 12px 10px 4px;
+/* ── 11. Table ────────────────────────────────────────────────────────────── */
+@layer components {
+  .tbl {
+    @apply w-full text-sm;
+    border-collapse: collapse;
+  }
+  .tbl th {
+    font-weight: 500;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    text-align: left;
+    padding: 10px 14px;
+    color: var(--text-3);
+    border-bottom: 1px solid var(--border);
+  }
+  .tbl td {
+    padding: 12px 14px;
+    color: var(--text-1);
+    border-bottom: 1px solid var(--border);
+  }
+  .tbl tr:last-child td {
+    border-bottom: none;
+  }
+  .tbl tbody tr:hover td {
+    background: var(--bg-elevated);
+  }
 }
 
-/* ── Layout ──────────────────────────────────────────────────────────────── */
+/* ── 12. Sidebar ──────────────────────────────────────────────────────────── */
+@layer components {
+  .sidebar {
+    height: 100vh;
+    position: fixed;
+    left: 0;
+    top: 0;
+    background: var(--bg-card);
+    border-right: 1px solid var(--border-md);
+    @apply flex flex-col z-40 overflow-y-auto;
+  }
+  .sidebar-expanded {
+    width: 240px;
+    min-width: 240px;
+  }
+  .sidebar-collapsed {
+    width: 64px;
+    min-width: 64px;
+  }
+
+  .sidebar-logo {
+    @apply flex items-center gap-2.5;
+    padding: 18px 16px 16px;
+    border-bottom: 1px solid var(--border);
+    min-height: 64px;
+  }
+
+  .sidebar-nav {
+    @apply flex-1 flex flex-col gap-0.5;
+    padding: 12px 10px;
+  }
+
+  /* Nav section label */
+  .nav-section {
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--text-3);
+    padding: 10px 14px 4px;
+  }
+
+  /* Nav item — default (light + dark) */
+  .nav-item {
+    @apply flex items-center gap-2.5 rounded-lg
+           font-medium text-sm
+           cursor-pointer no-underline
+           transition-all duration-150;
+    color: var(--text-2);
+    padding: 9px 10px;
+  }
+  .nav-item:hover {
+    background: var(--bg-elevated);
+    color: var(--text-1);
+  }
+
+  /* Active state — brand-coloured, works in both themes */
+  .nav-item.active {
+    background: rgba(8, 132, 246, 0.12);
+    color: #0884f6;
+  }
+  .nav-item.active svg {
+    color: #0884f6;
+  }
+}
+
+/* ── 13. Layout ───────────────────────────────────────────────────────────── */
 .main-layout {
   min-height: 100vh;
-  display: flex;
-  flex-direction: column;
+  @apply flex flex-col;
   transition: margin-left 0.3s ease-in-out;
 }
 .main-layout.expanded {
@@ -381,6 +464,7 @@ body {
 .main-layout.collapsed {
   margin-left: 64px;
 }
+
 .page-header {
   padding: 20px 24px 0;
 }
@@ -399,24 +483,18 @@ body {
   flex: 1;
 }
 
-/* ── Stats Card ──────────────────────────────────────────────────────────── */
+/* ── 14. Stat Card ────────────────────────────────────────────────────────── */
 .stat-card {
   background: var(--bg-card);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-md);
   border-radius: 12px;
   padding: 18px 20px;
-  display: flex;
-  align-items: flex-start;
-  gap: 14px;
+  @apply flex items-start gap-3.5;
 }
 .stat-icon {
+  @apply flex items-center justify-center flex-shrink-0 rounded-xl;
   width: 44px;
   height: 44px;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
 }
 .stat-val {
   font-size: 1.25rem;
@@ -424,16 +502,12 @@ body {
   color: var(--text-1);
   line-height: 1.2;
   margin-top: 2px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  @apply whitespace-nowrap overflow-hidden text-ellipsis;
 }
 .stat-label {
   font-size: 0.75rem;
   color: var(--text-3);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  @apply whitespace-nowrap overflow-hidden text-ellipsis;
 }
 .stat-change {
   font-size: 0.78rem;
@@ -446,35 +520,27 @@ body {
   color: var(--accent-rd);
 }
 
-/* ── POS ─────────────────────────────────────────────────────────────────── */
+/* ── 15. POS Layout ───────────────────────────────────────────────────────── */
 .pos-layout {
-  display: flex;
+  @apply flex overflow-hidden;
   height: 100vh;
-  overflow: hidden;
-  margin-left: 0px;
+  margin-left: 0;
 }
 .pos-catalog {
-  flex: 1;
-  overflow-y: auto;
+  @apply flex-1 overflow-y-auto flex flex-col gap-3.5;
   padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
 }
 .pos-cart {
   width: 340px;
   min-width: 340px;
   background: var(--bg-card);
   border-left: 1px solid var(--border);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
+  @apply flex flex-col overflow-hidden;
 }
 
+/* Category tabs */
 .category-tabs {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
+  @apply flex gap-1.5 flex-wrap;
 }
 .cat-tab {
   padding: 6px 14px;
@@ -491,11 +557,12 @@ body {
   color: var(--text-1);
 }
 .cat-tab.active {
-  background: rgba(8, 132, 246, 0.15);
+  background: rgba(8, 132, 246, 0.12);
   color: #0884f6;
-  border-color: rgba(8, 132, 246, 0.3);
+  border-color: rgba(8, 132, 246, 0.28);
 }
 
+/* Product grid */
 .product-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
@@ -508,14 +575,10 @@ body {
   padding: 14px 12px;
   cursor: pointer;
   transition: all 0.15s;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  position: relative;
-  overflow: hidden;
+  @apply flex flex-col gap-1.5 relative overflow-hidden;
 }
 .product-card:hover {
-  border-color: rgba(8, 132, 246, 0.45);
+  border-color: rgba(8, 132, 246, 0.4);
   background: var(--bg-elevated);
   transform: translateY(-1px);
 }
@@ -523,16 +586,13 @@ body {
   transform: scale(0.97);
 }
 .product-card.out-of-stock {
-  opacity: 0.45;
-  cursor: not-allowed;
+  @apply opacity-45 cursor-not-allowed;
 }
+
 .product-icon {
+  @apply flex items-center justify-center rounded-lg;
   width: 40px;
   height: 40px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   font-size: 1.4rem;
   background: var(--bg-elevated);
   margin-bottom: 4px;
@@ -563,31 +623,15 @@ body {
   border-bottom: 1px solid var(--border);
 }
 .cart-items {
-  flex: 1;
-  overflow-y: auto;
+  @apply flex-1 overflow-y-auto flex flex-col gap-2;
   padding: 10px 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
 }
 .cart-item {
   background: var(--bg-elevated);
   border-radius: 8px;
   padding: 10px 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+  @apply flex flex-col gap-1.5;
   animation: slideIn 0.12s ease;
-}
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateY(-6px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
 }
 .cart-item-name {
   font-size: 0.82rem;
@@ -595,16 +639,14 @@ body {
   color: var(--text-1);
 }
 .cart-item-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  @apply flex items-center justify-between;
 }
+
 .qty-ctrl {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  @apply flex items-center gap-2;
 }
 .qty-btn {
+  @apply flex items-center justify-center cursor-pointer transition-all;
   width: 26px;
   height: 26px;
   border-radius: 6px;
@@ -612,15 +654,11 @@ body {
   border: 1px solid var(--border-md);
   color: var(--text-1);
   font-size: 1rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.1s;
 }
 .qty-btn:hover {
   background: var(--brand);
   border-color: var(--brand);
+  color: #fff;
 }
 .qty-val {
   font-size: 0.9rem;
@@ -633,52 +671,38 @@ body {
 .cart-footer {
   border-top: 1px solid var(--border);
   padding: 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+  @apply flex flex-col gap-2.5;
 }
 .cart-total-row {
-  display: flex;
-  justify-content: space-between;
+  @apply flex justify-between;
   font-size: 0.85rem;
 }
 .cart-total-row.grand {
-  font-weight: 700;
+  @apply font-bold;
   font-size: 1rem;
   color: var(--text-1);
   padding-top: 8px;
   border-top: 1px solid var(--border);
 }
+
 .checkout-btn {
-  width: 100%;
+  @apply w-full flex items-center justify-center gap-2
+         font-bold text-base rounded-xl text-white
+         transition-all duration-150 border-none cursor-pointer;
   padding: 14px;
-  border-radius: 10px;
   background: linear-gradient(135deg, #0884f6, #0670d4);
-  color: #fff;
-  font-size: 1rem;
-  font-weight: 700;
-  border: none;
-  cursor: pointer;
-  transition: all 0.15s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  box-shadow: 0 4px 20px rgba(8, 132, 246, 0.35);
+  box-shadow: 0 4px 20px rgba(8, 132, 246, 0.3);
 }
 .checkout-btn:hover {
-  filter: brightness(1.1);
+  filter: brightness(1.08);
   transform: translateY(-1px);
 }
 .checkout-btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
+  @apply opacity-40 cursor-not-allowed;
   transform: none;
 }
 
-/* ── Discount UI (minimal – visual styles are inline in page.tsx) ─────── */
-
-/* Hide number input spinners globally in cart */
+/* ── 16. Hide number spinners in cart ────────────────────────────────────── */
 .cart-item input[type='number']::-webkit-outer-spin-button,
 .cart-item input[type='number']::-webkit-inner-spin-button,
 .cart-footer input[type='number']::-webkit-outer-spin-button,
@@ -691,63 +715,39 @@ body {
   -moz-appearance: textfield;
 }
 
-/* ── Payment Modal ───────────────────────────────────────────────────────── */
+/* ── 17. Payment Modal ───────────────────────────────────────────────────── */
 .modal-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 100;
-  background: rgba(0, 0, 0, 0.7);
+  @apply fixed inset-0 z-[100] flex items-center justify-center p-4;
+  background: rgba(0, 0, 0, 0.65);
   backdrop-filter: blur(4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 16px;
 }
 .modal-box {
   background: var(--bg-card);
   border: 1px solid var(--border-md);
   border-radius: 16px;
   padding: 24px;
-  width: 100%;
+  @apply w-full overflow-y-auto;
   max-width: 400px;
   max-height: 90vh;
-  overflow-y: auto;
   animation: modalIn 0.18s ease;
-}
-@keyframes modalIn {
-  from {
-    opacity: 0;
-    transform: scale(0.95) translateY(12px);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
 }
 
 .pay-method-tabs {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
+  @apply flex gap-1.5 flex-wrap;
 }
 .pay-tab {
-  flex: 1;
+  @apply flex-1 rounded-lg font-semibold cursor-pointer transition-all text-center;
   min-width: 60px;
   padding: 8px 4px;
-  border-radius: 8px;
+  font-size: 0.8rem;
   background: var(--bg-elevated);
   border: 1px solid var(--border-md);
   color: var(--text-2);
-  font-size: 0.8rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.12s;
-  text-align: center;
 }
 .pay-tab.active {
-  background: rgba(8, 132, 246, 0.2);
+  background: rgba(8, 132, 246, 0.16);
   color: #0884f6;
-  border-color: rgba(8, 132, 246, 0.4);
+  border-color: rgba(8, 132, 246, 0.35);
 }
 
 .numpad {
@@ -757,16 +757,12 @@ body {
   margin-top: 10px;
 }
 .num-btn {
+  @apply rounded-lg font-semibold text-base cursor-pointer
+         transition-all text-center;
   padding: 14px 8px;
-  border-radius: 8px;
   background: var(--bg-elevated);
   border: 1px solid var(--border);
   color: var(--text-1);
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.1s;
-  text-align: center;
 }
 .num-btn:hover {
   background: var(--bg-hover);
@@ -776,7 +772,7 @@ body {
   transform: scale(0.94);
 }
 
-/* ── Receipt (Print) ─────────────────────────────────────────────────────── */
+/* ── 18. Receipt (Print) ─────────────────────────────────────────────────── */
 @media print {
   body > *:not(#receipt-root) {
     display: none !important;
@@ -801,30 +797,22 @@ body {
   }
 }
 
-/* ── Misc ────────────────────────────────────────────────────────────────── */
+/* ── 19. Misc Utilities ──────────────────────────────────────────────────── */
 .empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
+  @apply flex flex-col items-center justify-center gap-3 text-center;
   padding: 48px 16px;
   color: var(--text-3);
-  text-align: center;
 }
 .loading-spin {
   animation: spin 0.8s linear infinite;
-}
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
 }
 .divider {
   height: 1px;
   background: var(--border);
   margin: 12px 0;
 }
+
+/* Legacy text helpers (used inline in pages) */
 .text-em {
   color: var(--accent-em);
 }
@@ -835,7 +823,7 @@ body {
   color: var(--text-3);
 }
 
-/* ── Category row hover ──────────────────────────────────────────────────── */
+/* Category row hover */
 .category-row:hover {
   background: var(--bg-elevated) !important;
 }
@@ -843,24 +831,39 @@ body {
   border-bottom: none !important;
 }
 
-/* ── Slide-in animation (modals / toasts) ───────────────────────────────── */
+/* ── 20. Animations ──────────────────────────────────────────────────────── */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
 @keyframes slideIn {
   from {
     opacity: 0;
-    transform: translateY(-8px) scale(0.98);
+    transform: translateY(-6px);
   }
   to {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: translateY(0);
+  }
+}
+@keyframes modalIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
   }
 }
 
-/* ── Responsive UI Overrides ─────────────────────────────────────────────── */
+/* ── 21. Responsive Layout ───────────────────────────────────────────────── */
 .sidebar-overlay-backdrop {
   display: none;
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(0, 0, 0, 0.45);
   z-index: 30;
   backdrop-filter: blur(2px);
 }
@@ -872,7 +875,7 @@ body {
   }
   .sidebar-expanded,
   .sidebar-collapsed {
-    width: 240px; /* Force to standard size on mobile overlay */
+    width: 240px;
     min-width: 240px;
   }
   .sidebar.open {
@@ -910,7 +913,7 @@ body {
   }
   .pos-cart {
     width: 100%;
-    height: calc(100vh - 60px); /* Leave room at top or use fixed bottom sheet */
+    height: calc(100vh - 60px);
     min-width: unset;
     position: fixed;
     bottom: 0;
@@ -920,7 +923,7 @@ body {
     transition: transform 0.3s ease-in-out;
     border-top-left-radius: 16px;
     border-top-right-radius: 16px;
-    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.12);
   }
   .pos-cart.open {
     transform: translateY(0);

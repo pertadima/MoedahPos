@@ -25,8 +25,12 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   // Initialize directly from localStorage to avoid setState-in-effect
   const [theme, setTheme] = useState<Theme>(getInitialTheme);
 
-  // Sync the data-theme attribute whenever theme changes
+  // Sync the `dark` class on <html> whenever theme changes.
+  // Tailwind v4's @custom-variant dark targets `.dark` ancestors,
+  // so we toggle the class instead of the data-theme attribute.
   useEffect(() => {
+    document.documentElement.classList.toggle('dark', theme === 'dark');
+    // Keep data-theme for the legacy CSS vars still used in globals.css
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
 
