@@ -334,7 +334,9 @@ export default function UnifiedReportsPage() {
   const [expandedDates, setExpandedDates] = useState<Set<string>>(new Set());
   const [transactionsByDate, setTransactionsByDate] = useState<Record<string, Transaction[]>>({});
   const [loadingTransactions, setLoadingTransactions] = useState<Set<string>>(new Set());
-  const [cashFlowDetailByDate, setCashFlowDetailByDate] = useState<Record<string, CashFlowDetailEntry[]>>({});
+  const [cashFlowDetailByDate, setCashFlowDetailByDate] = useState<
+    Record<string, CashFlowDetailEntry[]>
+  >({});
   const [loadingCfDetail, setLoadingCfDetail] = useState<Set<string>>(new Set());
 
   const loadDataset = useCallback(
@@ -1114,14 +1116,20 @@ export default function UnifiedReportsPage() {
                                 onClick={() => toggleCfDateExpanded(r.date)}
                                 className="p-1 hover:bg-surface-hv rounded transition"
                               >
-                                {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                                {isExpanded ? (
+                                  <ChevronDown size={16} />
+                                ) : (
+                                  <ChevronRight size={16} />
+                                )}
                               </button>
                             </td>
                             <td className="font-bold">{formatDate(r.date)}</td>
                             <td className="!text-right text-accent-em font-bold whitespace-nowrap">
                               {formatRp(r.cash_in)}
                             </td>
-                            <td className="!text-right text-accent-rd whitespace-nowrap">{formatRp(r.cash_out)}</td>
+                            <td className="!text-right text-accent-rd whitespace-nowrap">
+                              {formatRp(r.cash_out)}
+                            </td>
                             <td
                               className={`!text-right font-black whitespace-nowrap ${
                                 r.net_cash >= 0 ? 'text-blue-500' : 'text-accent-rd'
@@ -1129,7 +1137,7 @@ export default function UnifiedReportsPage() {
                             >
                               {formatRp(r.net_cash)}
                             </td>
-                          </tr>
+                          </tr>,
                         ];
 
                         if (isExpanded) {
@@ -1149,36 +1157,65 @@ export default function UnifiedReportsPage() {
                                     <table className="w-full text-xs text-left">
                                       <thead>
                                         <tr className="border-b border-border/50 text-[10px] uppercase text-3">
-                                          <th className="py-1 px-2 font-semibold w-[60px]">Waktu</th>
+                                          <th className="py-1 px-2 font-semibold w-[60px]">
+                                            Waktu
+                                          </th>
                                           <th className="py-1 px-2 font-semibold">Kategori</th>
-                                          <th className="py-1 px-2 font-semibold w-full">Keterangan</th>
-                                          <th className="py-1 px-2 font-semibold whitespace-nowrap">Metode</th>
-                                          <th className="py-1 px-2 font-semibold !text-right whitespace-nowrap">Masuk</th>
-                                          <th className="py-1 px-2 font-semibold !text-right whitespace-nowrap">Keluar</th>
+                                          <th className="py-1 px-2 font-semibold w-full">
+                                            Keterangan
+                                          </th>
+                                          <th className="py-1 px-2 font-semibold whitespace-nowrap">
+                                            Metode
+                                          </th>
+                                          <th className="py-1 px-2 font-semibold !text-right whitespace-nowrap">
+                                            Masuk
+                                          </th>
+                                          <th className="py-1 px-2 font-semibold !text-right whitespace-nowrap">
+                                            Keluar
+                                          </th>
                                         </tr>
                                       </thead>
                                       <tbody className="divide-y divide-border/30">
                                         {details.map((ent, idx) => {
                                           const isIn = ent.type === 'SALE' || ent.type === 'INCOME';
                                           const catBadge = ent.category ? (
-                                            <span className="bg-surface border border-border px-1.5 py-0.5 rounded leading-none inline-block max-w-[100px] truncate" title={ent.category}>
+                                            <span
+                                              className="bg-surface border border-border px-1.5 py-0.5 rounded leading-none inline-block max-w-[100px] truncate"
+                                              title={ent.category}
+                                            >
                                               {ent.category}
                                             </span>
                                           ) : null;
                                           return (
-                                            <tr key={idx} className="hover:bg-surface transition-colors">
-                                              <td className="py-1.5 px-2 font-mono opacity-80 whitespace-nowrap">{ent.timestamp.slice(11, 16)}</td>
+                                            <tr
+                                              key={idx}
+                                              className="hover:bg-surface transition-colors"
+                                            >
+                                              <td className="py-1.5 px-2 font-mono opacity-80 whitespace-nowrap">
+                                                {ent.timestamp.slice(11, 16)}
+                                              </td>
                                               <td className="py-1.5 px-2">
                                                 <div className="flex items-center gap-1.5">
                                                   {catBadge}
-                                                  <span className="opacity-70 text-[9px] uppercase tracking-wider">{ent.type}</span>
+                                                  <span className="opacity-70 text-[9px] uppercase tracking-wider">
+                                                    {ent.type}
+                                                  </span>
                                                 </div>
                                               </td>
                                               <td className="py-1.5 px-2">
                                                 <div className="font-semibold">{ent.label}</div>
-                                                {ent.notes && <div className="text-[10px] opacity-60 italic max-w-sm truncate" title={ent.notes}>{ent.notes}</div>}
+                                                {ent.notes && (
+                                                  <div
+                                                    className="text-[10px] opacity-60 italic max-w-sm truncate"
+                                                    title={ent.notes}
+                                                  >
+                                                    {ent.notes}
+                                                  </div>
+                                                )}
                                               </td>
-                                              <td className="py-1.5 px-2 opacity-80 whitespace-nowrap">{methodLabel(ent.payment_method)}</td>
+                                              <td className="py-1.5 px-2 opacity-80 whitespace-nowrap">
+                                                {methodLabel(ent.payment_method)}
+                                              </td>
                                               <td className="py-1.5 px-2 !text-right font-bold text-accent-em whitespace-nowrap">
                                                 {isIn ? `+${formatRp(ent.amount)}` : '-'}
                                               </td>
