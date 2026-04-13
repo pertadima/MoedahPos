@@ -25,6 +25,7 @@ export const storesApi = {
     tax_number?: string;
     currency?: string;
     store_type: string;
+    default_tax_percentage?: number;
   }) => api.post<Store>('/stores', payload),
   update: (
     id: string,
@@ -35,6 +36,7 @@ export const storesApi = {
       tax_number?: string;
       currency?: string;
       store_type: string;
+      default_tax_percentage?: number;
       is_active?: boolean;
     }
   ) => api.put<Store>(`/stores/${id}`, payload),

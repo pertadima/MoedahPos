@@ -35,6 +35,7 @@ interface FormState {
   name: string;
   description: string;
   category_id: string;
+  sell_price: string;
   use_global_tax: boolean;
   tax_percentage: string;
   packaging_cost: string;

@@ -25,7 +25,9 @@ func main() {
 		fmt.Printf("db error: %v\n", err)
 		os.Exit(1)
 	}
-	defer sqlxDB.Close()
+	defer func() {
+		_ = sqlxDB.Close()
+	}()
 
 	if err := db.RunMigrations(sqlxDB, cfg.Migration.Dir, log); err != nil {
 		fmt.Printf("migrate error: %v\n", err)
