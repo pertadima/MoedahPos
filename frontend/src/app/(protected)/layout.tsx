@@ -6,6 +6,7 @@ import { Loader2, Menu } from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { SidebarProvider, useSidebar } from '@/lib/context/SidebarContext';
 import Sidebar from '@/components/layout/Sidebar';
+import Header from '@/components/layout/Header';
 
 function LayoutContent({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
@@ -45,6 +46,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
         className={`main-layout ${isCollapsed ? 'collapsed' : 'expanded'}`}
         style={{ flex: 1, width: '100%' }}
       >
+        <Header />
         <div className="lg:hidden flex items-center p-3 border-b border-[var(--border-md)] bg-[var(--bg-card)] sticky top-0 z-20">
           <button
             onClick={toggleCollapsed}

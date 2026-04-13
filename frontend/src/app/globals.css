@@ -615,6 +615,60 @@ body {
   flex: 1;
 }
 
+/* Header component */
+.header {
+  height: 64px;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border);
+  @apply flex items-center justify-between px-7 sticky top-0 z-30;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.header-left {
+  @apply flex items-center gap-4;
+}
+.header-right {
+  @apply flex items-center gap-3;
+}
+.header-divider {
+  width: 1px;
+  height: 24px;
+  background: var(--border-md);
+  margin: 0 4px;
+}
+.header-profile {
+  @apply flex items-center gap-3 cursor-pointer select-none;
+  padding: 4px 8px;
+  border-radius: 100px;
+  transition: background-color 0.15s ease;
+}
+.header-profile:hover {
+  background: var(--bg-elevated);
+}
+.header-avatar {
+  @apply flex items-center justify-center flex-shrink-0 font-bold;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #0884f6, #0566cc);
+  color: #fff;
+  font-size: 0.85rem;
+  box-shadow: 0 2px 8px rgba(8, 132, 246, 0.25);
+}
+.header-user-info {
+  @apply hidden sm:flex flex-col;
+}
+.header-user-name {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-1);
+  line-height: 1.2;
+}
+.header-user-role {
+  font-size: 0.6875rem;
+  color: var(--text-3);
+}
+
 /* ── 14. Stat Card ────────────────────────────────────────────────────────── */
 /*
    Modern stat card:

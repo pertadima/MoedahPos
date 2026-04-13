@@ -11,7 +11,6 @@ import {
   ClipboardList,
   BarChart3,
   Users,
-  LogOut,
   Sun,
   Moon,
   Store,
@@ -235,7 +234,7 @@ const restaurantGroup: NavGroup = {
 // ── Sidebar ───────────────────────────────────────────────────────────────────
 export default function Sidebar() {
   const pathname = usePathname();
-  const { user, selectedStore, stores, selectStore, logout } = useAuth();
+  const { selectedStore, stores, selectStore } = useAuth();
   const { isDark, toggleTheme } = useTheme();
   const { isCollapsed, toggleCollapsed } = useSidebar();
   const isRestaurant = selectedStore?.store_type === 'restaurant';
@@ -416,102 +415,6 @@ export default function Sidebar() {
             </div>
           ))}
         </nav>
-
-        {/* ── User Profile Footer ── */}
-        <div
-          style={{
-            padding: '10px 12px',
-            borderTop: '1px solid var(--border)',
-            background: 'var(--bg-elevated)',
-          }}
-        >
-          {/* Expanded: avatar + name + role */}
-          {user && !isCollapsed && (
-            <div className="flex items-center gap-2.5" style={{ marginBottom: 8 }}>
-              <div
-                className="flex items-center justify-center flex-shrink-0"
-                style={{
-                  width: 34,
-                  height: 34,
-                  borderRadius: '50%',
-                  background: 'linear-gradient(135deg, #0884f6, #0566cc)',
-                  fontSize: '0.82rem',
-                  fontWeight: 700,
-                  color: '#fff',
-                  boxShadow: '0 2px 8px rgba(8,132,246,0.30)',
-                }}
-              >
-                {user.name.charAt(0).toUpperCase()}
-              </div>
-              <div style={{ overflow: 'hidden', flex: 1 }}>
-                <div
-                  className="font-semibold"
-                  style={{
-                    fontSize: '0.82rem',
-                    color: 'var(--text-1)',
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                  }}
-                >
-                  {user.name}
-                </div>
-                <div
-                  style={{
-                    fontSize: '0.7rem',
-                    color: 'var(--text-3)',
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                  }}
-                >
-                  {selectedStore?.role ?? user.email}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Collapsed: avatar only */}
-          {user && isCollapsed && (
-            <div
-              className="flex justify-center"
-              style={{ marginBottom: 8 }}
-              title={`${user.name}\n${user.email}`}
-            >
-              <div
-                className="flex items-center justify-center"
-                style={{
-                  width: 32,
-                  height: 32,
-                  borderRadius: '50%',
-                  background: 'linear-gradient(135deg, #0884f6, #0566cc)',
-                  fontSize: '0.8rem',
-                  fontWeight: 700,
-                  color: '#fff',
-                }}
-              >
-                {user.name.charAt(0).toUpperCase()}
-              </div>
-            </div>
-          )}
-
-          {/* Logout button */}
-          <button
-            onClick={logout}
-            className="btn btn-ghost btn-sm w-full"
-            title={isCollapsed ? 'Keluar' : undefined}
-            style={{
-              justifyContent: isCollapsed ? 'center' : 'flex-start',
-              gap: 8,
-              padding: isCollapsed ? '7px 8px' : '7px 10px',
-              color: 'var(--text-2)',
-              fontSize: '0.82rem',
-            }}
-          >
-            <LogOut size={14} />
-            {!isCollapsed && <span>Keluar</span>}
-          </button>
-        </div>
       </aside>
     </>
   );
