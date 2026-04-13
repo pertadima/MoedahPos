@@ -276,42 +276,31 @@ export default function Sidebar() {
 
   return (
     <>
+      {/* Mobile overlay */}
       <div
         className={`sidebar-overlay-backdrop ${!isCollapsed ? 'open' : ''}`}
         onClick={toggleCollapsed}
       />
+
       <aside
         className={`sidebar ${isCollapsed ? 'sidebar-collapsed' : 'sidebar-expanded open'}`}
         style={{ transition: 'width 0.3s ease-in-out, transform 0.3s ease-in-out' }}
       >
-        {/* Logo */}
+        {/* ── Logo / Header ── */}
         <div className="sidebar-logo">
           {isCollapsed ? (
-            <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
-              <button
-                onClick={toggleCollapsed}
-                className="btn btn-ghost btn-sm"
-                title={isCollapsed ? 'Perluas sidebar' : 'Ciutkan sidebar'}
-                style={{
-                  padding: '6px 8px',
-                  borderRadius: 8,
-                  border: '1px solid var(--border-md)',
-                }}
-                aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-              >
-                {isCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
-              </button>
-            </div>
-          ) : (
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                width: '100%',
-              }}
+            <button
+              onClick={toggleCollapsed}
+              className="btn btn-ghost btn-sm"
+              title="Perluas sidebar"
+              aria-label="Expand sidebar"
+              style={{ padding: '6px 8px', margin: 'auto' }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <ChevronRight size={16} />
+            </button>
+          ) : (
+            <div className="flex items-center justify-between w-full">
+              <div className="flex items-center gap-2">
                 <Image
                   src={isDark ? '/logo-icon-dark.svg' : '/logo-icon-light.svg'}
                   alt="Moedah"
@@ -320,121 +309,87 @@ export default function Sidebar() {
                   style={{ objectFit: 'contain', flexShrink: 0 }}
                   priority
                 />
+                <span
+                  className="font-bold text-sm"
+                  style={{ color: 'var(--text-1)', letterSpacing: '-0.01em' }}
+                >
+                  MoedahPOS
+                </span>
               </div>
-              <div style={{ display: 'flex', gap: 4 }}>
+              <div className="flex gap-1">
                 <button
                   onClick={toggleTheme}
                   className="btn btn-ghost btn-sm"
-                  title={isDark ? 'Ganti ke mode terang' : 'Ganti ke mode gelap'}
-                  style={{
-                    padding: '6px 8px',
-                    borderRadius: 8,
-                    border: '1px solid var(--border-md)',
-                  }}
+                  title={isDark ? 'Mode Terang' : 'Mode Gelap'}
+                  style={{ padding: '6px 8px' }}
                 >
                   {isDark ? <Sun size={14} /> : <Moon size={14} />}
                 </button>
                 <button
                   onClick={toggleCollapsed}
                   className="btn btn-ghost btn-sm"
-                  title={isCollapsed ? 'Perluas sidebar' : 'Ciutkan sidebar'}
-                  style={{
-                    padding: '6px 8px',
-                    borderRadius: 8,
-                    border: '1px solid var(--border-md)',
-                  }}
-                  aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+                  title="Ciutkan sidebar"
+                  aria-label="Collapse sidebar"
+                  style={{ padding: '6px 8px' }}
                 >
-                  {isCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
+                  <ChevronLeft size={14} />
                 </button>
               </div>
             </div>
           )}
         </div>
 
-        {/* Store Selector */}
+        {/* ── Store Selector ── */}
         {stores.length > 0 && !isCollapsed && (
-          <div style={{ padding: '10px 12px 8px', borderBottom: '1px solid var(--border)' }}>
-            <div
-              style={{
-                fontSize: '0.68rem',
-                color: 'var(--text-3)',
-                marginBottom: 5,
-                textTransform: 'uppercase',
-                letterSpacing: '0.06em',
-              }}
-            >
+          <div
+            style={{
+              padding: '10px 12px 10px',
+              borderBottom: '1px solid var(--border)',
+            }}
+          >
+            <p className="type-overline" style={{ marginBottom: 6, paddingLeft: 2 }}>
               Toko Aktif
-            </div>
-            <div style={{ position: 'relative' }}>
-              <select
-                value={selectedStore?.store_id ?? ''}
-                onChange={e => selectStore(e.target.value)}
-                style={{
-                  width: '100%',
-                  background: 'var(--bg-elevated)',
-                  border: '1px solid var(--border-md)',
-                  borderRadius: 7,
-                  padding: '6px 10px',
-                  color: 'var(--text-1)',
-                  fontSize: '0.8rem',
-                  cursor: 'pointer',
-                  outline: 'none',
-                }}
-              >
-                {!selectedStore && <option value="">— Pilih Toko —</option>}
-                {stores.map(s => (
-                  <option key={s.store_id} value={s.store_id}>
-                    {s.store_name}
-                  </option>
-                ))}
-              </select>
-            </div>
+            </p>
+            <select
+              value={selectedStore?.store_id ?? ''}
+              onChange={e => selectStore(e.target.value)}
+              className="input"
+              style={{ fontSize: '0.8rem', padding: '6px 10px' }}
+            >
+              {!selectedStore && <option value="">— Pilih Toko —</option>}
+              {stores.map(s => (
+                <option key={s.store_id} value={s.store_id}>
+                  {s.store_name}
+                </option>
+              ))}
+            </select>
             {selectedStore && (
-              <div style={{ display: 'flex', gap: 6, marginTop: 5, alignItems: 'center' }}>
-                <div style={{ fontSize: '0.7rem', color: 'var(--accent-em)' }}>
+              <div className="flex items-center gap-2 mt-1.5">
+                <span className="badge badge-blue" style={{ textTransform: 'capitalize' }}>
                   {selectedStore.role}
-                </div>
-                <div
+                </span>
+                <span
+                  className="badge"
                   style={{
-                    fontSize: '0.62rem',
-                    padding: '1px 5px',
-                    borderRadius: 4,
-                    fontWeight: 600,
-                    background: isRestaurant ? 'rgba(251,146,60,0.15)' : 'rgba(16,185,129,0.12)',
-                    color: isRestaurant ? '#fb923c' : 'var(--accent-em)',
+                    background: isRestaurant ? 'rgba(251,146,60,0.10)' : 'rgba(16,185,129,0.10)',
+                    color: isRestaurant ? '#fb923c' : '#10b981',
                   }}
                 >
-                  {isRestaurant ? '🍽️ Restaurant' : '🏪 Retail'}
-                </div>
+                  {isRestaurant ? '🍽️ Restoran' : '🏪 Retail'}
+                </span>
               </div>
             )}
           </div>
         )}
 
-        {/* Grouped Navigation */}
+        {/* ── Navigation ── */}
         <nav className="sidebar-nav" style={{ flex: 1, overflowY: 'auto' }}>
           {finalGroups.map(group => (
-            <div key={group.label} style={{ marginBottom: 4 }}>
-              {/* Group label */}
-              {!isCollapsed && (
-                <div
-                  style={{
-                    fontSize: '0.62rem',
-                    fontWeight: 700,
-                    letterSpacing: '0.09em',
-                    textTransform: 'uppercase',
-                    color: 'var(--text-3)',
-                    padding: '10px 14px 4px',
-                    opacity: isCollapsed ? 0 : 1,
-                    transition: 'opacity 0.2s ease-in-out',
-                  }}
-                >
-                  {group.label}
-                </div>
-              )}
+            <div key={group.label}>
+              {/* Group section label */}
+              {!isCollapsed && <div className="nav-section">{group.label}</div>}
 
-              {/* Group items */}
+              {/* Group nav items */}
               {group.items.map(({ href, icon: Icon, label }) => {
                 const active =
                   pathname === href || (href !== '/dashboard' && pathname.startsWith(href + '/'));
@@ -446,16 +401,15 @@ export default function Sidebar() {
                     title={isCollapsed ? label : undefined}
                     style={{
                       justifyContent: isCollapsed ? 'center' : 'flex-start',
-                      padding: isCollapsed ? '12px 8px' : '12px 14px',
+                      padding: isCollapsed ? '10px 8px' : '9px 12px',
                     }}
                   >
-                    <Icon size={15} />
+                    <Icon size={16} strokeWidth={active ? 2.2 : 1.75} />
                     {!isCollapsed && (
                       <span
                         style={{
-                          marginLeft: 8,
                           opacity: isCollapsed ? 0 : 1,
-                          transition: 'opacity 0.2s ease-in-out',
+                          transition: 'opacity 0.2s',
                           whiteSpace: 'nowrap',
                         }}
                       >
@@ -469,30 +423,74 @@ export default function Sidebar() {
           ))}
         </nav>
 
-        {/* User Profile + Logout */}
-        <div style={{ padding: '12px', borderTop: '1px solid var(--border)' }}>
-          {user && (
+        {/* ── User Profile Footer ── */}
+        <div
+          style={{
+            padding: '10px 12px',
+            borderTop: '1px solid var(--border)',
+            background: 'var(--bg-elevated)',
+          }}
+        >
+          {/* Expanded: avatar + name + role */}
+          {user && !isCollapsed && (
+            <div className="flex items-center gap-2.5" style={{ marginBottom: 8 }}>
+              <div
+                className="flex items-center justify-center flex-shrink-0"
+                style={{
+                  width: 34,
+                  height: 34,
+                  borderRadius: '50%',
+                  background: 'linear-gradient(135deg, #0884f6, #0566cc)',
+                  fontSize: '0.82rem',
+                  fontWeight: 700,
+                  color: '#fff',
+                  boxShadow: '0 2px 8px rgba(8,132,246,0.30)',
+                }}
+              >
+                {user.name.charAt(0).toUpperCase()}
+              </div>
+              <div style={{ overflow: 'hidden', flex: 1 }}>
+                <div
+                  className="font-semibold"
+                  style={{
+                    fontSize: '0.82rem',
+                    color: 'var(--text-1)',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                  }}
+                >
+                  {user.name}
+                </div>
+                <div
+                  style={{
+                    fontSize: '0.7rem',
+                    color: 'var(--text-3)',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                  }}
+                >
+                  {selectedStore?.role ?? user.email}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Collapsed: avatar only */}
+          {user && isCollapsed && (
             <div
-              style={{
-                display: 'flex',
-                alignItems: isCollapsed ? 'center' : 'flex-start',
-                justifyContent: isCollapsed ? 'center' : 'flex-start',
-                gap: 8,
-                marginBottom: 8,
-                cursor: isCollapsed ? 'pointer' : 'default',
-              }}
-              title={isCollapsed ? `${user.name}\n${user.email}` : undefined}
+              className="flex justify-center"
+              style={{ marginBottom: 8 }}
+              title={`${user.name}\n${user.email}`}
             >
               <div
+                className="flex items-center justify-center"
                 style={{
                   width: 32,
                   height: 32,
                   borderRadius: '50%',
-                  flexShrink: 0,
-                  background: 'linear-gradient(135deg, var(--accent-in), var(--accent-em))',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
+                  background: 'linear-gradient(135deg, #0884f6, #0566cc)',
                   fontSize: '0.8rem',
                   fontWeight: 700,
                   color: '#fff',
@@ -500,58 +498,25 @@ export default function Sidebar() {
               >
                 {user.name.charAt(0).toUpperCase()}
               </div>
-              {!isCollapsed && (
-                <div
-                  style={{
-                    overflow: 'hidden',
-                    opacity: isCollapsed ? 0 : 1,
-                    transition: 'opacity 0.2s ease-in-out',
-                  }}
-                >
-                  <div
-                    style={{
-                      fontSize: '0.8rem',
-                      fontWeight: 600,
-                      color: 'var(--text-1)',
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                    }}
-                  >
-                    {user.name}
-                  </div>
-                  <div
-                    style={{
-                      fontSize: '0.7rem',
-                      color: 'var(--text-3)',
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                    }}
-                  >
-                    {user.email}
-                  </div>
-                </div>
-              )}
             </div>
           )}
-          {/* Logout row */}
-          <div style={{ display: 'flex', gap: 6 }}>
-            <button
-              onClick={logout}
-              className="btn btn-ghost btn-sm"
-              title={isCollapsed ? 'Keluar' : undefined}
-              style={{
-                flex: 1,
-                justifyContent: isCollapsed ? 'center' : 'flex-start',
-                gap: 8,
-                padding: isCollapsed ? '6px 8px' : '6px 12px',
-              }}
-            >
-              <LogOut size={14} />
-              {!isCollapsed && <span>Keluar</span>}
-            </button>
-          </div>
+
+          {/* Logout button */}
+          <button
+            onClick={logout}
+            className="btn btn-ghost btn-sm w-full"
+            title={isCollapsed ? 'Keluar' : undefined}
+            style={{
+              justifyContent: isCollapsed ? 'center' : 'flex-start',
+              gap: 8,
+              padding: isCollapsed ? '7px 8px' : '7px 10px',
+              color: 'var(--text-2)',
+              fontSize: '0.82rem',
+            }}
+          >
+            <LogOut size={14} />
+            {!isCollapsed && <span>Keluar</span>}
+          </button>
         </div>
       </aside>
     </>
