@@ -312,7 +312,7 @@ export default function DashboardPage() {
               </div>
             </div>
             {chartData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={220}>
+              <ResponsiveContainer debounce={300} width="100%" height={220}>
                 <LineChart data={chartData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
                   <XAxis dataKey="date" tick={axisTickStyle} axisLine={false} tickLine={false} />
@@ -374,7 +374,7 @@ export default function DashboardPage() {
               </select>
             </div>
             {cashierRevenue.length > 0 ? (
-              <ResponsiveContainer width="100%" height={240}>
+              <ResponsiveContainer debounce={300} width="100%" height={240}>
                 <BarChart
                   data={cashierRevenue}
                   margin={{ left: -20, right: 10, top: 8, bottom: 0 }}

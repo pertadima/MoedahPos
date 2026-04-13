@@ -669,7 +669,7 @@ export default function UnifiedReportsPage() {
                 <h3 className="text-sm font-bold mb-6">📈 Grafik Omzet Harian</h3>
                 <div className="w-full h-72">
                   {isMounted && (
-                    <ResponsiveContainer>
+                    <ResponsiveContainer debounce={300}>
                       <BarChart data={salesDataForChart}>
                         <CartesianGrid
                           strokeDasharray="3 3"
@@ -941,7 +941,7 @@ export default function UnifiedReportsPage() {
                 <h3 className="text-sm font-bold mb-6">📉 Profitability vs Expenses</h3>
                 <div className="w-full h-80">
                   {isMounted && (
-                    <ResponsiveContainer>
+                    <ResponsiveContainer debounce={300}>
                       <ComposedChart data={profitChartData}>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} />
                         <XAxis dataKey="period" tick={{ fontSize: 10 }} />
@@ -1049,7 +1049,7 @@ export default function UnifiedReportsPage() {
                 <h3 className="text-sm font-bold mb-6">📉 Tren Arus Kas Aktual</h3>
                 <div className="w-full h-80">
                   {isMounted && (
-                    <ResponsiveContainer>
+                    <ResponsiveContainer debounce={300}>
                       <ComposedChart data={cfChartData}>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} />
                         <XAxis dataKey="date" tick={{ fontSize: 10 }} />

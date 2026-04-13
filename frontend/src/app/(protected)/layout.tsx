@@ -40,12 +40,9 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div style={{ display: 'flex', width: '100%' }}>
+    <div className="w-full min-h-screen relative">
       <Sidebar />
-      <div
-        className={`main-layout ${isCollapsed ? 'collapsed' : 'expanded'}`}
-        style={{ flex: 1, width: '100%' }}
-      >
+      <div className={`main-layout ${isCollapsed ? 'collapsed' : 'expanded'}`}>
         <Header />
         <div className="lg:hidden flex items-center p-3 border-b border-[var(--border-md)] bg-[var(--bg-card)] sticky top-0 z-20">
           <button
