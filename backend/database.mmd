@@ -21,6 +21,7 @@ erDiagram
         TIMESTAMPTZ updated_at
         TIMESTAMPTZ deleted_at
         VARCHAR store_type
+        NUMERIC default_tax_percentage
     }
     roles {
         UUID id PK
@@ -74,7 +75,8 @@ erDiagram
         VARCHAR unit
         NUMERIC cost_price
         NUMERIC sell_price
-        NUMERIC tax_rate
+        NUMERIC tax_percentage
+        BOOLEAN use_global_tax
         TEXT image_url
         BOOLEAN is_active
         TIMESTAMPTZ created_at
@@ -198,7 +200,11 @@ erDiagram
         VARCHAR name
         TEXT description
         NUMERIC sell_price
-        NUMERIC tax_rate
+        NUMERIC tax_percentage
+        BOOLEAN use_global_tax
+        NUMERIC packaging_cost
+        NUMERIC overhead_cost
+        NUMERIC labor_cost
         TEXT image_url
         BOOLEAN is_active
         TIMESTAMPTZ created_at
@@ -281,7 +287,10 @@ erDiagram
         UUID id PK
         VARCHAR name
         TEXT description
+        BOOLEAN is_active
         TIMESTAMPTZ created_at
+        TIMESTAMPTZ updated_at
+        TIMESTAMPTZ deleted_at
     }
     expenses {
         UUID id PK
@@ -335,7 +344,10 @@ erDiagram
         UUID id PK
         VARCHAR name
         TEXT description
+        BOOLEAN is_active
         TIMESTAMPTZ created_at
+        TIMESTAMPTZ updated_at
+        TIMESTAMPTZ deleted_at
     }
     incomes {
         UUID id PK
@@ -349,6 +361,16 @@ erDiagram
         UUID created_by FK
         TIMESTAMPTZ created_at
         TIMESTAMPTZ updated_at
+    }
+    activity_logs {
+        UUID id PK
+        UUID user_id FK
+        UUID store_id FK
+        VARCHAR action_type
+        VARCHAR module
+        UUID reference_id
+        JSONB metadata
+        TIMESTAMPTZ created_at
     }
     users ||--o{ user_stores : "assigned to stores"
     stores ||--o{ user_stores : "has users"
@@ -411,3 +433,5 @@ erDiagram
     income_categories ||--o{ incomes : "categorizes"
     stores ||--o{ incomes : "has incomes"
     users ||--o{ incomes : "creates"
+    users ||--o{ activity_logs : "creates"
+    stores ||--o{ activity_logs : "has"
