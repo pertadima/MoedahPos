@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import {
   UtensilsCrossed,
   Plus,
@@ -72,6 +72,7 @@ export default function MenuItemsPage() {
   });
   const [form, setForm] = useState<FormState>(emptyForm());
   const [formError, setFormError] = useState('');
+  const prevHppRef = useRef<number>(0);
   const [submitting, setSubmitting] = useState(false);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
@@ -561,11 +562,14 @@ export default function MenuItemsPage() {
                   </label>
                   <input
                     className="input"
-                    type="number"
-                    min={0}
-                    placeholder="30000"
-                    value={form.sell_price}
-                    onChange={e => setForm(f => ({ ...f, sell_price: e.target.value }))}
+                    type="text"
+                    placeholder="0"
+                    onFocus={e => e.target.select()}
+                    value={form.sell_price ? Number(form.sell_price).toLocaleString('id-ID') : ''}
+                    onChange={e => {
+                      const val = e.target.value.replace(/[^0-9]/g, '');
+                      setForm(f => ({ ...f, sell_price: val }));
+                    }}
                   />
                 </div>
                 {/* Tax */}
@@ -821,11 +825,14 @@ export default function MenuItemsPage() {
                       </label>
                       <input
                         className="input"
-                        type="number"
-                        min={0}
+                        type="text"
                         placeholder="0"
-                        value={form.packaging_cost}
-                        onChange={e => setForm(f => ({ ...f, packaging_cost: e.target.value }))}
+                        onFocus={e => e.target.select()}
+                        value={form.packaging_cost ? Number(form.packaging_cost).toLocaleString('id-ID') : ''}
+                        onChange={e => {
+                          const val = e.target.value.replace(/[^0-9]/g, '');
+                          setForm(f => ({ ...f, packaging_cost: val }));
+                        }}
                       />
                     </div>
                     <div>
@@ -842,11 +849,14 @@ export default function MenuItemsPage() {
                       </label>
                       <input
                         className="input"
-                        type="number"
-                        min={0}
+                        type="text"
                         placeholder="0"
-                        value={form.overhead_cost}
-                        onChange={e => setForm(f => ({ ...f, overhead_cost: e.target.value }))}
+                        onFocus={e => e.target.select()}
+                        value={form.overhead_cost ? Number(form.overhead_cost).toLocaleString('id-ID') : ''}
+                        onChange={e => {
+                          const val = e.target.value.replace(/[^0-9]/g, '');
+                          setForm(f => ({ ...f, overhead_cost: val }));
+                        }}
                       />
                     </div>
                     <div>
@@ -863,11 +873,14 @@ export default function MenuItemsPage() {
                       </label>
                       <input
                         className="input"
-                        type="number"
-                        min={0}
+                        type="text"
                         placeholder="0"
-                        value={form.labor_cost}
-                        onChange={e => setForm(f => ({ ...f, labor_cost: e.target.value }))}
+                        onFocus={e => e.target.select()}
+                        value={form.labor_cost ? Number(form.labor_cost).toLocaleString('id-ID') : ''}
+                        onChange={e => {
+                          const val = e.target.value.replace(/[^0-9]/g, '');
+                          setForm(f => ({ ...f, labor_cost: val }));
+                        }}
                       />
                     </div>
                   </div>
@@ -895,8 +908,11 @@ export default function MenuItemsPage() {
                     let profit = 0;
                     if (currentPrice > 0 && currentPrice >= totalHpp) {
                       profit = currentPrice - totalHpp;
-                      marginPct = (profit / currentPrice) * 100;
+                      marginPct = (profit / totalHpp) * 100;
                     }
+
+                    const isHppIncreased = totalHpp > prevHppRef.current && prevHppRef.current > 0;
+                    prevHppRef.current = totalHpp;
 
                     return (
                       <div
@@ -908,6 +924,21 @@ export default function MenuItemsPage() {
                           border: '1px solid var(--border-md)',
                         }}
                       >
+                        <style>{`
+                          @keyframes bumpRed {
+                            0% { transform: scale(1); color: var(--text-1); }
+                            30% { transform: scale(1.1); color: #ef4444; }
+                            100% { transform: scale(1); color: var(--text-1); }
+                          }
+                          @keyframes bumpNormal {
+                            0% { transform: scale(1); }
+                            30% { transform: scale(1.05); }
+                            100% { transform: scale(1); }
+                          }
+                          .animate-hpp {
+                            display: inline-block;
+                          }
+                        `}</style>
                         <div
                           style={{
                             marginBottom: 12,
@@ -972,7 +1003,15 @@ export default function MenuItemsPage() {
                           }}
                         >
                           <span style={{ color: 'var(--text-1)', fontWeight: 600 }}>Total HPP</span>
-                          <span style={{ fontWeight: 700, color: 'var(--text-1)' }}>
+                          <span
+                            key={totalHpp}
+                            className="animate-hpp"
+                            style={{ 
+                              fontWeight: 700, 
+                              color: 'var(--text-1)',
+                              animation: isHppIncreased ? 'bumpRed 0.8s ease' : 'bumpNormal 0.4s ease'
+                            }}
+                          >
                             {formatRp(totalHpp)}
                           </span>
                         </div>
@@ -1013,10 +1052,31 @@ export default function MenuItemsPage() {
                           style={{
                             display: 'flex',
                             gap: 8,
+                            alignItems: 'center',
                             justifyContent: 'flex-end',
                             marginTop: 12,
                           }}
                         >
+                          <input
+                            type="text"
+                            placeholder="Kustom Harga..."
+                            style={{
+                              width: 120,
+                              textAlign: 'right',
+                              fontSize: '0.8rem',
+                              padding: '6px 10px',
+                              borderRadius: 6,
+                              border: '1px solid var(--border-md)',
+                              background: 'var(--bg-base)',
+                              color: 'var(--text-1)'
+                            }}
+                            onFocus={e => e.target.select()}
+                            value={form.sell_price ? Number(form.sell_price).toLocaleString('id-ID') : ''}
+                            onChange={e => {
+                              const val = e.target.value.replace(/[^0-9]/g, '');
+                              setForm(f => ({ ...f, sell_price: val }));
+                            }}
+                          />
                           <button
                             type="button"
                             className="btn btn-ghost btn-sm"
