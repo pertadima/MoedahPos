@@ -52,19 +52,25 @@ type CreateMenuItemRequest struct {
 	CategoryID  *string           `json:"category_id"`
 	Name        string            `json:"name"        validate:"required,max=200"`
 	Description string            `json:"description"`
-	SellPrice   float64           `json:"sell_price"  validate:"min=0"`
-	TaxRate     float64           `json:"tax_rate"    validate:"min=0,max=100"`
-	Ingredients []IngredientInput `json:"ingredients"`
+	SellPrice     float64           `json:"sell_price"  validate:"min=0"`
+	TaxRate       float64           `json:"tax_rate"    validate:"min=0,max=100"`
+	PackagingCost float64           `json:"packaging_cost" validate:"min=0"`
+	OverheadCost  float64           `json:"overhead_cost"  validate:"min=0"`
+	LaborCost     float64           `json:"labor_cost"     validate:"min=0"`
+	Ingredients   []IngredientInput `json:"ingredients"`
 }
 
 type UpdateMenuItemRequest struct {
 	CategoryID  *string           `json:"category_id"`
 	Name        string            `json:"name"        validate:"required,max=200"`
 	Description string            `json:"description"`
-	SellPrice   float64           `json:"sell_price"  validate:"min=0"`
-	TaxRate     float64           `json:"tax_rate"    validate:"min=0,max=100"`
-	IsActive    *bool             `json:"is_active"`
-	Ingredients []IngredientInput `json:"ingredients"`
+	SellPrice     float64           `json:"sell_price"  validate:"min=0"`
+	TaxRate       float64           `json:"tax_rate"    validate:"min=0,max=100"`
+	PackagingCost float64           `json:"packaging_cost" validate:"min=0"`
+	OverheadCost  float64           `json:"overhead_cost"  validate:"min=0"`
+	LaborCost     float64           `json:"labor_cost"     validate:"min=0"`
+	IsActive      *bool             `json:"is_active"`
+	Ingredients   []IngredientInput `json:"ingredients"`
 }
 
 type MenuItemResponse struct {
@@ -74,12 +80,16 @@ type MenuItemResponse struct {
 	CategoryName *string              `json:"category_name,omitempty"`
 	Name         string               `json:"name"`
 	Description  string               `json:"description"`
-	SellPrice    float64              `json:"sell_price"`
-	CostPrice    float64              `json:"cost_price"`
-	TaxRate      float64              `json:"tax_rate"`
-	ImageURL     string               `json:"image_url,omitempty"`
-	IsActive     bool                 `json:"is_active"`
-	Ingredients  []IngredientResponse `json:"ingredients"`
-	CreatedAt    string               `json:"created_at"`
+	SellPrice      float64               `json:"sell_price"`
+	CostPrice      float64               `json:"cost_price"`
+	IngredientCost float64               `json:"ingredient_cost"`
+	PackagingCost  float64               `json:"packaging_cost"`
+	OverheadCost   float64               `json:"overhead_cost"`
+	LaborCost      float64               `json:"labor_cost"`
+	TaxRate        float64               `json:"tax_rate"`
+	ImageURL       string                `json:"image_url,omitempty"`
+	IsActive       bool                  `json:"is_active"`
+	Ingredients    []IngredientResponse  `json:"ingredients"`
+	CreatedAt      string                `json:"created_at"`
 	UpdatedAt    string               `json:"updated_at"`
 }

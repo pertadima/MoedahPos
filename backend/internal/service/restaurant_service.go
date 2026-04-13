@@ -138,12 +138,15 @@ func (s *MenuItemService) List(ctx context.Context, storeID string) ([]*dto.Menu
 func (s *MenuItemService) Create(ctx context.Context, storeID string, req *dto.CreateMenuItemRequest) (*dto.MenuItemResponse, error) {
 	desc := req.Description
 	item := &domain.MenuItem{
-		StoreID:     storeID,
-		CategoryID:  req.CategoryID,
-		Name:        req.Name,
-		Description: &desc,
-		SellPrice:   req.SellPrice,
-		TaxRate:     req.TaxRate,
+		StoreID:       storeID,
+		CategoryID:    req.CategoryID,
+		Name:          req.Name,
+		Description:   &desc,
+		SellPrice:     req.SellPrice,
+		TaxRate:       req.TaxRate,
+		PackagingCost: req.PackagingCost,
+		OverheadCost:  req.OverheadCost,
+		LaborCost:     req.LaborCost,
 	}
 	created, err := s.repo.Create(ctx, item)
 	if err != nil {
@@ -185,6 +188,9 @@ func (s *MenuItemService) Update(ctx context.Context, id string, req *dto.Update
 	existing.Description = &desc
 	existing.SellPrice = req.SellPrice
 	existing.TaxRate = req.TaxRate
+	existing.PackagingCost = req.PackagingCost
+	existing.OverheadCost = req.OverheadCost
+	existing.LaborCost = req.LaborCost
 	if req.IsActive != nil {
 		existing.IsActive = *req.IsActive
 	}
@@ -247,10 +253,10 @@ func toMenuItemResponse(item *domain.MenuItem) *dto.MenuItemResponse {
 	}
 
 	// Compute BOM cost (HPP) from ingredients
-	var costPrice float64
+	var ingredientCost float64
 	ings := make([]dto.IngredientResponse, len(item.Ingredients))
 	for i, ing := range item.Ingredients {
-		costPrice += ing.CostPrice * ing.Quantity
+		ingredientCost += ing.CostPrice * ing.Quantity
 		ings[i] = dto.IngredientResponse{
 			ID:          ing.ID,
 			ProductID:   ing.ProductID,
@@ -262,20 +268,26 @@ func toMenuItemResponse(item *domain.MenuItem) *dto.MenuItemResponse {
 		}
 	}
 
+	totalCostPrice := ingredientCost + item.PackagingCost + item.OverheadCost + item.LaborCost
+
 	r := &dto.MenuItemResponse{
-		ID:           item.ID,
-		StoreID:      item.StoreID,
-		CategoryID:   item.CategoryID,
-		CategoryName: item.CategoryName,
-		Name:         item.Name,
-		Description:  desc,
-		SellPrice:    item.SellPrice,
-		CostPrice:    costPrice,
-		TaxRate:      item.TaxRate,
-		IsActive:     item.IsActive,
-		Ingredients:  ings,
-		CreatedAt:    item.CreatedAt.Format(time.RFC3339),
-		UpdatedAt:    item.UpdatedAt.Format(time.RFC3339),
+		ID:             item.ID,
+		StoreID:        item.StoreID,
+		CategoryID:     item.CategoryID,
+		CategoryName:   item.CategoryName,
+		Name:           item.Name,
+		Description:    desc,
+		SellPrice:      item.SellPrice,
+		CostPrice:      totalCostPrice,
+		IngredientCost: ingredientCost,
+		PackagingCost:  item.PackagingCost,
+		OverheadCost:   item.OverheadCost,
+		LaborCost:      item.LaborCost,
+		TaxRate:        item.TaxRate,
+		IsActive:       item.IsActive,
+		Ingredients:    ings,
+		CreatedAt:      item.CreatedAt.Format(time.RFC3339),
+		UpdatedAt:      item.UpdatedAt.Format(time.RFC3339),
 	}
 	if item.ImageURL != nil {
 		r.ImageURL = *item.ImageURL

@@ -35,8 +35,10 @@ interface FormState {
   name: string;
   description: string;
   category_id: string;
-  sell_price: string;
   tax_rate: string;
+  packaging_cost: string;
+  overhead_cost: string;
+  labor_cost: string;
   ingredients: IngredientInput[];
 }
 
@@ -46,6 +48,9 @@ const emptyForm = (): FormState => ({
   category_id: '',
   sell_price: '',
   tax_rate: '0',
+  packaging_cost: '0',
+  overhead_cost: '0',
+  labor_cost: '0',
   ingredients: [],
 });
 
@@ -123,6 +128,9 @@ export default function MenuItemsPage() {
       category_id: item.category_id ?? '',
       sell_price: String(item.sell_price),
       tax_rate: String(item.tax_rate),
+      packaging_cost: String(item.packaging_cost ?? 0),
+      overhead_cost: String(item.overhead_cost ?? 0),
+      labor_cost: String(item.labor_cost ?? 0),
       ingredients: item.ingredients.map(i => ({
         productId: i.product_id,
         productName: i.product_name,
@@ -190,6 +198,9 @@ export default function MenuItemsPage() {
       category_id: form.category_id || undefined,
       sell_price: parseFloat(form.sell_price) || 0,
       tax_rate: parseFloat(form.tax_rate) || 0,
+      packaging_cost: parseFloat(form.packaging_cost) || 0,
+      overhead_cost: parseFloat(form.overhead_cost) || 0,
+      labor_cost: parseFloat(form.labor_cost) || 0,
       ingredients: form.ingredients.map(i => ({ product_id: i.productId, quantity: i.quantity })),
     };
     try {
@@ -783,20 +794,115 @@ export default function MenuItemsPage() {
                   )}
                 </div>
 
-                {form.ingredients.length > 0 &&
-                  typeof products !== 'undefined' &&
+                {/* Biaya Tambahan */}
+                <div style={{ marginBottom: 18 }}>
+                  <div
+                    style={{
+                      fontSize: '0.8rem',
+                      fontWeight: 700,
+                      color: 'var(--text-1)',
+                      marginBottom: 10,
+                    }}
+                  >
+                    Biaya Tambahan
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+                    <div>
+                      <label
+                        style={{
+                          display: 'block',
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                          marginBottom: 5,
+                          color: 'var(--text-2)',
+                        }}
+                      >
+                        Packaging
+                      </label>
+                      <input
+                        className="input"
+                        type="number"
+                        min={0}
+                        placeholder="0"
+                        value={form.packaging_cost}
+                        onChange={e => setForm(f => ({ ...f, packaging_cost: e.target.value }))}
+                      />
+                    </div>
+                    <div>
+                      <label
+                        style={{
+                          display: 'block',
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                          marginBottom: 5,
+                          color: 'var(--text-2)',
+                        }}
+                      >
+                        Overhead
+                      </label>
+                      <input
+                        className="input"
+                        type="number"
+                        min={0}
+                        placeholder="0"
+                        value={form.overhead_cost}
+                        onChange={e => setForm(f => ({ ...f, overhead_cost: e.target.value }))}
+                      />
+                    </div>
+                    <div>
+                      <label
+                        style={{
+                          display: 'block',
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                          marginBottom: 5,
+                          color: 'var(--text-2)',
+                        }}
+                      >
+                        Tenaga Kerja
+                      </label>
+                      <input
+                        className="input"
+                        type="number"
+                        min={0}
+                        placeholder="0"
+                        value={form.labor_cost}
+                        onChange={e => setForm(f => ({ ...f, labor_cost: e.target.value }))}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {typeof products !== 'undefined' &&
                   (() => {
-                    const totalHpp = form.ingredients.reduce((acc, ing) => {
+                    const ingredientCost = form.ingredients.reduce((acc, ing) => {
                       const p = products.find(x => x.id === ing.productId);
                       return acc + (p?.cost_price || 0) * ing.quantity;
                     }, 0);
+                    const packagingCost = parseFloat(form.packaging_cost) || 0;
+                    const overheadCost = parseFloat(form.overhead_cost) || 0;
+                    const laborCost = parseFloat(form.labor_cost) || 0;
+                    const totalHpp = ingredientCost + packagingCost + overheadCost + laborCost;
+
                     const suggestedPriceMin = totalHpp * 1.3;
                     const suggestedPriceMax = totalHpp * 1.45;
+                    const currentPrice = parseFloat(form.sell_price) || 0;
+
+                    const showSummary = totalHpp > 0;
+                    if (!showSummary) return null;
+
+                    let marginPct = 0;
+                    let profit = 0;
+                    if (currentPrice > 0 && currentPrice >= totalHpp) {
+                      profit = currentPrice - totalHpp;
+                      marginPct = (profit / currentPrice) * 100;
+                    }
+
                     return (
                       <div
                         style={{
                           marginTop: 12,
-                          padding: 12,
+                          padding: 14,
                           background: 'var(--bg-elevated)',
                           borderRadius: 8,
                           border: '1px solid var(--border-md)',
@@ -804,62 +910,138 @@ export default function MenuItemsPage() {
                       >
                         <div
                           style={{
+                            marginBottom: 12,
+                            paddingBottom: 10,
+                            borderBottom: '1px dashed var(--border)',
+                          }}
+                        >
+                          <div
+                            style={{
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              fontSize: '0.75rem',
+                              marginBottom: 4,
+                              color: 'var(--text-2)',
+                            }}
+                          >
+                            <span>Bahan Baku</span>
+                            <span>{formatRp(ingredientCost)}</span>
+                          </div>
+                          <div
+                            style={{
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              fontSize: '0.75rem',
+                              marginBottom: 4,
+                              color: 'var(--text-2)',
+                            }}
+                          >
+                            <span>Packaging</span>
+                            <span>{formatRp(packagingCost)}</span>
+                          </div>
+                          <div
+                            style={{
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              fontSize: '0.75rem',
+                              marginBottom: 4,
+                              color: 'var(--text-2)',
+                            }}
+                          >
+                            <span>Overhead</span>
+                            <span>{formatRp(overheadCost)}</span>
+                          </div>
+                          <div
+                            style={{
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              fontSize: '0.75rem',
+                              color: 'var(--text-2)',
+                            }}
+                          >
+                            <span>Tenaga Kerja</span>
+                            <span>{formatRp(laborCost)}</span>
+                          </div>
+                        </div>
+                        <div
+                          style={{
                             display: 'flex',
                             justifyContent: 'space-between',
-                            marginBottom: 6,
+                            marginBottom: 10,
                             fontSize: '0.85rem',
                           }}
                         >
-                          <span style={{ color: 'var(--text-2)' }}>Total Harga Pokok (HPP)</span>
+                          <span style={{ color: 'var(--text-1)', fontWeight: 600 }}>Total HPP</span>
                           <span style={{ fontWeight: 700, color: 'var(--text-1)' }}>
                             {formatRp(totalHpp)}
                           </span>
                         </div>
-                        {totalHpp > 0 && (
-                          <>
-                            <div
+                        <div
+                          style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            marginBottom: 10,
+                            fontSize: '0.8rem',
+                          }}
+                        >
+                          <span style={{ color: 'var(--text-3)' }}>Saran Harga (30% - 45%)</span>
+                          <span style={{ color: 'var(--brand)', fontWeight: 600 }}>
+                            {formatRp(suggestedPriceMin)} - {formatRp(suggestedPriceMax)}
+                          </span>
+                        </div>
+                        {currentPrice > 0 && (
+                          <div
+                            style={{
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              marginBottom: 10,
+                              fontSize: '0.8rem',
+                            }}
+                          >
+                            <span style={{ color: 'var(--text-3)' }}>Profit saat ini (Margin)</span>
+                            <span
                               style={{
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                marginBottom: 10,
-                                fontSize: '0.8rem',
+                                color: marginPct >= 30 ? 'var(--brand)' : '#ef4444',
+                                fontWeight: 600,
                               }}
                             >
-                              <span style={{ color: 'var(--text-3)' }}>
-                                Saran Harga Jual (Profit 30% - 45%)
-                              </span>
-                              <span style={{ color: 'var(--brand)', fontWeight: 600 }}>
-                                {formatRp(suggestedPriceMin)} - {formatRp(suggestedPriceMax)}
-                              </span>
-                            </div>
-                            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-                              <button
-                                type="button"
-                                className="btn btn-ghost btn-sm"
-                                onClick={() =>
-                                  setForm(f => ({
-                                    ...f,
-                                    sell_price: String(Math.round(suggestedPriceMin)),
-                                  }))
-                                }
-                              >
-                                Tetapkan Margin 30%
-                              </button>
-                              <button
-                                type="button"
-                                className="btn btn-primary btn-sm"
-                                onClick={() =>
-                                  setForm(f => ({
-                                    ...f,
-                                    sell_price: String(Math.round(suggestedPriceMax)),
-                                  }))
-                                }
-                              >
-                                Tetapkan Margin 45%
-                              </button>
-                            </div>
-                          </>
+                              {formatRp(profit)} ({marginPct.toFixed(1)}%)
+                            </span>
+                          </div>
                         )}
+                        <div
+                          style={{
+                            display: 'flex',
+                            gap: 8,
+                            justifyContent: 'flex-end',
+                            marginTop: 12,
+                          }}
+                        >
+                          <button
+                            type="button"
+                            className="btn btn-ghost btn-sm"
+                            onClick={() =>
+                              setForm(f => ({
+                                ...f,
+                                sell_price: String(Math.round(suggestedPriceMin)),
+                              }))
+                            }
+                          >
+                            Set Margin 30%
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn-primary btn-sm"
+                            onClick={() =>
+                              setForm(f => ({
+                                ...f,
+                                sell_price: String(Math.round(suggestedPriceMax)),
+                              }))
+                            }
+                          >
+                            Set Margin 45%
+                          </button>
+                        </div>
                       </div>
                     );
                   })()}

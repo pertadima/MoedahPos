@@ -110,6 +110,7 @@ func (r *MenuItemRepo) FindAllByStore(ctx context.Context, storeID string) ([]*d
 	const q = `
 		SELECT mi.id, mi.store_id, mi.category_id, mi.name, mi.description,
 		       mi.sell_price, mi.tax_rate, mi.image_url, mi.is_active,
+		       mi.packaging_cost, mi.overhead_cost, mi.labor_cost,
 		       mi.created_at, mi.updated_at, mi.deleted_at,
 		       c.name AS category_name
 		FROM menu_items mi
@@ -143,6 +144,7 @@ func (r *MenuItemRepo) FindByID(ctx context.Context, id string) (*domain.MenuIte
 	const q = `
 		SELECT mi.id, mi.store_id, mi.category_id, mi.name, mi.description,
 		       mi.sell_price, mi.tax_rate, mi.image_url, mi.is_active,
+		       mi.packaging_cost, mi.overhead_cost, mi.labor_cost,
 		       mi.created_at, mi.updated_at, mi.deleted_at,
 		       c.name AS category_name
 		FROM menu_items mi
@@ -191,14 +193,14 @@ func (r *MenuItemRepo) loadIngredients(ctx context.Context, ids []string) (map[s
 
 func (r *MenuItemRepo) Create(ctx context.Context, item *domain.MenuItem) (*domain.MenuItem, error) {
 	const q = `
-		INSERT INTO menu_items (store_id, category_id, name, description, sell_price, tax_rate, image_url, is_active)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, true)
-		RETURNING id, store_id, category_id, name, description, sell_price, tax_rate, image_url,
+		INSERT INTO menu_items (store_id, category_id, name, description, sell_price, tax_rate, packaging_cost, overhead_cost, labor_cost, image_url, is_active)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, true)
+		RETURNING id, store_id, category_id, name, description, sell_price, tax_rate, packaging_cost, overhead_cost, labor_cost, image_url,
 		          is_active, created_at, updated_at, deleted_at`
 	row := &domain.MenuItem{}
 	err := r.db.QueryRowxContext(ctx, q,
 		item.StoreID, item.CategoryID, item.Name, item.Description,
-		item.SellPrice, item.TaxRate, item.ImageURL,
+		item.SellPrice, item.TaxRate, item.PackagingCost, item.OverheadCost, item.LaborCost, item.ImageURL,
 	).StructScan(row)
 	if err != nil {
 		return nil, fmt.Errorf("MenuItemRepo.Create: %w", err)
@@ -210,13 +212,15 @@ func (r *MenuItemRepo) Update(ctx context.Context, item *domain.MenuItem) (*doma
 	const q = `
 		UPDATE menu_items
 		SET category_id=$1, name=$2, description=$3, sell_price=$4, tax_rate=$5,
-		    image_url=$6, is_active=$7, updated_at=NOW()
-		WHERE id=$8 AND deleted_at IS NULL
-		RETURNING id, store_id, category_id, name, description, sell_price, tax_rate, image_url,
+		    packaging_cost=$6, overhead_cost=$7, labor_cost=$8,
+		    image_url=$9, is_active=$10, updated_at=NOW()
+		WHERE id=$11 AND deleted_at IS NULL
+		RETURNING id, store_id, category_id, name, description, sell_price, tax_rate, packaging_cost, overhead_cost, labor_cost, image_url,
 		          is_active, created_at, updated_at, deleted_at`
 	row := &domain.MenuItem{}
 	err := r.db.QueryRowxContext(ctx, q,
 		item.CategoryID, item.Name, item.Description, item.SellPrice, item.TaxRate,
+		item.PackagingCost, item.OverheadCost, item.LaborCost,
 		item.ImageURL, item.IsActive, item.ID,
 	).StructScan(row)
 	if err != nil {

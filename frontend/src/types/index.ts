@@ -98,6 +98,10 @@ export interface MenuItem {
   description: string;
   sell_price: number;
   cost_price: number;
+  ingredient_cost?: number;
+  packaging_cost?: number;
+  overhead_cost?: number;
+  labor_cost?: number;
   tax_rate: number;
   image_url?: string;
   is_active: boolean;
