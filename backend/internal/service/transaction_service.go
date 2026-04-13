@@ -269,7 +269,7 @@ func (s *TransactionService) Checkout(ctx context.Context, storeID string, req *
 			}
 
 			finalPrice, _, lineNet, lineTax, lineSubtotal := computeItemPricing(
-				product.SellPrice, item.Quantity, product.TaxRate, discType, discValue)
+				product.SellPrice, item.Quantity, product.EffectiveTaxRate(), discType, discValue)
 
 			subtotal += lineNet
 			discountAmt += (product.SellPrice - finalPrice) * item.Quantity
@@ -287,7 +287,7 @@ func (s *TransactionService) Checkout(ctx context.Context, storeID string, req *
 				DiscountPct:   item.DiscountPct,
 				DiscountType:  discType,
 				DiscountValue: discValue,
-				TaxRate:       product.TaxRate,
+				TaxRate:       product.EffectiveTaxRate(),
 				Subtotal:      lineSubtotal,
 			})
 		}
@@ -514,7 +514,7 @@ func (s *TransactionService) processProduct(_ context.Context, item dto.TxItemIn
 	}
 
 	finalPrice, _, lineNet, lineTax, lineSubtotal := computeItemPricing(
-		product.SellPrice, item.Quantity, product.TaxRate, discType, discValue)
+		product.SellPrice, item.Quantity, product.EffectiveTaxRate(), discType, discValue)
 
 	pid := item.ProductID
 	discountAmt := (product.SellPrice - finalPrice) * item.Quantity
@@ -530,7 +530,7 @@ func (s *TransactionService) processProduct(_ context.Context, item dto.TxItemIn
 		DiscountPct:   item.DiscountPct,
 		DiscountType:  discType,
 		DiscountValue: discValue,
-		TaxRate:       product.TaxRate,
+		TaxRate:       product.EffectiveTaxRate(),
 		Subtotal:      lineSubtotal,
 	}, discountAmt, lineNet, lineTax, nil
 }

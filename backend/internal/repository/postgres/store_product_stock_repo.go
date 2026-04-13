@@ -272,14 +272,14 @@ func NewProductRepo(db *sqlx.DB) *ProductRepo { return &ProductRepo{db: db} }
 func (r *ProductRepo) Create(ctx context.Context, p *domain.Product) (*domain.Product, error) {
 	const q = `
 		INSERT INTO products
-		  (store_id, category_id, sku, name, description, barcode, unit, cost_price, sell_price, tax_rate, image_url)
-		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+		  (store_id, category_id, sku, name, description, barcode, unit, cost_price, sell_price, use_global_tax, tax_percentage, image_url)
+		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
 		RETURNING id, store_id, category_id, sku, name, description, barcode, unit,
-		          cost_price, sell_price, tax_rate, image_url, is_active, created_at, updated_at, deleted_at`
+		          cost_price, sell_price, use_global_tax, tax_percentage, image_url, is_active, created_at, updated_at, deleted_at`
 	row := &domain.Product{}
 	err := r.db.QueryRowxContext(ctx, q,
 		p.StoreID, p.CategoryID, p.SKU, p.Name, p.Description,
-		p.Barcode, p.Unit, p.CostPrice, p.SellPrice, p.TaxRate, p.ImageURL,
+		p.Barcode, p.Unit, p.CostPrice, p.SellPrice, p.UseGlobalTax, p.TaxPercentage, p.ImageURL,
 	).StructScan(row)
 	if err != nil {
 		return nil, fmt.Errorf("ProductRepo.Create: %w", err)
@@ -328,11 +328,13 @@ func (r *ProductRepo) FindAll(ctx context.Context, f dto.ProductListFilter) ([]*
 
 	dataQ := fmt.Sprintf(`
 		SELECT p.id, p.store_id, p.category_id, p.sku, p.name, p.description, p.barcode, p.unit,
-		       p.cost_price, p.sell_price, p.tax_rate, p.image_url, p.is_active,
+		       p.cost_price, p.sell_price, p.use_global_tax, p.tax_percentage, p.image_url, p.is_active,
 		       p.created_at, p.updated_at, p.deleted_at,
-		       c.name AS category_name, %s
+		       c.name AS category_name, %s,
+		       s.default_tax_percentage AS store_default_tax
 		FROM products p
 		LEFT JOIN categories c ON c.id = p.category_id AND c.deleted_at IS NULL
+		INNER JOIN stores s ON s.id = p.store_id
 		%s
 		%s
 		ORDER BY p.name ASC
@@ -348,10 +350,12 @@ func (r *ProductRepo) FindAll(ctx context.Context, f dto.ProductListFilter) ([]*
 func (r *ProductRepo) FindByID(ctx context.Context, id string) (*domain.Product, error) {
 	const q = `
 		SELECT p.id, p.store_id, p.category_id, p.sku, p.name, p.description, p.barcode, p.unit,
-		       p.cost_price, p.sell_price, p.tax_rate, p.image_url, p.is_active,
-		       p.created_at, p.updated_at, p.deleted_at, c.name AS category_name
+		       p.cost_price, p.sell_price, p.use_global_tax, p.tax_percentage, p.image_url, p.is_active,
+		       p.created_at, p.updated_at, p.deleted_at, c.name AS category_name,
+		       s.default_tax_percentage AS store_default_tax
 		FROM products p
 		LEFT JOIN categories c ON c.id = p.category_id AND c.deleted_at IS NULL
+		INNER JOIN stores s ON s.id = p.store_id
 		WHERE p.id = $1 AND p.deleted_at IS NULL`
 	p := &domain.Product{}
 	if err := r.db.QueryRowxContext(ctx, q, id).StructScan(p); err != nil {
@@ -366,10 +370,12 @@ func (r *ProductRepo) FindByID(ctx context.Context, id string) (*domain.Product,
 func (r *ProductRepo) FindByBarcode(ctx context.Context, storeID, barcode string) (*domain.Product, error) {
 	const q = `
 		SELECT p.id, p.store_id, p.category_id, p.sku, p.name, p.description, p.barcode, p.unit,
-		       p.cost_price, p.sell_price, p.tax_rate, p.image_url, p.is_active,
-		       p.created_at, p.updated_at, p.deleted_at, c.name AS category_name
+		       p.cost_price, p.sell_price, p.use_global_tax, p.tax_percentage, p.image_url, p.is_active,
+		       p.created_at, p.updated_at, p.deleted_at, c.name AS category_name,
+		       s.default_tax_percentage AS store_default_tax
 		FROM products p
 		LEFT JOIN categories c ON c.id = p.category_id AND c.deleted_at IS NULL
+		INNER JOIN stores s ON s.id = p.store_id
 		WHERE p.store_id = $1 AND p.barcode = $2 AND p.deleted_at IS NULL AND p.is_active = true`
 	p := &domain.Product{}
 	if err := r.db.QueryRowxContext(ctx, q, storeID, barcode).StructScan(p); err != nil {
@@ -400,14 +406,14 @@ func (r *ProductRepo) Update(ctx context.Context, p *domain.Product) (*domain.Pr
 	const q = `
 		UPDATE products
 		SET category_id=$1, name=$2, description=$3, barcode=$4, unit=$5,
-		    cost_price=$6, sell_price=$7, tax_rate=$8, image_url=$9, is_active=$10, updated_at=NOW()
-		WHERE id=$11 AND deleted_at IS NULL
+		    cost_price=$6, sell_price=$7, use_global_tax=$8, tax_percentage=$9, image_url=$10, is_active=$11, updated_at=NOW()
+		WHERE id=$12 AND deleted_at IS NULL
 		RETURNING id, store_id, category_id, sku, name, description, barcode, unit,
-		          cost_price, sell_price, tax_rate, image_url, is_active, created_at, updated_at, deleted_at`
+		          cost_price, sell_price, use_global_tax, tax_percentage, image_url, is_active, created_at, updated_at, deleted_at`
 	row := &domain.Product{}
 	err := r.db.QueryRowxContext(ctx, q,
 		p.CategoryID, p.Name, p.Description, p.Barcode, p.Unit,
-		p.CostPrice, p.SellPrice, p.TaxRate, p.ImageURL, p.IsActive, p.ID,
+		p.CostPrice, p.SellPrice, p.UseGlobalTax, p.TaxPercentage, p.ImageURL, p.IsActive, p.ID,
 	).StructScan(row)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {

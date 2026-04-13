@@ -36,7 +36,8 @@ export default function ProductsPage() {
     sell_price: '',
     cost_price: '',
     unit: 'pcs',
-    tax_rate: '11',
+    use_global_tax: true,
+    tax_percentage: '',
     category_id: '',
     initial_qty: '0',
   });
@@ -77,7 +78,8 @@ export default function ProductsPage() {
       sell_price: '',
       cost_price: '',
       unit: 'pcs',
-      tax_rate: '11',
+      use_global_tax: true,
+      tax_percentage: '',
       category_id: '',
       initial_qty: '0',
     });
@@ -92,7 +94,9 @@ export default function ProductsPage() {
       sell_price: String(p.sell_price),
       cost_price: String(p.cost_price),
       unit: p.unit,
-      tax_rate: String(p.tax_rate),
+      use_global_tax: p.use_global_tax ?? true,
+      tax_percentage:
+        p.tax_percentage !== null && p.tax_percentage !== undefined ? String(p.tax_percentage) : '',
       category_id: p.category_id ?? '',
       initial_qty: '0',
     });
@@ -111,7 +115,8 @@ export default function ProductsPage() {
         sell_price: +formData.sell_price,
         cost_price: +formData.cost_price,
         unit: formData.unit,
-        tax_rate: +formData.tax_rate,
+        use_global_tax: formData.use_global_tax,
+        tax_percentage: formData.use_global_tax ? null : +formData.tax_percentage || 0,
         category_id: formData.category_id || undefined,
         initial_qty: +formData.initial_qty,
         is_active: true,
@@ -346,18 +351,54 @@ export default function ProductsPage() {
                 ['sell_price', 'Harga Jual', 'number'],
                 ['cost_price', 'Harga Beli', 'number'],
                 ['unit', 'Satuan', 'text'],
-                ['tax_rate', 'PPN (%)', 'number'],
               ].map(([k, l, t]) => (
                 <div key={k} className="input-group">
                   <label className="input-label">{l}</label>
                   <input
                     type={t}
                     className="input"
-                    value={formData[k as keyof typeof formData]}
+                    value={formData[k as keyof typeof formData] as string}
                     onChange={f(k as keyof typeof formData)}
                   />
                 </div>
               ))}
+
+              <div className="input-group">
+                <label
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    fontSize: '0.8rem',
+                    fontWeight: 600,
+                    marginBottom: formData.use_global_tax ? 15 : 5,
+                    color: 'var(--text-2)',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={formData.use_global_tax}
+                    onChange={e => setFormData(d => ({ ...d, use_global_tax: e.target.checked }))}
+                  />
+                  Gunakan PPN default toko
+                </label>
+                {!formData.use_global_tax && (
+                  <>
+                    <label className="input-label" style={{ marginTop: 8 }}>
+                      Custom PPN (%)
+                    </label>
+                    <input
+                      className="input"
+                      type="number"
+                      min={0}
+                      max={100}
+                      value={formData.tax_percentage}
+                      onChange={f('tax_percentage')}
+                    />
+                  </>
+                )}
+              </div>
               <div className="input-group">
                 <label className="input-label">Kategori</label>
                 <select className="input" value={formData.category_id} onChange={f('category_id')}>

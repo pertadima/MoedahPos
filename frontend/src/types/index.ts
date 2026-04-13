@@ -126,6 +126,8 @@ export interface Product {
   unit: string;
   cost_price: number;
   sell_price: number;
+  use_global_tax?: boolean;
+  tax_percentage?: number | null;
   tax_rate: number;
   image_url?: string;
   is_active: boolean;

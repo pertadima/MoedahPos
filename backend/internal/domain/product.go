@@ -4,26 +4,38 @@ import "time"
 
 // Product is a sellable item belonging to a store.
 type Product struct {
-	ID          string     `db:"id"`
-	StoreID     string     `db:"store_id"`
-	CategoryID  *string    `db:"category_id"`
-	SKU         string     `db:"sku"`
-	Name        string     `db:"name"`
-	Description *string    `db:"description"`
-	Barcode     *string    `db:"barcode"`
-	Unit        string     `db:"unit"`
-	CostPrice   float64    `db:"cost_price"`
-	SellPrice   float64    `db:"sell_price"`
-	TaxRate     float64    `db:"tax_rate"`
-	ImageURL    *string    `db:"image_url"`
-	IsActive    bool       `db:"is_active"`
-	CreatedAt   time.Time  `db:"created_at"`
-	UpdatedAt   time.Time  `db:"updated_at"`
-	DeletedAt   *time.Time `db:"deleted_at"`
+	ID            string     `db:"id"`
+	StoreID       string     `db:"store_id"`
+	CategoryID    *string    `db:"category_id"`
+	SKU           string     `db:"sku"`
+	Name          string     `db:"name"`
+	Description   *string    `db:"description"`
+	Barcode       *string    `db:"barcode"`
+	Unit          string     `db:"unit"`
+	CostPrice     float64    `db:"cost_price"`
+	SellPrice     float64    `db:"sell_price"`
+	UseGlobalTax  bool       `db:"use_global_tax"`
+	TaxPercentage *float64   `db:"tax_percentage"`
+	ImageURL      *string    `db:"image_url"`
+	IsActive      bool       `db:"is_active"`
+	CreatedAt     time.Time  `db:"created_at"`
+	UpdatedAt     time.Time  `db:"updated_at"`
+	DeletedAt     *time.Time `db:"deleted_at"`
 
 	// Populated via JOIN
-	CategoryName *string  `db:"category_name"`
-	StockQty     *float64 `db:"stock_qty"` // from stock_levels join
+	CategoryName    *string  `db:"category_name"`
+	StockQty        *float64 `db:"stock_qty"` // from stock_levels join
+	StoreDefaultTax float64  `db:"store_default_tax"`
+}
+
+func (p *Product) EffectiveTaxRate() float64 {
+	if p.UseGlobalTax {
+		return p.StoreDefaultTax
+	}
+	if p.TaxPercentage != nil {
+		return *p.TaxPercentage
+	}
+	return 0
 }
 
 // Category groups products within a store (supports nested parent/child).

@@ -145,10 +145,15 @@ func (s *ProductService) CreateProduct(ctx context.Context, storeID string, req 
 		return nil, ErrSKUAlreadyExists
 	}
 
+	useGlobalTax := true
+	if req.UseGlobalTax != nil {
+		useGlobalTax = *req.UseGlobalTax
+	}
+
 	product, err := s.productRepo.Create(ctx, &domain.Product{
 		StoreID: storeID, CategoryID: req.CategoryID, SKU: req.SKU, Name: req.Name,
 		Description: &req.Description, Barcode: req.Barcode, Unit: req.Unit,
-		CostPrice: req.CostPrice, SellPrice: req.SellPrice, TaxRate: req.TaxRate,
+		CostPrice: req.CostPrice, SellPrice: req.SellPrice, UseGlobalTax: useGlobalTax, TaxPercentage: req.TaxPercentage,
 		ImageURL: req.ImageURL, IsActive: true,
 	})
 	if err != nil {
@@ -191,7 +196,12 @@ func (s *ProductService) UpdateProduct(ctx context.Context, id string, req *dto.
 	product.Unit = req.Unit
 	product.CostPrice = req.CostPrice
 	product.SellPrice = req.SellPrice
-	product.TaxRate = req.TaxRate
+	if req.UseGlobalTax != nil {
+		product.UseGlobalTax = *req.UseGlobalTax
+	} else {
+		product.UseGlobalTax = true // default fallback
+	}
+	product.TaxPercentage = req.TaxPercentage
 	product.ImageURL = req.ImageURL
 	if req.IsActive != nil {
 		product.IsActive = *req.IsActive
@@ -258,23 +268,25 @@ func toProductResponse(p *domain.Product) *dto.ProductResponse {
 		desc = *p.Description
 	}
 	r := &dto.ProductResponse{
-		ID:           p.ID,
-		StoreID:      p.StoreID,
-		CategoryID:   p.CategoryID,
-		CategoryName: p.CategoryName,
-		SKU:          p.SKU,
-		Name:         p.Name,
-		Description:  desc,
-		Barcode:      p.Barcode,
-		Unit:         p.Unit,
-		CostPrice:    p.CostPrice,
-		SellPrice:    p.SellPrice,
-		TaxRate:      p.TaxRate,
-		ImageURL:     p.ImageURL,
-		IsActive:     p.IsActive,
-		StockQty:     p.StockQty,
-		CreatedAt:    p.CreatedAt.Format(time.RFC3339),
-		UpdatedAt:    p.UpdatedAt.Format(time.RFC3339),
+		ID:            p.ID,
+		StoreID:       p.StoreID,
+		CategoryID:    p.CategoryID,
+		CategoryName:  p.CategoryName,
+		SKU:           p.SKU,
+		Name:          p.Name,
+		Description:   desc,
+		Barcode:       p.Barcode,
+		Unit:          p.Unit,
+		CostPrice:     p.CostPrice,
+		SellPrice:     p.SellPrice,
+		UseGlobalTax:  p.UseGlobalTax,
+		TaxPercentage: p.TaxPercentage,
+		TaxRate:       p.EffectiveTaxRate(),
+		ImageURL:      p.ImageURL,
+		IsActive:      p.IsActive,
+		StockQty:      p.StockQty,
+		CreatedAt:     p.CreatedAt.Format(time.RFC3339),
+		UpdatedAt:     p.UpdatedAt.Format(time.RFC3339),
 	}
 	if p.DeletedAt != nil {
 		t := p.DeletedAt.Format(time.RFC3339)
