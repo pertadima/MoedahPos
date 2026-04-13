@@ -162,22 +162,44 @@
   --shadow-xl: 0 20px 40px rgba(15, 23, 42, 0.12), 0 8px 16px rgba(15, 23, 42, 0.06);
 }
 
-/* ── 4. Smooth Theme Transitions ─────────────────────────────────────────── */
-html {
+/* ── 4. Theme & Layout Transitions ────────────────────────────────────────── */
+html,
+body,
+.header {
   transition:
-    background-color 0.25s ease,
-    color 0.25s ease;
-}
-*,
-*::before,
-*::after {
-  transition:
-    background-color 0.25s ease,
+    background-color 0.2s ease,
     border-color 0.2s ease,
-    color 0.15s ease,
-    box-shadow 0.2s ease,
-    transform 0.15s ease,
-    opacity 0.15s ease;
+    color 0.15s ease;
+}
+
+/* Centralized layout animations */
+.sidebar,
+.main-layout {
+  transition:
+    width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
+  will-change: width, margin-left;
+}
+
+/* Targeted transitions for interactive components */
+.btn,
+.input,
+.card,
+.stat-card,
+.nav-item,
+.product-card,
+.cart-item,
+.badge {
+  transition:
+    background-color 0.12s ease,
+    border-color 0.12s ease,
+    color 0.1s ease,
+    box-shadow 0.16s ease,
+    transform 0.1s ease,
+    opacity 0.12s ease;
 }
 
 /* ── 5. Base ──────────────────────────────────────────────────────────────── */
@@ -585,7 +607,6 @@ body {
 .main-layout {
   min-height: 100vh;
   @apply flex flex-col;
-  transition: margin-left 0.3s ease-in-out;
 }
 .main-layout.expanded {
   margin-left: 240px;

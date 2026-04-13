@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
@@ -245,31 +246,33 @@ export default function Sidebar() {
     : baseGroups;
 
   // Build the final visible groups based on the current store role
-  const finalGroups = allGroups
-    .map(group => {
-      const isSettings = group.label === 'Pengaturan';
+  const finalGroups = useMemo(() => {
+    return allGroups
+      .map(group => {
+        const isSettings = group.label === 'Pengaturan';
 
-      const visibleItems = group.items
-        .map(item => {
-          if (item.href === '/products' && isRestaurant) {
-            return { ...item, label: 'Bahan Baku' };
-          }
-          return item;
-        })
-        .filter(item => {
-          if (item.adminOnly) return isSuperOrAdmin;
-          if (item.permission) return hasPermission(role, item.permission);
-          return true;
-        });
+        const visibleItems = group.items
+          .map(item => {
+            if (item.href === '/products' && isRestaurant) {
+              return { ...item, label: 'Bahan Baku' };
+            }
+            return item;
+          })
+          .filter(item => {
+            if (item.adminOnly) return isSuperOrAdmin;
+            if (item.permission) return hasPermission(role, item.permission);
+            return true;
+          });
 
-      if (visibleItems.length === 0) return null;
+        if (visibleItems.length === 0) return null;
 
-      // For non-settings groups, check group-level permission gate
-      if (!isSettings && group.permission && !hasPermission(role, group.permission)) return null;
+        // For non-settings groups, check group-level permission gate
+        if (!isSettings && group.permission && !hasPermission(role, group.permission)) return null;
 
-      return { ...group, items: visibleItems };
-    })
-    .filter(Boolean) as NavGroup[];
+        return { ...group, items: visibleItems };
+      })
+      .filter(Boolean) as NavGroup[];
+  }, [allGroups, isRestaurant, isSuperOrAdmin, role]);
 
   return (
     <>
@@ -279,10 +282,7 @@ export default function Sidebar() {
         onClick={toggleCollapsed}
       />
 
-      <aside
-        className={`sidebar ${isCollapsed ? 'sidebar-collapsed' : 'sidebar-expanded open'}`}
-        style={{ transition: 'width 0.3s ease-in-out, transform 0.3s ease-in-out' }}
-      >
+      <aside className={`sidebar ${isCollapsed ? 'sidebar-collapsed' : 'sidebar-expanded open'}`}>
         {/* ── Logo / Header ── */}
         <div className="sidebar-logo">
           {isCollapsed ? (
