@@ -15,6 +15,7 @@ import {
 import { useAuth } from '@/lib/auth/AuthContext';
 import { usePermission } from '@/hooks/usePermission';
 import { productsApi } from '@/lib/api/products';
+import { stockApi } from '@/lib/api/store-apis';
 import { formatRp } from '@/lib/utils';
 import type { Product, Category, PaginatedData } from '@/types';
 import { ApiError } from '@/lib/api/client';
@@ -43,6 +44,7 @@ export default function ProductsPage() {
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [minStock, setMinStock] = useState('0');
 
   const storeId = selectedStore?.store_id;
   const isRestaurant = selectedStore?.store_type === 'restaurant';
@@ -83,6 +85,7 @@ export default function ProductsPage() {
       category_id: '',
       initial_qty: '0',
     });
+    setMinStock('0');
     setError('');
     setShowModal(true);
   };
@@ -102,6 +105,17 @@ export default function ProductsPage() {
     });
     setError('');
     setShowModal(true);
+    // Load current min stock for this product
+    if (storeId) {
+      stockApi
+        .levels(storeId)
+        .then(res => {
+          const levels = res.data as import('@/types').StockLevel[];
+          const level = levels.find(l => l.product_id === p.id);
+          setMinStock(level ? String(level.min_quantity) : '0');
+        })
+        .catch(() => setMinStock('0'));
+    }
   };
 
   const handleSave = async () => {
@@ -121,8 +135,21 @@ export default function ProductsPage() {
         initial_qty: +formData.initial_qty,
         is_active: true,
       };
-      if (editing) await productsApi.update(storeId, editing.id, payload);
-      else await productsApi.create(storeId, payload);
+      let savedProduct: Product;
+      if (editing) {
+        const res = await productsApi.update(storeId, editing.id, payload);
+        savedProduct = res.data as Product;
+      } else {
+        const res = await productsApi.create(storeId, payload);
+        savedProduct = res.data as Product;
+      }
+      // Save min stock via stock API (upsert)
+      const minVal = parseFloat(minStock);
+      if (!isNaN(minVal) && minVal >= 0) {
+        await stockApi
+          .setMin(storeId, { product_id: savedProduct.id, min_quantity: minVal })
+          .catch(() => {}); // non-blocking; stock level row may not exist yet for brand new products
+      }
       setShowModal(false);
       load();
     } catch (e) {
@@ -421,6 +448,39 @@ export default function ProductsPage() {
                   />
                 </div>
               )}
+              <div className="input-group">
+                <label
+                  className="input-label"
+                  style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+                >
+                  Min Stok
+                  <span
+                    style={{
+                      fontSize: '0.72rem',
+                      color: 'var(--text-3)',
+                      fontWeight: 400,
+                      background: 'var(--bg-hover, rgba(255,255,255,0.06))',
+                      borderRadius: 4,
+                      padding: '1px 6px',
+                    }}
+                  >
+                    threshold stok menipis
+                  </span>
+                </label>
+                <input
+                  type="number"
+                  className="input"
+                  min={0}
+                  step={1}
+                  value={minStock}
+                  onChange={e => setMinStock(e.target.value)}
+                  placeholder="0"
+                />
+                <p style={{ fontSize: '0.73rem', color: 'var(--text-3)', marginTop: 4 }}>
+                  Sistem akan menandai stok sebagai &ldquo;Menipis&rdquo; ketika stok saat ini ≤
+                  nilai ini.
+                </p>
+              </div>
             </div>
             <div style={{ display: 'flex', gap: 8, marginTop: 20 }}>
               <button

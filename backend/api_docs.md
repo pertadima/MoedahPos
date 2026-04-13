@@ -3,7 +3,6 @@
 Base URL: `/api/v1`
 
 ## General Response Formats
-
 **Success Response**
 ```json
 {
@@ -12,14 +11,15 @@ Base URL: `/api/v1`
 }
 ```
 
-**Error Responses**
+**Global Error Responses**
+Unless specified otherwise, every endpoint can return:
 
 *400 Bad Request*
 ```json
 {
   "success": false,
   "error": "BAD_REQUEST",
-  "message": "Invalid input format"
+  "message": "Invalid input format or validation failed"
 }
 ```
 
@@ -29,6 +29,15 @@ Base URL: `/api/v1`
   "success": false,
   "error": "UNAUTHORIZED",
   "message": "Missing or invalid token"
+}
+```
+
+*403 Forbidden*
+```json
+{
+  "success": false,
+  "error": "FORBIDDEN",
+  "message": "Insufficient permissions"
 }
 ```
 
@@ -54,558 +63,238 @@ Base URL: `/api/v1`
 
 ## 1. Auth Module
 
+### Register
+- **Endpoint**: `POST /auth/register`
+- **Description**: Register a new user.
+- **Request Body**: `{"name": "...", "email": "...", "password": "..."}`
+- **Success Response**: `{"success":true,"data":{"id":"uuid"}}`
+
 ### Login
 - **Endpoint**: `POST /auth/login`
-- **Description**: Authenticate user and receive JWT.
-- **Request Body**:
-```json
-{
-  "email": "user@example.com",
-  "password": "password123"
-}
-```
-- **Success Response**:
-```json
-{
-  "success": true,
-  "data": {
-    "token": "eyJhbGciOi...",
-    "user": {
-      "id": "uuid",
-      "name": "Jane Doe",
-      "email": "user@example.com",
-      "role": "cashier"
-    }
-  }
-}
-```
-- **Notes**: Returns 401 if invalid credentials.
+- **Description**: Authenticate user.
+- **Request Body**: `{"email": "...", "password": "..."}`
+- **Success Response**: `{"success":true,"data":{"token":"jwt...","user":{}}}`
 
 ### Refresh Token
 - **Endpoint**: `POST /auth/refresh`
 - **Description**: Refresh an expired JWT.
-- **Request Body**:
-```json
-{
-  "refresh_token": "eyJhbGciOi..."
-}
-```
-- **Success Response**:
-```json
-{
-  "success": true,
-  "data": {
-    "token": "eyJhbGciOi..."
-  }
-}
-```
+- **Request Body**: `{"refresh_token": "..."}`
+- **Success Response**: `{"success":true,"data":{"token":"jwt..."}}`
+
+### Logout
+- **Endpoint**: `POST /auth/logout`
+- **Description**: Invalidate current session.
+- **Headers**: `Authorization: Bearer <token>`
+- **Success Response**: `{"success":true,"data":null}`
 
 ### Get Current User
 - **Endpoint**: `GET /auth/me`
-- **Description**: Get currently logged in user info.
+- **Description**: Current user info.
 - **Headers**: `Authorization: Bearer <token>`
-- **Success Response**:
-```json
-{
-  "success": true,
-  "data": {
-    "id": "uuid",
-    "name": "Jane Doe",
-    "email": "user@example.com",
-    "role": "cashier"
-  }
-}
-```
+- **Success Response**: `{"success":true,"data":{"id":"uuid","name":"Jane Doe","email":"user@example.com"}}`
 
 ---
 
-## 2. Product Module
+## 2. Admin Module (SuperAdmin/Admin)
 
-### List Products
-- **Endpoint**: `GET /stores/{storeId}/products`
-- **Description**: Retrieve a paginated list of products for a store.
+### List Roles
+- **Endpoint**: `GET /admin/roles`
+- **Description**: Get all available system roles.
 - **Headers**: `Authorization: Bearer <token>`
-- **Query Params**:
-  - `page` (optional, default: 1)
-  - `limit` (optional, default: 10)
-  - `search` (optional)
-- **Success Response**:
-```json
-{
-  "success": true,
-  "data": {
-    "items": [
-      {
-        "id": "uuid",
-        "name": "Kopi Susu",
-        "sku": "KP-001",
-        "category_id": "uuid",
-        "category_name": "Beverages",
-        "price": 25000,
-        "cost_price": 10000,
-        "use_global_tax": true,
-        "tax_percentage": 11,
-        "stock": 50,
-        "is_active": true
-      }
-    ],
-    "total": 1
-  }
-}
-```
+- **Success Response**: `{"success":true,"data":[{"id":"uuid","name":"super_admin","permissions":[]}]}`
 
-### Create Product
-- **Endpoint**: `POST /stores/{storeId}/products`
-- **Description**: Create a new product.
-- **Headers**: `Authorization: Bearer <token>`
-- **Request Body**:
-```json
-{
-  "name": "Kopi Susu",
-  "sku": "KP-001",
-  "category_id": "uuid",
-  "price": 25000,
-  "cost_price": 10000,
-  "stock_alert_level": 10,
-  "is_active": true
-}
-```
-- **Success Response**:
-```json
-{
-  "success": true,
-  "data": {
-    "id": "uuid",
-    "name": "Kopi Susu",
-    "sku": "KP-001",
-    "category_id": "uuid",
-    "price": 25000,
-    "cost_price": 10000,
-    "is_active": true,
-    "created_at": "2024-05-10T10:00:00Z"
-  }
-}
-```
-
-### Update Product
-- **Endpoint**: `PUT /stores/{storeId}/products/{productId}`
-- **Description**: Update an existing product.
-- **Headers**: `Authorization: Bearer <token>`
-- **Request Body**:
-```json
-{
-  "name": "Kopi Susu Large",
-  "price": 28000,
-  "cost_price": 12000,
-  "use_global_tax": true
-}
-```
-- **Success Response**: (Same as Create Product)
-- **Notes**: Returns 404 if product ID doesn't exist.
-
-### Delete Product
-- **Endpoint**: `DELETE /stores/{storeId}/products/{productId}`
-- **Description**: Soft delete or remove a product.
-- **Headers**: `Authorization: Bearer <token>`
-- **Success Response**:
-```json
-{
-  "success": true,
-  "data": null
-}
-```
+### User Management
+- **`GET /admin/users`**: List users. Params: `page`, `limit`.
+- **`POST /admin/users`**: Create user. Body: `{"name":"", "email":"", "password":"", "stores":[{"store_id":"","role_id":""}]}`
+- **`GET /admin/users/{userId}`**: Get user details.
+- **`PUT /admin/users/{userId}`**: Update user profile.
+- **`POST /admin/users/{userId}/deactivate`**: Toggle user active status.
+- **`POST /admin/users/{userId}/reset-password`**: Reset user password. Body: `{"password": ""}`
+- **`PUT /admin/users/{userId}/stores`**: Update user store assignments. Body: `{"stores":[]}`
 
 ---
 
-## 3. Transaction Module
+## 3. Global Categories (Income & Expense)
 
-### Create Transaction (Checkout)
-- **Endpoint**: `POST /stores/{storeId}/transactions`
-- **Description**: Process a POS checkout.
-- **Headers**: `Authorization: Bearer <token>`
-- **Request Body**:
-```json
-{
-  "customer_id": "uuid (optional)",
-  "payment_method": "CASH",
-  "total_amount": 25000,
-  "discount_amount": 0,
-  "tax_amount": 2750,
-  "grand_total": 27750,
-  "amount_paid": 50000,
-  "change_amount": 22250,
-  "items": [
-    {
-      "product_id": "uuid",
-      "quantity": 1,
-      "price": 25000,
-      "subtotal": 25000
-    }
-  ]
-}
-```
-- **Success Response**:
-```json
-{
-  "success": true,
-  "data": {
-    "id": "uuid",
-    "invoice_number": "INV-20240510-0001",
-    "status": "COMPLETED",
-    "grand_total": 27750,
-    "created_at": "2024-05-10T10:05:00Z"
-  }
-}
-```
-- **Notes**: Validates `amount_paid` >= `grand_total` for CASH. Deducts stock automatically.
-
-### Get Transaction History
-- **Endpoint**: `GET /stores/{storeId}/transactions`
-- **Description**: List past transactions.
-- **Headers**: `Authorization: Bearer <token>`
-- **Query Params**:
-  - `page` (optional)
-  - `limit` (optional)
-  - `start_date` (optional, YYYY-MM-DD)
-  - `end_date` (optional, YYYY-MM-DD)
-  - `status` (optional)
-- **Success Response**:
-```json
-{
-  "success": true,
-  "data": {
-    "items": [
-      {
-        "id": "uuid",
-        "invoice_number": "INV-20240510-0001",
-        "status": "COMPLETED",
-        "grand_total": 27750,
-        "payment_method": "CASH",
-        "created_at": "2024-05-10T10:05:00Z"
-      }
-    ],
-    "total": 1
-  }
-}
-```
+*Paths*: `/expense-categories`, `/income-categories`
+*Endpoints* (Apply to both):
+- **`GET /`**: List categories.
+- **`POST /`**: Create category (SuperAdmin only). Body: `{"name":"...", "description":"..."}`
+- **`PUT /{id}`**: Update category (SuperAdmin only).
+- **`DELETE /{id}`**: Soft delete category (SuperAdmin only).
 
 ---
 
-## 4. Purchase Order Module
+## 4. Suppliers Module
 
-### Create Purchase Order
-- **Endpoint**: `POST /stores/{storeId}/purchase-orders`
-- **Description**: Draft a new PO.
-- **Headers**: `Authorization: Bearer <token>`
-- **Request Body**:
-```json
-{
-  "supplier_id": "uuid",
-  "expected_date": "2024-05-15T00:00:00Z",
-  "notes": "Weekly supply",
-  "items": [
-    {
-      "product_id": "uuid",
-      "quantity": 100,
-      "cost_price": 10000
-    }
-  ]
-}
-```
-- **Success Response**:
-```json
-{
-  "success": true,
-  "data": {
-    "id": "uuid",
-    "po_number": "PO-20240510-001",
-    "status": "DRAFT",
-    "total_amount": 1000000
-  }
-}
-```
-
-### Receive Purchase Order
-- **Endpoint**: `POST /stores/{storeId}/purchase-orders/{poId}/receive`
-- **Description**: Mark PO as received (full or partial) and add stock.
-- **Headers**: `Authorization: Bearer <token>`
-- **Request Body**:
-```json
-{
-  "received_items": [
-    {
-      "po_item_id": "uuid",
-      "received_quantity": 100
-    }
-  ]
-}
-```
-- **Success Response**:
-```json
-{
-  "success": true,
-  "data": {
-    "id": "uuid",
-    "status": "RECEIVED"
-  }
-}
-```
-- **Notes**: Updates product inventory based on received quantity and recalculates HPP using FIFO.
-
-### Pay Purchase Order
-- **Endpoint**: `POST /stores/{storeId}/purchase-orders/{poId}/payments`
-- **Description**: Record payment for a PO.
-- **Headers**: `Authorization: Bearer <token>`
-- **Request Body**:
-```json
-{
-  "amount": 1000000,
-  "payment_method": "BANK_TRANSFER",
-  "reference_number": "TRX-998877",
-  "notes": "Paid in full"
-}
-```
-- **Success Response**:
-```json
-{
-  "success": true,
-  "data": {
-    "id": "uuid",
-    "po_id": "uuid",
-    "amount": 1000000,
-    "status": "COMPLETED"
-  }
-}
-```
+- **`GET /suppliers`**: List all global suppliers. Params: `page`, `limit`, `search`.
+- **`POST /suppliers`**: Create supplier. Body: `{"name":"", "contact_name":"", "phone":"", "email":"", "address":""}`
+- **`GET /suppliers/{supplierId}`**: Get supplier details.
+- **`PUT /suppliers/{supplierId}`**: Update supplier.
+- **`DELETE /suppliers/{supplierId}`**: Soft delete supplier.
 
 ---
 
-## 5. Income Module
+## 5. Stores Module
 
-### Log General Income
-- **Endpoint**: `POST /stores/{storeId}/incomes`
-- **Description**: Record a non-sales income.
-- **Headers**: `Authorization: Bearer <token>`
-- **Request Body**:
-```json
-{
-  "amount": 500000,
-  "category_id": "uuid",
-  "description": "Funding deposit",
-  "payment_method": "BANK_TRANSFER",
-  "date": "2024-05-10T12:00:00Z"
-}
-```
-- **Success Response**:
-```json
-{
-  "success": true,
-  "data": {
-    "id": "uuid",
-    "amount": 500000,
-    "status": "COMPLETED"
-  }
-}
-```
+- **`GET /stores`**: List accessible stores for current user.
+- **`POST /stores`**: Create a new store. Body: `{"name":"", "address":"", "store_type":"retail", "currency":"IDR", "default_tax_percentage":11}`
+- **`GET /stores/{storeId}`**: Get store context.
+- **`PUT /stores/{storeId}`**: Update store info.
+- **`DELETE /stores/{storeId}`**: Soft delete store.
 
-### Get Incomes
-- **Endpoint**: `GET /stores/{storeId}/incomes`
-- **Description**: Retrieve income logs.
-- **Headers**: `Authorization: Bearer <token>`
-- **Query Params**:
-  - `page` (optional)
-  - `limit` (optional)
-  - `start_date` (optional, YYYY-MM-DD)
-  - `end_date` (optional, YYYY-MM-DD)
-- **Success Response**:
-```json
-{
-  "success": true,
-  "data": {
-    "items": [
-      {
-        "id": "uuid",
-        "amount": 500000,
-        "category_name": "Deposit",
-        "description": "Funding deposit",
-        "date": "2024-05-10T12:00:00Z"
-      }
-    ],
-    "total": 1
-  }
-}
-```
+### Store Members (`/stores/{storeId}/members`)
+- **`GET /`**: List store members.
+- **`POST /`**: Add member to store. Body: `{"user_id":"uuid", "role_id":"uuid"}`
+- **`PUT /{userId}`**: Update member role. Body: `{"role_id":"uuid"}`
+- **`DELETE /{userId}`**: Remove member from store.
 
 ---
 
-## 6. Expense Module
+## 6. Product Module (`/stores/{storeId}`)
 
-### Log Expense
-- **Endpoint**: `POST /stores/{storeId}/expenses`
-- **Description**: Log a store expense.
-- **Headers**: `Authorization: Bearer <token>`
-- **Request Body**:
-```json
-{
-  "amount": 150000,
-  "category_id": "uuid",
-  "description": "Electricity Bill",
-  "payment_method": "CASH",
-  "date": "2024-05-10T14:00:00Z"
-}
-```
-- **Success Response**:
-```json
-{
-  "success": true,
-  "data": {
-    "id": "uuid",
-    "amount": 150000,
-    "status": "PAID"
-  }
-}
-```
+### Product Categories
+- **`GET /categories`**: List categories.
+- **`POST /categories`**: Create category. Body: `{"name":"", "description":""}`
+- **`PUT /categories/{categoryId}`**: Update category.
+- **`DELETE /categories/{categoryId}`**: Delete category.
 
-### Get Expenses
-- **Endpoint**: `GET /stores/{storeId}/expenses`
-- **Description**: Retrieve expense logs.
-- **Headers**: `Authorization: Bearer <token>`
-- **Query Params**:
-  - `page` (optional)
-  - `limit` (optional)
-  - `start_date` (optional, YYYY-MM-DD)
-  - `end_date` (optional, YYYY-MM-DD)
-- **Success Response**:
-```json
-{
-  "success": true,
-  "data": {
-    "items": [
-      {
-        "id": "uuid",
-        "amount": 150000,
-        "category_name": "Utilities",
-        "description": "Electricity Bill",
-        "date": "2024-05-10T14:00:00Z"
-      }
-    ],
-    "total": 1
-  }
-}
-```
+### Products
+- **`GET /products`**: List products. Params: `page`, `limit`, `search`.
+- **`POST /products`**: Create product.
+- **`GET /products/barcode/{barcode}`**: Find product by barcode.
+- **`GET /products/{productId}`**: Get product details.
+- **`PUT /products/{productId}`**: Update product.
+- **`DELETE /products/{productId}`**: Soft delete.
+
+### Price History
+- **`GET /products/{productId}/price-history`**: Product specific price history.
+- **`GET /price-history`**: Store-wide price history changes. Params: `product_id`, `start_date`, `end_date`.
 
 ---
 
-## 7. Cash Flow Module
+## 7. Customers Module (`/stores/{storeId}/customers`)
 
-### Get Cash Flow Report
-- **Endpoint**: `GET /stores/{storeId}/reports/cash-flow`
-- **Description**: Generate aggregated cash flow metrics.
-- **Headers**: `Authorization: Bearer <token>`
-- **Query Params**:
-  - `start_date` (YYYY-MM-DD)
-  - `end_date` (YYYY-MM-DD)
-- **Success Response**:
-```json
-{
-  "success": true,
-  "data": {
-    "total_cash_in": 527750,
-    "total_cash_out": 1150000,
-    "net_cash": -622250,
-    "total_sales_in": 27750,
-    "total_other_in": 500000,
-    "cash_in_by_method": {
-      "CASH": 27750,
-      "BANK_TRANSFER": 500000
-    },
-    "rows": [
-      {
-        "date": "2024-05-10",
-        "cash_in": 527750,
-        "cash_out": 1150000,
-        "net_cash": -622250,
-        "sales_in": 27750,
-        "other_in": 500000,
-        "cash_in_by_method": {
-          "CASH": 27750,
-          "BANK_TRANSFER": 500000
-        }
-      }
-    ]
-  }
-}
-```
-
-### Get Cash Flow Detailed Drill-Down
-- **Endpoint**: `GET /stores/{storeId}/reports/cash-flow/detail`
-- **Description**: Get individual entries affecting cash flow.
-- **Headers**: `Authorization: Bearer <token>`
-- **Query Params**:
-  - `date` (YYYY-MM-DD)
-- **Success Response**:
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "type": "SALE",
-      "label": "INV-20240510-0001",
-      "amount": 27750,
-      "payment_method": "CASH",
-      "category": null,
-      "notes": null,
-      "timestamp": "2024-05-10T10:05:00Z"
-    },
-    {
-      "type": "EXPENSE",
-      "label": "Utilities",
-      "amount": -150000,
-      "payment_method": "CASH",
-      "category": "Utilities",
-      "notes": "Electricity Bill",
-      "timestamp": "2024-05-10T14:00:00Z"
-    }
-  ]
-}
-```
+- **`GET /`**: List customers.
+- **`GET /search`**: Search for autocomplete. Query: `q`.
+- **`POST /`**: Create customer. Body: `{"name":"", "phone":"", "email":"", "address":""}`
+- **`GET /{customerId}`**: Get specific customer.
+- **`PUT /{customerId}`**: Update customer.
+- **`DELETE /{customerId}`**: Delete customer.
 
 ---
 
-## 8. Activity Log Module
+## 8. Stock Module (`/stores/{storeId}`)
 
-### Get Activity Logs
-- **Endpoint**: `GET /stores/{storeId}/activity-logs`
-- **Description**: Retrieve audit trail logs.
-- **Headers**: `Authorization: Bearer <token>`
-- **Query Params**:
-  - `page` (optional)
-  - `limit` (optional)
-  - `user_id` (optional)
-  - `module` (optional)
-  - `action_type` (optional)
-- **Success Response**:
-```json
-{
-  "success": true,
-  "data": {
-    "items": [
-      {
-        "id": "uuid",
-        "user_id": "uuid",
-        "user_name": "Jane Doe",
-        "store_id": "uuid",
-        "action_type": "CREATE",
-        "module": "TRANSACTION",
-        "reference_id": "uuid",
-        "metadata": {
-          "invoice_number": "INV-20240510-0001",
-          "total": 27750
-        },
-        "created_at": "2024-05-10T10:05:00Z"
-      }
-    ],
-    "total": 1
-  }
-}
-```
+- **`GET /stock`**: Current stock levels for products.
+- **`GET /stock/low`**: Products below minimum stock alert level.
+- **`GET /stock/movements`**: History of stock movements IN/OUT.
+- **`POST /stock/adjust`**: Manual adjustment. Body: `{"product_id":"", "quantity_change":10, "reason":"Damaged", "type":"OUT"}`
+- **`PUT /stock/min`**: Set minimum stock level. Body: `{"product_id":"", "min_stock": 5}`
+- **`GET /stock/batches`**: Active FIFO batches.
+- **`GET /stock/batch-summary`**: Summary of batch values.
+- **`GET /stock/{productId}`**: Detailed stock metrics per product.
+- **`GET /adjustments`**: History of manual adjustments.
+- **`POST /adjustments`**: Create manual adjustment log.
+
+---
+
+## 9. Transaction Module (`/stores/{storeId}/transactions`)
+
+- **`GET /`**: List completed transactions.
+- **`POST /`**: Direct Checkout. Body: `{"payment_method":"CASH","grand_total":100, "items":[]}`
+- **`GET /draft`**: List active drafts (saved carts / restaurant tables).
+- **`POST /draft`**: Create draft order.
+- **`GET /{txnId}`**: Get specific transaction detail.
+- **`PUT /{txnId}/draft`**: Update items in draft order.
+- **`POST /{txnId}/pay`**: Settle draft/table order. Body: `{"amount_paid":100, "payment_method":"CASH"}`
+- **`POST /{txnId}/void`**: Void a completed transaction.
+
+---
+
+## 10. Purchase Order Module (`/stores/{storeId}/purchase-orders`)
+
+- **`GET /`**: List POs.
+- **`POST /`**: Create PO draft. Body: `{"supplier_id":"", "expected_date":"", "items":[]}`
+- **`GET /payables`**: List outstanding accounts payable.
+- **`GET /{poId}`**: Get PO details.
+- **`PUT /{poId}`**: Update PO draft.
+- **`POST /{poId}/submit`**: Move PO from draft to submitted.
+- **`POST /{poId}/receive`**: Receive stock to warehouse. Body: `{"received_items":[]}`
+- **`DELETE /{poId}`**: Cancel PO.
+- **`GET /{poId}/payments`**: View PO payments.
+- **`POST /{poId}/payments`**: Pay PO outright. Body: `{"amount":100, "payment_method":"..."}`
+
+### Termin (Installments)
+- **`GET /{poId}/termins`**: List termin schedules.
+- **`POST /{poId}/termins`**: Create payment schedule. Body: `{"termins":[{"due_date":"", "amount":0}]}`
+- **`POST /{poId}/termins/{terminId}/payments`**: Pay specific termin installment.
+- **`GET /{poId}/debt`**: Get debt summary for PO.
+- **`GET /{poId}/document`**: Generate PO document metadata.
+
+---
+
+## 11. Reports Module (`/stores/{storeId}/reports`)
+
+- **`GET /sales`**: Overall sales summary. Query: `start_date`, `end_date`.
+- **`GET /sales/by-product`**: Sales grouped by product.
+- **`GET /sales/by-cashier`**: Sales grouped by user.
+- **`GET /stock-valuation`**: Total valuation of current stock based on average cost.
+- **`GET /profit`**: Net profit calculations over time.
+
+---
+
+## 12. Income & Expense (`/stores/{storeId}`)
+
+### Incomes
+- **`GET /incomes`**: List non-POS incomes.
+- **`POST /incomes`**: Log income. Body: `{"amount":100, "category_id":""}`
+- **`PUT /incomes/{id}`**: Update income entry.
+- **`DELETE /incomes/{id}`**: Delete income entry.
+
+### Expenses & Recurring
+- **`GET /expenses`**: List expenses.
+- **`POST /expenses`**: Log expense.
+- **`PUT /expenses/{id}`**: Update expense.
+- **`DELETE /expenses/{id}`**: Delete expense.
+- **`PATCH /expenses/{id}/status`**: Change expense lifecycle status.
+- **`GET /recurring-expenses`**: List subscriptions/recurring rules.
+- **`POST /recurring-expenses`**: Create recurring expense job.
+- **`PUT /recurring-expenses/{id}`**: Update recurring job.
+- **`DELETE /recurring-expenses/{id}`**: Delete recurring job.
+
+---
+
+## 13. Cash Flow Module (`/stores/{storeId}/reports/cash-flow`)
+
+- **`GET /`**: Summarized Cash Flow dashboard stats (Total Cash In / Out, Net Cash).
+- **`GET /detail`**: Granular list of every financial record affecting cash float for a specific day.
+
+---
+
+## 14. Activity Log (`/stores/{storeId}/activity-logs`)
+
+- **`GET /`**: Full system audit trail. Params: `user_id`, `module`, `action_type`, `start_date`, `end_date`. Returns action metadata and references to modified rows.
+
+---
+
+## 15. Restaurant Mode (`/stores/{storeId}`)
+
+*Note: These only work if store type is 'restaurant'.*
+
+### Tables
+- **`GET /tables`**: List all tables and occupancy status.
+- **`POST /tables`**: Add table. Body: `{"name":"Table 1", "capacity":4}`
+- **`PUT /tables/{tableId}`**: Update details.
+- **`PUT /tables/{tableId}/status`**: Update table state directly.
+- **`DELETE /tables/{tableId}`**: Remove table.
+
+### Menu Items
+- **`GET /menu-items`**: List restaurant menu offerings.
+- **`POST /menu-items`**: Create menu. Body combines product tracking with menu visibility.
+- **`PUT /menu-items/{menuItemId}`**: Update menu item.
+- **`DELETE /menu-items/{menuItemId}`**: Remove menu item.
+
+### Kitchen Display System (KDS)
+- **`GET /kds/tickets`**: List active kitchen tickets (draft transaction items).
+- **`PUT /kds/items/{itemId}`**: Move item status (e.g. PENDING -> PREPARING -> COMPLETED). Body: `{"status": "PREPARING"}`

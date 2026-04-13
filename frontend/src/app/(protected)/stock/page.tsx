@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState, useMemo } from 'react';
+import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import {
   AlertTriangle,
   ChevronDown,
@@ -14,6 +14,8 @@ import {
   Check,
   Plus,
   Package,
+  Pencil,
+  X,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { stockApi } from '@/lib/api/store-apis';
@@ -54,6 +56,173 @@ const TABS: [Tab, string][] = [
   ['movements', 'Riwayat Mutasi'],
 ];
 
+// ─── Inline Min Stock Editor ──────────────────────────────────────────────────
+
+interface MinStockCellProps {
+  level: StockLevel;
+  canEdit: boolean;
+  onSave: (productId: string, storeId: string, value: number) => Promise<void>;
+}
+
+function MinStockCell({ level, canEdit, onSave }: MinStockCellProps) {
+  const [editing, setEditing] = useState(false);
+  const [inputVal, setInputVal] = useState(String(level.min_quantity));
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [error, setError] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const startEdit = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!canEdit) return;
+    setInputVal(String(level.min_quantity));
+    setEditing(true);
+    setError('');
+    setSaved(false);
+  };
+
+  const cancel = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    setEditing(false);
+    setError('');
+  };
+
+  const commit = async (e?: React.MouseEvent | React.KeyboardEvent) => {
+    e?.stopPropagation();
+    const num = parseFloat(inputVal);
+    if (isNaN(num) || num < 0) {
+      setError('Min stok harus ≥ 0');
+      return;
+    }
+    setSaving(true);
+    setError('');
+    try {
+      await onSave(level.product_id, level.store_id, num);
+      setEditing(false);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch {
+      setError('Gagal menyimpan');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  useEffect(() => {
+    if (editing) inputRef.current?.focus();
+  }, [editing]);
+
+  if (editing) {
+    return (
+      <td style={{ whiteSpace: 'nowrap' }} onClick={e => e.stopPropagation()}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          <input
+            ref={inputRef}
+            type="number"
+            min={0}
+            step={1}
+            value={inputVal}
+            onChange={e => setInputVal(e.target.value)}
+            onKeyDown={e => {
+              if (e.key === 'Enter') void commit(e);
+              if (e.key === 'Escape') cancel();
+            }}
+            style={{
+              width: 72,
+              padding: '4px 8px',
+              borderRadius: 6,
+              border: `1px solid ${error ? 'var(--accent-rd)' : 'var(--accent-em)'}`,
+              background: 'var(--bg-surface)',
+              color: 'var(--text-1)',
+              fontSize: '0.85rem',
+              outline: 'none',
+            }}
+          />
+          {saving ? (
+            <Loader2 size={14} className="loading-spin" style={{ color: 'var(--accent-em)' }} />
+          ) : (
+            <>
+              <button
+                type="button"
+                title="Simpan"
+                onClick={e => void commit(e)}
+                style={{
+                  background: 'var(--accent-em)',
+                  border: 'none',
+                  borderRadius: 4,
+                  padding: '3px 6px',
+                  cursor: 'pointer',
+                  color: '#fff',
+                  display: 'flex',
+                  alignItems: 'center',
+                }}
+              >
+                <Check size={12} />
+              </button>
+              <button
+                type="button"
+                title="Batal"
+                onClick={cancel}
+                style={{
+                  background: 'transparent',
+                  border: '1px solid var(--border)',
+                  borderRadius: 4,
+                  padding: '3px 6px',
+                  cursor: 'pointer',
+                  color: 'var(--text-3)',
+                  display: 'flex',
+                  alignItems: 'center',
+                }}
+              >
+                <X size={12} />
+              </button>
+            </>
+          )}
+        </div>
+        {error && (
+          <div style={{ fontSize: '0.72rem', color: 'var(--accent-rd)', marginTop: 2 }}>
+            {error}
+          </div>
+        )}
+      </td>
+    );
+  }
+
+  return (
+    <td
+      onClick={canEdit ? startEdit : undefined}
+      title={canEdit ? 'Klik untuk edit min stok' : undefined}
+      style={{
+        cursor: canEdit ? 'pointer' : 'default',
+        whiteSpace: 'nowrap',
+      }}
+    >
+      <span
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 5,
+          color: saved ? 'var(--accent-em)' : 'var(--text-2)',
+          transition: 'color 0.3s',
+        }}
+      >
+        {saved ? <Check size={12} style={{ color: 'var(--accent-em)' }} /> : null}
+        {level.min_quantity} {level.unit}
+        {canEdit && (
+          <Pencil
+            size={11}
+            style={{
+              color: 'var(--text-3)',
+              opacity: 0.6,
+              marginLeft: 2,
+            }}
+          />
+        )}
+      </span>
+    </td>
+  );
+}
+
 // ─── Expandable Stock Row ─────────────────────────────────────────────────────
 
 interface StockRowProps {
@@ -62,9 +231,19 @@ interface StockRowProps {
   batches: StockBatch[];
   isExpanded: boolean;
   onToggle: () => void;
+  canUpdateStock: boolean;
+  onSaveMinStock: (productId: string, storeId: string, value: number) => Promise<void>;
 }
 
-function StockRow({ level, summary, batches, isExpanded, onToggle }: StockRowProps) {
+function StockRow({
+  level,
+  summary,
+  batches,
+  isExpanded,
+  onToggle,
+  canUpdateStock,
+  onSaveMinStock,
+}: StockRowProps) {
   const hasBatches = batches.length > 0;
 
   return (
@@ -142,10 +321,8 @@ function StockRow({ level, summary, batches, isExpanded, onToggle }: StockRowPro
           {summary ? formatCurrency(summary.avg_cost_price) : '—'}
         </td>
 
-        {/* Min stock */}
-        <td style={{ color: 'var(--text-2)' }}>
-          {level.min_quantity} {level.unit}
-        </td>
+        {/* Min stock — inline editable */}
+        <MinStockCell level={level} canEdit={canUpdateStock} onSave={onSaveMinStock} />
 
         {/* Status */}
         <td>
@@ -332,6 +509,23 @@ export default function StockPage() {
   };
 
   // ── Data loaders ────────────────────────────────────────────────────────────
+
+  // ── Save min stock ───────────────────────────────────────────────────────────
+  const handleSaveMinStock = useCallback(
+    async (productId: string, _storeId: string, value: number) => {
+      if (!storeId) return;
+      await stockApi.setMin(storeId, { product_id: productId, min_quantity: value });
+      // Optimistically update local state so the new value is immediately visible.
+      setLevels(prev =>
+        prev.map(l =>
+          l.product_id === productId
+            ? { ...l, min_quantity: value, is_low_stock: l.quantity <= value }
+            : l
+        )
+      );
+    },
+    [storeId]
+  );
 
   const loadAll = useCallback(() => {
     if (!storeId) return;
@@ -557,6 +751,8 @@ export default function StockPage() {
                   batches={batchMap.get(level.product_id) ?? []}
                   isExpanded={expanded.has(level.product_id)}
                   onToggle={() => toggleExpand(level.product_id)}
+                  canUpdateStock={canUpdateStock}
+                  onSaveMinStock={handleSaveMinStock}
                 />
               ))}
             </tbody>
