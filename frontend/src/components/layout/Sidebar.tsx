@@ -300,28 +300,22 @@ export default function Sidebar() {
             </button>
           ) : (
             <div className="flex items-center justify-between w-full">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center">
                 <Image
-                  src={isDark ? '/logo-icon-dark.svg' : '/logo-icon-light.svg'}
+                  src={isDark ? '/logo-dashboard-dark.svg' : '/logo-dashboard-light.svg'}
                   alt="Moedah"
-                  width={32}
-                  height={36}
+                  width={90}
+                  height={24}
                   style={{ objectFit: 'contain', flexShrink: 0 }}
                   priority
                 />
-                <span
-                  className="font-bold text-sm"
-                  style={{ color: 'var(--text-1)', letterSpacing: '-0.01em' }}
-                >
-                  MoedahPOS
-                </span>
               </div>
-              <div className="flex gap-1">
+              <div className="flex items-center gap-0.5">
                 <button
                   onClick={toggleTheme}
                   className="btn btn-ghost btn-sm"
                   title={isDark ? 'Mode Terang' : 'Mode Gelap'}
-                  style={{ padding: '6px 8px' }}
+                  style={{ padding: '6px' }}
                 >
                   {isDark ? <Sun size={14} /> : <Moon size={14} />}
                 </button>
@@ -330,7 +324,7 @@ export default function Sidebar() {
                   className="btn btn-ghost btn-sm"
                   title="Ciutkan sidebar"
                   aria-label="Collapse sidebar"
-                  style={{ padding: '6px 8px' }}
+                  style={{ padding: '6px' }}
                 >
                   <ChevronLeft size={14} />
                 </button>
