@@ -1,0 +1,790 @@
+openapi: 3.0.3
+info:
+  title: Moedah POS API
+  description: API documentation for the Moedah POS backend.
+  version: 1.0.0
+servers:
+  - url: /api/v1
+    description: Base URL
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: string
+          example: "BAD_REQUEST"
+        message:
+          type: string
+          example: "Detailed error message"
+
+  responses:
+    BadRequest:
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            error: "BAD_REQUEST"
+            message: "Invalid input format"
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            error: "UNAUTHORIZED"
+            message: "Missing or invalid token"
+    NotFound:
+      description: Not Found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            error: "NOT_FOUND"
+            message: "Resource not found"
+    InternalServerError:
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            error: "INTERNAL_SERVER_ERROR"
+            message: "An unexpected error occurred"
+
+paths:
+  # ─── Auth Module ────────────────────────────────────────────────────────
+  /auth/login:
+    post:
+      summary: Login
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  token: "eyJhbGciOi..."
+                  user:
+                    id: "uuid"
+                    name: "Jane Doe"
+                    email: "user@example.com"
+                    role: "cashier"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/refresh:
+    post:
+      summary: Refresh Token
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refresh_token]
+              properties:
+                refresh_token:
+                  type: string
+      responses:
+        '200':
+          description: Token refreshed
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  token: "eyJhbGciOi..."
+
+  /auth/me:
+    get:
+      summary: Get Current User
+      tags: [Auth]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User profile
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  id: "uuid"
+                  name: "Jane Doe"
+                  email: "user@example.com"
+                  role: "cashier"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # ─── Product Module ─────────────────────────────────────────────────────
+  /stores/{storeId}/products:
+    parameters:
+      - name: storeId
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      summary: List Products
+      tags: [Product]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of products
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  items:
+                    - id: "uuid"
+                      name: "Kopi Susu"
+                      sku: "KP-001"
+                      category_id: "uuid"
+                      category_name: "Beverages"
+                      price: 25000
+                      cost_price: 10000
+                      use_global_tax: true
+                      tax_percentage: 11
+                      stock: 50
+                      is_active: true
+                  total: 1
+    post:
+      summary: Create Product
+      tags: [Product]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example:
+              name: "Kopi Susu"
+              sku: "KP-001"
+              category_id: "uuid"
+              price: 25000
+              cost_price: 10000
+              stock_alert_level: 10
+              is_active: true
+      responses:
+        '200':
+          description: Product created
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  id: "uuid"
+                  name: "Kopi Susu"
+                  sku: "KP-001"
+                  category_id: "uuid"
+                  price: 25000
+                  cost_price: 10000
+                  is_active: true
+                  created_at: "2024-05-10T10:00:00Z"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /stores/{storeId}/products/{productId}:
+    parameters:
+      - name: storeId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: productId
+        in: path
+        required: true
+        schema:
+          type: string
+    put:
+      summary: Update Product
+      tags: [Product]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example:
+              name: "Kopi Susu Large"
+              price: 28000
+              cost_price: 12000
+              use_global_tax: true
+      responses:
+        '200':
+          description: Product updated
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  id: "uuid"
+                  name: "Kopi Susu Large"
+                  price: 28000
+                  cost_price: 12000
+                  is_active: true
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      summary: Delete Product
+      tags: [Product]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Product deleted
+          content:
+            application/json:
+              example:
+                success: true
+                data: null
+
+  # ─── Transaction Module ─────────────────────────────────────────────────
+  /stores/{storeId}/transactions:
+    parameters:
+      - name: storeId
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      summary: Get Transaction History
+      tags: [Transaction]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: status
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of transactions
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  items:
+                    - id: "uuid"
+                      invoice_number: "INV-20240510-0001"
+                      status: "COMPLETED"
+                      grand_total: 27750
+                      payment_method: "CASH"
+                      created_at: "2024-05-10T10:05:00Z"
+                  total: 1
+    post:
+      summary: Create Transaction (Checkout)
+      tags: [Transaction]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example:
+              customer_id: "uuid"
+              payment_method: "CASH"
+              total_amount: 25000
+              discount_amount: 0
+              tax_amount: 2750
+              grand_total: 27750
+              amount_paid: 50000
+              change_amount: 22250
+              items:
+                - product_id: "uuid"
+                  quantity: 1
+                  price: 25000
+                  subtotal: 25000
+      responses:
+        '200':
+          description: Transaction completed
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  id: "uuid"
+                  invoice_number: "INV-20240510-0001"
+                  status: "COMPLETED"
+                  grand_total: 27750
+                  created_at: "2024-05-10T10:05:00Z"
+
+  # ─── Purchase Order Module ──────────────────────────────────────────────
+  /stores/{storeId}/purchase-orders:
+    parameters:
+      - name: storeId
+        in: path
+        required: true
+        schema:
+          type: string
+    post:
+      summary: Create Purchase Order
+      tags: [Purchase Order]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example:
+              supplier_id: "uuid"
+              expected_date: "2024-05-15T00:00:00Z"
+              notes: "Weekly supply"
+              items:
+                - product_id: "uuid"
+                  quantity: 100
+                  cost_price: 10000
+      responses:
+        '200':
+          description: PO Drafted
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  id: "uuid"
+                  po_number: "PO-20240510-001"
+                  status: "DRAFT"
+                  total_amount: 1000000
+
+  /stores/{storeId}/purchase-orders/{poId}/receive:
+    parameters:
+      - name: storeId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: poId
+        in: path
+        required: true
+        schema:
+          type: string
+    post:
+      summary: Receive Purchase Order Items
+      tags: [Purchase Order]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example:
+              received_items:
+                - po_item_id: "uuid"
+                  received_quantity: 100
+      responses:
+        '200':
+          description: PO Received
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  id: "uuid"
+                  status: "RECEIVED"
+
+  /stores/{storeId}/purchase-orders/{poId}/payments:
+    parameters:
+      - name: storeId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: poId
+        in: path
+        required: true
+        schema:
+          type: string
+    post:
+      summary: Pay Purchase Order
+      tags: [Purchase Order]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example:
+              amount: 1000000
+              payment_method: "BANK_TRANSFER"
+              reference_number: "TRX-998877"
+              notes: "Paid in full"
+      responses:
+        '200':
+          description: PO Paid
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  id: "uuid"
+                  po_id: "uuid"
+                  amount: 1000000
+                  status: "COMPLETED"
+
+  # ─── Income Module ──────────────────────────────────────────────────────
+  /stores/{storeId}/incomes:
+    parameters:
+      - name: storeId
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      summary: Get Incomes
+      tags: [Income]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: List of Incomes
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  items:
+                    - id: "uuid"
+                      amount: 500000
+                      category_name: "Deposit"
+                      description: "Funding deposit"
+                      date: "2024-05-10T12:00:00Z"
+                  total: 1
+    post:
+      summary: Log General Income
+      tags: [Income]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example:
+              amount: 500000
+              category_id: "uuid"
+              description: "Funding deposit"
+              payment_method: "BANK_TRANSFER"
+              date: "2024-05-10T12:00:00Z"
+      responses:
+        '200':
+          description: Income created
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  id: "uuid"
+                  amount: 500000
+                  status: "COMPLETED"
+
+  # ─── Expense Module ─────────────────────────────────────────────────────
+  /stores/{storeId}/expenses:
+    parameters:
+      - name: storeId
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      summary: Get Expenses
+      tags: [Expense]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: List of expenses
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  items:
+                    - id: "uuid"
+                      amount: 150000
+                      category_name: "Utilities"
+                      description: "Electricity Bill"
+                      date: "2024-05-10T14:00:00Z"
+                  total: 1
+    post:
+      summary: Log Expense
+      tags: [Expense]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example:
+              amount: 150000
+              category_id: "uuid"
+              description: "Electricity Bill"
+              payment_method: "CASH"
+              date: "2024-05-10T14:00:00Z"
+      responses:
+        '200':
+          description: Expense created
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  id: "uuid"
+                  amount: 150000
+                  status: "PAID"
+
+  # ─── Cash Flow Module ───────────────────────────────────────────────────
+  /stores/{storeId}/reports/cash-flow:
+    parameters:
+      - name: storeId
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      summary: Get Cash Flow Report
+      tags: [Cash Flow]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Cash Flow Report
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  total_cash_in: 527750
+                  total_cash_out: 1150000
+                  net_cash: -622250
+                  total_sales_in: 27750
+                  total_other_in: 500000
+                  cash_in_by_method:
+                    CASH: 27750
+                    BANK_TRANSFER: 500000
+                  rows:
+                    - date: "2024-05-10"
+                      cash_in: 527750
+                      cash_out: 1150000
+                      net_cash: -622250
+                      sales_in: 27750
+                      other_in: 500000
+                      cash_in_by_method:
+                        CASH: 27750
+                        BANK_TRANSFER: 500000
+
+  /stores/{storeId}/reports/cash-flow/detail:
+    parameters:
+      - name: storeId
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      summary: Get Cash Flow Detailed Drill-Down
+      tags: [Cash Flow]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Detailed list of entries
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  - type: "SALE"
+                    label: "INV-20240510-0001"
+                    amount: 27750
+                    payment_method: "CASH"
+                    category: null
+                    notes: null
+                    timestamp: "2024-05-10T10:05:00Z"
+                  - type: "EXPENSE"
+                    label: "Utilities"
+                    amount: -150000
+                    payment_method: "CASH"
+                    category: "Utilities"
+                    notes: "Electricity Bill"
+                    timestamp: "2024-05-10T14:00:00Z"
+
+  # ─── Activity Log Module ────────────────────────────────────────────────
+  /stores/{storeId}/activity-logs:
+    parameters:
+      - name: storeId
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      summary: Get Activity Logs
+      tags: [Activity Log]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+        - name: user_id
+          in: query
+          schema:
+            type: string
+        - name: module
+          in: query
+          schema:
+            type: string
+        - name: action_type
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of activity logs
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  items:
+                    - id: "uuid"
+                      user_id: "uuid"
+                      user_name: "Jane Doe"
+                      store_id: "uuid"
+                      action_type: "CREATE"
+                      module: "TRANSACTION"
+                      reference_id: "uuid"
+                      metadata:
+                        invoice_number: "INV-20240510-0001"
+                        total: 27750
+                      created_at: "2024-05-10T10:05:00Z"
+                  total: 1
