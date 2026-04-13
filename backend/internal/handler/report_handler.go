@@ -110,7 +110,7 @@ func (h *ReportHandler) CashFlow(w http.ResponseWriter, r *http.Request) {
 func (h *ReportHandler) CashFlowDetail(w http.ResponseWriter, r *http.Request) {
 	storeID := chi.URLParam(r, "storeId")
 	date := r.URL.Query().Get("date")
-	
+
 	result, err := h.reportSvc.CashFlowDetail(r.Context(), storeID, date)
 	if err != nil {
 		h.log.Error().Err(err).Msg("cash flow detail failed")
