@@ -252,11 +252,18 @@ export default function Sidebar() {
     .map(group => {
       const isSettings = group.label === 'Pengaturan';
 
-      const visibleItems = group.items.filter(item => {
-        if (item.adminOnly) return isSuperOrAdmin;
-        if (item.permission) return hasPermission(role, item.permission);
-        return true;
-      });
+      const visibleItems = group.items
+        .map(item => {
+          if (item.href === '/products' && isRestaurant) {
+            return { ...item, label: 'Bahan Baku' };
+          }
+          return item;
+        })
+        .filter(item => {
+          if (item.adminOnly) return isSuperOrAdmin;
+          if (item.permission) return hasPermission(role, item.permission);
+          return true;
+        });
 
       if (visibleItems.length === 0) return null;
 

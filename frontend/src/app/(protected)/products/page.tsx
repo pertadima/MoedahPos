@@ -44,6 +44,9 @@ export default function ProductsPage() {
   const [error, setError] = useState('');
 
   const storeId = selectedStore?.store_id;
+  const isRestaurant = selectedStore?.store_type === 'restaurant';
+  const productLabel = isRestaurant ? 'Bahan Baku' : 'Produk';
+  const productLabelLower = productLabel.toLowerCase();
 
   const load = useCallback(() => {
     if (!storeId) return;
@@ -147,13 +150,15 @@ export default function ProductsPage() {
         <div>
           <h1 className="page-title" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <Package size={22} style={{ color: 'var(--accent-em)' }} />
-            Produk
+            {productLabel}
           </h1>
-          <p className="page-subtitle">Kelola katalog produk {selectedStore?.store_name}</p>
+          <p className="page-subtitle">
+            Kelola katalog {productLabelLower} {selectedStore?.store_name}
+          </p>
         </div>
         {can('products.create') && (
           <button className="btn btn-primary" onClick={openCreate}>
-            <Plus size={15} /> Tambah Produk
+            <Plus size={15} /> Tambah {productLabel}
           </button>
         )}
       </div>
@@ -173,7 +178,7 @@ export default function ProductsPage() {
         <input
           className="input"
           style={{ paddingLeft: 36 }}
-          placeholder="Cari produk..."
+          placeholder={`Cari ${productLabelLower}...`}
           value={search}
           onChange={e => {
             setSearch(e.target.value);
@@ -191,13 +196,13 @@ export default function ProductsPage() {
         ) : products.length === 0 ? (
           <div className="empty-state">
             <Package size={32} />
-            <p>Belum ada produk</p>
+            <p>Belum ada {productLabelLower}</p>
           </div>
         ) : (
           <table className="tbl">
             <thead>
               <tr>
-                <th>Produk</th>
+                <th>{productLabel}</th>
                 <th>SKU</th>
                 <th>Stok</th>
                 <th>Harga Jual</th>
@@ -312,7 +317,9 @@ export default function ProductsPage() {
                 marginBottom: 18,
               }}
             >
-              <h2 style={{ fontWeight: 700 }}>{editing ? 'Edit Produk' : 'Tambah Produk'}</h2>
+              <h2 style={{ fontWeight: 700 }}>
+                {editing ? `Edit ${productLabel}` : `Tambah ${productLabel}`}
+              </h2>
               <button className="btn btn-ghost btn-sm" onClick={() => setShowModal(false)}>
                 <X size={15} />
               </button>
@@ -334,7 +341,7 @@ export default function ProductsPage() {
             )}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {[
-                ['name', 'Nama Produk', 'text'],
+                ['name', `Nama ${productLabel}`, 'text'],
                 ['sku', 'SKU', 'text'],
                 ['sell_price', 'Harga Jual', 'number'],
                 ['cost_price', 'Harga Beli', 'number'],
