@@ -11,8 +11,6 @@ import {
   ClipboardList,
   BarChart3,
   Users,
-  Sun,
-  Moon,
   Store,
   Tag,
   UtensilsCrossed,
@@ -235,7 +233,7 @@ const restaurantGroup: NavGroup = {
 export default function Sidebar() {
   const pathname = usePathname();
   const { selectedStore, stores, selectStore } = useAuth();
-  const { isDark, toggleTheme } = useTheme();
+  const { isDark } = useTheme();
   const { isCollapsed, toggleCollapsed } = useSidebar();
   const isRestaurant = selectedStore?.store_type === 'restaurant';
   const role = selectedStore?.role;
@@ -309,15 +307,7 @@ export default function Sidebar() {
                   priority
                 />
               </div>
-              <div className="flex items-center gap-0.5">
-                <button
-                  onClick={toggleTheme}
-                  className="btn btn-ghost btn-sm"
-                  title={isDark ? 'Mode Terang' : 'Mode Gelap'}
-                  style={{ padding: '6px' }}
-                >
-                  {isDark ? <Sun size={14} /> : <Moon size={14} />}
-                </button>
+              <div className="flex items-center">
                 <button
                   onClick={toggleCollapsed}
                   className="btn btn-ghost btn-sm"
