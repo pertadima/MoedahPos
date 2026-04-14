@@ -11,6 +11,13 @@ import {
   Loader2,
   Users,
   AlertTriangle,
+  Search,
+  Calendar,
+  ChevronLeft,
+  ChevronRight,
+  Filter,
+  Phone,
+  Clock,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { usePermission } from '@/hooks/usePermission';
@@ -54,7 +61,316 @@ const STATUS_CONFIG: Record<
   },
 };
 
+// ── Mock Data ────────────────────────────────────────────────────────────────
+
+const MOCK_RESERVATIONS = [
+  {
+    id: 'res-1',
+    customerName: 'Uthman ibn Hunaif',
+    time: '7:30 PM',
+    pax: 6,
+    tableNumber: '1',
+    phone: '+84 678 890 000',
+    status: 'payment',
+    type: 'Dinner',
+  },
+  {
+    id: 'res-2',
+    customerName: 'Bashir ibn Sa\'ad',
+    time: 'On Dine',
+    pax: 2,
+    tableNumber: '2',
+    phone: '+84 342 556 777',
+    status: 'on_dine',
+    type: 'Dinner',
+  },
+  {
+    id: 'res-3',
+    customerName: 'Ali',
+    time: '8:00 PM',
+    pax: 2,
+    tableNumber: '3',
+    phone: '+84 342 556 555',
+    status: 'payment',
+    type: 'Dinner',
+  },
+  {
+    id: 'res-4',
+    customerName: 'Khunais ibn Hudhafa',
+    time: 'On Dine',
+    pax: 3,
+    tableNumber: '4',
+    phone: '',
+    status: 'on_dine',
+    type: 'Dinner',
+  },
+  {
+    id: 'res-5',
+    customerName: 'Available Now',
+    time: 'Free',
+    pax: 0,
+    tableNumber: '5',
+    phone: '',
+    status: 'free',
+    type: '',
+  },
+];
+
 // ── Page ──────────────────────────────────────────────────────────────────────
+
+// ── Components ────────────────────────────────────────────────────────────────
+
+function ReservationCard({ res }: { res: (typeof MOCK_RESERVATIONS)[0] }) {
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'payment':
+        return { bg: '#ecfdf5', text: '#10b981', border: '#10b981' };
+      case 'on_dine':
+        return { bg: '#f1f5f9', text: '#64748b', border: '#cbd5e1' };
+      case 'free':
+        return { bg: '#eff6ff', text: '#3b82f6', border: '#3b82f6' };
+      default:
+        return { bg: '#f3f4f6', text: '#94a3b8', border: '#e5e7eb' };
+    }
+  };
+
+  const colors = getStatusColor(res.status);
+
+  return (
+    <div
+      className="card"
+      style={{
+        padding: 16,
+        marginBottom: 12,
+        background: 'var(--bg-card)',
+        border: '1px solid var(--border)',
+        borderRadius: 16,
+        display: 'flex',
+        gap: 16,
+        transition: 'all 0.2s ease',
+        cursor: 'pointer',
+      }}
+    >
+      {/* Time Badge */}
+      <div
+        style={{
+          width: 60,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: res.time === 'On Dine' ? '#fff1f2' : res.time === 'Free' ? '#eff6ff' : 'var(--bg-elevated)',
+          borderRadius: 8,
+          gap: 2,
+        }}
+      >
+        <span
+          style={{
+            fontSize: '0.75rem',
+            fontWeight: 800,
+            color: res.time === 'On Dine' ? '#ef4444' : res.time === 'Free' ? '#3b82f6' : 'var(--text-1)',
+            textAlign: 'center',
+            lineHeight: 1.2,
+          }}
+        >
+          {res.time === 'On Dine' ? 'On\nDine' : res.time}
+        </span>
+      </div>
+
+      {/* Info */}
+      <div style={{ flex: 1 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+          <h4 style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--text-1)' }}>
+            {res.customerName}
+          </h4>
+          <span style={{ fontSize: '0.65rem', color: 'var(--text-3)', fontWeight: 600 }}>
+            {res.type}
+          </span>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--text-2)' }}>
+            <Grid3x3 size={12} />
+            <span style={{ fontSize: '0.75rem', fontWeight: 600 }}>{res.tableNumber}</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--text-2)' }}>
+            <Users size={12} />
+            <span style={{ fontSize: '0.75rem', fontWeight: 600 }}>{res.pax}</span>
+          </div>
+        </div>
+
+        {res.phone && (
+          <div
+            style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--text-3)', marginBottom: 10 }}
+          >
+            <Phone size={12} />
+            <span style={{ fontSize: '0.75rem' }}>{res.phone}</span>
+          </div>
+        )}
+
+        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4,
+              padding: '2px 8px',
+              borderRadius: 20,
+              background: colors.bg,
+              color: colors.text,
+              fontSize: '0.68rem',
+              fontWeight: 700,
+              border: `1px solid ${colors.border}44`,
+            }}
+          >
+            <div style={{ width: 6, height: 6, borderRadius: '50%', background: colors.text }} />
+            {res.status === 'payment' ? 'Payment' : res.status === 'on_dine' ? 'On Dine' : 'Available Now'}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ReservationSidebar() {
+  const [activeTab, setActiveTab] = useState('all');
+
+  return (
+    <div
+      style={{
+        width: 380,
+        height: 'calc(100vh - 80px)',
+        borderRight: '1px solid var(--border)',
+        display: 'flex',
+        flexDirection: 'column',
+        background: '#f8fafc',
+        position: 'relative',
+      }}
+    >
+      {/* Tabs */}
+      <div style={{ padding: '20px 20px 10px' }}>
+        <div
+          style={{
+            display: 'flex',
+            background: 'var(--bg-card)',
+            padding: 4,
+            borderRadius: 12,
+            gap: 4,
+            border: '1px solid var(--border)',
+          }}
+        >
+          {['All', 'Reservation', 'On Dine'].map(t => {
+            const key = t.toLowerCase();
+            const active = activeTab === key;
+            const count = key === 'all' ? 12 : key === 'reservation' ? 7 : 5;
+            return (
+              <button
+                key={key}
+                onClick={() => setActiveTab(key)}
+                style={{
+                  flex: 1,
+                  padding: '8px 4px',
+                  borderRadius: 8,
+                  fontSize: '0.8rem',
+                  fontWeight: 700,
+                  background: active ? 'var(--bg-elevated)' : 'transparent',
+                  color: active ? 'var(--text-1)' : 'var(--text-3)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 6,
+                  transition: 'all 0.2s ease',
+                }}
+              >
+                {t}
+                <span
+                  style={{
+                    background: active ? 'var(--accent-em)' : 'var(--bg-elevated)',
+                    color: active ? 'white' : 'var(--text-3)',
+                    padding: '1px 6px',
+                    borderRadius: 20,
+                    fontSize: '0.7rem',
+                  }}
+                >
+                  {count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Date Navigator */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '10px 20px',
+        }}
+      >
+        <button className="btn btn-ghost btn-xs">
+          <ChevronLeft size={18} />
+        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-1)' }}>
+            Thu, 11 January 2024
+          </span>
+        </div>
+        <button className="btn btn-ghost btn-xs">
+          <ChevronRight size={18} />
+        </button>
+      </div>
+
+      {/* Search & Filter */}
+      <div style={{ padding: '10px 20px', display: 'flex', gap: 8 }}>
+        <div style={{ position: 'relative', flex: 1 }}>
+          <Search
+            size={16}
+            style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-3)' }}
+          />
+          <input
+            type="text"
+            placeholder="Search customers"
+            className="input"
+            style={{ paddingLeft: 36, height: 40, fontSize: '0.85rem' }}
+          />
+        </div>
+      </div>
+
+      {/* List */}
+      <div style={{ flex: 1, overflowY: 'auto', padding: '10px 20px 80px' }}>
+        {MOCK_RESERVATIONS.map(res => (
+          <ReservationCard key={res.id} res={res} />
+        ))}
+      </div>
+
+      {/* Floating Add Button */}
+      <div
+        style={{
+          position: 'absolute',
+          bottom: 20,
+          left: 20,
+          right: 20,
+          zIndex: 10,
+        }}
+      >
+        <button
+          className="btn btn-primary"
+          style={{
+            width: '100%',
+            height: 48,
+            borderRadius: 12,
+            boxShadow: '0 8px 24px rgba(8,132,246,0.3)',
+            gap: 8,
+          }}
+        >
+          <Plus size={18} /> Add New Reservation
+        </button>
+      </div>
+    </div>
+  );
+}
 
 export default function TablesPage() {
   const { selectedStore } = useAuth();
@@ -206,253 +522,198 @@ export default function TablesPage() {
   const occupied = tables.filter(t => t.status === 'occupied').length;
 
   return (
-    <div className="w-full p-6">
-      {/* Toast */}
-      {toast && (
+    <div
+      style={{
+        display: 'flex',
+        minHeight: 'calc(100vh - 80px)',
+        background: 'var(--bg-base)',
+      }}
+    >
+      {/* 1. Sidebar */}
+      <ReservationSidebar />
+
+      {/* 2. Main Floor Plan Area */}
+      <div style={{ flex: 1, padding: 32, overflowY: 'auto' }}>
+        {/* Toast */}
+        {toast && (
+          <div
+            style={{
+              position: 'fixed',
+              top: 20,
+              right: 20,
+              zIndex: 9999,
+              background: toast.type === 'success' ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)',
+              border: `1px solid ${toast.type === 'success' ? '#10b981' : '#ef4444'}`,
+              color: toast.type === 'success' ? '#10b981' : '#ef4444',
+              padding: '12px 20px',
+              borderRadius: 10,
+              fontWeight: 600,
+              fontSize: '0.85rem',
+              backdropFilter: 'blur(12px)',
+              animation: 'slideIn 0.2s ease',
+            }}
+          >
+            {toast.msg}
+          </div>
+        )}
+
+        {/* Top Header Line */}
         <div
           style={{
-            position: 'fixed',
-            top: 20,
-            right: 20,
-            zIndex: 9999,
-            background: toast.type === 'success' ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)',
-            border: `1px solid ${toast.type === 'success' ? '#10b981' : '#ef4444'}`,
-            color: toast.type === 'success' ? '#10b981' : '#ef4444',
-            padding: '12px 20px',
-            borderRadius: 10,
-            fontWeight: 600,
-            fontSize: '0.85rem',
-            backdropFilter: 'blur(12px)',
-            animation: 'slideIn 0.2s ease',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: 32,
           }}
         >
-          {toast.msg}
-        </div>
-      )}
+          <div>
+            <h1
+              style={{
+                fontSize: '1.75rem',
+                fontWeight: 900,
+                color: 'var(--text-1)',
+                letterSpacing: '-0.03em',
+              }}
+            >
+              Manage Tables
+            </h1>
+            <div style={{ display: 'flex', gap: 16, marginTop: 8 }}>
+              {(Object.entries(STATUS_CONFIG) as [TableStatus, (typeof STATUS_CONFIG)['available']][])
+                .filter(([k]) => k !== 'unavailable')
+                .map(([key, cfg]) => (
+                  <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <div
+                      style={{ width: 8, height: 8, borderRadius: '50%', background: cfg.dot }}
+                    />
+                    <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-2)' }}>
+                      {cfg.label}
+                    </span>
+                  </div>
+                ))}
+            </div>
+          </div>
 
-      {/* Header */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginBottom: 24,
-        }}
-      >
-        <div>
-          <h1 className="page-title" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <Grid3x3 size={22} style={{ color: '#fb923c' }} />
-            Manajemen Meja
-          </h1>
-          <p className="page-subtitle">
-            {selectedStore.store_name} · {tables.length} meja
-          </p>
+          {can('products.create') && (
+            <button className="btn btn-primary" onClick={openCreate} style={{ gap: 8 }}>
+              <Plus size={16} />
+              Tambah Meja
+            </button>
+          )}
         </div>
-        {can('products.create') && (
-          <button className="btn btn-primary" onClick={openCreate} style={{ gap: 8 }}>
-            <Plus size={16} /> Tambah Meja
-          </button>
+
+        {/* Grid & Content */}
+        {loading ? (
+          <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}>
+            <Loader2 size={28} className="loading-spin" style={{ color: 'var(--accent-em)' }} />
+          </div>
+        ) : tables.length === 0 ? (
+          <div className="empty-state card" style={{ padding: 60 }}>
+            <Grid3x3 size={48} style={{ color: 'var(--text-3)' }} />
+            <p style={{ fontWeight: 600, color: 'var(--text-2)' }}>Belum ada meja</p>
+            <p style={{ fontSize: '0.85rem' }}>
+              Klik &ldquo;Tambah Meja&rdquo; untuk menambahkan meja pertama.
+            </p>
+          </div>
+        ) : (
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
+              gap: 24,
+              padding: 32,
+              background: 'radial-gradient(circle, var(--border-md) 1px, transparent 1px)',
+              backgroundSize: '40px 40px',
+              borderRadius: 24,
+              minHeight: 600,
+            }}
+          >
+            {tables.map(table => {
+              const cfg = STATUS_CONFIG[table.status as TableStatus];
+              const isUpdating = statusUpdating === table.id;
+              return (
+                <div
+                  key={table.id}
+                  className="table-group"
+                  style={{
+                    position: 'relative',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    padding: 20,
+                    transition: 'all 0.3s ease',
+                  }}
+                >
+                  <div onClick={() => openEdit(table)} style={{ cursor: 'pointer' }}>
+                    <TableVisual table={table} config={cfg} />
+                  </div>
+
+                  <div
+                    className="table-hud"
+                    style={{
+                      position: 'absolute',
+                      bottom: -10,
+                      left: '50%',
+                      transform: 'translateX(-50%) translateY(10px)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                      padding: '8px 12px',
+                      background: 'var(--bg-card)',
+                      borderRadius: 12,
+                      boxShadow: 'var(--shadow-lg)',
+                      border: '1px solid var(--border-md)',
+                      opacity: 0,
+                      visibility: 'hidden',
+                      transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+                      zIndex: 100,
+                      backdropFilter: 'blur(12px)',
+                    }}
+                  >
+                    <select
+                      value={table.status}
+                      disabled={isUpdating}
+                      onChange={e => handleStatusChange(table, e.target.value as TableStatus)}
+                      className="select-minimal"
+                      style={{
+                        fontSize: '0.7rem',
+                        height: 28,
+                        padding: '0 8px',
+                        background: 'var(--bg-elevated)',
+                        borderRadius: 6,
+                        fontWeight: 700,
+                      }}
+                    >
+                      <option value="available">🟢 Available</option>
+                      <option value="occupied">🔴 On Dine</option>
+                      <option value="reserved">🔵 Reserved</option>
+                    </select>
+
+                    <div style={{ width: 1, height: 16, background: 'var(--border-md)' }} />
+
+                    <div style={{ display: 'flex', gap: 4 }}>
+                      <button
+                        className="btn btn-ghost btn-xs"
+                        onClick={() => openEdit(table)}
+                        style={{ width: 26, height: 26, padding: 0 }}
+                      >
+                        <Pencil size={12} />
+                      </button>
+                      <button
+                        className="btn btn-ghost btn-xs"
+                        onClick={() => setDeleteConfirm({ open: true, table })}
+                        style={{ width: 26, height: 26, padding: 0, color: '#ef4444' }}
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         )}
       </div>
 
-      {/* Legend & Stats */}
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'flex-end',
-          marginBottom: 24,
-          gap: 16,
-        }}
-      >
-        <div style={{ display: 'flex', gap: 24 }}>
-          {(Object.entries(STATUS_CONFIG) as [TableStatus, (typeof STATUS_CONFIG)['available']][])
-            .filter(([k]) => k !== 'unavailable')
-            .map(([key, cfg]) => (
-              <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <div
-                  style={{
-                    width: 12,
-                    height: 12,
-                    borderRadius: 3,
-                    background: cfg.dot,
-                    boxShadow: `0 0 8px ${cfg.dot}66`,
-                  }}
-                />
-                <span
-                  style={{
-                    fontSize: '0.78rem',
-                    fontWeight: 600,
-                    color: 'var(--text-2)',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.05em',
-                  }}
-                >
-                  {cfg.label}
-                </span>
-              </div>
-            ))}
-        </div>
-
-        <div style={{ display: 'flex', gap: 16 }}>
-          {[
-            { label: 'Total', value: tables.length, color: 'var(--text-3)' },
-            { label: 'Available', value: available, color: '#10b981' },
-            { label: 'On Dine', value: occupied, color: '#ef4444' },
-          ].map(stat => (
-            <div
-              key={stat.label}
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'flex-end',
-                padding: '4px 0',
-              }}
-            >
-              <span
-                style={{
-                  fontSize: '0.65rem',
-                  color: 'var(--text-3)',
-                  fontWeight: 700,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.1em',
-                }}
-              >
-                {stat.label}
-              </span>
-              <span
-                style={{
-                  fontSize: '1.4rem',
-                  fontWeight: 800,
-                  color: stat.color,
-                  lineHeight: 1,
-                  marginTop: 2,
-                }}
-              >
-                {stat.value}
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Table grid */}
-      {loading ? (
-        <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}>
-          <Loader2 size={28} className="loading-spin" style={{ color: 'var(--accent-em)' }} />
-        </div>
-      ) : tables.length === 0 ? (
-        <div className="empty-state card" style={{ padding: 60 }}>
-          <Grid3x3 size={48} style={{ color: 'var(--text-3)' }} />
-          <p style={{ fontWeight: 600, color: 'var(--text-2)' }}>Belum ada meja</p>
-          <p style={{ fontSize: '0.85rem' }}>
-            Klik &ldquo;Tambah Meja&rdquo; untuk menambahkan meja pertama.
-          </p>
-        </div>
-      ) : (
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
-            gap: 24,
-            padding: 32,
-            background: 'radial-gradient(circle, var(--border-md) 1px, transparent 1px)',
-            backgroundSize: '40px 40px',
-            borderRadius: 24,
-            minHeight: 600,
-          }}
-        >
-          {tables.map(table => {
-            const cfg = STATUS_CONFIG[table.status as TableStatus];
-            const isUpdating = statusUpdating === table.id;
-            return (
-              <div
-                key={table.id}
-                className="table-group"
-                style={{
-                  position: 'relative',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  padding: 20,
-                  transition: 'all 0.3s ease',
-                }}
-              >
-                {/* Visual Table */}
-                <div onClick={() => openEdit(table)} style={{ cursor: 'pointer' }}>
-                  <TableVisual table={table} config={cfg} />
-                </div>
-
-                {/* Floating Command HUD */}
-                <div
-                  className="table-hud"
-                  style={{
-                    position: 'absolute',
-                    bottom: -10,
-                    left: '50%',
-                    transform: 'translateX(-50%) translateY(10px)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 8,
-                    padding: '8px 12px',
-                    background: 'var(--bg-card)',
-                    borderRadius: 12,
-                    boxShadow: 'var(--shadow-lg)',
-                    border: '1px solid var(--border-md)',
-                    opacity: 0,
-                    visibility: 'hidden',
-                    transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-                    zIndex: 100,
-                    backdropFilter: 'blur(12px)',
-                  }}
-                >
-                  <select
-                    value={table.status}
-                    disabled={isUpdating}
-                    onChange={e => handleStatusChange(table, e.target.value as TableStatus)}
-                    className="select-minimal"
-                    style={{
-                      fontSize: '0.7rem',
-                      height: 28,
-                      padding: '0 8px',
-                      background: 'var(--bg-elevated)',
-                      borderRadius: 6,
-                      fontWeight: 700,
-                    }}
-                  >
-                    <option value="available">🟢 Available</option>
-                    <option value="occupied">🔴 On Dine</option>
-                    <option value="reserved">🔵 Reserved</option>
-                  </select>
-
-                  <div style={{ width: 1, height: 16, background: 'var(--border-md)' }} />
-
-                  <div style={{ display: 'flex', gap: 4 }}>
-                    <button
-                      className="btn btn-ghost btn-xs"
-                      onClick={() => openEdit(table)}
-                      style={{ width: 26, height: 26, padding: 0 }}
-                      title="Edit Table"
-                    >
-                      <Pencil size={12} />
-                    </button>
-                    <button
-                      className="btn btn-ghost btn-xs"
-                      onClick={() => setDeleteConfirm({ open: true, table })}
-                      style={{ width: 26, height: 26, padding: 0, color: '#ef4444' }}
-                      title="Delete Table"
-                    >
-                      <Trash2 size={12} />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {/* ── Create / Edit Modal ──────────────────────────────────────────────── */}
       {modal.open && (
         <div
           style={{
