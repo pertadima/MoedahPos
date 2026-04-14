@@ -410,7 +410,7 @@ export default function TablesPage() {
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(3, 1fr)',
+              gridTemplateColumns: 'repeat(4, 1fr)',
               gap: 40,
               padding: 48,
               background: 'rgba(255,255,255,0.4)',
