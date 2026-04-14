@@ -894,6 +894,33 @@ body {
   .stat-change.down {
     color: var(--accent-rd);
   }
+
+  /* ── 14.5 Table Cards ─────────────────────────────────────────────────── */
+  .table-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    @apply p-5 relative cursor-pointer overflow-hidden;
+    transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+  }
+  .table-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--brand-lt);
+  }
+  .table-card-animate {
+    animation: tableIn 0.5s cubic-bezier(0.165, 0.84, 0.44, 1) both;
+  }
+  @keyframes tableIn {
+    from {
+      opacity: 0;
+      transform: scale(0.95) translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+  }
 }
 
 /* ── 15. POS Layout ───────────────────────────────────────────────────────── */
