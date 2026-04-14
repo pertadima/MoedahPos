@@ -23,11 +23,6 @@ export default function Header() {
           {isDark ? <Sun size={18} /> : <Moon size={18} />}
         </button>
 
-        {/* Notifications (Placeholder) */}
-        <button className="btn btn-ghost btn-sm" style={{ padding: '8px' }}>
-          <Bell size={18} />
-        </button>
-
         <div className="header-divider" />
 
         {/* User Profile */}
