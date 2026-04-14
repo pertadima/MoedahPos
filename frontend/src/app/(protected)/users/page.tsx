@@ -1020,6 +1020,7 @@ export default function UsersPage() {
           <div
             key={label}
             className="stat-card reveal-animate"
+            data-tooltip={`${label}: ${val}`}
             style={{ animationDelay: `${0.15 + i * 0.05}s` }}
           >
             <div className="stat-icon" style={{ background: bg }}>

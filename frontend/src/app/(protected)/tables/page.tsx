@@ -293,7 +293,7 @@ export default function TablesPage() {
               bg: 'rgba(59,130,246,0.10)',
             },
           ].map((s, i) => (
-            <div key={i} className="stat-card">
+            <div key={i} className="stat-card" data-tooltip={`${s.label}: ${s.count}`}>
               <div className="stat-icon" style={{ background: s.bg }}>
                 <s.icon size={22} style={{ color: s.color }} />
               </div>
