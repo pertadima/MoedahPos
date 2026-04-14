@@ -23,6 +23,7 @@ import {
   Eye,
   Check,
   Trash2,
+  FileText,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { purchaseOrdersApi, suppliersApi, storesApi } from '@/lib/api/store-apis';
@@ -2007,6 +2008,7 @@ export default function PurchaseOrdersPage() {
   const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [showNotesPop, setShowNotesPop] = useState(false);
 
   const storeId = selectedStore?.store_id;
 
@@ -2591,6 +2593,10 @@ export default function PurchaseOrdersPage() {
               from { transform: translateX(100%); }
               to { transform: translateX(0); }
             }
+            @keyframes slideInUp {
+              from { transform: translateY(10px); opacity: 0; }
+              to { transform: translateY(0); opacity: 1; }
+            }
           `}</style>
           {/* Backdrop */}
           <div
@@ -2928,103 +2934,139 @@ export default function PurchaseOrdersPage() {
                     <Plus size={14} /> Tambah Item Lain
                   </button>
                 </div>
-
-                {/* Notes Section */}
-                <div className="input-group">
-                  <label className="input-label">Catatan</label>
-                  <textarea
-                    className="input"
-                    rows={3}
-                    placeholder="Contoh: Pembayaran termin 30 hari..."
-                    style={{ resize: 'none', padding: '10px 12px' }}
-                    value={form.notes}
-                    onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
-                  />
-                </div>
-
-                {/* Total Summary Button */}
-                <button
-                  disabled={saving || calculateTotal() === 0}
-                  onClick={handleCreate}
-                  style={{
-                    width: '100%',
-                    background: 'var(--accent-em)',
-                    backgroundImage: 'linear-gradient(135deg, var(--accent-em) 0%, #3b82f6 100%)',
-                    borderRadius: 16,
-                    padding: '20px',
-                    color: '#fff',
-                    marginTop: 8,
-                    textAlign: 'left',
-                    boxShadow: '0 8px 24px rgba(59,130,246,0.25)',
-                    border: 'none',
-                    cursor: saving || calculateTotal() === 0 ? 'not-allowed' : 'pointer',
-                    transition: 'all 0.2s ease',
-                    opacity: saving || calculateTotal() === 0 ? 0.7 : 1,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 4,
-                  }}
-                  onMouseEnter={e => {
-                    if (!saving && calculateTotal() > 0) {
-                      e.currentTarget.style.transform = 'translateY(-2px)';
-                      e.currentTarget.style.boxShadow = '0 12px 32px rgba(59,130,246,0.35)';
-                    }
-                  }}
-                  onMouseLeave={e => {
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = '0 8px 24px rgba(59,130,246,0.25)';
-                  }}
-                >
-                  <div
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      width: '100%',
-                    }}
-                  >
-                    <div style={{ opacity: 0.9, fontSize: '0.85rem', fontWeight: 600 }}>
-                      Total Pembelian
-                    </div>
-                    {saving ? <Loader2 size={18} className="loading-spin" /> : <Check size={20} />}
-                  </div>
-                  <div style={{ fontSize: '1.45rem', fontWeight: 800 }}>
-                    {formatRp(calculateTotal())}
-                  </div>
-                  <div style={{ fontSize: '0.75rem', opacity: 0.8, fontWeight: 500 }}>
-                    Klik untuk Simpan Pembelian
-                  </div>
-                </button>
               </div>
             </div>
 
-            {/* Footer */}
+            {/* Consolidated Inline High-Density Footer */}
             <div
               style={{
-                padding: '20px 24px',
+                padding: '12px 24px',
+                background: 'var(--bg-card)',
                 borderTop: '1px solid var(--border)',
                 display: 'flex',
-                gap: 12,
-                justifyContent: 'flex-end',
-                background: 'var(--bg-card)',
+                alignItems: 'center',
+                gap: 16,
+                boxShadow: '0 -4px 12px rgba(0,0,0,0.05)',
+                position: 'relative',
               }}
             >
-              <button
-                className="btn btn-ghost"
-                onClick={() => setShowModal(false)}
-                style={{ minWidth: 100 }}
-              >
-                Batal
-              </button>
-              <button
-                className="btn btn-primary"
-                disabled={saving}
-                style={{ minWidth: 160, gap: 8 }}
-                onClick={handleCreate}
-              >
-                {saving ? <Loader2 size={16} className="loading-spin" /> : <Check size={16} />}
-                {saving ? 'Menyimpan...' : 'Simpan Pembelian'}
-              </button>
+              {/* Notes Icon & Popover */}
+              <div style={{ position: 'relative' }}>
+                <button
+                  onClick={() => setShowNotesPop(!showNotesPop)}
+                  className={`btn ${form.notes ? 'btn-primary' : 'btn-ghost'}`}
+                  style={{
+                    padding: 8,
+                    height: 40,
+                    width: 40,
+                    borderRadius: 12,
+                    transition: 'all 0.2s ease',
+                  }}
+                  title="Catatan"
+                >
+                  <FileText size={20} />
+                </button>
+                {showNotesPop && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      bottom: 'calc(100% + 12px)',
+                      left: -12,
+                      width: 320,
+                      background: 'var(--bg-card)',
+                      border: '1px solid var(--border)',
+                      borderRadius: 12,
+                      padding: 16,
+                      boxShadow: '0 10px 40px rgba(0,0,0,0.2)',
+                      zIndex: 100,
+                      animation: 'slideInUp 0.15s cubic-bezier(0, 0, 0.2, 1)',
+                    }}
+                  >
+                    <label
+                      style={{
+                        fontSize: '0.65rem',
+                        fontWeight: 800,
+                        textTransform: 'uppercase',
+                        color: 'var(--text-3)',
+                        display: 'block',
+                        marginBottom: 10,
+                        letterSpacing: '0.05em',
+                      }}
+                    >
+                      Catatan Pembelian
+                    </label>
+                    <textarea
+                      autoFocus
+                      className="input"
+                      rows={4}
+                      placeholder="Masukkan catatan pembelian..."
+                      style={{ resize: 'none', fontSize: '0.85rem', padding: '10px 12px' }}
+                      value={form.notes}
+                      onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
+                    />
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 12 }}>
+                      <button
+                        className="btn btn-primary btn-sm"
+                        onClick={() => setShowNotesPop(false)}
+                      >
+                        Selesai
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Total Display */}
+              <div style={{ flex: 1 }}>
+                <div
+                  style={{
+                    fontSize: '0.65rem',
+                    color: 'var(--text-3)',
+                    fontWeight: 700,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    marginBottom: 2,
+                  }}
+                >
+                  Grand Total
+                </div>
+                <div
+                  style={{
+                    fontSize: '1.25rem',
+                    fontWeight: 800,
+                    color: 'var(--accent-em)',
+                    lineHeight: 1,
+                  }}
+                >
+                  {formatRp(calculateTotal())}
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <button
+                  className="btn btn-ghost"
+                  onClick={() => setShowModal(false)}
+                  style={{ height: 40, padding: '0 12px', fontSize: '0.85rem' }}
+                >
+                  Batal
+                </button>
+                <button
+                  className="btn btn-primary"
+                  disabled={saving || calculateTotal() === 0}
+                  style={{
+                    height: 40,
+                    padding: '0 16px',
+                    gap: 8,
+                    fontWeight: 700,
+                    minWidth: 100,
+                  }}
+                  onClick={handleCreate}
+                >
+                  {saving ? <Loader2 size={16} className="loading-spin" /> : <Check size={16} />}
+                  Simpan
+                </button>
+              </div>
             </div>
           </div>
         </div>
