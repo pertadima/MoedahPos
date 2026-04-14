@@ -1,6 +1,6 @@
 'use client';
 
-import { LogOut, Sun, Moon, Bell } from 'lucide-react';
+import { LogOut, Sun, Moon } from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { useTheme } from '@/lib/theme/ThemeContext';
 

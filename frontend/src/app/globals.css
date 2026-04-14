@@ -704,63 +704,77 @@ body {
     font-size: 0.6875rem;
     color: var(--text-3);
   }
+
+  /* ── 14. Stat Card ────────────────────────────────────────────────────────── */
+  /*
+     Modern stat card:
+     - left icon column (soft colored pill)
+     - right text column (label + value + delta)
+     - hover lifts with shadow-md
+  */
+  .stat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 22px 24px;
+    box-shadow: var(--shadow-sm);
+    @apply flex items-start gap-4.5;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+  }
+  .stat-card:hover {
+    box-shadow: var(--shadow-md);
+    border-color: var(--border-md);
+    transform: translateY(-2px);
+  }
+  .stat-icon {
+    @apply flex items-center justify-center flex-shrink-0 rounded-xl;
+    width: 48px;
+    height: 48px;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+  }
+  .stat-label {
+    font-size: 0.75rem;
+    color: var(--text-3);
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .stat-val {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-1);
+    line-height: 1.2;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+    @apply flex items-baseline gap-1 flex-wrap;
+  }
+  .stat-currency {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-3);
+    align-self: flex-start;
+    margin-top: 2px;
+  }
+  .stat-number {
+    @apply break-all;
+  }
+  .stat-change {
+    font-size: 0.75rem;
+    font-weight: 500;
+    margin-top: 6px;
+    @apply flex items-center gap-1;
+  }
+  .stat-change.up {
+    color: #10b981;
+  }
+  .stat-change.down {
+    color: var(--accent-rd);
+  }
 }
 
-/* ── 14. Stat Card ────────────────────────────────────────────────────────── */
-/*
-   Modern stat card:
-   - left icon column (soft colored pill)
-   - right text column (label + value + delta)
-   - hover lifts with shadow-md
-*/
-.stat-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 20px 22px;
-  box-shadow: var(--shadow-sm);
-  @apply flex items-start gap-4;
-  transition:
-    box-shadow 0.2s ease,
-    transform 0.15s ease;
-}
-.stat-card:hover {
-  box-shadow: var(--shadow-md);
-  transform: translateY(-1px);
-}
-.stat-icon {
-  @apply flex items-center justify-center flex-shrink-0 rounded-lg;
-  width: 46px;
-  height: 46px;
-}
-.stat-val {
-  font-size: 1.375rem;
-  font-weight: 700;
-  color: var(--text-1);
-  line-height: 1.15;
-  margin-top: 3px;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: -0.02em;
-  @apply whitespace-nowrap overflow-hidden text-ellipsis;
-}
-.stat-label {
-  font-size: 0.75rem;
-  color: var(--text-3);
-  font-weight: 500;
-  letter-spacing: 0.01em;
-  @apply whitespace-nowrap overflow-hidden text-ellipsis;
-}
-.stat-change {
-  font-size: 0.75rem;
-  font-weight: 500;
-  margin-top: 5px;
-}
-.stat-change.up {
-  color: #10b981;
-}
-.stat-change.down {
-  color: var(--accent-rd);
-}
 
 /* ── 15. POS Layout ───────────────────────────────────────────────────────── */
 /*

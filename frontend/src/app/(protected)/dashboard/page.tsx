@@ -266,7 +266,7 @@ export default function DashboardPage() {
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
           gap: 14,
           marginBottom: 24,
         }}
@@ -274,7 +274,7 @@ export default function DashboardPage() {
         {statCards.map(({ label, value, icon: Icon, color, bg, alert }) => (
           <div key={label} className="stat-card">
             <div className="stat-icon" style={{ background: bg }}>
-              <Icon size={20} style={{ color }} />
+              <Icon size={22} style={{ color }} />
             </div>
             <div style={{ minWidth: 0, flex: 1 }}>
               <div className="stat-label" title={label}>
@@ -285,7 +285,14 @@ export default function DashboardPage() {
                 style={{ color: alert ? '#f59e0b' : 'var(--text-1)' }}
                 title={value}
               >
-                {value}
+                {value.startsWith('Rp') ? (
+                  <>
+                    <span className="stat-currency">Rp</span>
+                    <span className="stat-number">{value.replace('Rp', '').trim()}</span>
+                  </>
+                ) : (
+                  value
+                )}
               </div>
             </div>
           </div>
