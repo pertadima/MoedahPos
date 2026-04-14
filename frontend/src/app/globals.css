@@ -78,15 +78,15 @@
   --text-3: #94a3b8;
 
   /* Borders — hairline, barely visible */
-  --border: rgba(15, 23, 42, 0.06);
-  --border-md: rgba(15, 23, 42, 0.1);
+  --border: rgba(15, 23, 42, 0.04);
+  --border-md: rgba(15, 23, 42, 0.08);
 
-  /* Shadows — soft, multi-layer for depth */
-  --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.04);
-  --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
-  --shadow-md: 0 4px 8px rgba(15, 23, 42, 0.08), 0 2px 4px rgba(15, 23, 42, 0.04);
-  --shadow-lg: 0 10px 24px rgba(15, 23, 42, 0.1), 0 4px 8px rgba(15, 23, 42, 0.06);
-  --shadow-xl: 0 20px 40px rgba(15, 23, 42, 0.12), 0 8px 16px rgba(15, 23, 42, 0.06);
+  /* Shadows — extremely soft, near flat */
+  --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.02);
+  --shadow-sm: 0 1px 4px rgba(15, 23, 42, 0.04);
+  --shadow-md: 0 3px 8px rgba(15, 23, 42, 0.05);
+  --shadow-lg: 0 8px 16px rgba(15, 23, 42, 0.06);
+  --shadow-xl: 0 16px 32px rgba(15, 23, 42, 0.08);
 }
 
 /*   .dark = DARK mode overrides                                               */
@@ -113,15 +113,15 @@
   --text-2: #94a3b8;
   --text-3: #4e6280;
 
-  --border: rgba(255, 255, 255, 0.06);
-  --border-md: rgba(255, 255, 255, 0.1);
+  --border: rgba(255, 255, 255, 0.04);
+  --border-md: rgba(255, 255, 255, 0.08);
 
-  /* Dark shadows — more subtle, use opacity */
-  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.2);
-  --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.25), 0 1px 2px rgba(0, 0, 0, 0.2);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.3), 0 2px 4px rgba(0, 0, 0, 0.2);
-  --shadow-lg: 0 10px 28px rgba(0, 0, 0, 0.4), 0 4px 8px rgba(0, 0, 0, 0.2);
-  --shadow-xl: 0 20px 48px rgba(0, 0, 0, 0.5), 0 8px 16px rgba(0, 0, 0, 0.25);
+  /* Dark shadows — refined for dark backgrounds */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.15);
+  --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 3px 8px rgba(0, 0, 0, 0.25);
+  --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.3);
+  --shadow-xl: 0 16px 32px rgba(0, 0, 0, 0.4);
 }
 
 /* Legacy data-theme attribute support */
@@ -254,7 +254,7 @@ body {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--border);
+  background: rgba(148, 163, 184, 0.08);
   border-radius: 100px;
 }
 ::-webkit-scrollbar-thumb:hover {
@@ -859,7 +859,6 @@ body {
   min-width: 340px;
   background: var(--bg-card);
   border-left: 1px solid var(--border);
-  box-shadow: -2px 0 12px rgba(0, 0, 0, 0.04);
   @apply flex flex-col overflow-hidden;
 }
 
@@ -1336,7 +1335,7 @@ body {
     transform: translateY(100%);
     border-top-left-radius: 20px;
     border-top-right-radius: 20px;
-    box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
     transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
   }
   .pos-cart.open {
