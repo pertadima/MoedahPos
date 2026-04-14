@@ -470,7 +470,7 @@ export default function TablesPage() {
                       height: 32,
                       width: 'auto',
                       padding: '0 28px 0 10px',
-                      background: 'var(--bg-elevated)',
+                      backgroundColor: 'var(--bg-elevated)',
                       borderRadius: 6,
                       fontWeight: 600,
                       flex: 1,
