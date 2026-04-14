@@ -1215,7 +1215,7 @@ body {
 }
 
 .pos-table-card.available {
-  background: linear-gradient(135deg, var(--bg-card), rgba(34, 197, 94, 0.05));
+  background: linear-gradient(135deg, var(--bg-card), rgba(16, 185, 129, 0.05));
 }
 
 .pos-table-card.occupied {
@@ -1238,13 +1238,13 @@ body {
 }
 
 .pos-table-card.available .pos-table-icon-wrapper {
-  color: #22c55e;
-  background: rgba(34, 197, 94, 0.08);
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.08);
 }
 
 .pos-table-card.occupied .pos-table-icon-wrapper {
-  color: #f97316;
-  background: rgba(249, 115, 22, 0.08);
+  color: var(--accent-am);
+  background: rgba(245, 158, 11, 0.08);
 }
 
 .pos-table-card.occupied .pos-table-icon-wrapper svg {
@@ -1280,15 +1280,15 @@ body {
 }
 
 .status-available .pos-table-status-pill {
-  background: rgba(34, 197, 94, 0.1);
-  color: #16a34a;
-  border-color: rgba(34, 197, 94, 0.2);
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+  border-color: rgba(16, 185, 129, 0.2);
 }
 
 .status-occupied .pos-table-status-pill {
-  background: rgba(249, 115, 22, 0.1);
-  color: #ea580c;
-  border-color: rgba(249, 115, 22, 0.2);
+  background: rgba(245, 158, 11, 0.1);
+  color: var(--accent-am);
+  border-color: rgba(245, 158, 11, 0.2);
 }
 
 .status-unavailable .pos-table-status-pill {
