@@ -252,8 +252,18 @@ export default function DashboardPage() {
   /* ── Render ────────────────────────────────────────────────────────────── */
   return (
     <div className="w-full" style={{ padding: '24px 28px 40px', maxWidth: 1400, margin: '0 auto' }}>
+      <style>{`
+        @keyframes fadeInScale {
+          from { opacity: 0; transform: scale(0.98) translateY(12px); }
+          to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .reveal-animate {
+          animation: fadeInScale 0.5s cubic-bezier(0.165, 0.84, 0.44, 1) both;
+        }
+      `}</style>
+
       {/* ── Page Header ── */}
-      <div style={{ marginBottom: 28 }}>
+      <div style={{ marginBottom: 28 }} className="reveal-animate">
         <h1 className="page-title">
           <LayoutDashboard size={20} style={{ color: 'var(--brand)' }} />
           Dashboard
@@ -278,13 +288,17 @@ export default function DashboardPage() {
           marginBottom: 24,
         }}
       >
-        {statCards.map(({ label, value, icon: Icon, color, bg, alert }) => {
+        {statCards.map(({ label, value, icon: Icon, color, bg, alert }, i) => {
           const isCurrency = value.startsWith('Rp');
           const displayValue = isCurrency ? value.replace('Rp', '').trim() : value;
           const fontSize = getStatFontSize(displayValue);
 
           return (
-            <div key={label} className="stat-card">
+            <div
+              key={label}
+              className="stat-card reveal-animate"
+              style={{ animationDelay: `${0.1 + i * 0.05}s` }}
+            >
               <div className="stat-icon" style={{ background: bg }}>
                 <Icon size={22} style={{ color }} />
               </div>
@@ -316,7 +330,7 @@ export default function DashboardPage() {
         {/* Left column */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           {/* Sales trend chart */}
-          <div className="card" style={{ padding: 22 }}>
+          <div className="card reveal-animate" style={{ padding: 22, animationDelay: '0.35s' }}>
             <div style={{ marginBottom: 18 }}>
               <div className="type-subheading">Tren Penjualan (30 hari)</div>
               <div className="type-caption" style={{ marginTop: 2 }}>
@@ -359,7 +373,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Cashier revenue bar chart */}
-          <div className="card" style={{ padding: 22 }}>
+          <div className="card reveal-animate" style={{ padding: 22, animationDelay: '0.45s' }}>
             <div
               style={{
                 display: 'flex',
@@ -441,7 +455,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Product performance */}
-          <div className="card" style={{ padding: 22 }}>
+          <div className="card reveal-animate" style={{ padding: 22, animationDelay: '0.55s' }}>
             <div
               style={{
                 display: 'flex',
@@ -572,7 +586,10 @@ export default function DashboardPage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           {/* Low stock alert */}
           {lowStock.length > 0 && (
-            <div className="card" style={{ padding: 18, borderColor: 'rgba(245,158,11,0.25)' }}>
+            <div
+              className="card reveal-animate"
+              style={{ padding: 18, borderColor: 'rgba(245,158,11,0.25)', animationDelay: '0.65s' }}
+            >
               <div className="flex justify-between items-center" style={{ marginBottom: 14 }}>
                 <div className="flex items-center gap-2">
                   <AlertTriangle size={15} style={{ color: '#f59e0b' }} />
@@ -612,7 +629,7 @@ export default function DashboardPage() {
           )}
 
           {/* Purchase payables summary */}
-          <div className="card" style={{ padding: 18 }}>
+          <div className="card reveal-animate" style={{ padding: 18, animationDelay: '0.75s' }}>
             <div className="type-subheading" style={{ marginBottom: 14 }}>
               Hutang Pembelian
             </div>
@@ -633,7 +650,10 @@ export default function DashboardPage() {
           </div>
 
           {/* Recent transactions */}
-          <div className="card" style={{ padding: 18, flex: 1 }}>
+          <div
+            className="card reveal-animate"
+            style={{ padding: 18, flex: 1, animationDelay: '0.85s' }}
+          >
             <div className="type-subheading" style={{ marginBottom: 14 }}>
               Transaksi Terakhir
             </div>
