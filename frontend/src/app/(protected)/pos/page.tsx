@@ -1043,7 +1043,16 @@ export default function POSPage() {
   if (isRestaurant && !selectedTable && !isTakeAway) {
     return (
       <>
-        <div style={{ padding: '24px 28px', minHeight: '100vh' }}>
+        <style>{`
+          @keyframes fadeInScale {
+            from { opacity: 0; transform: scale(0.98) translateY(12px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+          }
+          .reveal-animate {
+            animation: fadeInScale 0.5s cubic-bezier(0.165, 0.84, 0.44, 1) both;
+          }
+        `}</style>
+        <div style={{ padding: '24px 28px', minHeight: '100vh' }} className="reveal-animate">
           {/* Header */}
           <div className="flex items-center justify-between" style={{ marginBottom: 28 }}>
             <div>
@@ -1095,7 +1104,7 @@ export default function POSPage() {
                 gap: 16,
               }}
             >
-              {tables.map(table => {
+              {tables.map((table, i) => {
                 const draft = tablesDraftMap[table.id];
                 const hasOrder = !!draft;
                 const isOccupied = table.status === 'occupied' || hasOrder;
@@ -1104,8 +1113,10 @@ export default function POSPage() {
                 return (
                   <button
                     key={table.id}
+                    className="table-btn reveal-animate"
                     onClick={() => !isUnavailable && handleSelectTable(table)}
                     style={{
+                      animationDelay: `${i * 0.03}s`,
                       background: isUnavailable
                         ? 'var(--bg-elevated)'
                         : isOccupied
@@ -1206,10 +1217,19 @@ export default function POSPage() {
   // ── Render (Retail + Restaurant order screen) ───────────────────────────────
   return (
     <div className="pos-layout">
+      <style>{`
+        @keyframes fadeInScale {
+          from { opacity: 0; transform: scale(0.98) translateY(12px); }
+          to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .reveal-animate {
+          animation: fadeInScale 0.5s cubic-bezier(0.165, 0.84, 0.44, 1) both;
+        }
+      `}</style>
       {/* ── LEFT: Catalog ── */}
       <div className="pos-catalog">
         {/* ── Catalog header row: mode badge + search ── */}
-        <div className="flex items-center gap-2" style={{ marginBottom: 10 }}>
+        <div className="flex items-center gap-2 reveal-animate" style={{ marginBottom: 10 }}>
           {isRestaurant && (selectedTable || isTakeAway) && (
             <button
               onClick={handleBackToTables}
@@ -1269,7 +1289,7 @@ export default function POSPage() {
         </div>
 
         {/* Category Tabs */}
-        <div className="category-tabs">
+        <div className="category-tabs reveal-animate" style={{ animationDelay: '0.1s' }}>
           <button
             className={`cat-tab ${activeCat === 'all' ? 'active' : ''}`}
             onClick={() => setActiveCat('all')}
@@ -1336,13 +1356,14 @@ export default function POSPage() {
             </div>
           ) : (
             <div className="product-grid">
-              {filteredMenuItems.map(m => {
+              {filteredMenuItems.map((m, i) => {
                 const inCart = cart.find(i => i.menuItemId === m.id);
                 return (
                   <div
                     key={m.id}
-                    className="product-card"
+                    className="product-card reveal-animate"
                     onClick={() => dispatch({ type: 'ADD_MENU', item: m })}
+                    style={{ animationDelay: `${0.2 + i * 0.012}s` }}
                   >
                     {/* In-cart quantity badge */}
                     {inCart && (
@@ -1406,14 +1427,15 @@ export default function POSPage() {
           </div>
         ) : (
           <div className="product-grid">
-            {filteredProducts.map(p => {
+            {filteredProducts.map((p, i) => {
               const inCart = cart.find(i => i.product.id === p.id && !i.menuItemId);
               const outOfStock = (p.stock_qty ?? 1) <= 0;
               return (
                 <div
                   key={p.id}
-                  className={`product-card ${outOfStock ? 'out-of-stock' : ''}`}
+                  className={`product-card ${outOfStock ? 'out-of-stock' : ''} reveal-animate`}
                   onClick={() => !outOfStock && dispatch({ type: 'ADD_PRODUCT', product: p })}
+                  style={{ animationDelay: `${0.2 + i * 0.012}s` }}
                 >
                   {/* In-cart quantity badge */}
                   {inCart && (
