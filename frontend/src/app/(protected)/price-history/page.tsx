@@ -251,10 +251,8 @@ export default function PriceHistoryPage() {
               <tr>
                 <th>Produk</th>
                 <th>Sumber</th>
-                <th>Harga Beli</th>
-                <th>Δ HPP</th>
-                <th>Harga Jual</th>
-                <th>Δ HJ</th>
+                <th>Harga Beli / HPP</th>
+                <th>Harga Jual / HJ</th>
                 <th>Diubah Oleh</th>
                 <th>Waktu</th>
                 <th>Catatan</th>
@@ -268,7 +266,7 @@ export default function PriceHistoryPage() {
                   <tr key={row.id}>
                     {/* Product */}
                     <td>
-                      <div style={{ fontWeight: 600, maxWidth: 200 }}>{row.product_name}</div>
+                      <div style={{ fontWeight: 600, maxWidth: 220 }}>{row.product_name}</div>
                     </td>
 
                     {/* Source */}
@@ -276,36 +274,32 @@ export default function PriceHistoryPage() {
                       <SourceBadge source={row.source} />
                     </td>
 
-                    {/* Cost price pair */}
+                    {/* Cost section */}
                     <td>
-                      {costChanged ? (
-                        <PricePair old={row.old_cost} next={row.new_cost} />
-                      ) : (
-                        <span style={{ color: 'var(--text-3)', fontSize: '0.82rem' }}>
-                          {formatRp(row.old_cost)}
-                        </span>
-                      )}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                        {costChanged ? (
+                          <PricePair old={row.old_cost} next={row.new_cost} />
+                        ) : (
+                          <span style={{ color: 'var(--text-3)', fontSize: '0.82rem' }}>
+                            {formatRp(row.old_cost)}
+                          </span>
+                        )}
+                        <DeltaBadge old={row.old_cost} next={row.new_cost} label="HPP baru" />
+                      </div>
                     </td>
 
-                    {/* Cost delta */}
+                    {/* Sell section */}
                     <td>
-                      <DeltaBadge old={row.old_cost} next={row.new_cost} label="HPP baru" />
-                    </td>
-
-                    {/* Sell price pair */}
-                    <td>
-                      {sellChanged ? (
-                        <PricePair old={row.old_sell} next={row.new_sell} />
-                      ) : (
-                        <span style={{ color: 'var(--text-3)', fontSize: '0.82rem' }}>
-                          {formatRp(row.old_sell)}
-                        </span>
-                      )}
-                    </td>
-
-                    {/* Sell delta */}
-                    <td>
-                      <DeltaBadge old={row.old_sell} next={row.new_sell} label="HJ baru" />
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                        {sellChanged ? (
+                          <PricePair old={row.old_sell} next={row.new_sell} />
+                        ) : (
+                          <span style={{ color: 'var(--text-3)', fontSize: '0.82rem' }}>
+                            {formatRp(row.old_sell)}
+                          </span>
+                        )}
+                        <DeltaBadge old={row.old_sell} next={row.new_sell} label="HJ baru" />
+                      </div>
                     </td>
 
                     {/* Changed by */}
