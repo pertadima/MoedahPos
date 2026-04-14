@@ -384,7 +384,8 @@ export default function Sidebar() {
                 pathname === item.href ||
                 (item.href !== '/dashboard' && pathname.startsWith(item.href + '/'))
             );
-            const isCollapsedSection = collapsedSections[group.label] && !isCollapsed && !hasActiveItem;
+            const isCollapsedSection =
+              collapsedSections[group.label] && !isCollapsed && !hasActiveItem;
 
             return (
               <div key={group.label} className="nav-group-container">
