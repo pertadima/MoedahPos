@@ -387,8 +387,18 @@ export default function TablesPage() {
             return (
               <div
                 key={table.id}
-                className="table-card table-card-animate"
-                style={{ animationDelay: `${i * 0.05}s` }}
+                className={`table-card table-card-animate ${table.status !== 'available' ? 'active' : ''}`}
+                style={{
+                  animationDelay: `${i * 0.05}s`,
+                  borderColor: table.status !== 'available' ? cfg.color : 'var(--border)',
+                  background:
+                    table.status === 'occupied'
+                      ? 'rgba(239, 68, 68, 0.02)'
+                      : table.status === 'reserved'
+                        ? 'rgba(59, 130, 246, 0.02)'
+                        : 'var(--bg-card)',
+                  boxShadow: table.status !== 'available' ? `0 0 0 1px ${cfg.color}11` : 'none',
+                }}
                 onClick={() => openEdit(table)}
               >
                 <div
@@ -400,22 +410,6 @@ export default function TablesPage() {
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <div
-                      style={{
-                        width: 36,
-                        height: 36,
-                        borderRadius: 8,
-                        background: cfg.bg,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: cfg.color,
-                        fontWeight: 800,
-                        fontSize: '0.9rem',
-                      }}
-                    >
-                      {table.table_number}
-                    </div>
                     <div>
                       <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-1)' }}>
                         Meja {table.table_number}
