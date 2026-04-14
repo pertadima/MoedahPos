@@ -265,22 +265,36 @@ export default function TablesPage() {
           gap: 16,
         }}
       >
-        <div style={{ display: 'flex', gap: 20 }}>
+        <div style={{ display: 'flex', gap: 24 }}>
           {(Object.entries(STATUS_CONFIG) as [TableStatus, (typeof STATUS_CONFIG)['available']][])
             .filter(([k]) => k !== 'unavailable')
             .map(([key, cfg]) => (
-              <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <div
-                  style={{ width: 10, height: 10, borderRadius: '50%', background: cfg.dot }}
+                  style={{
+                    width: 12,
+                    height: 12,
+                    borderRadius: 3,
+                    background: cfg.dot,
+                    boxShadow: `0 0 8px ${cfg.dot}66`,
+                  }}
                 />
-                <span style={{ fontSize: '0.82rem', fontWeight: 500, color: 'var(--text-2)' }}>
+                <span
+                  style={{
+                    fontSize: '0.78rem',
+                    fontWeight: 600,
+                    color: 'var(--text-2)',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                  }}
+                >
                   {cfg.label}
                 </span>
               </div>
             ))}
         </div>
 
-        <div style={{ display: 'flex', gap: 12 }}>
+        <div style={{ display: 'flex', gap: 16 }}>
           {[
             { label: 'Total', value: tables.length, color: 'var(--text-3)' },
             { label: 'Available', value: available, color: '#10b981' },
@@ -290,19 +304,32 @@ export default function TablesPage() {
               key={stat.label}
               style={{
                 display: 'flex',
-                alignItems: 'baseline',
-                gap: 6,
-                padding: '4px 12px',
-                background: 'var(--bg-card)',
-                borderRadius: 8,
-                border: '1px solid var(--border)',
+                flexDirection: 'column',
+                alignItems: 'flex-end',
+                padding: '4px 0',
               }}
             >
-              <span style={{ fontSize: '1.2rem', fontWeight: 700, color: stat.color }}>
-                {stat.value}
-              </span>
-              <span style={{ fontSize: '0.72rem', color: 'var(--text-3)', fontWeight: 500 }}>
+              <span
+                style={{
+                  fontSize: '0.65rem',
+                  color: 'var(--text-3)',
+                  fontWeight: 700,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.1em',
+                }}
+              >
                 {stat.label}
+              </span>
+              <span
+                style={{
+                  fontSize: '1.4rem',
+                  fontWeight: 800,
+                  color: stat.color,
+                  lineHeight: 1,
+                  marginTop: 2,
+                }}
+              >
+                {stat.value}
               </span>
             </div>
           ))}
@@ -326,8 +353,13 @@ export default function TablesPage() {
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
             gap: 24,
+            padding: 32,
+            background: 'radial-gradient(circle, var(--border-md) 1px, transparent 1px)',
+            backgroundSize: '40px 40px',
+            borderRadius: 24,
+            minHeight: 600,
           }}
         >
           {tables.map(table => {
@@ -336,58 +368,82 @@ export default function TablesPage() {
             return (
               <div
                 key={table.id}
-                className="card"
+                className="table-group"
                 style={{
-                  padding: 16,
+                  position: 'relative',
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
-                  background: 'var(--bg-card)',
-                  border: `1px solid ${table.status === 'available' ? 'var(--border)' : cfg.color + '33'}`,
-                  boxShadow: table.status !== 'available' ? `0 4px 12px ${cfg.color}11` : 'none',
+                  padding: 20,
+                  transition: 'all 0.3s ease',
                 }}
               >
                 {/* Visual Table */}
-                <TableVisual table={table} config={cfg} />
+                <div onClick={() => openEdit(table)} style={{ cursor: 'pointer' }}>
+                  <TableVisual table={table} config={cfg} />
+                </div>
 
-                {/* Status selector & Actions */}
-                <div style={{ width: '100%', marginTop: 12 }}>
-                  <div style={{ display: 'flex', gap: 6 }}>
-                    <select
-                      value={table.status}
-                      disabled={isUpdating}
-                      onChange={e => handleStatusChange(table, e.target.value as TableStatus)}
-                      className="select-minimal"
-                      style={{
-                        flex: 1,
-                        fontSize: '0.75rem',
-                        height: 32,
-                        padding: '0 8px',
-                      }}
+                {/* Floating Command HUD */}
+                <div
+                  className="table-hud"
+                  style={{
+                    position: 'absolute',
+                    bottom: -10,
+                    left: '50%',
+                    transform: 'translateX(-50%) translateY(10px)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    padding: '8px 12px',
+                    background: 'var(--bg-card)',
+                    borderRadius: 12,
+                    boxShadow: 'var(--shadow-lg)',
+                    border: '1px solid var(--border-md)',
+                    opacity: 0,
+                    visibility: 'hidden',
+                    transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+                    zIndex: 100,
+                    backdropFilter: 'blur(12px)',
+                  }}
+                >
+                  <select
+                    value={table.status}
+                    disabled={isUpdating}
+                    onChange={e => handleStatusChange(table, e.target.value as TableStatus)}
+                    className="select-minimal"
+                    style={{
+                      fontSize: '0.7rem',
+                      height: 28,
+                      padding: '0 8px',
+                      background: 'var(--bg-elevated)',
+                      borderRadius: 6,
+                      fontWeight: 700,
+                    }}
+                  >
+                    <option value="available">🟢 Available</option>
+                    <option value="occupied">🔴 On Dine</option>
+                    <option value="reserved">🔵 Reserved</option>
+                  </select>
+
+                  <div style={{ width: 1, height: 16, background: 'var(--border-md)' }} />
+
+                  <div style={{ display: 'flex', gap: 4 }}>
+                    <button
+                      className="btn btn-ghost btn-xs"
+                      onClick={() => openEdit(table)}
+                      style={{ width: 26, height: 26, padding: 0 }}
+                      title="Edit Table"
                     >
-                      <option value="available">🟢 Available</option>
-                      <option value="occupied">🔴 On Dine</option>
-                      <option value="reserved">🔵 Reserved</option>
-                    </select>
-
-                    {can('products.update') && (
-                      <button
-                        className="btn btn-ghost btn-sm"
-                        onClick={() => openEdit(table)}
-                        style={{ width: 32, height: 32, padding: 0 }}
-                      >
-                        <Pencil size={13} />
-                      </button>
-                    )}
-                    {can('products.delete') && (
-                      <button
-                        className="btn btn-ghost btn-sm"
-                        onClick={() => setDeleteConfirm({ open: true, table })}
-                        style={{ width: 32, height: 32, padding: 0, color: '#ef4444' }}
-                      >
-                        <Trash2 size={13} />
-                      </button>
-                    )}
+                      <Pencil size={12} />
+                    </button>
+                    <button
+                      className="btn btn-ghost btn-xs"
+                      onClick={() => setDeleteConfirm({ open: true, table })}
+                      style={{ width: 26, height: 26, padding: 0, color: '#ef4444' }}
+                      title="Delete Table"
+                    >
+                      <Trash2 size={12} />
+                    </button>
                   </div>
                 </div>
               </div>
@@ -640,9 +696,8 @@ export default function TablesPage() {
 function TableVisual({ table, config }: { table: RestaurantTable; config: any }) {
   const isRect = table.capacity >= 5;
   const isCircle = table.capacity < 4;
-  const chairs = Array.from({ length: table.capacity });
 
-  // Distribute chairs: Top, Bottom, Left, Right
+  // Chair distribution
   let top = 0,
     bottom = 0,
     left = 0,
@@ -651,30 +706,56 @@ function TableVisual({ table, config }: { table: RestaurantTable; config: any })
     top = Math.ceil(table.capacity / 2);
     bottom = table.capacity - top;
   } else if (isCircle) {
-    // Circle: distribute around (symbolic)
     top = 1;
     bottom = table.capacity > 1 ? 1 : 0;
     left = table.capacity > 2 ? 1 : 0;
   } else {
-    // Square distribution (Cap 4)
     top = 1;
     bottom = 1;
     left = 1;
     right = 1;
   }
 
-  const Chair = ({ active }: { active: boolean }) => (
-    <div
-      style={{
-        width: 14,
-        height: 14,
-        borderRadius: 4,
-        border: `1.5px solid ${active ? config.color : '#cbd5e1'}`,
-        background: active ? config.furniture : 'transparent',
-        opacity: active ? 1 : 0.3,
-      }}
-    />
-  );
+  const Chair = ({ active, position = 'top' }: { active: boolean; position?: string }) => {
+    const isHorizontal = position === 'left' || position === 'right';
+    return (
+      <div
+        className="chair-icon"
+        style={{
+          width: isHorizontal ? 10 : 16,
+          height: isHorizontal ? 16 : 10,
+          position: 'relative',
+          display: 'flex',
+          flexDirection: position === 'top' ? 'column' : position === 'bottom' ? 'column-reverse' : position === 'left' ? 'row' : 'row-reverse',
+          alignItems: 'center',
+          gap: 0,
+        }}
+      >
+        {/* Chair Seat */}
+        <div
+          style={{
+            width: isHorizontal ? 8 : 14,
+            height: isHorizontal ? 14 : 8,
+            borderRadius: 3,
+            background: active ? config.furniture : 'var(--bg-elevated)',
+            border: `1px solid ${active ? config.color : 'var(--border-md)'}`,
+            zIndex: 2,
+          }}
+        />
+        {/* Chair Backrest */}
+        <div
+          style={{
+            width: isHorizontal ? 3 : 10,
+            height: isHorizontal ? 10 : 3,
+            borderRadius: 2,
+            background: active ? config.color : 'var(--text-3)',
+            opacity: active ? 0.6 : 0.2,
+            zIndex: 1,
+          }}
+        />
+      </div>
+    );
+  };
 
   return (
     <div
@@ -684,13 +765,13 @@ function TableVisual({ table, config }: { table: RestaurantTable; config: any })
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '20px 0',
+        padding: '24px 0',
       }}
     >
       {/* Top Chairs */}
       <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
         {Array.from({ length: top }).map((_, i) => (
-          <Chair key={i} active={true} />
+          <Chair key={i} active={true} position="top" />
         ))}
       </div>
 
@@ -698,29 +779,31 @@ function TableVisual({ table, config }: { table: RestaurantTable; config: any })
         {/* Left Side Chair */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           {Array.from({ length: left }).map((_, i) => (
-            <Chair key={i} active={true} />
+            <Chair key={i} active={true} position="left" />
           ))}
         </div>
 
         {/* Table Body */}
         <div
+          className="table-furniture"
           style={{
-            width: isRect ? 140 : 90,
-            height: 90,
-            borderRadius: isCircle ? '50%' : 12,
-            background: config.furniture,
-            border: `1px solid ${config.color}33`,
+            width: isRect ? 140 : 100,
+            height: 100,
+            borderRadius: isCircle ? '50%' : 16,
+            background: `linear-gradient(135deg, ${config.furniture} 0%, ${config.furniture}bb 100%)`,
+            border: `1.5px solid ${config.color}22`,
+            boxShadow: `inset 0 0 10px ${config.color}11`,
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
             gap: 2,
-            transition: 'all 0.2s ease',
-            cursor: 'default',
+            position: 'relative',
+            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
           }}
         >
-          <div style={{ fontSize: '0.85rem', fontWeight: 700, color: config.color }}>
-            Table #{table.table_number}
+          <div style={{ fontSize: '0.9rem', fontWeight: 800, color: config.color }}>
+            #{table.table_number}
           </div>
           <div
             style={{
@@ -729,7 +812,8 @@ function TableVisual({ table, config }: { table: RestaurantTable; config: any })
               gap: 4,
               fontSize: '0.75rem',
               color: config.color,
-              opacity: 0.8,
+              opacity: 0.7,
+              fontWeight: 600,
             }}
           >
             <Users size={12} /> {table.capacity}
@@ -739,7 +823,7 @@ function TableVisual({ table, config }: { table: RestaurantTable; config: any })
         {/* Right Side Chair */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           {Array.from({ length: right }).map((_, i) => (
-            <Chair key={i} active={true} />
+            <Chair key={i} active={true} position="right" />
           ))}
         </div>
       </div>
@@ -747,7 +831,7 @@ function TableVisual({ table, config }: { table: RestaurantTable; config: any })
       {/* Bottom Chairs */}
       <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
         {Array.from({ length: bottom }).map((_, i) => (
-          <Chair key={i} active={true} />
+          <Chair key={i} active={true} position="bottom" />
         ))}
       </div>
     </div>

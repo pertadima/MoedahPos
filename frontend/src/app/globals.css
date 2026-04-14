@@ -1527,3 +1527,33 @@ body {
     stroke-linejoin: round;
   }
 }
+
+/* ── Restaurant Tables: Architectural UI ────────────────────────────────── */
+
+.table-group {
+  cursor: pointer;
+}
+
+.table-group:hover .table-hud {
+  opacity: 1 !important;
+  visibility: visible !important;
+  transform: translateX(-50%) translateY(0) !important;
+}
+
+.table-furniture {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.table-group:hover .table-furniture {
+  transform: scale(1.03);
+  box-shadow: 0 0 25px currentColor;
+}
+
+.chair-icon {
+  transition: all 0.3s ease;
+}
+
+.table-group:hover .chair-icon {
+  transform: translateY(-2px);
+  opacity: 1 !important;
+}
