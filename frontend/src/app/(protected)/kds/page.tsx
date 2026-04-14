@@ -131,8 +131,19 @@ export default function KDSPage() {
         background: 'var(--bg-base)',
       }}
     >
+      <style>{`
+        @keyframes fadeInScale {
+          from { opacity: 0; transform: scale(0.98) translateY(12px); }
+          to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .reveal-animate {
+          animation: fadeInScale 0.5s cubic-bezier(0.165, 0.84, 0.44, 1) both;
+        }
+      `}</style>
+
       {/* Header */}
       <div
+        className="reveal-animate"
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -199,7 +210,10 @@ export default function KDSPage() {
       {loading && tickets.length === 0 ? (
         <div className="empty-state">Memuat antrean...</div>
       ) : tickets.length === 0 ? (
-        <div className="empty-state" style={{ marginTop: 60 }}>
+        <div
+          className="empty-state reveal-animate"
+          style={{ marginTop: 60, animationDelay: '0.1s' }}
+        >
           <CheckCircle2 size={48} style={{ color: 'var(--brand)', marginBottom: 16 }} />
           <h3 style={{ fontSize: '1.2rem', color: 'var(--text-1)', marginBottom: 8 }}>
             Dapur Kosong!
@@ -216,9 +230,9 @@ export default function KDSPage() {
             alignItems: 'start',
           }}
         >
-          {tickets.map(ticket => {
+          {tickets.map((ticket, i) => {
             const isTakeAway = !ticket.table_id;
-            const completedCount = ticket.items.filter(i => i.status === 'completed').length;
+            const completedCount = ticket.items.filter(it => it.status === 'completed').length;
             const totalCount = ticket.items.length;
             const isAllDone = completedCount === totalCount;
 
@@ -230,7 +244,9 @@ export default function KDSPage() {
             return (
               <div
                 key={ticket.id}
+                className="reveal-animate"
                 style={{
+                  animationDelay: `${0.1 + i * 0.05}s`,
                   background: 'var(--bg-elevated)',
                   borderRadius: 8,
                   border: `1px solid ${isAllDone ? '#10b981' : isLate ? '#ef4444' : 'var(--border)'}`,
