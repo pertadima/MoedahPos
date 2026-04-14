@@ -548,7 +548,6 @@ body {
     top: 0;
     background: var(--bg-card);
     border-right: 1px solid var(--border);
-    box-shadow: var(--shadow-sm);
     @apply flex flex-col z-40 overflow-y-auto;
   }
   .sidebar-expanded {
