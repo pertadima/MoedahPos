@@ -598,8 +598,8 @@ body {
     @apply flex flex-col mb-1 relative;
   }
   .nav-section-header {
-  @apply flex items-center justify-between cursor-pointer select-none rounded-md mx-1;
-  padding: 8px 10px;
+    @apply flex items-center justify-between cursor-pointer select-none rounded-md mx-1;
+    padding: 8px 10px;
     margin-top: 12px;
     margin-bottom: 4px;
     transition: all 0.15s ease;
@@ -650,11 +650,11 @@ body {
     background: var(--border-md);
     opacity: 0.8;
   }
-.nav-section-items.collapsed {
-  max-height: 0;
-  opacity: 0;
-  pointer-events: none;
-}
+  .nav-section-items.collapsed {
+    max-height: 0;
+    opacity: 0;
+    pointer-events: none;
+  }
 
   /* Nav item */
   .nav-item {
@@ -700,9 +700,15 @@ body {
   }
 
   @keyframes iconPulse {
-    0% { transform: scale(1.05); }
-    50% { transform: scale(1.2); }
-    100% { transform: scale(1.05); }
+    0% {
+      transform: scale(1.05);
+    }
+    50% {
+      transform: scale(1.2);
+    }
+    100% {
+      transform: scale(1.05);
+    }
   }
   /* Dark mode active — slightly brighter */
   .dark .nav-item.active {

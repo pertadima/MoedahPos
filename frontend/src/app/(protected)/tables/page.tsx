@@ -11,13 +11,6 @@ import {
   Loader2,
   Users,
   AlertTriangle,
-  Search,
-  Calendar,
-  ChevronLeft,
-  ChevronRight,
-  Filter,
-  Phone,
-  Clock,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { usePermission } from '@/hooks/usePermission';
@@ -61,316 +54,7 @@ const STATUS_CONFIG: Record<
   },
 };
 
-// ── Mock Data ────────────────────────────────────────────────────────────────
-
-const MOCK_RESERVATIONS = [
-  {
-    id: 'res-1',
-    customerName: 'Uthman ibn Hunaif',
-    time: '7:30 PM',
-    pax: 6,
-    tableNumber: '1',
-    phone: '+84 678 890 000',
-    status: 'payment',
-    type: 'Dinner',
-  },
-  {
-    id: 'res-2',
-    customerName: 'Bashir ibn Sa\'ad',
-    time: 'On Dine',
-    pax: 2,
-    tableNumber: '2',
-    phone: '+84 342 556 777',
-    status: 'on_dine',
-    type: 'Dinner',
-  },
-  {
-    id: 'res-3',
-    customerName: 'Ali',
-    time: '8:00 PM',
-    pax: 2,
-    tableNumber: '3',
-    phone: '+84 342 556 555',
-    status: 'payment',
-    type: 'Dinner',
-  },
-  {
-    id: 'res-4',
-    customerName: 'Khunais ibn Hudhafa',
-    time: 'On Dine',
-    pax: 3,
-    tableNumber: '4',
-    phone: '',
-    status: 'on_dine',
-    type: 'Dinner',
-  },
-  {
-    id: 'res-5',
-    customerName: 'Available Now',
-    time: 'Free',
-    pax: 0,
-    tableNumber: '5',
-    phone: '',
-    status: 'free',
-    type: '',
-  },
-];
-
 // ── Page ──────────────────────────────────────────────────────────────────────
-
-// ── Components ────────────────────────────────────────────────────────────────
-
-function ReservationCard({ res }: { res: (typeof MOCK_RESERVATIONS)[0] }) {
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'payment':
-        return { bg: '#ecfdf5', text: '#10b981', border: '#10b981' };
-      case 'on_dine':
-        return { bg: '#f1f5f9', text: '#64748b', border: '#cbd5e1' };
-      case 'free':
-        return { bg: '#eff6ff', text: '#3b82f6', border: '#3b82f6' };
-      default:
-        return { bg: '#f3f4f6', text: '#94a3b8', border: '#e5e7eb' };
-    }
-  };
-
-  const colors = getStatusColor(res.status);
-
-  return (
-    <div
-      className="card"
-      style={{
-        padding: 16,
-        marginBottom: 12,
-        background: 'var(--bg-card)',
-        border: '1px solid var(--border)',
-        borderRadius: 16,
-        display: 'flex',
-        gap: 16,
-        transition: 'all 0.2s ease',
-        cursor: 'pointer',
-      }}
-    >
-      {/* Time Badge */}
-      <div
-        style={{
-          width: 60,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: res.time === 'On Dine' ? '#fff1f2' : res.time === 'Free' ? '#eff6ff' : 'var(--bg-elevated)',
-          borderRadius: 8,
-          gap: 2,
-        }}
-      >
-        <span
-          style={{
-            fontSize: '0.75rem',
-            fontWeight: 800,
-            color: res.time === 'On Dine' ? '#ef4444' : res.time === 'Free' ? '#3b82f6' : 'var(--text-1)',
-            textAlign: 'center',
-            lineHeight: 1.2,
-          }}
-        >
-          {res.time === 'On Dine' ? 'On\nDine' : res.time}
-        </span>
-      </div>
-
-      {/* Info */}
-      <div style={{ flex: 1 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-          <h4 style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--text-1)' }}>
-            {res.customerName}
-          </h4>
-          <span style={{ fontSize: '0.65rem', color: 'var(--text-3)', fontWeight: 600 }}>
-            {res.type}
-          </span>
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--text-2)' }}>
-            <Grid3x3 size={12} />
-            <span style={{ fontSize: '0.75rem', fontWeight: 600 }}>{res.tableNumber}</span>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--text-2)' }}>
-            <Users size={12} />
-            <span style={{ fontSize: '0.75rem', fontWeight: 600 }}>{res.pax}</span>
-          </div>
-        </div>
-
-        {res.phone && (
-          <div
-            style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--text-3)', marginBottom: 10 }}
-          >
-            <Phone size={12} />
-            <span style={{ fontSize: '0.75rem' }}>{res.phone}</span>
-          </div>
-        )}
-
-        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 4,
-              padding: '2px 8px',
-              borderRadius: 20,
-              background: colors.bg,
-              color: colors.text,
-              fontSize: '0.68rem',
-              fontWeight: 700,
-              border: `1px solid ${colors.border}44`,
-            }}
-          >
-            <div style={{ width: 6, height: 6, borderRadius: '50%', background: colors.text }} />
-            {res.status === 'payment' ? 'Payment' : res.status === 'on_dine' ? 'On Dine' : 'Available Now'}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function ReservationSidebar() {
-  const [activeTab, setActiveTab] = useState('all');
-
-  return (
-    <div
-      style={{
-        width: 380,
-        height: 'calc(100vh - 80px)',
-        borderRight: '1px solid var(--border)',
-        display: 'flex',
-        flexDirection: 'column',
-        background: '#f8fafc',
-        position: 'relative',
-      }}
-    >
-      {/* Tabs */}
-      <div style={{ padding: '20px 20px 10px' }}>
-        <div
-          style={{
-            display: 'flex',
-            background: 'var(--bg-card)',
-            padding: 4,
-            borderRadius: 12,
-            gap: 4,
-            border: '1px solid var(--border)',
-          }}
-        >
-          {['All', 'Reservation', 'On Dine'].map(t => {
-            const key = t.toLowerCase();
-            const active = activeTab === key;
-            const count = key === 'all' ? 12 : key === 'reservation' ? 7 : 5;
-            return (
-              <button
-                key={key}
-                onClick={() => setActiveTab(key)}
-                style={{
-                  flex: 1,
-                  padding: '8px 4px',
-                  borderRadius: 8,
-                  fontSize: '0.8rem',
-                  fontWeight: 700,
-                  background: active ? 'var(--bg-elevated)' : 'transparent',
-                  color: active ? 'var(--text-1)' : 'var(--text-3)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 6,
-                  transition: 'all 0.2s ease',
-                }}
-              >
-                {t}
-                <span
-                  style={{
-                    background: active ? 'var(--accent-em)' : 'var(--bg-elevated)',
-                    color: active ? 'white' : 'var(--text-3)',
-                    padding: '1px 6px',
-                    borderRadius: 20,
-                    fontSize: '0.7rem',
-                  }}
-                >
-                  {count}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Date Navigator */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '10px 20px',
-        }}
-      >
-        <button className="btn btn-ghost btn-xs">
-          <ChevronLeft size={18} />
-        </button>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-1)' }}>
-            Thu, 11 January 2024
-          </span>
-        </div>
-        <button className="btn btn-ghost btn-xs">
-          <ChevronRight size={18} />
-        </button>
-      </div>
-
-      {/* Search & Filter */}
-      <div style={{ padding: '10px 20px', display: 'flex', gap: 8 }}>
-        <div style={{ position: 'relative', flex: 1 }}>
-          <Search
-            size={16}
-            style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-3)' }}
-          />
-          <input
-            type="text"
-            placeholder="Search customers"
-            className="input"
-            style={{ paddingLeft: 36, height: 40, fontSize: '0.85rem' }}
-          />
-        </div>
-      </div>
-
-      {/* List */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '10px 20px 80px' }}>
-        {MOCK_RESERVATIONS.map(res => (
-          <ReservationCard key={res.id} res={res} />
-        ))}
-      </div>
-
-      {/* Floating Add Button */}
-      <div
-        style={{
-          position: 'absolute',
-          bottom: 20,
-          left: 20,
-          right: 20,
-          zIndex: 10,
-        }}
-      >
-        <button
-          className="btn btn-primary"
-          style={{
-            width: '100%',
-            height: 48,
-            borderRadius: 12,
-            boxShadow: '0 8px 24px rgba(8,132,246,0.3)',
-            gap: 8,
-          }}
-        >
-          <Plus size={18} /> Add New Reservation
-        </button>
-      </div>
-    </div>
-  );
-}
 
 export default function TablesPage() {
   const { selectedStore } = useAuth();
@@ -391,7 +75,7 @@ export default function TablesPage() {
   const [form, setForm] = useState({ table_number: '', capacity: 4, notes: '' });
   const [formError, setFormError] = useState('');
 
-// ── Components ────────────────────────────────────────────────────────────────
+  // ── Components ────────────────────────────────────────────────────────────────
 
   const storeId = selectedStore?.store_id ?? '';
 
@@ -518,9 +202,6 @@ export default function TablesPage() {
       </div>
     );
 
-  const available = tables.filter(t => t.status === 'available').length;
-  const occupied = tables.filter(t => t.status === 'occupied').length;
-
   return (
     <div
       style={{
@@ -529,10 +210,7 @@ export default function TablesPage() {
         background: 'var(--bg-base)',
       }}
     >
-      {/* 1. Sidebar */}
-      <ReservationSidebar />
-
-      {/* 2. Main Floor Plan Area */}
+      {/* 1. Main Floor Plan Area */}
       <div style={{ flex: 1, padding: 32, overflowY: 'auto' }}>
         {/* Toast */}
         {toast && (
@@ -542,7 +220,8 @@ export default function TablesPage() {
               top: 20,
               right: 20,
               zIndex: 9999,
-              background: toast.type === 'success' ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)',
+              background:
+                toast.type === 'success' ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)',
               border: `1px solid ${toast.type === 'success' ? '#10b981' : '#ef4444'}`,
               color: toast.type === 'success' ? '#10b981' : '#ef4444',
               padding: '12px 20px',
@@ -578,7 +257,12 @@ export default function TablesPage() {
               Manage Tables
             </h1>
             <div style={{ display: 'flex', gap: 16, marginTop: 8 }}>
-              {(Object.entries(STATUS_CONFIG) as [TableStatus, (typeof STATUS_CONFIG)['available']][])
+              {(
+                Object.entries(STATUS_CONFIG) as [
+                  TableStatus,
+                  (typeof STATUS_CONFIG)['available'],
+                ][]
+              )
                 .filter(([k]) => k !== 'unavailable')
                 .map(([key, cfg]) => (
                   <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -618,7 +302,7 @@ export default function TablesPage() {
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
+              gridTemplateColumns: 'repeat(3, 1fr)',
               gap: 24,
               padding: 32,
               background: 'radial-gradient(circle, var(--border-md) 1px, transparent 1px)',
@@ -954,7 +638,13 @@ export default function TablesPage() {
 
 // ── Components ────────────────────────────────────────────────────────────────
 
-function TableVisual({ table, config }: { table: RestaurantTable; config: any }) {
+function TableVisual({
+  table,
+  config,
+}: {
+  table: RestaurantTable;
+  config: (typeof STATUS_CONFIG)['available'];
+}) {
   const isRect = table.capacity >= 5;
   const isCircle = table.capacity < 4;
 
@@ -987,7 +677,14 @@ function TableVisual({ table, config }: { table: RestaurantTable; config: any })
           height: isHorizontal ? 16 : 10,
           position: 'relative',
           display: 'flex',
-          flexDirection: position === 'top' ? 'column' : position === 'bottom' ? 'column-reverse' : position === 'left' ? 'row' : 'row-reverse',
+          flexDirection:
+            position === 'top'
+              ? 'column'
+              : position === 'bottom'
+                ? 'column-reverse'
+                : position === 'left'
+                  ? 'row'
+                  : 'row-reverse',
           alignItems: 'center',
           gap: 0,
         }}
