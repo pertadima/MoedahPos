@@ -846,7 +846,7 @@ body {
 */
 .pos-layout {
   @apply flex overflow-hidden;
-  height: 100vh;
+  height: calc(100vh - 64px);
   margin-left: 0;
   background: var(--bg-base);
 }
@@ -857,6 +857,7 @@ body {
 .pos-cart {
   width: 340px;
   min-width: 340px;
+  height: 100%;
   background: var(--bg-card);
   border-left: 1px solid var(--border);
   @apply flex flex-col overflow-hidden;
@@ -1036,8 +1037,8 @@ body {
 /* Cart footer */
 .cart-footer {
   border-top: 1px solid var(--border);
-  padding: 14px 16px;
-  @apply flex flex-col gap-2.5;
+  padding: 10px 14px 14px;
+  @apply flex flex-col gap-2 sticky bottom-0 z-10;
   background: var(--bg-card);
 }
 .cart-total-row {
@@ -1048,9 +1049,9 @@ body {
 }
 .cart-total-row.grand {
   font-weight: 700;
-  font-size: 1.0625rem;
+  font-size: 1rem;
   color: var(--text-1);
-  padding-top: 10px;
+  padding-top: 8px;
   margin-top: 2px;
   border-top: 1px solid var(--border);
   font-variant-numeric: tabular-nums;
@@ -1058,12 +1059,12 @@ body {
 
 .checkout-btn {
   @apply w-full flex items-center justify-center gap-2
-         font-bold text-base text-white
+         font-bold text-[0.875rem] text-white
          border-none cursor-pointer;
-  padding: 15px;
-  border-radius: 14px;
+  padding: 10px;
+  border-radius: 10px;
   background: linear-gradient(135deg, #0884f6 0%, #0566cc 100%);
-  box-shadow: 0 4px 16px rgba(8, 132, 246, 0.35);
+  box-shadow: 0 4px 12px rgba(8, 132, 246, 0.25);
   transition:
     box-shadow 0.2s ease,
     transform 0.15s ease,
