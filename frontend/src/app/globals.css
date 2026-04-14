@@ -1185,7 +1185,119 @@ body {
   -moz-appearance: textfield;
 }
 
-/* ── 17. Payment Modal ───────────────────────────────────────────────────── */
+/* ── 17. Restaurant POS Table Selection ─────────────────────────────────── */
+.pos-table-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 1.25rem;
+  width: 100%;
+}
+
+.pos-table-card {
+  @apply flex flex-col items-center gap-3 relative transition-all duration-200 cursor-pointer;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 1.75rem 1.25rem;
+  box-shadow: var(--shadow-sm);
+  text-align: center;
+}
+
+.pos-table-card:hover:not(.unavailable) {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--brand-lt);
+}
+
+.pos-table-card:active:not(.unavailable) {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.pos-table-card.available {
+  background: linear-gradient(135deg, var(--bg-card), rgba(34, 197, 94, 0.05));
+}
+
+.pos-table-card.occupied {
+  background: linear-gradient(135deg, var(--bg-card), rgba(249, 115, 22, 0.05));
+  border-color: rgba(249, 115, 22, 0.4);
+}
+
+.pos-table-card.unavailable {
+  @apply opacity-50 cursor-not-allowed grayscale-[0.8];
+  background: var(--bg-elevated);
+}
+
+.pos-table-icon-wrapper {
+  @apply flex items-center justify-center rounded-2xl relative;
+  width: 60px;
+  height: 60px;
+  background: var(--bg-elevated);
+  margin-bottom: 0.25rem;
+  transition: all 0.2s ease;
+}
+
+.pos-table-card.available .pos-table-icon-wrapper {
+  color: #22c55e;
+  background: rgba(34, 197, 94, 0.08);
+}
+
+.pos-table-card.occupied .pos-table-icon-wrapper {
+  color: #f97316;
+  background: rgba(249, 115, 22, 0.08);
+}
+
+.pos-table-card.occupied .pos-table-icon-wrapper svg {
+  animation: iconPulse 2s infinite ease-in-out;
+}
+
+.pos-table-card.unavailable .pos-table-icon-wrapper {
+  color: var(--text-3);
+  background: var(--bg-hover);
+}
+
+.pos-table-number {
+  font-size: 1.125rem;
+  font-weight: 800;
+  color: var(--text-1);
+  letter-spacing: -0.02em;
+}
+
+.pos-table-capacity {
+  @apply flex items-center gap-1.5;
+  font-size: 0.75rem;
+  color: var(--text-3);
+  font-weight: 500;
+}
+
+.pos-table-status-pill {
+  @apply flex items-center gap-1.5 px-3 py-1 rounded-full font-bold uppercase tracking-wider;
+  font-size: 0.6rem;
+  margin-top: 0.5rem;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border-width: 1px;
+}
+
+.status-available .pos-table-status-pill {
+  background: rgba(34, 197, 94, 0.1);
+  color: #16a34a;
+  border-color: rgba(34, 197, 94, 0.2);
+}
+
+.status-occupied .pos-table-status-pill {
+  background: rgba(249, 115, 22, 0.1);
+  color: #ea580c;
+  border-color: rgba(249, 115, 22, 0.2);
+}
+
+.status-unavailable .pos-table-status-pill {
+  background: var(--bg-hover);
+  color: var(--text-3);
+  border-color: var(--border);
+}
+
+/* ── 18. Payment Modal ───────────────────────────────────────────────────── */
 .modal-overlay {
   @apply fixed inset-0 z-[100] flex items-center justify-center p-4;
   background: rgba(7, 12, 26, 0.6);

@@ -15,7 +15,6 @@ import {
   ShoppingBag,
   UserRound,
   ArrowLeft,
-  Coffee,
   Clock,
   Users,
   Tag,
@@ -1043,15 +1042,32 @@ export default function POSPage() {
   if (isRestaurant && !selectedTable && !isTakeAway) {
     return (
       <>
-        <div style={{ padding: '24px 28px', minHeight: '100vh' }} className="reveal-animate">
+        <div
+          style={{ padding: '28px 32px', minHeight: '100vh', background: 'var(--bg-app)' }}
+          className="reveal-animate"
+        >
           {/* Header */}
-          <div className="flex items-center justify-between" style={{ marginBottom: 28 }}>
+          <div className="flex items-center justify-between" style={{ marginBottom: 32 }}>
             <div>
-              <h1 className="page-title">
-                <UtensilsCrossed size={20} style={{ color: 'var(--brand)' }} />
+              <h1 className="page-title" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div
+                  style={{
+                    background: 'rgba(8,132,246,0.1)',
+                    color: 'var(--brand)',
+                    padding: 8,
+                    borderRadius: 12,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <UtensilsCrossed size={22} />
+                </div>
                 Pilih Meja
               </h1>
-              <p className="page-subtitle">{selectedStore.store_name}</p>
+              <p className="page-subtitle" style={{ marginLeft: 42 }}>
+                {selectedStore.store_name}
+              </p>
             </div>
 
             {/* Take Away shortcut button */}
@@ -1062,136 +1078,92 @@ export default function POSPage() {
                 setError('');
                 setHoldError('');
               }}
-              className="btn"
+              className="btn shadow-hover"
               style={{
-                background: 'rgba(245,158,11,0.10)',
-                border: '1.5px solid rgba(245,158,11,0.35)',
+                background: 'rgba(245,158,11,0.08)',
+                border: '1px solid rgba(245,158,11,0.25)',
                 color: '#d97706',
-                fontWeight: 600,
-                gap: 6,
-                padding: '8px 16px',
-                borderRadius: 12,
+                fontWeight: 700,
+                gap: 8,
+                padding: '10px 20px',
+                borderRadius: 14,
+                transition: 'all 0.2s ease',
               }}
             >
-              <ShoppingBag size={15} />
-              Take Away
+              <ShoppingBag size={18} />
+              Bungkus / Take Away
             </button>
           </div>
 
           {tablesLoading ? (
-            <div style={{ display: 'flex', justifyContent: 'center', padding: 64 }}>
-              <Loader2 size={32} className="loading-spin" style={{ color: 'var(--brand)' }} />
+            <div style={{ display: 'flex', justifyContent: 'center', padding: 80 }}>
+              <Loader2 size={40} className="loading-spin" style={{ color: 'var(--brand)' }} />
             </div>
           ) : tables.length === 0 ? (
-            <div className="empty-state">
-              <Coffee size={40} />
-              <p>Belum ada meja. Tambahkan meja di menu Manajemen Meja.</p>
+            <div className="empty-state" style={{ marginTop: 40 }}>
+              <UtensilsCrossed size={48} />
+              <p style={{ fontSize: '1.1rem', fontWeight: 500 }}>Belum ada meja yang terdaftar.</p>
+              <p style={{ color: 'var(--text-3)', fontSize: '0.9rem' }}>
+                Tambahkan konfigurasi meja Anda di menu Manajemen Meja.
+              </p>
             </div>
           ) : (
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))',
-                gap: 16,
-              }}
-            >
+            <div className="pos-table-grid">
               {tables.map((table, i) => {
                 const draft = tablesDraftMap[table.id];
                 const hasOrder = !!draft;
                 const isOccupied = table.status === 'occupied' || hasOrder;
                 const isUnavailable = table.status === 'unavailable';
 
+                const statusClass = isUnavailable
+                  ? 'unavailable'
+                  : isOccupied
+                    ? 'occupied'
+                    : 'available';
+
                 return (
                   <button
                     key={table.id}
-                    className="table-btn reveal-animate"
+                    className={`pos-table-card ${statusClass} reveal-animate shadow-hover`}
                     onClick={() => !isUnavailable && handleSelectTable(table)}
-                    style={{
-                      animationDelay: `${i * 0.03}s`,
-                      background: isUnavailable
-                        ? 'var(--bg-elevated)'
-                        : isOccupied
-                          ? 'linear-gradient(135deg, rgba(255,167,36,0.15), rgba(255,167,36,0.05))'
-                          : 'linear-gradient(135deg, rgba(8,132,246,0.12), rgba(8,132,246,0.04))',
-                      border: isUnavailable
-                        ? '1.5px solid var(--border)'
-                        : isOccupied
-                          ? '1.5px solid rgba(255,167,36,0.5)'
-                          : '1.5px solid rgba(8,132,246,0.35)',
-                      borderRadius: 16,
-                      padding: '20px 16px',
-                      cursor: isUnavailable ? 'not-allowed' : 'pointer',
-                      opacity: isUnavailable ? 0.5 : 1,
-                      textAlign: 'center',
-                      transition: 'all 0.18s',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      gap: 8,
-                      position: 'relative',
-                    }}
+                    style={{ animationDelay: `${i * 0.04}s` }}
                   >
-                    {/* Status dot */}
-                    <div
-                      style={{
-                        width: 10,
-                        height: 10,
-                        borderRadius: '50%',
-                        background: isUnavailable
-                          ? 'var(--text-3)'
+                    <div className="pos-table-icon-wrapper">
+                      <UtensilsCrossed size={24} strokeWidth={2.5} />
+                    </div>
+
+                    <div className="pos-table-number">Meja {table.table_number}</div>
+
+                    <div className="pos-table-capacity">
+                      <Users size={12} strokeWidth={2.5} />
+                      <span>{table.capacity} Kursi</span>
+                    </div>
+
+                    <div className={`status-${statusClass}`}>
+                      <div className="pos-table-status-pill">
+                        {isUnavailable
+                          ? 'Offline'
                           : isOccupied
-                            ? '#FFA724'
-                            : '#22c55e',
-                        position: 'absolute',
-                        top: 12,
-                        right: 12,
-                        boxShadow:
-                          isOccupied && !isUnavailable ? '0 0 8px rgba(255,167,36,0.6)' : 'none',
-                      }}
-                    />
-
-                    <div style={{ fontSize: '2rem' }}>🪑</div>
-                    <div style={{ fontWeight: 800, fontSize: '1.05rem', color: 'var(--text-1)' }}>
-                      Meja {table.table_number}
-                    </div>
-                    <div
-                      style={{
-                        fontSize: '0.75rem',
-                        color: 'var(--text-2)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 4,
-                      }}
-                    >
-                      <Users size={11} /> {table.capacity} kursi
-                    </div>
-
-                    {hasOrder && draft ? (
-                      <div
-                        style={{
-                          background: 'rgba(255,167,36,0.18)',
-                          borderRadius: 8,
-                          padding: '4px 8px',
-                          fontSize: '0.72rem',
-                          color: '#FFA724',
-                          fontWeight: 600,
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 4,
-                        }}
-                      >
-                        <Clock size={10} />
-                        {draft.items.length} item · {formatRp(draft.total)}
+                            ? hasOrder
+                              ? 'Draf Aktif'
+                              : 'Terisi'
+                            : 'Tersedia'}
                       </div>
-                    ) : (
+                    </div>
+
+                    {hasOrder && draft && (
                       <div
                         style={{
-                          fontSize: '0.72rem',
-                          fontWeight: 600,
-                          color: isUnavailable ? 'var(--text-3)' : 'var(--brand)',
+                          marginTop: 6,
+                          fontSize: '0.68rem',
+                          color: 'var(--accent-em)',
+                          fontWeight: 700,
+                          background: 'rgba(8,132,246,0.06)',
+                          padding: '2px 8px',
+                          borderRadius: 6,
                         }}
                       >
-                        {isUnavailable ? 'Tidak Tersedia' : 'Tersedia'}
+                        {draft.items.length} item · {formatRp(draft.total)}
                       </div>
                     )}
                   </button>
