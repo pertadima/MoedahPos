@@ -639,6 +639,7 @@ export default function TablesPage() {
 
 function TableVisual({ table, config }: { table: RestaurantTable; config: any }) {
   const isRect = table.capacity >= 5;
+  const isCircle = table.capacity < 4;
   const chairs = Array.from({ length: table.capacity });
 
   // Distribute chairs: Top, Bottom, Left, Right
@@ -649,12 +650,17 @@ function TableVisual({ table, config }: { table: RestaurantTable; config: any })
   if (isRect) {
     top = Math.ceil(table.capacity / 2);
     bottom = table.capacity - top;
-  } else {
-    // Square distribution
+  } else if (isCircle) {
+    // Circle: distribute around (symbolic)
     top = 1;
     bottom = table.capacity > 1 ? 1 : 0;
     left = table.capacity > 2 ? 1 : 0;
-    right = table.capacity > 3 ? 1 : 0;
+  } else {
+    // Square distribution (Cap 4)
+    top = 1;
+    bottom = 1;
+    left = 1;
+    right = 1;
   }
 
   const Chair = ({ active }: { active: boolean }) => (
@@ -686,7 +692,6 @@ function TableVisual({ table, config }: { table: RestaurantTable; config: any })
         {Array.from({ length: top }).map((_, i) => (
           <Chair key={i} active={true} />
         ))}
-        {!isRect && top === 1 && table.capacity < 1 && <Chair active={false} />}
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -702,7 +707,7 @@ function TableVisual({ table, config }: { table: RestaurantTable; config: any })
           style={{
             width: isRect ? 140 : 90,
             height: 90,
-            borderRadius: 12,
+            borderRadius: isCircle ? '50%' : 12,
             background: config.furniture,
             border: `1px solid ${config.color}33`,
             display: 'flex',
