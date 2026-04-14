@@ -396,11 +396,11 @@ export default function Sidebar() {
                     onClick={() => toggleSection(group.label)}
                     title={isCollapsedSection ? `Perluas ${group.label}` : `Ciutkan ${group.label}`}
                   >
+                    <span className="nav-section-title">{group.label}</span>
                     <ChevronDown
                       size={12}
                       className={`nav-section-chevron ${isCollapsedSection ? 'collapsed' : ''}`}
                     />
-                    <span className="nav-section-title">{group.label}</span>
                   </div>
                 )}
 
