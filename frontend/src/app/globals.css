@@ -572,14 +572,53 @@ body {
     gap: 1px;
   }
 
-  /* Section label */
-  .nav-section {
+  .nav-group-container {
+    @apply flex flex-col mb-1;
+  }
+  .nav-section-header {
+    @apply flex items-center justify-between cursor-pointer select-none rounded-md mx-1;
+    padding: 10px 10px;
+    margin-top: 12px;
+    margin-bottom: 4px;
+    transition: all 0.15s ease;
+  }
+  .nav-section-header:hover {
+    background: var(--bg-hover);
+  }
+  .nav-section-header:hover .nav-section-title,
+  .nav-section-header:hover .nav-section-chevron {
+    color: var(--text-2);
+  }
+  .nav-section-title {
     font-size: 0.65rem;
     font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--text-3);
-    padding: 18px 14px 6px;
+    transition: color 0.15s ease;
+  }
+  .nav-section-chevron {
+    color: var(--border-md);
+    transition: all 0.2s ease;
+  }
+  .nav-section-header:hover .nav-section-chevron {
+    transform: scale(1.1);
+  }
+  .nav-section-chevron.collapsed {
+    transform: rotate(-90deg);
+  }
+  .nav-section-items {
+    @apply flex flex-col gap-1 overflow-hidden;
+    transition:
+      max-height 0.3s ease-out,
+      opacity 0.2s ease;
+    max-height: 1000px;
+    opacity: 1;
+  }
+  .nav-section-items.collapsed {
+    max-height: 0;
+    opacity: 0;
+    pointer-events: none;
   }
 
   /* Nav item */
@@ -716,7 +755,9 @@ body {
     border-radius: 12px;
     padding: 24px 24px;
     @apply flex items-start gap-4.5;
-    transition: border-color 0.15s ease, background-color 0.15s ease;
+    transition:
+      border-color 0.15s ease,
+      background-color 0.15s ease;
     position: relative;
     overflow: hidden;
     min-height: 110px;
@@ -774,7 +815,6 @@ body {
     color: var(--accent-rd);
   }
 }
-
 
 /* ── 15. POS Layout ───────────────────────────────────────────────────────── */
 /*
