@@ -1002,12 +1002,12 @@ export default function TransactionsPage() {
                   <Icon size={22} style={{ color }} />
                 </div>
                 <div style={{ minWidth: 0, flex: 1 }}>
-                  <div className="stat-label" title={label}>
-                    {label}
-                  </div>
                   <div className="stat-val">
                     {isCurrency && <span className="stat-currency">Rp</span>}
                     <span className="stat-number">{displayValue}</span>
+                  </div>
+                  <div className="stat-label" title={label}>
+                    {label}
                   </div>
                 </div>
               </div>

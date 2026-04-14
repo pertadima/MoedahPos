@@ -208,14 +208,6 @@ export default function DashboardPage() {
       bg: 'rgba(99,102,241,0.10)',
     },
     {
-      label: 'Stok Menipis',
-      value: lowStock.length.toString(),
-      icon: AlertTriangle,
-      color: '#f59e0b',
-      bg: 'rgba(245,158,11,0.10)',
-      alert: lowStock.length > 0,
-    },
-    {
       label: 'Penjualan Hari Ini',
       value: formatRp(summary?.rows?.[0]?.total_sales ?? 0),
       icon: ArrowUpRight,
@@ -284,12 +276,12 @@ export default function DashboardPage() {
                 <Icon size={22} style={{ color }} />
               </div>
               <div style={{ minWidth: 0, flex: 1 }}>
-                <div className="stat-label" title={label}>
-                  {label}
-                </div>
                 <div className="stat-val" style={{ color: alert ? '#f59e0b' : 'var(--text-1)' }}>
                   {isCurrency && <span className="stat-currency">Rp</span>}
                   <span className="stat-number">{displayValue}</span>
+                </div>
+                <div className="stat-label" title={label}>
+                  {label}
                 </div>
               </div>
             </div>

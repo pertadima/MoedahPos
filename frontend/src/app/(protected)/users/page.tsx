@@ -1026,11 +1026,11 @@ export default function UsersPage() {
               <Icon size={22} style={{ color }} />
             </div>
             <div style={{ minWidth: 0, flex: 1 }}>
-              <div className="stat-label" title={label}>
-                {label}
-              </div>
               <div className="stat-val">
                 <span className="stat-number">{val}</span>
+              </div>
+              <div className="stat-label" title={label}>
+                {label}
               </div>
             </div>
           </div>

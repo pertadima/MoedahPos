@@ -298,10 +298,10 @@ export default function TablesPage() {
                 <s.icon size={22} style={{ color: s.color }} />
               </div>
               <div style={{ minWidth: 0, flex: 1 }}>
-                <div className="stat-label">{s.label}</div>
                 <div className="stat-val">
                   <span className="stat-number">{s.count}</span>
                 </div>
+                <div className="stat-label">{s.label}</div>
               </div>
             </div>
           ))}
