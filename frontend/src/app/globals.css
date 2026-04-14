@@ -644,8 +644,8 @@ body {
     content: '';
     position: absolute;
     left: 0;
-    top: 0;
-    bottom: 0px;
+    top: -12px;
+    bottom: 20px;
     width: 1.5px;
     background: var(--border-md);
     opacity: 0.8;
@@ -663,6 +663,19 @@ body {
     padding: 8px 10px;
     color: var(--text-2);
     cursor: pointer;
+    z-index: 1;
+  }
+  /* Horizontal branch line */
+  .sidebar-expanded .nav-item:before {
+    content: '';
+    position: absolute;
+    left: -12px;
+    top: 50%;
+    width: 12px;
+    height: 1.5px;
+    background: var(--border-md);
+    opacity: 0.8;
+    transform: translateY(-50%);
   }
   .nav-item:active {
     transform: scale(0.97);
