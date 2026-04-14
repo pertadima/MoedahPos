@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
@@ -24,6 +24,7 @@ import {
   Wallet,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   ArrowDownToLine,
   ShieldCheck,
 } from 'lucide-react';
@@ -236,6 +237,16 @@ export default function Sidebar() {
   const { selectedStore, stores, selectStore } = useAuth();
   const { isDark } = useTheme();
   const { isCollapsed, toggleCollapsed } = useSidebar();
+  const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
+
+  const toggleSection = (label: string) => {
+    if (isCollapsed) return; // Don't toggle inside mini-sidebar
+    setCollapsedSections(prev => ({
+      ...prev,
+      [label]: !prev[label],
+    }));
+  };
+
   const isRestaurant = selectedStore?.store_type === 'restaurant';
   const role = selectedStore?.role;
   const isSuperOrAdmin = role === 'superadmin' || role === 'admin';
@@ -336,8 +347,8 @@ export default function Sidebar() {
             <select
               value={selectedStore?.store_id ?? ''}
               onChange={e => selectStore(e.target.value)}
-              className="input"
-              style={{ fontSize: '0.8rem', padding: '6px 10px' }}
+              className="select-minimal"
+              style={{ fontSize: '0.8125rem' }}
             >
               {!selectedStore && <option value="">— Pilih Toko —</option>}
               {stores.map(s => (
@@ -367,43 +378,68 @@ export default function Sidebar() {
 
         {/* ── Navigation ── */}
         <nav className="sidebar-nav" style={{ flex: 1, overflowY: 'auto' }}>
-          {finalGroups.map(group => (
-            <div key={group.label}>
-              {/* Group section label */}
-              {!isCollapsed && <div className="nav-section">{group.label}</div>}
+          {finalGroups.map(group => {
+            const hasActiveItem = group.items.some(
+              item =>
+                pathname === item.href ||
+                (item.href !== '/dashboard' && pathname.startsWith(item.href + '/'))
+            );
+            const isCollapsedSection =
+              collapsedSections[group.label] && !isCollapsed && !hasActiveItem;
 
-              {/* Group nav items */}
-              {group.items.map(({ href, icon: Icon, label }) => {
-                const active =
-                  pathname === href || (href !== '/dashboard' && pathname.startsWith(href + '/'));
-                return (
-                  <Link
-                    key={href}
-                    href={href}
-                    className={`nav-item ${active ? 'active' : ''}`}
-                    title={isCollapsed ? label : undefined}
-                    style={{
-                      justifyContent: isCollapsed ? 'center' : 'flex-start',
-                      padding: isCollapsed ? '12px 0' : undefined,
-                    }}
+            return (
+              <div key={group.label} className="nav-group-container">
+                {/* Group section label */}
+                {!isCollapsed && (
+                  <div
+                    className="nav-section-header"
+                    onClick={() => toggleSection(group.label)}
+                    title={isCollapsedSection ? `Perluas ${group.label}` : `Ciutkan ${group.label}`}
                   >
-                    <Icon size={14} strokeWidth={active ? 2.5 : 2} />
-                    {!isCollapsed && (
-                      <span
+                    <span className="nav-section-title">{group.label}</span>
+                    <ChevronDown
+                      size={12}
+                      className={`nav-section-chevron ${isCollapsedSection ? 'collapsed' : ''}`}
+                    />
+                  </div>
+                )}
+
+                {/* Group nav items */}
+                <div className={`nav-section-items ${isCollapsedSection ? 'collapsed' : ''}`}>
+                  {group.items.map(({ href, icon: Icon, label }) => {
+                    const active =
+                      pathname === href ||
+                      (href !== '/dashboard' && pathname.startsWith(href + '/'));
+                    return (
+                      <Link
+                        key={href}
+                        href={href}
+                        className={`nav-item ${active ? 'active' : ''}`}
+                        title={isCollapsed ? label : undefined}
                         style={{
-                          opacity: isCollapsed ? 0 : 1,
-                          transition: 'opacity 0.2s',
-                          whiteSpace: 'nowrap',
+                          justifyContent: isCollapsed ? 'center' : 'flex-start',
+                          padding: isCollapsed ? '12px 0' : undefined,
                         }}
                       >
-                        {label}
-                      </span>
-                    )}
-                  </Link>
-                );
-              })}
-            </div>
-          ))}
+                        <Icon size={14} strokeWidth={active ? 2.5 : 2} />
+                        {!isCollapsed && (
+                          <span
+                            style={{
+                              opacity: isCollapsed ? 0 : 1,
+                              transition: 'opacity 0.2s',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            {label}
+                          </span>
+                        )}
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
         </nav>
       </aside>
     </>
