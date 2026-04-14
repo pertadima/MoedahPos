@@ -430,6 +430,28 @@ body {
     box-shadow: none;
   }
 
+  /* Minimalist Select */
+  .select-minimal {
+    @apply w-full rounded-lg text-sm outline-none cursor-pointer;
+    appearance: none;
+    background-color: var(--bg-card);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 14px;
+    border: 1px solid var(--border-md);
+    color: var(--text-1);
+    padding: 0.5rem 2.25rem 0.5rem 0.75rem;
+    transition: all 0.15s ease;
+  }
+  .select-minimal:hover {
+    border-color: var(--text-3);
+  }
+  .select-minimal:focus {
+    border-color: var(--brand);
+    box-shadow: none;
+  }
+
   .input-group {
     @apply flex flex-col;
     gap: 6px;

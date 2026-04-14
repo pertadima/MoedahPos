@@ -347,8 +347,8 @@ export default function Sidebar() {
             <select
               value={selectedStore?.store_id ?? ''}
               onChange={e => selectStore(e.target.value)}
-              className="input"
-              style={{ fontSize: '0.8rem', padding: '6px 10px' }}
+              className="select-minimal"
+              style={{ fontSize: '0.8125rem' }}
             >
               {!selectedStore && <option value="">— Pilih Toko —</option>}
               {stores.map(s => (
