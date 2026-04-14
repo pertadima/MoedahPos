@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import {
   Grid3x3,
   Plus,
@@ -11,6 +11,7 @@ import {
   Loader2,
   Users,
   AlertTriangle,
+  Search,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { usePermission } from '@/hooks/usePermission';
@@ -25,28 +26,28 @@ const STATUS_CONFIG: Record<
   { label: string; color: string; bg: string; dot: string; furniture: string }
 > = {
   available: {
-    label: 'Available',
+    label: 'Tersedia',
     color: '#047857',
     bg: '#ecfdf5',
     dot: '#10b981',
     furniture: '#c6f6d5',
   },
   occupied: {
-    label: 'On Dine',
+    label: 'Sedang Makan',
     color: '#be123c',
     bg: '#fff1f2',
     dot: '#f43f5e',
     furniture: '#fed7e2',
   },
   reserved: {
-    label: 'Reserved',
+    label: 'Dipesan',
     color: '#1e40af',
     bg: '#eff6ff',
     dot: '#3b82f6',
     furniture: '#dbeafe',
   },
   unavailable: {
-    label: 'Unavailable',
+    label: 'Tidak Tersedia',
     color: '#4b5563',
     bg: '#f3f4f6',
     dot: '#6b7280',
@@ -74,6 +75,20 @@ export default function TablesPage() {
   const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
   const [form, setForm] = useState({ table_number: '', capacity: 4, notes: '' });
   const [formError, setFormError] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const stats = useMemo(() => {
+    return {
+      total: tables.length,
+      available: tables.filter(t => t.status === 'available').length,
+      occupied: tables.filter(t => t.status === 'occupied').length,
+      reserved: tables.filter(t => t.status === 'reserved').length,
+    };
+  }, [tables]);
+
+  const filteredTables = useMemo(() => {
+    return tables.filter(t => t.table_number.toLowerCase().includes(searchQuery.toLowerCase()));
+  }, [tables, searchQuery]);
 
   // ── Components ────────────────────────────────────────────────────────────────
 
@@ -205,13 +220,46 @@ export default function TablesPage() {
   return (
     <div
       style={{
-        display: 'flex',
         minHeight: 'calc(100vh - 80px)',
         background: 'var(--bg-base)',
+        position: 'relative',
+        overflow: 'hidden',
       }}
     >
+      <style>{`
+        @keyframes fadeInScale {
+          from { opacity: 0; transform: scale(0.95) translateY(10px); }
+          to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        @keyframes glowPulse {
+          0% { box-shadow: 0 0 0 0px var(--glow-color); }
+          100% { box-shadow: 0 0 20px 2px var(--glow-color); }
+        }
+        .table-card-animate {
+          animation: fadeInScale 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+        }
+        .table-group:hover .table-furniture {
+          transform: scale(1.05);
+          box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1);
+        }
+        .table-group:hover .table-hud {
+          opacity: 1 !important;
+          visibility: visible !important;
+          transform: translateX(-50%) translateY(0) !important;
+        }
+      `}</style>
       {/* 1. Main Floor Plan Area */}
-      <div style={{ flex: 1, padding: 32, overflowY: 'auto' }}>
+      <div
+        style={{
+          flex: 1,
+          padding: '32px 48px',
+          overflowY: 'auto',
+          background: `
+            radial-gradient(circle at 2px 2px, var(--border-md) 1px, transparent 0)
+          `,
+          backgroundSize: '40px 40px',
+        }}
+      >
         {/* Toast */}
         {toast && (
           <div
@@ -248,41 +296,103 @@ export default function TablesPage() {
           <div>
             <h1
               style={{
-                fontSize: '1.75rem',
+                fontSize: '2rem',
                 fontWeight: 900,
                 color: 'var(--text-1)',
-                letterSpacing: '-0.03em',
+                letterSpacing: '-0.04em',
+                marginBottom: 4,
               }}
             >
-              Manage Tables
+              Kelola Meja
             </h1>
-            <div style={{ display: 'flex', gap: 16, marginTop: 8 }}>
-              {(
-                Object.entries(STATUS_CONFIG) as [
-                  TableStatus,
-                  (typeof STATUS_CONFIG)['available'],
-                ][]
-              )
-                .filter(([k]) => k !== 'unavailable')
-                .map(([key, cfg]) => (
-                  <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <div
-                      style={{ width: 8, height: 8, borderRadius: '50%', background: cfg.dot }}
-                    />
-                    <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-2)' }}>
-                      {cfg.label}
-                    </span>
-                  </div>
-                ))}
-            </div>
+            <p style={{ fontSize: '0.88rem', color: 'var(--text-3)', fontWeight: 500 }}>
+              Pantau dan atur tata letak meja restoran Anda secara real-time.
+            </p>
           </div>
 
-          {can('products.create') && (
-            <button className="btn btn-primary" onClick={openCreate} style={{ gap: 8 }}>
-              <Plus size={16} />
-              Tambah Meja
-            </button>
-          )}
+          <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+            <div style={{ position: 'relative', width: 280 }}>
+              <Search
+                size={16}
+                style={{
+                  position: 'absolute',
+                  left: 14,
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  color: 'var(--text-3)',
+                }}
+              />
+              <input
+                type="text"
+                placeholder="Cari meja..."
+                className="input"
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                style={{
+                  paddingLeft: 40,
+                  height: 44,
+                  borderRadius: 12,
+                  fontSize: '0.88rem',
+                  border: '1px solid var(--border-md)',
+                  background: 'rgba(255,255,255,0.5)',
+                }}
+              />
+            </div>
+
+            <div
+              style={{
+                display: 'flex',
+                background: 'var(--bg-card)',
+                padding: '4px 16px',
+                borderRadius: 100,
+                border: '1px solid var(--border-md)',
+                alignItems: 'center',
+                gap: 16,
+                height: 44,
+              }}
+            >
+              {[
+                { label: 'Total', count: stats.total, color: 'var(--text-2)' },
+                { label: 'Tersedia', count: stats.available, color: '#10b981' },
+                { label: 'Sedang Makan', count: stats.occupied, color: '#ef4444' },
+                { label: 'Dipesan', count: stats.reserved, color: '#3b82f6' },
+              ].map((s, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-3)' }}>
+                    {s.label}
+                  </span>
+                  <span
+                    style={{
+                      fontSize: '0.85rem',
+                      fontWeight: 800,
+                      color: s.color,
+                      background: `${s.color}11`,
+                      padding: '2px 8px',
+                      borderRadius: 6,
+                    }}
+                  >
+                    {s.count}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            {can('products.create') && (
+              <button
+                className="btn btn-primary"
+                onClick={openCreate}
+                style={{
+                  gap: 8,
+                  padding: '0 24px',
+                  borderRadius: 12,
+                  boxShadow: '0 10px 15px -3px rgba(8, 132, 246, 0.3)',
+                }}
+              >
+                <Plus size={16} />
+                Tambah Meja
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Grid & Content */}
@@ -290,44 +400,51 @@ export default function TablesPage() {
           <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}>
             <Loader2 size={28} className="loading-spin" style={{ color: 'var(--accent-em)' }} />
           </div>
-        ) : tables.length === 0 ? (
+        ) : filteredTables.length === 0 ? (
           <div className="empty-state card" style={{ padding: 60 }}>
-            <Grid3x3 size={48} style={{ color: 'var(--text-3)' }} />
-            <p style={{ fontWeight: 600, color: 'var(--text-2)' }}>Belum ada meja</p>
-            <p style={{ fontSize: '0.85rem' }}>
-              Klik &ldquo;Tambah Meja&rdquo; untuk menambahkan meja pertama.
-            </p>
+            <Search size={48} style={{ color: 'var(--text-3)', marginBottom: 12 }} />
+            <p style={{ fontWeight: 600, color: 'var(--text-2)' }}>Meja tidak ditemukan</p>
+            <p style={{ fontSize: '0.85rem' }}>Coba sesuaikan kata kunci pencarian Anda.</p>
           </div>
         ) : (
           <div
             style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(3, 1fr)',
-              gap: 24,
-              padding: 32,
-              background: 'radial-gradient(circle, var(--border-md) 1px, transparent 1px)',
-              backgroundSize: '40px 40px',
-              borderRadius: 24,
+              gap: 40,
+              padding: 48,
+              background: 'rgba(255,255,255,0.4)',
+              backdropFilter: 'blur(8px)',
+              border: '1px solid var(--border-md)',
+              borderRadius: 32,
               minHeight: 600,
+              boxShadow: 'inset 0 2px 10px rgba(0,0,0,0.02)',
             }}
           >
-            {tables.map(table => {
+            {filteredTables.map((table, i) => {
               const cfg = STATUS_CONFIG[table.status as TableStatus];
               const isUpdating = statusUpdating === table.id;
               return (
                 <div
                   key={table.id}
-                  className="table-group"
-                  style={{
-                    position: 'relative',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    padding: 20,
-                    transition: 'all 0.3s ease',
-                  }}
+                  className="table-group table-card-animate"
+                  style={
+                    {
+                      position: 'relative',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      padding: 20,
+                      transition: 'all 0.3s ease',
+                      animationDelay: `${i * 0.05}s`,
+                      '--glow-color': `${cfg.dot}33`,
+                    } as React.CSSProperties & { [key: string]: string | number }
+                  }
                 >
-                  <div onClick={() => openEdit(table)} style={{ cursor: 'pointer' }}>
+                  <div
+                    onClick={() => openEdit(table)}
+                    style={{ cursor: 'pointer', position: 'relative' }}
+                  >
                     <TableVisual table={table} config={cfg} />
                   </div>
 
@@ -367,9 +484,9 @@ export default function TablesPage() {
                         fontWeight: 700,
                       }}
                     >
-                      <option value="available">🟢 Available</option>
-                      <option value="occupied">🔴 On Dine</option>
-                      <option value="reserved">🔵 Reserved</option>
+                      <option value="available">🟢 Tersedia</option>
+                      <option value="occupied">🔴 Sedang Makan</option>
+                      <option value="reserved">🔵 Dipesan</option>
                     </select>
 
                     <div style={{ width: 1, height: 16, background: 'var(--border-md)' }} />
@@ -750,14 +867,18 @@ function TableVisual({
             borderRadius: isCircle ? '50%' : 16,
             background: `linear-gradient(135deg, ${config.furniture} 0%, ${config.furniture}bb 100%)`,
             border: `1.5px solid ${config.color}22`,
-            boxShadow: `inset 0 0 10px ${config.color}11`,
+            boxShadow: `
+              inset 0 0 20px ${config.color}11,
+              0 10px 15px -3px rgba(0,0,0,0.05),
+              0 4px 6px -2px rgba(0,0,0,0.05)
+            `,
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
             gap: 2,
             position: 'relative',
-            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+            transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
           }}
         >
           <div style={{ fontSize: '0.9rem', fontWeight: 800, color: config.color }}>
