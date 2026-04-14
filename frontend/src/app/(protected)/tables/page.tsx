@@ -215,7 +215,7 @@ export default function TablesPage() {
     );
 
   return (
-    <div className="w-full p-6">
+    <div className="w-full p-4 sm:p-6">
       <style>{`
         @keyframes fadeInScale {
           from { opacity: 0; transform: scale(0.98) translateY(10px); }
@@ -276,14 +276,7 @@ export default function TablesPage() {
       )}
 
       {/* Header */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginBottom: 28,
-        }}
-      >
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-7">
         <div>
           <h1 className="page-title">
             <LayoutDashboard size={20} style={{ color: 'var(--brand)' }} />
@@ -304,14 +297,7 @@ export default function TablesPage() {
 
       {/* 2. Legend / Stats Section (Dashboard Style) */}
       {!loading && (
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(4, 1fr)',
-            gap: 16,
-            marginBottom: 24,
-          }}
-        >
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           {[
             {
               label: 'Total Meja',
@@ -373,14 +359,7 @@ export default function TablesPage() {
           </p>
         </div>
       ) : (
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(4, 1fr)',
-            gap: 20,
-            minHeight: 400,
-          }}
-        >
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 min-h-[400px]">
           {tables.map((table, i) => {
             const cfg = STATUS_CONFIG[table.status as TableStatus];
             const isUpdating = statusUpdating === table.id;
