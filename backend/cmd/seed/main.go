@@ -373,6 +373,11 @@ func main() { //nolint:funlen,cyclop // seeder bootstrap is inherently long
 	log.Println("   🔥 Seeding active KDS tickets...")
 	seedActiveKDSTickets(ctx, db, padangStoreID, kasirID)
 
+	// ── Extended: customers, price history, POs, stock batches, incomes, expenses ──
+	log.Println("")
+	log.Println("   📊 Seeding extended financial & inventory data...")
+	seedExtendedData(ctx, db, mainStoreID, branchStoreID, padangStoreID, adminID)
+
 	log.Println("")
 	log.Println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 	log.Println("✅  Seed completed!")
@@ -464,15 +469,15 @@ func seedProducts(ctx context.Context, db *sqlx.DB, storeID string, catalog []Pr
 		sellPrice := p.SellPrice
 		_, err := db.ExecContext(ctx, `
 			INSERT INTO products
-			  (id, store_id, category_id, sku, name, barcode, unit, cost_price, sell_price, tax_rate, is_active)
-			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, true)
+			  (id, store_id, category_id, sku, name, barcode, unit, cost_price, sell_price, tax_percentage, use_global_tax, is_active)
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, true)
 			ON CONFLICT (store_id, sku) DO UPDATE SET
 			  name=EXCLUDED.name, category_id=EXCLUDED.category_id,
 			  barcode=EXCLUDED.barcode, cost_price=EXCLUDED.cost_price,
-			  sell_price=EXCLUDED.sell_price, tax_rate=EXCLUDED.tax_rate,
-			  updated_at=NOW(), deleted_at=NULL
+			  sell_price=EXCLUDED.sell_price, tax_percentage=EXCLUDED.tax_percentage,
+			  use_global_tax=EXCLUDED.use_global_tax, updated_at=NOW(), deleted_at=NULL
 		`, uuid.NewString(), storeID, catID, p.SKU, p.Name, p.Barcode,
-			p.Unit, p.CostPrice, sellPrice, p.TaxRate)
+			p.Unit, p.CostPrice, sellPrice, p.TaxRate, p.TaxRate == 0)
 		must(err)
 
 		// read actual product id after upsert
@@ -559,9 +564,9 @@ func seedTransactions(ctx context.Context, db *sqlx.DB, storeID, cashierID strin
 		SKU       string  `db:"sku"`
 		SellPrice float64 `db:"sell_price"`
 		CostPrice float64 `db:"cost_price"`
-		TaxRate   float64 `db:"tax_rate"`
+		TaxRate   float64 `db:"tax_percentage"`
 	}
-	must(db.SelectContext(ctx, &prods, "SELECT id, name, sku, sell_price, cost_price, tax_rate FROM products WHERE store_id=$1", storeID))
+	must(db.SelectContext(ctx, &prods, "SELECT id, name, sku, sell_price, cost_price, tax_percentage FROM products WHERE store_id=$1", storeID))
 	if len(prods) == 0 {
 		return 0
 	}
@@ -597,7 +602,7 @@ func seedTransactions(ctx context.Context, db *sqlx.DB, storeID, cashierID strin
 				SKU       string  `db:"sku"`
 				SellPrice float64 `db:"sell_price"`
 				CostPrice float64 `db:"cost_price"`
-				TaxRate   float64 `db:"tax_rate"`
+				TaxRate   float64 `db:"tax_percentage"`
 			}
 			qty float64
 			sub float64
@@ -704,9 +709,9 @@ func seedRestaurantTransactions(ctx context.Context, db *sqlx.DB, storeID, cashi
 		ID        string  `db:"id"`
 		Name      string  `db:"name"`
 		SellPrice float64 `db:"sell_price"`
-		TaxRate   float64 `db:"tax_rate"`
+		TaxRate   float64 `db:"tax_percentage"`
 	}
-	must(db.SelectContext(ctx, &menus, "SELECT id, name, sell_price, tax_rate FROM menu_items WHERE store_id=$1", storeID))
+	must(db.SelectContext(ctx, &menus, "SELECT id, name, sell_price, tax_percentage FROM menu_items WHERE store_id=$1", storeID))
 	if len(menus) == 0 {
 		return 0
 	}
@@ -1025,10 +1030,10 @@ func seedRestaurantPadang(ctx context.Context, db *sqlx.DB, storeID, _ string) {
 		catID := menucatMap[m.Category]
 		menuItemID := uuid.NewString()
 		_, err := db.ExecContext(ctx, `
-			INSERT INTO menu_items (id, store_id, category_id, name, description, sell_price, tax_rate)
-			VALUES ($1, $2, $3, $4, $5, $6, $7)
+			INSERT INTO menu_items (id, store_id, category_id, name, description, sell_price, tax_percentage, use_global_tax)
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 			ON CONFLICT DO NOTHING
-		`, menuItemID, storeID, catID, m.Name, m.Description, m.SellPrice, m.TaxRate)
+		`, menuItemID, storeID, catID, m.Name, m.Description, m.SellPrice, m.TaxRate, m.TaxRate == 0)
 		must(err)
 
 		// re-read actual id (may already exist)
