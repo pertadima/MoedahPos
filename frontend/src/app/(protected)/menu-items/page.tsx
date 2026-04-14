@@ -888,7 +888,7 @@ export default function MenuItemsPage() {
                           color: 'var(--text-2)',
                         }}
                       >
-                        Packaging
+                        Packaging (Rp)
                       </label>
                       <input
                         className="input"
@@ -916,7 +916,7 @@ export default function MenuItemsPage() {
                           color: 'var(--text-2)',
                         }}
                       >
-                        Overhead
+                        Overhead (Rp)
                       </label>
                       <input
                         className="input"
@@ -944,7 +944,7 @@ export default function MenuItemsPage() {
                           color: 'var(--text-2)',
                         }}
                       >
-                        Tenaga Kerja
+                        Tenaga Kerja (Rp)
                       </label>
                       <input
                         className="input"
@@ -1117,30 +1117,52 @@ export default function MenuItemsPage() {
                           }}
                         >
                           <div className="flex gap-2">
-                            <input
-                              type="text"
-                              placeholder="Kustom Harga..."
+                            <div
                               style={{
                                 flex: 1,
-                                textAlign: 'right',
-                                fontSize: '0.8rem',
-                                padding: '8px 12px',
-                                borderRadius: 8,
-                                border: '1px solid var(--border-md)',
+                                display: 'flex',
+                                alignItems: 'center',
                                 background: 'var(--bg-base)',
-                                color: 'var(--text-1)',
+                                border: '1px solid var(--border-md)',
+                                borderRadius: 8,
+                                padding: '0 12px',
                               }}
-                              onFocus={e => e.target.select()}
-                              value={
-                                form.sell_price
-                                  ? Number(form.sell_price).toLocaleString('id-ID')
-                                  : ''
-                              }
-                              onChange={e => {
-                                const val = e.target.value.replace(/[^0-9]/g, '');
-                                setForm(f => ({ ...f, sell_price: val }));
-                              }}
-                            />
+                            >
+                              <span
+                                style={{
+                                  fontSize: '0.75rem',
+                                  color: 'var(--text-3)',
+                                  fontWeight: 600,
+                                  whiteSpace: 'nowrap',
+                                }}
+                              >
+                                Harga Jual (Rp)
+                              </span>
+                              <input
+                                type="text"
+                                placeholder="0"
+                                style={{
+                                  flex: 1,
+                                  textAlign: 'right',
+                                  fontSize: '0.8rem',
+                                  padding: '8px 0',
+                                  background: 'transparent',
+                                  border: 'none',
+                                  outline: 'none',
+                                  color: 'var(--text-1)',
+                                }}
+                                onFocus={e => e.target.select()}
+                                value={
+                                  form.sell_price
+                                    ? Number(form.sell_price).toLocaleString('id-ID')
+                                    : ''
+                                }
+                                onChange={e => {
+                                  const val = e.target.value.replace(/[^0-9]/g, '');
+                                  setForm(f => ({ ...f, sell_price: val }));
+                                }}
+                              />
+                            </div>
                           </div>
                           <div className="flex gap-2">
                             <button
