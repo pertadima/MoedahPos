@@ -16,6 +16,8 @@ import {
   Layers,
   ChevronDown,
   ChevronRight,
+  ShoppingCart,
+  Warehouse,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { reportsApi } from '@/lib/api/store-apis';
@@ -234,54 +236,12 @@ function UnifiedCard({
   );
 }
 
-function ShoppingCartIcon(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      {...props}
-    >
-      <circle cx="9" cy="21" r="1" />
-      <circle cx="20" cy="21" r="1" />
-      <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
-    </svg>
-  );
-}
-
-function WarehouseIcon(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      {...props}
-    >
-      <path d="M3 21V10l9-7 9 7v11" />
-      <path d="M9 21V9" />
-      <path d="M15 21V9" />
-    </svg>
-  );
-}
-
 const TAB_CONFIG: { key: Tab; label: string; icon: React.ElementType }[] = [
-  { key: 'sales', label: 'Penjualan', icon: ShoppingCartIcon },
+  { key: 'sales', label: 'Penjualan', icon: ShoppingCart },
   { key: 'products', label: 'Per Produk', icon: Layers },
-  { key: 'profit', label: '💰 Profit', icon: Activity },
-  { key: 'cashflow', label: '💵 Arus Kas', icon: DollarSign },
-  { key: 'valuation', label: 'Stok', icon: WarehouseIcon },
+  { key: 'profit', label: 'Profit', icon: Activity },
+  { key: 'cashflow', label: 'Arus Kas', icon: DollarSign },
+  { key: 'valuation', label: 'Stok', icon: Warehouse },
 ];
 
 const TAB_DATASETS: Record<Tab, ReportDataset[]> = {
@@ -344,6 +304,7 @@ export default function UnifiedReportsPage() {
       if (!storeId) return;
       if (!force && (loadingState[dataset] || loadedState[dataset])) return;
 
+      const startTime = Date.now();
       setLoadingState(prev => ({ ...prev, [dataset]: true }));
       try {
         if (dataset === 'summary') {
@@ -362,11 +323,14 @@ export default function UnifiedReportsPage() {
           const response = await reportsApi.cashFlow(storeId, dateFrom, dateTo);
           setCfData(response.data as CashFlowResponse);
         }
-
-        setLoadedState(prev => ({ ...prev, [dataset]: true }));
       } catch (err) {
         console.error(`Fetch error for ${dataset}:`, err);
       } finally {
+        const elapsed = Date.now() - startTime;
+        if (elapsed < 400) {
+          await new Promise(resolve => setTimeout(resolve, 400 - elapsed));
+        }
+        setLoadedState(prev => ({ ...prev, [dataset]: true }));
         setLoadingState(prev => ({ ...prev, [dataset]: false }));
       }
     },
@@ -605,7 +569,7 @@ export default function UnifiedReportsPage() {
           <UnifiedCard
             label="Total Valuasi Stok"
             value={valuation?.grand_total ?? 0}
-            icon={WarehouseIcon}
+            icon={Warehouse}
             color="#6366f1"
           />
         ) : (
@@ -643,14 +607,16 @@ export default function UnifiedReportsPage() {
           <button
             key={key}
             onClick={() => setTab(key)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all ${
-              tab === key ? 'bg-accent-em text-white' : 'text-3 hover:bg-surface-hv'
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all duration-200 transform ${
+              tab === key
+                ? 'bg-accent-em text-white shadow-md scale-105 active:scale-95'
+                : 'text-3 hover:bg-surface-hv hover:scale-102 active:scale-95'
             }`}
           >
             {TAB_DATASETS[key].some(dataset => loadingState[dataset]) ? (
-              <Loader2 size={12} className="loading-spin" />
+              <Loader2 size={14} className="loading-spin" />
             ) : (
-              <TabIcon size={12} />
+              <TabIcon size={14} />
             )}
             {label}
           </button>
@@ -662,14 +628,14 @@ export default function UnifiedReportsPage() {
           <Loader2 size={32} className="loading-spin text-accent-em" />
         </div>
       ) : (
-        <div className="animate-in fade-in slide-in-from-bottom-1 duration-300">
+        <div key={tab} className="animate-in fade-in slide-in-from-bottom-2 duration-500 ease-out">
           {tab === 'sales' && (
             <div className="flex flex-col gap-5">
               <div className="card p-6">
                 <h3 className="text-sm font-bold mb-6">📈 Grafik Omzet Harian</h3>
-                <div className="w-full h-72">
+                <div className="w-full h-72 min-h-[288px] relative">
                   {isMounted && (
-                    <ResponsiveContainer debounce={300}>
+                    <ResponsiveContainer width="100%" height="100%" minWidth={0} debounce={300}>
                       <BarChart data={salesDataForChart}>
                         <CartesianGrid
                           strokeDasharray="3 3"
@@ -939,9 +905,9 @@ export default function UnifiedReportsPage() {
               </div>
               <div className="card p-6">
                 <h3 className="text-sm font-bold mb-6">📉 Profitability vs Expenses</h3>
-                <div className="w-full h-80">
+                <div className="w-full h-80 min-h-[320px] relative">
                   {isMounted && (
-                    <ResponsiveContainer debounce={300}>
+                    <ResponsiveContainer width="100%" height="100%" minWidth={0} debounce={300}>
                       <ComposedChart data={profitChartData}>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} />
                         <XAxis dataKey="period" tick={{ fontSize: 10 }} />
@@ -1047,9 +1013,9 @@ export default function UnifiedReportsPage() {
               )}
               <div className="card p-6">
                 <h3 className="text-sm font-bold mb-6">📉 Tren Arus Kas Aktual</h3>
-                <div className="w-full h-80">
+                <div className="w-full h-80 min-h-[320px] relative">
                   {isMounted && (
-                    <ResponsiveContainer debounce={300}>
+                    <ResponsiveContainer width="100%" height="100%" minWidth={0} debounce={300}>
                       <ComposedChart data={cfChartData}>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} />
                         <XAxis dataKey="date" tick={{ fontSize: 10 }} />

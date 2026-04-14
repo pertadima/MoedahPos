@@ -39,6 +39,11 @@
   /* Foreground/background aliases */
   --color-background: var(--bg-base);
   --color-foreground: var(--text-1);
+
+  /* Custom UI colors */
+  --color-accent-em: var(--accent-em);
+  --color-surface: var(--bg-card);
+  --color-surface-hv: var(--bg-hover);
 }
 
 /* ── 3. CSS Custom Properties ─────────────────────────────────────────────── */
@@ -54,6 +59,10 @@
   --brand: #0884f6;
   --brand-dk: #0670d4;
   --brand-lt: #3fa3ff;
+
+  /* Theme aliases */
+  --bg-surface: var(--bg-card);
+  --bg-surface-hv: var(--bg-hover);
 
   /* Accent aliases */
   --accent-em: #0884f6;
@@ -86,6 +95,8 @@
   --bg-card: #0d1526;
   --bg-elevated: #111d30;
   --bg-hover: #172539;
+  --bg-surface: var(--bg-card);
+  --bg-surface-hv: var(--bg-hover);
 
   --brand: #0884f6;
   --brand-dk: #0670d4;
@@ -119,6 +130,9 @@
   --bg-card: #0d1526;
   --bg-elevated: #111d30;
   --bg-hover: #172539;
+  --bg-surface: var(--bg-card);
+  --bg-surface-hv: var(--bg-hover);
+
   --brand: #0884f6;
   --brand-dk: #0670d4;
   --brand-lt: #3fa3ff;
@@ -143,6 +157,8 @@
   --bg-card: #ffffff;
   --bg-elevated: #f1f4f8;
   --bg-hover: #e9edf4;
+  --bg-surface: var(--bg-card);
+  --bg-surface-hv: var(--bg-hover);
   --brand: #0884f6;
   --brand-dk: #0670d4;
   --brand-lt: #3fa3ff;

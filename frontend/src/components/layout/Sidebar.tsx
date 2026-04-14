@@ -303,7 +303,7 @@ export default function Sidebar() {
                   alt="Moedah"
                   width={90}
                   height={24}
-                  style={{ objectFit: 'contain', flexShrink: 0 }}
+                  style={{ width: '90px', height: 'auto', objectFit: 'contain', flexShrink: 0 }}
                   priority
                 />
               </div>
