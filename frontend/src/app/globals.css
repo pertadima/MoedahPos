@@ -716,12 +716,13 @@ body {
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: 12px;
-    padding: 22px 24px;
+    padding: 24px 24px;
     box-shadow: var(--shadow-sm);
     @apply flex items-start gap-4.5;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     overflow: hidden;
+    min-height: 110px;
   }
   .stat-card:hover {
     box-shadow: var(--shadow-md);
@@ -732,39 +733,42 @@ body {
     @apply flex items-center justify-center flex-shrink-0 rounded-xl;
     width: 48px;
     height: 48px;
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
   }
   .stat-label {
-    font-size: 0.75rem;
+    font-size: 0.725rem;
     color: var(--text-3);
-    font-weight: 600;
-    letter-spacing: 0.02em;
+    font-weight: 700;
+    letter-spacing: 0.05em;
     text-transform: uppercase;
-    margin-bottom: 4px;
+    margin-bottom: 6px;
+    @apply whitespace-nowrap overflow-hidden text-ellipsis;
+    display: block;
+    max-width: 100%;
   }
   .stat-val {
-    font-size: 1.25rem;
-    font-weight: 700;
     color: var(--text-1);
-    line-height: 1.2;
-    font-variant-numeric: tabular-nums;
-    letter-spacing: -0.01em;
-    @apply flex items-baseline gap-1 flex-wrap;
+    @apply flex flex-col items-start gap-0.5;
   }
   .stat-currency {
-    font-size: 0.875rem;
+    font-size: 0.75rem;
     font-weight: 600;
     color: var(--text-3);
-    align-self: flex-start;
-    margin-top: 2px;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    margin-bottom: -2px;
   }
   .stat-number {
-    @apply break-all;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.015em;
+    line-height: 1.1;
+    @apply whitespace-nowrap;
   }
   .stat-change {
     font-size: 0.75rem;
-    font-weight: 500;
-    margin-top: 6px;
+    font-weight: 600;
+    margin-top: 8px;
     @apply flex items-center gap-1;
   }
   .stat-change.up {
