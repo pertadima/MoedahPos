@@ -832,19 +832,19 @@ body {
   .stat-card {
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 24px 24px;
-    @apply flex items-start gap-4.5;
-    transition:
-      border-color 0.15s ease,
-      background-color 0.15s ease;
+    border-radius: 14px;
+    padding: 1.25rem 1.5rem;
+    @apply flex items-center gap-4.5;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     overflow: hidden;
     min-height: 110px;
   }
   .stat-card:hover {
-    border-color: var(--border-md);
+    border-color: var(--brand-lt);
     background: var(--bg-elevated);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
   }
   .stat-icon {
     @apply flex items-center justify-center flex-shrink-0 rounded-xl;
@@ -858,29 +858,29 @@ body {
     font-weight: 700;
     letter-spacing: 0.05em;
     text-transform: uppercase;
-    margin-bottom: 6px;
+    margin-bottom: 4px;
     @apply whitespace-nowrap overflow-hidden text-ellipsis;
     display: block;
     max-width: 100%;
   }
   .stat-val {
-    color: var(--text-1);
-    @apply flex flex-col items-start gap-0.5;
+    @apply flex items-baseline gap-1 min-w-0;
   }
   .stat-currency {
-    font-size: 0.75rem;
-    font-weight: 600;
+    font-size: 0.875rem;
+    font-weight: 700;
     color: var(--text-3);
-    text-transform: uppercase;
-    letter-spacing: 0.02em;
-    margin-bottom: -2px;
+    margin-right: 1px;
+    align-self: flex-start;
+    margin-top: 0.25rem;
   }
   .stat-number {
     font-weight: 800;
     font-variant-numeric: tabular-nums;
     letter-spacing: -0.015em;
     line-height: 1.1;
-    @apply whitespace-nowrap;
+    @apply whitespace-nowrap overflow-hidden text-ellipsis;
+    font-size: 1.75rem;
   }
   .stat-change {
     font-size: 0.75rem;

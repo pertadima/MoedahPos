@@ -300,9 +300,7 @@ export default function TablesPage() {
               <div style={{ minWidth: 0, flex: 1 }}>
                 <div className="stat-label">{s.label}</div>
                 <div className="stat-val">
-                  <span className="stat-number" style={{ fontSize: '1.5rem' }}>
-                    {s.count}
-                  </span>
+                  <span className="stat-number">{s.count}</span>
                 </div>
               </div>
             </div>

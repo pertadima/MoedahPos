@@ -16,6 +16,8 @@ import {
   CreditCard,
   Loader2,
   Eye,
+  TrendingUp,
+  ShoppingBag,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { transactionsApi } from '@/lib/api/transactions';
@@ -966,23 +968,51 @@ export default function TransactionsPage() {
           }}
         >
           {[
-            { label: 'Total Transaksi', val: meta.total, color: '#6366f1' },
-            { label: 'Selesai', val: completedCount, color: '#10b981' },
-            { label: 'Total Penjualan', val: formatRp(totalRevenue), color: '#f59e0b', big: true },
-          ].map(({ label, val, color, big }, i) => (
-            <div
-              key={label}
-              className="stat-card reveal-animate"
-              style={{ padding: '14px 16px', animationDelay: `${0.25 + i * 0.05}s` }}
-            >
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-3)', marginBottom: 4 }}>
-                {label}
+            {
+              label: 'Total Transaksi',
+              val: meta.total.toString(),
+              icon: ShoppingBag,
+              color: '#6366f1',
+              bg: 'rgba(99,102,241,0.1)',
+            },
+            {
+              label: 'Selesai',
+              val: completedCount.toString(),
+              icon: CheckCircle2,
+              color: '#10b981',
+              bg: 'rgba(16,185,129,0.1)',
+            },
+            {
+              label: 'Total Penjualan',
+              val: formatRp(totalRevenue),
+              icon: TrendingUp,
+              color: '#f59e0b',
+              bg: 'rgba(245,158,11,0.1)',
+            },
+          ].map(({ label, val, color, icon: Icon, bg }, i) => {
+            const isCurrency = val.startsWith('Rp');
+            const displayValue = isCurrency ? val.replace('Rp', '').trim() : val;
+            return (
+              <div
+                key={label}
+                className="stat-card reveal-animate"
+                style={{ animationDelay: `${0.25 + i * 0.05}s` }}
+              >
+                <div className="stat-icon" style={{ background: bg }}>
+                  <Icon size={22} style={{ color }} />
+                </div>
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <div className="stat-label" title={label}>
+                    {label}
+                  </div>
+                  <div className="stat-val">
+                    {isCurrency && <span className="stat-currency">Rp</span>}
+                    <span className="stat-number">{displayValue}</span>
+                  </div>
+                </div>
               </div>
-              <div style={{ fontWeight: 800, fontSize: big ? '1.1rem' : '1.4rem', color }}>
-                {val}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 

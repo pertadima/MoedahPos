@@ -241,14 +241,6 @@ export default function DashboardPage() {
     boxShadow: 'var(--shadow-md)',
   };
   const axisTickStyle = { fill: 'var(--text-3)', fontSize: 11 };
-
-  const getStatFontSize = (val: string) => {
-    const len = val.length;
-    if (len <= 8) return '1.875rem';
-    if (len <= 12) return '1.5rem';
-    return '1.25rem';
-  };
-
   /* ── Render ────────────────────────────────────────────────────────────── */
   return (
     <div className="w-full" style={{ padding: '24px 28px 40px', maxWidth: 1400, margin: '0 auto' }}>
@@ -281,7 +273,6 @@ export default function DashboardPage() {
         {statCards.map(({ label, value, icon: Icon, color, bg, alert }, i) => {
           const isCurrency = value.startsWith('Rp');
           const displayValue = isCurrency ? value.replace('Rp', '').trim() : value;
-          const fontSize = getStatFontSize(displayValue);
 
           return (
             <div
@@ -298,9 +289,7 @@ export default function DashboardPage() {
                 </div>
                 <div className="stat-val" style={{ color: alert ? '#f59e0b' : 'var(--text-1)' }}>
                   {isCurrency && <span className="stat-currency">Rp</span>}
-                  <span className="stat-number" style={{ fontSize }}>
-                    {displayValue}
-                  </span>
+                  <span className="stat-number">{displayValue}</span>
                 </div>
               </div>
             </div>

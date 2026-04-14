@@ -995,15 +995,44 @@ export default function UsersPage() {
         }}
       >
         {[
-          { label: 'Total Pengguna', val: total, color: '#6366f1' },
-          { label: 'Aktif', val: users.filter(u => u.is_active).length, color: '#10b981' },
-          { label: 'Nonaktif', val: users.filter(u => !u.is_active).length, color: '#f59e0b' },
-        ].map(({ label, val, color }) => (
-          <div key={label} className="stat-card" style={{ padding: '14px 16px' }}>
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-3)', marginBottom: 4 }}>
-              {label}
+          {
+            label: 'Total Pengguna',
+            val: total.toString(),
+            icon: Users,
+            color: '#6366f1',
+            bg: 'rgba(99,102,241,0.1)',
+          },
+          {
+            label: 'Aktif',
+            val: users.filter(u => u.is_active).length.toString(),
+            icon: CheckCircle2,
+            color: '#10b981',
+            bg: 'rgba(16,185,129,0.1)',
+          },
+          {
+            label: 'Nonaktif',
+            val: users.filter(u => !u.is_active).length.toString(),
+            icon: XCircle,
+            color: '#f59e0b',
+            bg: 'rgba(245,158,11,0.1)',
+          },
+        ].map(({ label, val, color, icon: Icon, bg }, i) => (
+          <div
+            key={label}
+            className="stat-card reveal-animate"
+            style={{ animationDelay: `${0.15 + i * 0.05}s` }}
+          >
+            <div className="stat-icon" style={{ background: bg }}>
+              <Icon size={22} style={{ color }} />
             </div>
-            <div style={{ fontWeight: 800, fontSize: '1.4rem', color }}>{val}</div>
+            <div style={{ minWidth: 0, flex: 1 }}>
+              <div className="stat-label" title={label}>
+                {label}
+              </div>
+              <div className="stat-val">
+                <span className="stat-number">{val}</span>
+              </div>
+            </div>
           </div>
         ))}
       </div>
