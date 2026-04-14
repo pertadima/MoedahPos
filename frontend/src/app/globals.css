@@ -272,13 +272,12 @@ body {
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: 8px;
-    box-shadow: var(--shadow-sm);
     transition:
-      box-shadow 0.2s ease,
-      transform 0.15s ease;
+      border-color 0.15s ease,
+      background-color 0.15s ease;
   }
   .card:hover {
-    box-shadow: var(--shadow-md);
+    border-color: var(--border-md);
   }
   .card-elevated {
     background: var(--bg-elevated);
@@ -717,17 +716,15 @@ body {
     border: 1px solid var(--border);
     border-radius: 12px;
     padding: 24px 24px;
-    box-shadow: var(--shadow-sm);
     @apply flex items-start gap-4.5;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: border-color 0.15s ease, background-color 0.15s ease;
     position: relative;
     overflow: hidden;
     min-height: 110px;
   }
   .stat-card:hover {
-    box-shadow: var(--shadow-md);
     border-color: var(--border-md);
-    transform: translateY(-2px);
+    background: var(--bg-elevated);
   }
   .stat-icon {
     @apply flex items-center justify-center flex-shrink-0 rounded-xl;
