@@ -304,6 +304,7 @@ export default function UnifiedReportsPage() {
       if (!storeId) return;
       if (!force && (loadingState[dataset] || loadedState[dataset])) return;
 
+      const startTime = Date.now();
       setLoadingState(prev => ({ ...prev, [dataset]: true }));
       try {
         if (dataset === 'summary') {
@@ -327,6 +328,10 @@ export default function UnifiedReportsPage() {
       } catch (err) {
         console.error(`Fetch error for ${dataset}:`, err);
       } finally {
+        const elapsed = Date.now() - startTime;
+        if (elapsed < 400) {
+          await new Promise(resolve => setTimeout(resolve, 400 - elapsed));
+        }
         setLoadingState(prev => ({ ...prev, [dataset]: false }));
       }
     },
@@ -629,9 +634,9 @@ export default function UnifiedReportsPage() {
             <div className="flex flex-col gap-5">
               <div className="card p-6">
                 <h3 className="text-sm font-bold mb-6">📈 Grafik Omzet Harian</h3>
-                <div className="w-full h-72">
+                <div className="w-full h-72 min-h-[288px] relative">
                   {isMounted && (
-                    <ResponsiveContainer debounce={300}>
+                    <ResponsiveContainer width="100%" height="100%" minWidth={0} debounce={300}>
                       <BarChart data={salesDataForChart}>
                         <CartesianGrid
                           strokeDasharray="3 3"
@@ -901,9 +906,9 @@ export default function UnifiedReportsPage() {
               </div>
               <div className="card p-6">
                 <h3 className="text-sm font-bold mb-6">📉 Profitability vs Expenses</h3>
-                <div className="w-full h-80">
+                <div className="w-full h-80 min-h-[320px] relative">
                   {isMounted && (
-                    <ResponsiveContainer debounce={300}>
+                    <ResponsiveContainer width="100%" height="100%" minWidth={0} debounce={300}>
                       <ComposedChart data={profitChartData}>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} />
                         <XAxis dataKey="period" tick={{ fontSize: 10 }} />
@@ -1009,9 +1014,9 @@ export default function UnifiedReportsPage() {
               )}
               <div className="card p-6">
                 <h3 className="text-sm font-bold mb-6">📉 Tren Arus Kas Aktual</h3>
-                <div className="w-full h-80">
+                <div className="w-full h-80 min-h-[320px] relative">
                   {isMounted && (
-                    <ResponsiveContainer debounce={300}>
+                    <ResponsiveContainer width="100%" height="100%" minWidth={0} debounce={300}>
                       <ComposedChart data={cfChartData}>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} />
                         <XAxis dataKey="date" tick={{ fontSize: 10 }} />
