@@ -621,11 +621,13 @@ body {
     flex: 1;
   }
   .nav-section-chevron {
-    color: var(--border-md);
+    color: var(--text-3);
+    opacity: 0.5;
     transition: all 0.2s ease;
   }
   .nav-section-header:hover .nav-section-chevron {
     transform: scale(1.1);
+    opacity: 1;
   }
   .nav-section-chevron.collapsed {
     transform: rotate(-90deg);
@@ -643,10 +645,10 @@ body {
     position: absolute;
     left: 0;
     top: 0;
-    bottom: 0;
-    width: 1px;
-    background: var(--border);
-    opacity: 0.6;
+    bottom: 0px;
+    width: 1.5px;
+    background: var(--border-md);
+    opacity: 0.8;
   }
   .nav-section-items.collapsed {
     max-height: 0;
