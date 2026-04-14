@@ -710,9 +710,37 @@ body {
     color: #0884f6;
     font-weight: 600;
   }
+  /* Animate horizontal branch line for active item */
+  .sidebar-expanded .nav-item.active:before {
+    background: repeating-linear-gradient(
+      to right,
+      var(--brand) 0,
+      var(--brand) 5px,
+      transparent 5px,
+      transparent 10px
+    );
+    background-size: 10px 100%;
+    animation: marchingAntsX 0.4s infinite linear;
+    opacity: 1;
+    height: 1.5px;
+  }
+  /* Color vertical line when active */
+  .sidebar-expanded .nav-group-container:has(.nav-item.active) .nav-section-items:before {
+    background: var(--brand);
+    opacity: 0.6;
+  }
   .nav-item.active svg {
     color: #0884f6;
     animation: iconPulse 2s infinite ease-in-out;
+  }
+
+  @keyframes marchingAntsX {
+    from {
+      background-position: 0 0;
+    }
+    to {
+      background-position: 10px 0;
+    }
   }
 
   @keyframes iconPulse {
