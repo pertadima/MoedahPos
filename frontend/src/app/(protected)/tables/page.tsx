@@ -22,16 +22,35 @@ import { getErrorMessage } from '@/lib/utils';
 
 const STATUS_CONFIG: Record<
   TableStatus,
-  { label: string; color: string; bg: string; dot: string }
+  { label: string; color: string; bg: string; dot: string; furniture: string }
 > = {
-  available: { label: 'Tersedia', color: '#10b981', bg: 'rgba(16,185,129,0.12)', dot: '#10b981' },
-  occupied: { label: 'Terisi', color: '#ef4444', bg: 'rgba(239,68,68,0.12)', dot: '#ef4444' },
-  reserved: { label: 'Reservasi', color: '#f59e0b', bg: 'rgba(245,158,11,0.12)', dot: '#f59e0b' },
+  available: {
+    label: 'Available',
+    color: '#047857',
+    bg: '#ecfdf5',
+    dot: '#10b981',
+    furniture: '#c6f6d5',
+  },
+  occupied: {
+    label: 'On Dine',
+    color: '#be123c',
+    bg: '#fff1f2',
+    dot: '#f43f5e',
+    furniture: '#fed7e2',
+  },
+  reserved: {
+    label: 'Reserved',
+    color: '#1e40af',
+    bg: '#eff6ff',
+    dot: '#3b82f6',
+    furniture: '#dbeafe',
+  },
   unavailable: {
-    label: 'Tidak Tersedia',
-    color: '#6b7280',
-    bg: 'rgba(107,114,128,0.12)',
+    label: 'Unavailable',
+    color: '#4b5563',
+    bg: '#f3f4f6',
     dot: '#6b7280',
+    furniture: '#e5e7eb',
   },
 };
 
@@ -55,6 +74,8 @@ export default function TablesPage() {
   const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
   const [form, setForm] = useState({ table_number: '', capacity: 4, notes: '' });
   const [formError, setFormError] = useState('');
+
+// ── Components ────────────────────────────────────────────────────────────────
 
   const storeId = selectedStore?.store_id ?? '';
 
@@ -234,27 +255,58 @@ export default function TablesPage() {
         )}
       </div>
 
-      {/* Stats */}
+      {/* Legend & Stats */}
       <div
         style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(3, 1fr)',
-          gap: 12,
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-end',
           marginBottom: 24,
+          gap: 16,
         }}
       >
-        {[
-          { label: 'Total Meja', value: tables.length, color: 'var(--accent-em)' },
-          { label: 'Tersedia', value: available, color: '#10b981' },
-          { label: 'Terisi', value: occupied, color: '#ef4444' },
-        ].map(stat => (
-          <div key={stat.label} className="stat-card" style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: '1.8rem', fontWeight: 700, color: stat.color }}>
-              {stat.value}
+        <div style={{ display: 'flex', gap: 20 }}>
+          {(Object.entries(STATUS_CONFIG) as [TableStatus, (typeof STATUS_CONFIG)['available']][])
+            .filter(([k]) => k !== 'unavailable')
+            .map(([key, cfg]) => (
+              <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div
+                  style={{ width: 10, height: 10, borderRadius: '50%', background: cfg.dot }}
+                />
+                <span style={{ fontSize: '0.82rem', fontWeight: 500, color: 'var(--text-2)' }}>
+                  {cfg.label}
+                </span>
+              </div>
+            ))}
+        </div>
+
+        <div style={{ display: 'flex', gap: 12 }}>
+          {[
+            { label: 'Total', value: tables.length, color: 'var(--text-3)' },
+            { label: 'Available', value: available, color: '#10b981' },
+            { label: 'On Dine', value: occupied, color: '#ef4444' },
+          ].map(stat => (
+            <div
+              key={stat.label}
+              style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: 6,
+                padding: '4px 12px',
+                background: 'var(--bg-card)',
+                borderRadius: 8,
+                border: '1px solid var(--border)',
+              }}
+            >
+              <span style={{ fontSize: '1.2rem', fontWeight: 700, color: stat.color }}>
+                {stat.value}
+              </span>
+              <span style={{ fontSize: '0.72rem', color: 'var(--text-3)', fontWeight: 500 }}>
+                {stat.label}
+              </span>
             </div>
-            <div style={{ fontSize: '0.78rem', color: 'var(--text-3)' }}>{stat.label}</div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
 
       {/* Table grid */}
@@ -274,87 +326,55 @@ export default function TablesPage() {
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
-            gap: 14,
+            gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+            gap: 24,
           }}
         >
           {tables.map(table => {
             const cfg = STATUS_CONFIG[table.status as TableStatus];
             const isUpdating = statusUpdating === table.id;
             return (
-              <div key={table.id} className="card" style={{ padding: 0, overflow: 'hidden' }}>
-                {/* Status strip */}
-                <div style={{ height: 4, background: cfg.dot }} />
-                <div style={{ padding: '14px 14px 10px' }}>
-                  {/* Table number */}
-                  <div
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'flex-start',
-                      marginBottom: 10,
-                    }}
-                  >
-                    <div>
-                      <div style={{ fontWeight: 700, fontSize: '1.1rem', color: 'var(--text-1)' }}>
-                        Meja {table.table_number}
-                      </div>
-                      <div
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 4,
-                          fontSize: '0.72rem',
-                          color: 'var(--text-3)',
-                        }}
-                      >
-                        <Users size={11} /> {table.capacity} orang
-                      </div>
-                    </div>
-                    <div
+              <div
+                key={table.id}
+                className="card"
+                style={{
+                  padding: 16,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  background: 'var(--bg-card)',
+                  border: `1px solid ${table.status === 'available' ? 'var(--border)' : cfg.color + '33'}`,
+                  boxShadow: table.status !== 'available' ? `0 4px 12px ${cfg.color}11` : 'none',
+                }}
+              >
+                {/* Visual Table */}
+                <TableVisual table={table} config={cfg} />
+
+                {/* Status selector & Actions */}
+                <div style={{ width: '100%', marginTop: 12 }}>
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <select
+                      value={table.status}
+                      disabled={isUpdating}
+                      onChange={e => handleStatusChange(table, e.target.value as TableStatus)}
+                      className="select-minimal"
                       style={{
-                        fontSize: '0.66rem',
-                        padding: '3px 7px',
-                        borderRadius: 6,
-                        fontWeight: 600,
-                        background: cfg.bg,
-                        color: cfg.color,
+                        flex: 1,
+                        fontSize: '0.75rem',
+                        height: 32,
+                        padding: '0 8px',
                       }}
                     >
-                      {cfg.label}
-                    </div>
-                  </div>
+                      <option value="available">🟢 Available</option>
+                      <option value="occupied">🔴 On Dine</option>
+                      <option value="reserved">🔵 Reserved</option>
+                    </select>
 
-                  {/* Status selector */}
-                  <select
-                    value={table.status}
-                    disabled={isUpdating}
-                    onChange={e => handleStatusChange(table, e.target.value as TableStatus)}
-                    style={{
-                      width: '100%',
-                      background: 'var(--bg-elevated)',
-                      border: `1px solid var(--border-md)`,
-                      borderRadius: 6,
-                      padding: '5px 8px',
-                      color: 'var(--text-1)',
-                      fontSize: '0.75rem',
-                      cursor: 'pointer',
-                      outline: 'none',
-                      marginBottom: 10,
-                    }}
-                  >
-                    <option value="available">🟢 Tersedia</option>
-                    <option value="occupied">🔴 Terisi</option>
-                    <option value="reserved">🟡 Reservasi</option>
-                  </select>
-
-                  {/* Actions */}
-                  <div style={{ display: 'flex', gap: 6 }}>
                     {can('products.update') && (
                       <button
                         className="btn btn-ghost btn-sm"
                         onClick={() => openEdit(table)}
-                        style={{ flex: 1, justifyContent: 'center', padding: '5px' }}
+                        style={{ width: 32, height: 32, padding: 0 }}
                       >
                         <Pencil size={13} />
                       </button>
@@ -363,12 +383,7 @@ export default function TablesPage() {
                       <button
                         className="btn btn-ghost btn-sm"
                         onClick={() => setDeleteConfirm({ open: true, table })}
-                        style={{
-                          flex: 1,
-                          justifyContent: 'center',
-                          padding: '5px',
-                          color: 'rgba(239,68,68,0.7)',
-                        }}
+                        style={{ width: 32, height: 32, padding: 0, color: '#ef4444' }}
                       >
                         <Trash2 size={13} />
                       </button>
@@ -616,6 +631,120 @@ export default function TablesPage() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+// ── Components ────────────────────────────────────────────────────────────────
+
+function TableVisual({ table, config }: { table: RestaurantTable; config: any }) {
+  const isRect = table.capacity >= 5;
+  const chairs = Array.from({ length: table.capacity });
+
+  // Distribute chairs: Top, Bottom, Left, Right
+  let top = 0,
+    bottom = 0,
+    left = 0,
+    right = 0;
+  if (isRect) {
+    top = Math.ceil(table.capacity / 2);
+    bottom = table.capacity - top;
+  } else {
+    // Square distribution
+    top = 1;
+    bottom = table.capacity > 1 ? 1 : 0;
+    left = table.capacity > 2 ? 1 : 0;
+    right = table.capacity > 3 ? 1 : 0;
+  }
+
+  const Chair = ({ active }: { active: boolean }) => (
+    <div
+      style={{
+        width: 14,
+        height: 14,
+        borderRadius: 4,
+        border: `1.5px solid ${active ? config.color : '#cbd5e1'}`,
+        background: active ? config.furniture : 'transparent',
+        opacity: active ? 1 : 0.3,
+      }}
+    />
+  );
+
+  return (
+    <div
+      style={{
+        position: 'relative',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '20px 0',
+      }}
+    >
+      {/* Top Chairs */}
+      <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
+        {Array.from({ length: top }).map((_, i) => (
+          <Chair key={i} active={true} />
+        ))}
+        {!isRect && top === 1 && table.capacity < 1 && <Chair active={false} />}
+      </div>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        {/* Left Side Chair */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {Array.from({ length: left }).map((_, i) => (
+            <Chair key={i} active={true} />
+          ))}
+        </div>
+
+        {/* Table Body */}
+        <div
+          style={{
+            width: isRect ? 140 : 90,
+            height: 90,
+            borderRadius: 12,
+            background: config.furniture,
+            border: `1px solid ${config.color}33`,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 2,
+            transition: 'all 0.2s ease',
+            cursor: 'default',
+          }}
+        >
+          <div style={{ fontSize: '0.85rem', fontWeight: 700, color: config.color }}>
+            Table #{table.table_number}
+          </div>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4,
+              fontSize: '0.75rem',
+              color: config.color,
+              opacity: 0.8,
+            }}
+          >
+            <Users size={12} /> {table.capacity}
+          </div>
+        </div>
+
+        {/* Right Side Chair */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {Array.from({ length: right }).map((_, i) => (
+            <Chair key={i} active={true} />
+          ))}
+        </div>
+      </div>
+
+      {/* Bottom Chairs */}
+      <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
+        {Array.from({ length: bottom }).map((_, i) => (
+          <Chair key={i} active={true} />
+        ))}
+      </div>
     </div>
   );
 }
