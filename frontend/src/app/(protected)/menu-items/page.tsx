@@ -273,6 +273,15 @@ export default function MenuItemsPage() {
 
   return (
     <div className="w-full p-6">
+      <style>{`
+        @keyframes fadeInScale {
+          from { opacity: 0; transform: scale(0.98) translateY(12px); }
+          to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .reveal-animate {
+          animation: fadeInScale 0.5s cubic-bezier(0.165, 0.84, 0.44, 1) both;
+        }
+      `}</style>
       {toast && (
         <div
           style={{
@@ -297,6 +306,7 @@ export default function MenuItemsPage() {
 
       {/* Header */}
       <div
+        className="reveal-animate"
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -326,7 +336,10 @@ export default function MenuItemsPage() {
           <Loader2 size={28} className="loading-spin" style={{ color: 'var(--accent-em)' }} />
         </div>
       ) : items.length === 0 ? (
-        <div className="empty-state card" style={{ padding: 60 }}>
+        <div
+          className="empty-state card reveal-animate"
+          style={{ padding: 60, animationDelay: '0.1s' }}
+        >
           <UtensilsCrossed size={48} style={{ color: 'var(--text-3)' }} />
           <p style={{ fontWeight: 600, color: 'var(--text-2)' }}>Belum ada menu</p>
           <p style={{ fontSize: '0.85rem' }}>
@@ -335,10 +348,14 @@ export default function MenuItemsPage() {
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {items.map(item => {
+          {items.map((item, i) => {
             const isExpanded = expanded === item.id;
             return (
-              <div key={item.id} className="card" style={{ padding: 0, overflow: 'hidden' }}>
+              <div
+                key={item.id}
+                className="card reveal-animate"
+                style={{ padding: 0, overflow: 'hidden', animationDelay: `${0.1 + i * 0.02}s` }}
+              >
                 <div
                   style={{
                     display: 'flex',

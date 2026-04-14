@@ -169,6 +169,16 @@ export default function CategoriesPage() {
 
   return (
     <div className="w-full p-6">
+      <style>{`
+        @keyframes fadeInScale {
+          from { opacity: 0; transform: scale(0.98) translateY(12px); }
+          to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .reveal-animate {
+          animation: fadeInScale 0.5s cubic-bezier(0.165, 0.84, 0.44, 1) both;
+        }
+      `}</style>
+
       {/* Toast */}
       {toast && (
         <div
@@ -194,6 +204,7 @@ export default function CategoriesPage() {
 
       {/* Header */}
       <div
+        className="reveal-animate"
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -224,7 +235,10 @@ export default function CategoriesPage() {
           <Loader2 size={28} className="loading-spin" style={{ color: 'var(--accent-em)' }} />
         </div>
       ) : categories.length === 0 ? (
-        <div className="empty-state card" style={{ padding: 60 }}>
+        <div
+          className="empty-state card reveal-animate"
+          style={{ padding: 60, animationDelay: '0.1s' }}
+        >
           <FolderOpen size={48} style={{ color: 'var(--text-3)' }} />
           <p style={{ fontWeight: 600, color: 'var(--text-2)' }}>Belum ada kategori</p>
           <p style={{ fontSize: '0.85rem' }}>
@@ -236,10 +250,14 @@ export default function CategoriesPage() {
           {/* Top-level categories */}
           {categories
             .filter(c => !c.parent_id)
-            .map(parent => {
+            .map((parent, idx) => {
               const children = categories.filter(c => c.parent_id === parent.id);
               return (
-                <div key={parent.id} className="card" style={{ padding: 0, overflow: 'hidden' }}>
+                <div
+                  key={parent.id}
+                  className="card reveal-animate"
+                  style={{ padding: 0, overflow: 'hidden', animationDelay: `${0.1 + idx * 0.03}s` }}
+                >
                   {/* Parent row */}
                   <CategoryRow
                     cat={parent}
@@ -268,8 +286,16 @@ export default function CategoriesPage() {
           {/* Orphaned categories (parent was deleted) */}
           {categories
             .filter(c => c.parent_id && !categories.find(p => p.id === c.parent_id))
-            .map(cat => (
-              <div key={cat.id} className="card" style={{ padding: 0, overflow: 'hidden' }}>
+            .map((cat, idx) => (
+              <div
+                key={cat.id}
+                className="card reveal-animate"
+                style={{
+                  padding: 0,
+                  overflow: 'hidden',
+                  animationDelay: `${0.3 + idx * 0.03}s`,
+                }}
+              >
                 <CategoryRow
                   cat={cat}
                   isParent={false}

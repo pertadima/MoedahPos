@@ -192,17 +192,19 @@ function UnifiedCard({
   icon: Icon,
   color,
   sub,
+  index = 0,
 }: {
   label: string;
   value: number;
   icon: React.ElementType;
   color: string;
   sub?: string;
+  index?: number;
 }) {
   const isNeg = value < 0;
   return (
     <div
-      className="card"
+      className="card reveal-animate"
       style={{
         padding: '16px 20px',
         display: 'flex',
@@ -211,6 +213,7 @@ function UnifiedCard({
         flex: 1,
         minWidth: 180,
         borderTop: `3px solid ${color}`,
+        animationDelay: `${0.1 + index * 0.03}s`,
       }}
     >
       <div className="flex justify-between items-start">
@@ -485,7 +488,17 @@ export default function UnifiedReportsPage() {
 
   return (
     <div className="w-full p-6">
-      <div className="flex justify-between items-start mb-6 flex-wrap gap-4">
+      <style>{`
+        @keyframes fadeInScale {
+          from { opacity: 0; transform: scale(0.98) translateY(12px); }
+          to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .reveal-animate {
+          animation: fadeInScale 0.5s cubic-bezier(0.165, 0.84, 0.44, 1) both;
+        }
+      `}</style>
+
+      <div className="reveal-animate flex justify-between items-start mb-6 flex-wrap gap-4">
         <div>
           <h1 className="page-title" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <BarChart3 size={22} style={{ color: 'var(--accent-em)' }} />
@@ -545,20 +558,26 @@ export default function UnifiedReportsPage() {
               value={cfData?.total_cash_in ?? 0}
               icon={TrendingUp}
               color="#10b981"
+              index={0}
             />
             <UnifiedCard
               label="Cash OUT"
               value={cfData?.total_cash_out ?? 0}
               icon={TrendingDown}
               color="#ef4444"
+              index={1}
             />
             <UnifiedCard
               label="Net Cash"
               value={cfData?.net_cash ?? 0}
               icon={ArrowUpRight}
               color={(cfData?.net_cash ?? 0) >= 0 ? '#3b82f6' : '#ef4444'}
+              index={2}
             />
-            <div className="card flex flex-col justify-center px-5 border-t-2 border-indigo-500">
+            <div
+              className="card reveal-animate flex flex-col justify-center px-5 border-t-2 border-indigo-500"
+              style={{ animationDelay: '0.19s' }}
+            >
               <div className="text-[10px] font-bold text-3 uppercase">Total Days</div>
               <div className="text-2xl font-black text-indigo-500 mt-1">
                 {cfData?.rows.length ?? 0}
@@ -571,6 +590,7 @@ export default function UnifiedReportsPage() {
             value={valuation?.grand_total ?? 0}
             icon={Warehouse}
             color="#6366f1"
+            index={0}
           />
         ) : (
           <>
@@ -579,20 +599,26 @@ export default function UnifiedReportsPage() {
               value={summary?.total_sales ?? 0}
               icon={TrendingUp}
               color="#10b981"
+              index={0}
             />
             <UnifiedCard
               label="Laba Kotor"
               value={summary?.gross_profit ?? 0}
               icon={Activity}
               color="#f59e0b"
+              index={1}
             />
             <UnifiedCard
               label="Laba Bersih"
               value={summary?.net_profit ?? 0}
               icon={Activity}
               color="#3b82f6"
+              index={2}
             />
-            <div className="card flex flex-col justify-center px-5 border-t-2 border-indigo-500">
+            <div
+              className="card reveal-animate flex flex-col justify-center px-5 border-t-2 border-indigo-500"
+              style={{ animationDelay: '0.19s' }}
+            >
               <div className="text-[10px] font-bold text-3 uppercase">Avg Margin</div>
               <div className="text-2xl font-black text-indigo-500 mt-1">
                 {(summary?.profit_margin ?? 0).toFixed(1)}%
@@ -602,7 +628,10 @@ export default function UnifiedReportsPage() {
         )}
       </div>
 
-      <div className="card inline-flex p-1 gap-1 mb-5 bg-surface border-none shadow-sm">
+      <div
+        className="card reveal-animate inline-flex p-1 gap-1 mb-5 bg-surface border-none shadow-sm"
+        style={{ animationDelay: '0.22s' }}
+      >
         {TAB_CONFIG.map(({ key, label, icon: TabIcon }) => (
           <button
             key={key}

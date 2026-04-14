@@ -155,8 +155,17 @@ export default function PriceHistoryPage() {
 
   return (
     <div className="w-full p-6">
+      <style>{`
+        @keyframes fadeInScale {
+          from { opacity: 0; transform: scale(0.98) translateY(12px); }
+          to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .reveal-animate {
+          animation: fadeInScale 0.5s cubic-bezier(0.165, 0.84, 0.44, 1) both;
+        }
+      `}</style>
       {/* Header */}
-      <div style={{ marginBottom: 20 }}>
+      <div className="reveal-animate" style={{ marginBottom: 20 }}>
         <h1 className="page-title" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <History size={22} style={{ color: 'var(--accent-em)' }} />
           Riwayat Harga
@@ -168,12 +177,14 @@ export default function PriceHistoryPage() {
 
       {/* Filters */}
       <div
+        className="reveal-animate"
         style={{
           display: 'flex',
           gap: 10,
           marginBottom: 16,
           flexWrap: 'wrap',
           alignItems: 'center',
+          animationDelay: '0.1s',
         }}
       >
         {/* Search */}
@@ -232,7 +243,7 @@ export default function PriceHistoryPage() {
       </div>
 
       {/* Table */}
-      <div className="card" style={{ overflow: 'hidden' }}>
+      <div className="card reveal-animate" style={{ overflow: 'hidden', animationDelay: '0.2s' }}>
         {loading ? (
           <div style={{ display: 'flex', justifyContent: 'center', padding: 40 }}>
             <Loader2 size={24} className="loading-spin" style={{ color: 'var(--accent-em)' }} />
@@ -259,11 +270,15 @@ export default function PriceHistoryPage() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map(row => {
+              {filtered.map((row, i) => {
                 const costChanged = Math.abs(row.new_cost - row.old_cost) > 0.001;
                 const sellChanged = Math.abs(row.new_sell - row.old_sell) > 0.001;
                 return (
-                  <tr key={row.id}>
+                  <tr
+                    key={row.id}
+                    className="reveal-animate"
+                    style={{ animationDelay: `${0.25 + i * 0.02}s` }}
+                  >
                     {/* Product */}
                     <td>
                       <div style={{ fontWeight: 600, maxWidth: 220 }}>{row.product_name}</div>

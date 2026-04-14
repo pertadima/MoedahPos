@@ -904,8 +904,18 @@ export default function UsersPage() {
 
   return (
     <div className="w-full p-6">
+      <style>{`
+        @keyframes fadeInScale {
+          from { opacity: 0; transform: scale(0.98) translateY(12px); }
+          to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .reveal-animate {
+          animation: fadeInScale 0.5s cubic-bezier(0.165, 0.84, 0.44, 1) both;
+        }
+      `}</style>
       {/* ── Header ── */}
       <div
+        className="reveal-animate"
         style={{
           display: 'flex',
           justifyContent: 'space-between',
@@ -929,12 +939,14 @@ export default function UsersPage() {
 
       {/* ── Filters ── */}
       <div
+        className="reveal-animate"
         style={{
           display: 'flex',
           gap: 8,
           marginBottom: 16,
           flexWrap: 'wrap',
           alignItems: 'center',
+          animationDelay: '0.05s',
         }}
       >
         <div style={{ position: 'relative', flex: 1, minWidth: 200 }}>
@@ -982,7 +994,14 @@ export default function UsersPage() {
 
       {/* ── Summary ── */}
       <div
-        style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 12, marginBottom: 16 }}
+        className="reveal-animate"
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(3,1fr)',
+          gap: 12,
+          marginBottom: 16,
+          animationDelay: '0.1s',
+        }}
       >
         {[
           { label: 'Total Pengguna', val: total, color: '#6366f1' },
@@ -1024,7 +1043,7 @@ export default function UsersPage() {
       )}
 
       {/* ── Table ── */}
-      <div className="card" style={{ overflow: 'hidden' }}>
+      <div className="card reveal-animate" style={{ overflow: 'hidden', animationDelay: '0.15s' }}>
         {loading ? (
           <div style={{ display: 'flex', justifyContent: 'center', padding: 48 }}>
             <Loader2 size={26} className="loading-spin" style={{ color: 'var(--accent-em)' }} />
@@ -1047,10 +1066,15 @@ export default function UsersPage() {
               </tr>
             </thead>
             <tbody>
-              {users.map(u => (
+              {users.map((u, i) => (
                 <tr
                   key={u.id}
-                  style={{ cursor: 'pointer', opacity: u.is_active ? 1 : 0.6 }}
+                  className="reveal-animate"
+                  style={{
+                    cursor: 'pointer',
+                    opacity: u.is_active ? 1 : 0.6,
+                    animationDelay: `${0.2 + i * 0.02}s`,
+                  }}
                   onClick={() => openDetail(u)}
                 >
                   <td>

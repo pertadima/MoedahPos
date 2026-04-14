@@ -2240,8 +2240,19 @@ export default function PurchaseOrdersPage() {
 
   return (
     <div className="w-full p-6">
+      <style>{`
+        @keyframes fadeInScale {
+          from { opacity: 0; transform: scale(0.98) translateY(12px); }
+          to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .reveal-animate {
+          animation: fadeInScale 0.5s cubic-bezier(0.165, 0.84, 0.44, 1) both;
+        }
+      `}</style>
+
       {/* Header */}
       <div
+        className="reveal-animate"
         style={{
           display: 'flex',
           justifyContent: 'space-between',
@@ -2271,11 +2282,13 @@ export default function PurchaseOrdersPage() {
       {/* Payable Summary Cards */}
       {payable && (
         <div
+          className="reveal-animate"
           style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))',
             gap: 12,
             marginBottom: 20,
+            animationDelay: '0.1s',
           }}
         >
           {[
@@ -2297,8 +2310,12 @@ export default function PurchaseOrdersPage() {
               icon: AlertCircle,
               color: '#ef4444',
             },
-          ].map(({ label, val, icon: Icon, color }) => (
-            <div key={label} className="card" style={{ padding: '14px 16px' }}>
+          ].map(({ label, val, icon: Icon, color }, i) => (
+            <div
+              key={label}
+              className="card reveal-animate"
+              style={{ padding: '14px 16px', animationDelay: `${0.1 + i * 0.05}s` }}
+            >
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                 <Icon size={16} style={{ color }} />
                 <span style={{ fontSize: '0.72rem', color: 'var(--text-3)', fontWeight: 600 }}>
@@ -2308,7 +2325,10 @@ export default function PurchaseOrdersPage() {
               <div style={{ fontWeight: 800, fontSize: '1.1rem', color }}>{formatRp(val)}</div>
             </div>
           ))}
-          <div className="card" style={{ padding: '14px 16px' }}>
+          <div
+            className="card reveal-animate"
+            style={{ padding: '14px 16px', animationDelay: '0.25s' }}
+          >
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
               <Clock size={16} style={{ color: '#f59e0b' }} />
               <span style={{ fontSize: '0.72rem', color: 'var(--text-3)', fontWeight: 600 }}>
@@ -2329,7 +2349,7 @@ export default function PurchaseOrdersPage() {
       )}
 
       {/* List */}
-      <div className="card" style={{ overflow: 'hidden' }}>
+      <div className="card reveal-animate" style={{ overflow: 'hidden', animationDelay: '0.3s' }}>
         {loading ? (
           <div style={{ display: 'flex', justifyContent: 'center', padding: 40 }}>
             <Loader2 size={24} className="loading-spin" style={{ color: 'var(--accent-em)' }} />
@@ -2357,15 +2377,17 @@ export default function PurchaseOrdersPage() {
               </tr>
             </thead>
             <tbody>
-              {orders.map(po => {
+              {orders.map((po, i) => {
                 const ps = po.payment_status ?? 'unpaid';
                 const isExpanded = expandedRow === po.id;
 
                 return (
                   <Fragment key={po.id}>
                     <tr
+                      className="reveal-animate"
                       style={{
                         background: isExpanded ? 'var(--bg-elevated)' : 'transparent',
+                        animationDelay: `${0.35 + i * 0.02}s`,
                       }}
                     >
                       <td

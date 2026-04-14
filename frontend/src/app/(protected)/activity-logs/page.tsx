@@ -113,13 +113,17 @@ function MetadataViewer({ data }: { data: any }) {
   );
 }
 
-function LogRow({ log }: { log: ActivityLog }) {
+function LogRow({ log, index = 0 }: { log: ActivityLog; index?: number }) {
   const [expanded, setExpanded] = useState(false);
   const action = ACTION_LABELS[log.action_type] || { label: log.action_type, color: 'gray' };
 
   return (
     <>
-      <tr onClick={() => setExpanded(!expanded)} style={{ cursor: 'pointer' }}>
+      <tr
+        onClick={() => setExpanded(!expanded)}
+        className="reveal-animate"
+        style={{ cursor: 'pointer', animationDelay: `${0.2 + index * 0.02}s` }}
+      >
         <td>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <div
@@ -346,8 +350,18 @@ export default function ActivityLogPage() {
 
   return (
     <div className="w-full p-6">
+      <style>{`
+        @keyframes fadeInScale {
+          from { opacity: 0; transform: scale(0.98) translateY(12px); }
+          to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .reveal-animate {
+          animation: fadeInScale 0.5s cubic-bezier(0.165, 0.84, 0.44, 1) both;
+        }
+      `}</style>
       {/* Header */}
       <div
+        className="reveal-animate"
         style={{
           display: 'flex',
           justifyContent: 'space-between',
@@ -372,7 +386,10 @@ export default function ActivityLogPage() {
       </div>
 
       {/* Filters Card */}
-      <div className="card" style={{ padding: 24, marginBottom: 32 }}>
+      <div
+        className="card reveal-animate"
+        style={{ padding: 24, marginBottom: 32, animationDelay: '0.1s' }}
+      >
         <div
           style={{
             display: 'flex',
@@ -514,8 +531,14 @@ export default function ActivityLogPage() {
 
       {/* Table Section */}
       <div
-        className="card"
-        style={{ overflow: 'hidden', minHeight: 400, display: 'flex', flexDirection: 'column' }}
+        className="card reveal-animate"
+        style={{
+          overflow: 'hidden',
+          minHeight: 400,
+          display: 'flex',
+          flexDirection: 'column',
+          animationDelay: '0.15s',
+        }}
       >
         {loading && logs.length === 0 ? (
           <div
@@ -636,8 +659,8 @@ export default function ActivityLogPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {logs.map(log => (
-                    <LogRow key={log.id} log={log} />
+                  {logs.map((log, i) => (
+                    <LogRow key={log.id} log={log} index={i} />
                   ))}
                 </tbody>
               </table>
