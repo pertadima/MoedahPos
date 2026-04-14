@@ -324,7 +324,6 @@ export default function UnifiedReportsPage() {
           setCfData(response.data as CashFlowResponse);
         }
 
-        setLoadedState(prev => ({ ...prev, [dataset]: true }));
       } catch (err) {
         console.error(`Fetch error for ${dataset}:`, err);
       } finally {
@@ -332,6 +331,7 @@ export default function UnifiedReportsPage() {
         if (elapsed < 400) {
           await new Promise(resolve => setTimeout(resolve, 400 - elapsed));
         }
+        setLoadedState(prev => ({ ...prev, [dataset]: true }));
         setLoadingState(prev => ({ ...prev, [dataset]: false }));
       }
     },
