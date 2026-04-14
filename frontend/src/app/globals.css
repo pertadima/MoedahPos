@@ -595,11 +595,11 @@ body {
   }
 
   .nav-group-container {
-    @apply flex flex-col mb-1;
+    @apply flex flex-col mb-1 relative;
   }
   .nav-section-header {
-    @apply flex items-center justify-between cursor-pointer select-none rounded-md mx-1;
-    padding: 10px 10px;
+    @apply flex items-center gap-2 cursor-pointer select-none rounded-md mx-1;
+    padding: 8px 10px;
     margin-top: 12px;
     margin-bottom: 4px;
     transition: all 0.15s ease;
@@ -612,12 +612,13 @@ body {
     color: var(--text-2);
   }
   .nav-section-title {
-    font-size: 0.65rem;
+    font-size: 0.625rem;
     font-weight: 700;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
     color: var(--text-3);
     transition: color 0.15s ease;
+    flex: 1;
   }
   .nav-section-chevron {
     color: var(--border-md);
@@ -629,13 +630,23 @@ body {
   .nav-section-chevron.collapsed {
     transform: rotate(-90deg);
   }
-  .nav-section-items {
-    @apply flex flex-col gap-1 overflow-hidden;
+  .sidebar-expanded .nav-section-items {
+    @apply flex flex-col gap-0.5 overflow-hidden relative ml-[18px] pl-3;
     transition:
-      max-height 0.3s ease-out,
+      max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1),
       opacity 0.2s ease;
     max-height: 1000px;
     opacity: 1;
+  }
+  .sidebar-expanded .nav-section-items:before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: var(--border);
+    opacity: 0.6;
   }
   .nav-section-items.collapsed {
     max-height: 0;
@@ -646,13 +657,10 @@ body {
   /* Nav item */
   .nav-item {
     @apply flex items-center gap-2.5 rounded-lg
-           font-medium text-sm
-           cursor-pointer no-underline;
+           font-medium text-sm transition-all no-underline;
+    padding: 8px 10px;
     color: var(--text-2);
-    padding: 12px 14px;
-    transition:
-      background-color 0.15s ease,
-      color 0.12s ease;
+    cursor: pointer;
   }
   .nav-item:hover {
     background: var(--bg-elevated);
