@@ -2507,7 +2507,7 @@ export default function PurchaseOrdersPage() {
                     {isExpanded && (
                       <tr>
                         <td
-                          colSpan={10}
+                          colSpan={11}
                           style={{ padding: 0, borderBottom: '2px solid var(--accent-em)' }}
                         >
                           <div style={{ background: 'var(--bg-card)' }}>
