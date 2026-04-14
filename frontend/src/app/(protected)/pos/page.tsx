@@ -1043,15 +1043,6 @@ export default function POSPage() {
   if (isRestaurant && !selectedTable && !isTakeAway) {
     return (
       <>
-        <style>{`
-          @keyframes fadeInScale {
-            from { opacity: 0; transform: scale(0.98) translateY(12px); }
-            to { opacity: 1; transform: scale(1) translateY(0); }
-          }
-          .reveal-animate {
-            animation: fadeInScale 0.5s cubic-bezier(0.165, 0.84, 0.44, 1) both;
-          }
-        `}</style>
         <div style={{ padding: '24px 28px', minHeight: '100vh' }} className="reveal-animate">
           {/* Header */}
           <div className="flex items-center justify-between" style={{ marginBottom: 28 }}>
@@ -1217,15 +1208,6 @@ export default function POSPage() {
   // ── Render (Retail + Restaurant order screen) ───────────────────────────────
   return (
     <div className="pos-layout">
-      <style>{`
-        @keyframes fadeInScale {
-          from { opacity: 0; transform: scale(0.98) translateY(12px); }
-          to { opacity: 1; transform: scale(1) translateY(0); }
-        }
-        .reveal-animate {
-          animation: fadeInScale 0.5s cubic-bezier(0.165, 0.84, 0.44, 1) both;
-        }
-      `}</style>
       {/* ── LEFT: Catalog ── */}
       <div className="pos-catalog">
         {/* ── Catalog header row: mode badge + search ── */}

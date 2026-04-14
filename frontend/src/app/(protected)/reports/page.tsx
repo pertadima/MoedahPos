@@ -488,16 +488,6 @@ export default function UnifiedReportsPage() {
 
   return (
     <div className="w-full p-6">
-      <style>{`
-        @keyframes fadeInScale {
-          from { opacity: 0; transform: scale(0.98) translateY(12px); }
-          to { opacity: 1; transform: scale(1) translateY(0); }
-        }
-        .reveal-animate {
-          animation: fadeInScale 0.5s cubic-bezier(0.165, 0.84, 0.44, 1) both;
-        }
-      `}</style>
-
       <div className="reveal-animate flex justify-between items-start mb-6 flex-wrap gap-4">
         <div>
           <h1 className="page-title" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>

@@ -216,41 +216,6 @@ export default function TablesPage() {
 
   return (
     <div className="w-full p-4 sm:p-6">
-      <style>{`
-        @keyframes fadeInScale {
-          from { opacity: 0; transform: scale(0.98) translateY(10px); }
-          to { opacity: 1; transform: scale(1) translateY(0); }
-        }
-        .table-card-animate {
-          animation: fadeInScale 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
-        }
-        .table-card {
-          background: var(--bg-card);
-          border: 1px solid var(--border);
-          border-radius: 12px;
-          padding: 16px;
-          position: relative;
-          transition: all 0.2s ease;
-          cursor: pointer;
-        }
-        .table-card:hover {
-          border-color: var(--brand);
-          box-shadow: var(--shadow-md);
-          transform: translateY(-2px);
-        }
-        .table-card.active {
-          border-color: var(--brand);
-          background: rgba(8, 132, 246, 0.02);
-        }
-        .table-hud {
-          display: flex;
-          align-items: center;
-          gap: 8,
-          margin-top: 12px;
-          padding-top: 12px;
-          border-top: 1px solid var(--border);
-        }
-      `}</style>
       {/* 1. Main Floor Plan Area */}
       {/* Toast */}
       {toast && (

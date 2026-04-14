@@ -155,15 +155,6 @@ export default function PriceHistoryPage() {
 
   return (
     <div className="w-full p-6">
-      <style>{`
-        @keyframes fadeInScale {
-          from { opacity: 0; transform: scale(0.98) translateY(12px); }
-          to { opacity: 1; transform: scale(1) translateY(0); }
-        }
-        .reveal-animate {
-          animation: fadeInScale 0.5s cubic-bezier(0.165, 0.84, 0.44, 1) both;
-        }
-      `}</style>
       {/* Header */}
       <div className="reveal-animate" style={{ marginBottom: 20 }}>
         <h1 className="page-title" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
