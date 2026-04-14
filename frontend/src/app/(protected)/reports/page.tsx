@@ -323,7 +323,6 @@ export default function UnifiedReportsPage() {
           const response = await reportsApi.cashFlow(storeId, dateFrom, dateTo);
           setCfData(response.data as CashFlowResponse);
         }
-
       } catch (err) {
         console.error(`Fetch error for ${dataset}:`, err);
       } finally {
