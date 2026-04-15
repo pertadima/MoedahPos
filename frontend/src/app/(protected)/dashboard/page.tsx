@@ -46,7 +46,7 @@ interface StatCard {
   icon: React.ElementType;
   color: string;
   bg: string;
-  alert: boolean;
+  alert?: boolean;
 }
 
 export default function DashboardPage() {
