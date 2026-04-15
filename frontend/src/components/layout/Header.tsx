@@ -1,16 +1,32 @@
 'use client';
 
-import { LogOut, Sun, Moon } from 'lucide-react';
+import { LogOut, Sun, Moon, Menu } from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { useTheme } from '@/lib/theme/ThemeContext';
+import { useSidebar } from '@/lib/context/SidebarContext';
 
 export default function Header() {
   const { user, selectedStore, logout } = useAuth();
   const { isDark, toggleTheme } = useTheme();
+  const { toggleCollapsed } = useSidebar();
 
   return (
     <header className="header">
-      <div className="header-left">{/* Can put page titles or breadcrumbs here if needed */}</div>
+      <div className="header-left">
+        <button
+          onClick={toggleCollapsed}
+          className="btn btn-ghost btn-sm lg:hidden"
+          style={{ padding: '6px' }}
+        >
+          <Menu size={20} />
+        </button>
+        <span
+          className="lg:hidden"
+          style={{ marginLeft: '12px', fontWeight: 600, fontSize: '0.9rem' }}
+        >
+          MoedahPOS
+        </span>
+      </div>
 
       <div className="header-right">
         {/* Theme Toggle */}
