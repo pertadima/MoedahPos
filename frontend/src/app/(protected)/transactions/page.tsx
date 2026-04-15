@@ -11,7 +11,6 @@ import {
   CheckCircle2,
   XCircle,
   Clock,
-  CalendarDays,
   User,
   CreditCard,
   Loader2,
@@ -894,26 +893,36 @@ export default function TransactionsPage() {
           flexWrap: 'wrap',
           alignItems: 'center',
           animationDelay: '0.15s',
+          position: 'relative',
+          zIndex: 100,
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <CalendarDays size={14} style={{ color: 'var(--text-3)' }} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <DatePicker
             value={dateFrom}
             onChange={val => {
               setDateFrom(val);
               setPreset('custom');
             }}
-            className="w-[145px]"
+            className="w-[180px] h-[38px]"
           />
-          <span style={{ color: 'var(--text-3)', fontSize: '0.85rem' }}>s/d</span>
+          <span
+            style={{
+              color: 'var(--text-3)',
+              fontSize: '0.75rem',
+              fontWeight: 800,
+              textTransform: 'uppercase',
+            }}
+          >
+            s/d
+          </span>
           <DatePicker
             value={dateTo}
             onChange={val => {
               setDateTo(val);
               setPreset('custom');
             }}
-            className="w-[145px]"
+            className="w-[180px] h-[38px]"
           />
         </div>
 

@@ -410,6 +410,8 @@ export default function ActivityLogPage() {
             gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
             gap: 24,
             marginBottom: 16,
+            position: 'relative',
+            zIndex: 50,
           }}
         >
           <div className="input-group">
