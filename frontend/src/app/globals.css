@@ -620,12 +620,20 @@ body {
     margin-bottom: 4px;
     transition: all 0.15s ease;
   }
-  .nav-section-header:hover {
+  .nav-section-header:hover,
+  .nav-group-container:has(.nav-item.active) .nav-section-header {
     background: var(--bg-hover);
   }
   .nav-section-header:hover .nav-section-title,
-  .nav-section-header:hover .nav-section-chevron {
+  .nav-section-header:hover .nav-section-chevron,
+  .nav-group-container:has(.nav-item.active) .nav-section-title,
+  .nav-group-container:has(.nav-item.active) .nav-section-chevron {
     color: var(--text-2);
+  }
+  /* Stronger highlight for active parent title */
+  .nav-group-container:has(.nav-item.active) .nav-section-title {
+    color: var(--text-1);
+    font-weight: 800;
   }
   .nav-section-title {
     font-size: 0.625rem;
