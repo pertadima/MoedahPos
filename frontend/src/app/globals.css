@@ -693,6 +693,23 @@ body {
     opacity: 0.8;
     transform: translateY(-50%);
   }
+  /* Vertical segment highlight overlay */
+  .sidebar-expanded .nav-item:after {
+    content: '';
+    position: absolute;
+    left: -12px;
+    top: 0;
+    bottom: 0;
+    width: 1.5px;
+    z-index: -1;
+  }
+  .sidebar-expanded .nav-item:first-child:after {
+    top: -12px;
+  }
+  .sidebar-expanded .nav-item.active:after {
+    bottom: 50%;
+  }
+
   .nav-item:active {
     transform: scale(0.97);
   }
@@ -710,7 +727,7 @@ body {
     color: #0884f6;
     font-weight: 600;
   }
-  /* Animate horizontal branch line for active item */
+  /* Animate horizontal dashes for active item */
   .sidebar-expanded .nav-item.active:before {
     background: repeating-linear-gradient(
       to right,
@@ -720,14 +737,23 @@ body {
       transparent 10px
     );
     background-size: 10px 100%;
-    animation: marchingAntsX 0.4s infinite linear;
+    animation: marchingAntsX 1s infinite linear;
     opacity: 1;
     height: 1.5px;
   }
-  /* Color vertical line when active */
-  .sidebar-expanded .nav-group-container:has(.nav-item.active) .nav-section-items:before {
-    background: var(--brand);
-    opacity: 0.6;
+  /* Animate vertical dashes up to active item */
+  .sidebar-expanded .nav-item.active:after,
+  .sidebar-expanded .nav-item:has(~ .active):after {
+    background: repeating-linear-gradient(
+      to bottom,
+      var(--brand) 0,
+      var(--brand) 5px,
+      transparent 5px,
+      transparent 10px
+    );
+    background-size: 100% 10px;
+    animation: marchingAntsY 1s infinite linear;
+    opacity: 1;
   }
   .nav-item.active svg {
     color: #0884f6;
@@ -740,6 +766,15 @@ body {
     }
     to {
       background-position: 10px 0;
+    }
+  }
+
+  @keyframes marchingAntsY {
+    from {
+      background-position: 0 0;
+    }
+    to {
+      background-position: 0 10px;
     }
   }
 
