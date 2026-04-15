@@ -748,224 +748,231 @@ export default function UnifiedReportsPage() {
                   )}
                 </div>
               </div>
-              <div className="card overflow-hidden">
-                <table className="tbl text-sm">
-                  <thead>
-                    <tr>
-                      <th className="w-[30px]" />
-                      <th className="w-[100px]">Tanggal</th>
-                      <th className="!text-right w-[120px]">Total Penjualan</th>
-                      <th className="!text-right w-[110px]">Total Pajak</th>
-                      <th className="!text-right w-[130px]">Total Diskon</th>
-                      <th className="!text-right w-[110px]">Jumlah Akhir</th>
-                      <th className="!text-right w-[110px]">Total HPP</th>
-                      <th className="!text-right w-[120px]">Laba Kotor</th>
-                      <th className="!text-right w-[130px]">Total Pengeluaran</th>
-                      <th className="!text-right w-[110px]">Laba Bersih</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {(summary?.rows ?? [])
-                      .slice()
-                      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-                      .flatMap(r => {
-                        const isExpanded = expandedDates.has(r.date);
-                        const isLoading = loadingTransactions.has(r.date);
-                        const transactions = transactionsByDate[r.date] || [];
-                        const rows: React.ReactNode[] = [
-                          <tr key={`date-${r.date}`}>
-                            <td className="text-center">
-                              <button
-                                onClick={() => toggleDateExpanded(r.date)}
-                                className="p-1 hover:bg-surface-hv rounded transition"
+              <div className="card" style={{ padding: 0 }}>
+                <div className="tbl-container">
+                  <table className="tbl text-sm">
+                    <thead>
+                      <tr>
+                        <th className="w-[30px]" />
+                        <th className="w-[100px]">Tanggal</th>
+                        <th className="!text-right w-[120px]">Total Penjualan</th>
+                        <th className="!text-right w-[110px]">Total Pajak</th>
+                        <th className="!text-right w-[130px]">Total Diskon</th>
+                        <th className="!text-right w-[110px]">Jumlah Akhir</th>
+                        <th className="!text-right w-[110px]">Total HPP</th>
+                        <th className="!text-right w-[120px]">Laba Kotor</th>
+                        <th className="!text-right w-[130px]">Total Pengeluaran</th>
+                        <th className="!text-right w-[110px]">Laba Bersih</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(summary?.rows ?? [])
+                        .slice()
+                        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                        .flatMap(r => {
+                          const isExpanded = expandedDates.has(r.date);
+                          const isLoading = loadingTransactions.has(r.date);
+                          const transactions = transactionsByDate[r.date] || [];
+                          const rows: React.ReactNode[] = [
+                            <tr key={`date-${r.date}`}>
+                              <td className="text-center">
+                                <button
+                                  onClick={() => toggleDateExpanded(r.date)}
+                                  className="p-1 hover:bg-surface-hv rounded transition"
+                                >
+                                  {isExpanded ? (
+                                    <ChevronDown size={16} />
+                                  ) : (
+                                    <ChevronRight size={16} />
+                                  )}
+                                </button>
+                              </td>
+                              <td className="font-bold">{formatDate(r.date)}</td>
+                              <td className="!text-right font-black text-accent-em">
+                                {formatRp(r.total_sales ?? 0)}
+                              </td>
+                              <td className="!text-right opacity-75">
+                                {formatRp(r.total_tax ?? 0)}
+                              </td>
+                              <td className="!text-right opacity-75">
+                                {formatRp(r.total_discount ?? 0)}
+                              </td>
+                              <td className="!text-right font-semibold">
+                                {formatRp((r.total_sales ?? 0) - (r.total_discount ?? 0))}
+                              </td>
+                              <td className="!text-right opacity-75">
+                                {formatRp(r.total_cost ?? 0)}
+                              </td>
+                              <td
+                                className={`!text-right font-semibold ${
+                                  (r.gross_profit ?? 0) >= 0 ? 'text-warning' : 'text-accent-rd'
+                                }`}
                               >
-                                {isExpanded ? (
-                                  <ChevronDown size={16} />
-                                ) : (
-                                  <ChevronRight size={16} />
-                                )}
-                              </button>
-                            </td>
-                            <td className="font-bold">{formatDate(r.date)}</td>
-                            <td className="!text-right font-black text-accent-em">
-                              {formatRp(r.total_sales ?? 0)}
-                            </td>
-                            <td className="!text-right opacity-75">{formatRp(r.total_tax ?? 0)}</td>
-                            <td className="!text-right opacity-75">
-                              {formatRp(r.total_discount ?? 0)}
-                            </td>
-                            <td className="!text-right font-semibold">
-                              {formatRp((r.total_sales ?? 0) - (r.total_discount ?? 0))}
-                            </td>
-                            <td className="!text-right opacity-75">
-                              {formatRp(r.total_cost ?? 0)}
-                            </td>
-                            <td
-                              className={`!text-right font-semibold ${
-                                (r.gross_profit ?? 0) >= 0 ? 'text-warning' : 'text-accent-rd'
-                              }`}
-                            >
-                              {formatRp(r.gross_profit ?? 0)}
-                            </td>
-                            <td className="!text-right opacity-75">
-                              {formatRp(r.total_expense ?? 0)}
-                            </td>
-                            <td
-                              className={`!text-right font-bold ${
-                                (r.net_profit ?? 0) >= 0 ? 'text-blue-500' : 'text-accent-rd'
-                              }`}
-                            >
-                              {formatRp(r.net_profit ?? 0)}
-                            </td>
-                          </tr>,
-                        ];
+                                {formatRp(r.gross_profit ?? 0)}
+                              </td>
+                              <td className="!text-right opacity-75">
+                                {formatRp(r.total_expense ?? 0)}
+                              </td>
+                              <td
+                                className={`!text-right font-bold ${
+                                  (r.net_profit ?? 0) >= 0 ? 'text-blue-500' : 'text-accent-rd'
+                                }`}
+                              >
+                                {formatRp(r.net_profit ?? 0)}
+                              </td>
+                            </tr>,
+                          ];
 
-                        if (isExpanded) {
-                          if (isLoading) {
-                            rows.push(
-                              <tr key={`loading-${r.date}`}>
-                                <td colSpan={7} className="text-center py-4">
-                                  <Loader2 size={16} className="loading-spin mx-auto" />
-                                </td>
-                              </tr>
-                            );
-                          } else if (transactions.length > 0) {
-                            // Add a row with nested transaction table
-                            rows.push(
-                              <tr key={`nested-table-${r.date}`}>
-                                <td colSpan={10} className="p-0">
-                                  <div className="bg-surface overflow-hidden rounded">
-                                    <table className="tbl text-xs w-full">
-                                      <thead>
-                                        <tr className="bg-surface-hv border-b border-border">
-                                          <th className="w-[12%]">ID</th>
-                                          <th className="w-[12%]">WAKTU</th>
-                                          <th className="w-[16%]">KASIR</th>
-                                          <th className="w-[14%]">PELANGGAN</th>
-                                          <th className="w-[12%]">METODE</th>
-                                          <th className="!text-right w-[13%]">SUBTOTAL</th>
-                                          <th className="!text-right w-[13%]">DISKON</th>
-                                          <th className="!text-right w-[13%]">PAJAK</th>
-                                          <th className="!text-right w-[13%]">TOTAL</th>
-                                          <th className="!text-center w-[6%]">STATUS</th>
-                                        </tr>
-                                      </thead>
-                                      <tbody>
-                                        {transactions.map((tx, txIdx) => (
-                                          <tr
-                                            key={`tx-${r.date}-${txIdx}`}
-                                            className="border-b border-border hover:bg-surface-hv transition"
-                                          >
-                                            <td className="font-mono text-[10px] opacity-75">
-                                              {tx.id?.slice(0, 8) || 'N/A'}
-                                            </td>
-                                            <td className="text-[10px] opacity-75">
-                                              {tx.created_at
-                                                ? new Date(tx.created_at).toLocaleTimeString(
-                                                    'id-ID',
-                                                    {
-                                                      hour: '2-digit',
-                                                      minute: '2-digit',
-                                                      hour12: false,
-                                                    }
-                                                  )
-                                                : 'N/A'}
-                                            </td>
-                                            <td className="text-[10px]">
-                                              <div className="flex items-center gap-2">
-                                                <div className="w-6 h-6 rounded-full bg-accent-em/20 text-accent-em flex items-center justify-center text-[9px] font-bold">
-                                                  {tx.cashier_name?.charAt(0).toUpperCase() || 'A'}
-                                                </div>
-                                                <span className="opacity-75">
-                                                  {tx.cashier_name || 'N/A'}
-                                                </span>
-                                              </div>
-                                            </td>
-                                            <td className="text-[10px] opacity-75">
-                                              {tx.customer_name || '−'}
-                                            </td>
-                                            <td>
-                                              <span className="inline-block px-2 py-1 bg-blue-500/20 text-blue-500 rounded text-[9px] font-medium">
-                                                {tx.payment_method || 'N/A'}
-                                              </span>
-                                            </td>
-                                            <td className="!text-right text-[10px] opacity-75">
-                                              {formatRp(tx.subtotal || 0)}
-                                            </td>
-                                            <td className="!text-right text-[10px] opacity-75">
-                                              {formatRp(tx.discount_amt || 0)}
-                                            </td>
-                                            <td className="!text-right text-[10px] opacity-75">
-                                              {formatRp(tx.tax_amt || 0)}
-                                            </td>
-                                            <td className="!text-right font-semibold text-accent-em text-[10px]">
-                                              {formatRp(tx.total || 0)}
-                                            </td>
-                                            <td className="!text-center">
-                                              <span className="inline-flex items-center gap-1 text-[9px] font-bold opacity-60">
-                                                <span className="w-2 h-2 rounded-full bg-green-500" />
-                                                Selesai
-                                              </span>
-                                            </td>
+                          if (isExpanded) {
+                            if (isLoading) {
+                              rows.push(
+                                <tr key={`loading-${r.date}`}>
+                                  <td colSpan={7} className="text-center py-4">
+                                    <Loader2 size={16} className="loading-spin mx-auto" />
+                                  </td>
+                                </tr>
+                              );
+                            } else if (transactions.length > 0) {
+                              // Add a row with nested transaction table
+                              rows.push(
+                                <tr key={`nested-table-${r.date}`}>
+                                  <td colSpan={10} className="p-0">
+                                    <div className="bg-surface rounded tbl-container">
+                                      <table className="tbl text-xs w-full">
+                                        <thead>
+                                          <tr className="bg-surface-hv border-b border-border">
+                                            <th className="w-[12%]">ID</th>
+                                            <th className="w-[12%]">WAKTU</th>
+                                            <th className="w-[16%]">KASIR</th>
+                                            <th className="w-[14%]">PELANGGAN</th>
+                                            <th className="w-[12%]">METODE</th>
+                                            <th className="!text-right w-[13%]">SUBTOTAL</th>
+                                            <th className="!text-right w-[13%]">DISKON</th>
+                                            <th className="!text-right w-[13%]">PAJAK</th>
+                                            <th className="!text-right w-[13%]">TOTAL</th>
+                                            <th className="!text-center w-[6%]">STATUS</th>
                                           </tr>
-                                        ))}
-                                      </tbody>
-                                    </table>
-                                  </div>
-                                </td>
-                              </tr>
-                            );
-                          } else {
-                            rows.push(
-                              <tr key={`empty-${r.date}`}>
-                                <td colSpan={7} className="text-center py-4 text-xs opacity-50">
-                                  No transactions
-                                </td>
-                              </tr>
-                            );
+                                        </thead>
+                                        <tbody>
+                                          {transactions.map((tx, txIdx) => (
+                                            <tr
+                                              key={`tx-${r.date}-${txIdx}`}
+                                              className="border-b border-border hover:bg-surface-hv transition"
+                                            >
+                                              <td className="font-mono text-[10px] opacity-75">
+                                                {tx.id?.slice(0, 8) || 'N/A'}
+                                              </td>
+                                              <td className="text-[10px] opacity-75">
+                                                {tx.created_at
+                                                  ? new Date(tx.created_at).toLocaleTimeString(
+                                                      'id-ID',
+                                                      {
+                                                        hour: '2-digit',
+                                                        minute: '2-digit',
+                                                        hour12: false,
+                                                      }
+                                                    )
+                                                  : 'N/A'}
+                                              </td>
+                                              <td className="text-[10px]">
+                                                <div className="flex items-center gap-2">
+                                                  <div className="w-6 h-6 rounded-full bg-accent-em/20 text-accent-em flex items-center justify-center text-[9px] font-bold">
+                                                    {tx.cashier_name?.charAt(0).toUpperCase() ||
+                                                      'A'}
+                                                  </div>
+                                                  <span className="opacity-75">
+                                                    {tx.cashier_name || 'N/A'}
+                                                  </span>
+                                                </div>
+                                              </td>
+                                              <td className="text-[10px] opacity-75">
+                                                {tx.customer_name || '−'}
+                                              </td>
+                                              <td>
+                                                <span className="inline-block px-2 py-1 bg-blue-500/20 text-blue-500 rounded text-[9px] font-medium">
+                                                  {tx.payment_method || 'N/A'}
+                                                </span>
+                                              </td>
+                                              <td className="!text-right text-[10px] opacity-75">
+                                                {formatRp(tx.subtotal || 0)}
+                                              </td>
+                                              <td className="!text-right text-[10px] opacity-75">
+                                                {formatRp(tx.discount_amt || 0)}
+                                              </td>
+                                              <td className="!text-right text-[10px] opacity-75">
+                                                {formatRp(tx.tax_amt || 0)}
+                                              </td>
+                                              <td className="!text-right font-semibold text-accent-em text-[10px]">
+                                                {formatRp(tx.total || 0)}
+                                              </td>
+                                              <td className="!text-center">
+                                                <span className="inline-flex items-center gap-1 text-[9px] font-bold opacity-60">
+                                                  <span className="w-2 h-2 rounded-full bg-green-500" />
+                                                  Selesai
+                                                </span>
+                                              </td>
+                                            </tr>
+                                          ))}
+                                        </tbody>
+                                      </table>
+                                    </div>
+                                  </td>
+                                </tr>
+                              );
+                            } else {
+                              rows.push(
+                                <tr key={`empty-${r.date}`}>
+                                  <td colSpan={7} className="text-center py-4 text-xs opacity-50">
+                                    No transactions
+                                  </td>
+                                </tr>
+                              );
+                            }
                           }
-                        }
 
-                        return rows;
-                      })}
-                  </tbody>
-                </table>
+                          return rows;
+                        })}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           )}
 
           {tab === 'products' && (
-            <div className="card overflow-hidden">
-              <table className="tbl text-sm">
-                <thead>
-                  <tr>
-                    <th className="w-[30%]">Nama Produk</th>
-                    <th className="w-[15%]">SKU</th>
-                    <th className="!text-right w-[10%]">Terjual</th>
-                    <th className="!text-right w-[15%]">Revenue</th>
-                    <th className="!text-right w-[15%]">Profit</th>
-                    <th className="!text-center w-[15%]">Margin</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {byProduct.map((r, i) => (
-                    <tr key={`${r.product_id}-${i}`}>
-                      <td className="font-bold">{r.product_name}</td>
-                      <td className="text-xs font-mono opacity-50">{r.sku}</td>
-                      <td className="!text-right font-bold">{r.total_quantity}</td>
-                      <td className="!text-right text-accent-em font-bold">
-                        {formatRp(r.total_revenue)}
-                      </td>
-                      <td className="!text-right text-warning font-semibold">
-                        {formatRp(r.gross_profit)}
-                      </td>
-                      <td className="!text-center">
-                        <ProfitMarginBadge margin={r.profit_margin} />
-                      </td>
+            <div className="card" style={{ padding: 0 }}>
+              <div className="tbl-container">
+                <table className="tbl text-sm">
+                  <thead>
+                    <tr>
+                      <th className="w-[30%]">Nama Produk</th>
+                      <th className="w-[15%]">SKU</th>
+                      <th className="!text-right w-[10%]">Terjual</th>
+                      <th className="!text-right w-[15%]">Revenue</th>
+                      <th className="!text-right w-[15%]">Profit</th>
+                      <th className="!text-center w-[15%]">Margin</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {byProduct.map((r, i) => (
+                      <tr key={`${r.product_id}-${i}`}>
+                        <td className="font-bold">{r.product_name}</td>
+                        <td className="text-xs font-mono opacity-50">{r.sku}</td>
+                        <td className="!text-right font-bold">{r.total_quantity}</td>
+                        <td className="!text-right text-accent-em font-bold">
+                          {formatRp(r.total_revenue)}
+                        </td>
+                        <td className="!text-right text-warning font-semibold">
+                          {formatRp(r.gross_profit)}
+                        </td>
+                        <td className="!text-center">
+                          <ProfitMarginBadge margin={r.profit_margin} />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
 
@@ -1029,48 +1036,50 @@ export default function UnifiedReportsPage() {
                   )}
                 </div>
               </div>
-              <div className="card overflow-hidden">
-                <table className="tbl text-sm">
-                  <thead>
-                    <tr>
-                      <th className="w-[120px]">Periode</th>
-                      <th className="!text-right w-[150px]">Revenue</th>
-                      <th className="!text-right w-[150px]">Cost</th>
-                      <th className="!text-right w-[150px]">Expense</th>
-                      <th className="!text-right w-[150px]">Net Profit</th>
-                      <th className="!text-center w-[100px]">Margin</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {profitChartData
-                      .slice()
-                      .reverse()
-                      .map((r, i) => (
-                        <tr key={`${r.period}-${i}`}>
-                          <td className="font-bold">{formatDate(r.period)}</td>
-                          <td className="!text-right font-bold text-accent-em">
-                            {formatRp(r.total_sales)}
-                          </td>
-                          <td className="!text-right text-accent-rd opacity-60">
-                            {formatRp(r.total_cost)}
-                          </td>
-                          <td className="!text-right text-accent-rd">
-                            {formatRp(r.total_expense)}
-                          </td>
-                          <td
-                            className={`!text-right font-black ${
-                              r.net_profit >= 0 ? 'text-blue-600' : 'text-accent-rd'
-                            }`}
-                          >
-                            {formatRp(r.net_profit)}
-                          </td>
-                          <td className="!text-center">
-                            <ProfitMarginBadge margin={r.profit_margin} />
-                          </td>
-                        </tr>
-                      ))}
-                  </tbody>
-                </table>
+              <div className="card" style={{ padding: 0 }}>
+                <div className="tbl-container">
+                  <table className="tbl text-sm">
+                    <thead>
+                      <tr>
+                        <th className="w-[120px]">Periode</th>
+                        <th className="!text-right w-[150px]">Revenue</th>
+                        <th className="!text-right w-[150px]">Cost</th>
+                        <th className="!text-right w-[150px]">Expense</th>
+                        <th className="!text-right w-[150px]">Net Profit</th>
+                        <th className="!text-center w-[100px]">Margin</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {profitChartData
+                        .slice()
+                        .reverse()
+                        .map((r, i) => (
+                          <tr key={`${r.period}-${i}`}>
+                            <td className="font-bold">{formatDate(r.period)}</td>
+                            <td className="!text-right font-bold text-accent-em">
+                              {formatRp(r.total_sales)}
+                            </td>
+                            <td className="!text-right text-accent-rd opacity-60">
+                              {formatRp(r.total_cost)}
+                            </td>
+                            <td className="!text-right text-accent-rd">
+                              {formatRp(r.total_expense)}
+                            </td>
+                            <td
+                              className={`!text-right font-black ${
+                                r.net_profit >= 0 ? 'text-blue-600' : 'text-accent-rd'
+                              }`}
+                            >
+                              {formatRp(r.net_profit)}
+                            </td>
+                            <td className="!text-center">
+                              <ProfitMarginBadge margin={r.profit_margin} />
+                            </td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           )}
@@ -1136,170 +1145,176 @@ export default function UnifiedReportsPage() {
                   )}
                 </div>
               </div>
-              <div className="card overflow-hidden">
-                <table className="tbl text-sm w-full">
-                  <thead>
-                    <tr>
-                      <th className="w-[30px]" />
-                      <th>Tanggal</th>
-                      <th className="!text-right">Masuk</th>
-                      <th className="!text-right">Keluar</th>
-                      <th className="!text-right">Net</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {(cfData?.rows ?? [])
-                      .slice()
-                      .reverse()
-                      .flatMap((r, i) => {
-                        const isExpanded = expandedDates.has(r.date);
-                        const isLoading = loadingCfDetail.has(r.date);
-                        const details = cashFlowDetailByDate[r.date] || [];
+              <div className="card" style={{ padding: 0 }}>
+                <div className="tbl-container">
+                  <table className="tbl text-sm w-full">
+                    <thead>
+                      <tr>
+                        <th className="w-[30px]" />
+                        <th>Tanggal</th>
+                        <th className="!text-right">Masuk</th>
+                        <th className="!text-right">Keluar</th>
+                        <th className="!text-right">Net</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(cfData?.rows ?? [])
+                        .slice()
+                        .reverse()
+                        .flatMap((r, i) => {
+                          const isExpanded = expandedDates.has(r.date);
+                          const isLoading = loadingCfDetail.has(r.date);
+                          const details = cashFlowDetailByDate[r.date] || [];
 
-                        const rows: React.ReactNode[] = [
-                          <tr key={`${r.date}-${i}`}>
-                            <td className="text-center">
-                              <button
-                                onClick={() => toggleCfDateExpanded(r.date)}
-                                className="p-1 hover:bg-surface-hv rounded transition"
+                          const rows: React.ReactNode[] = [
+                            <tr key={`${r.date}-${i}`}>
+                              <td className="text-center">
+                                <button
+                                  onClick={() => toggleCfDateExpanded(r.date)}
+                                  className="p-1 hover:bg-surface-hv rounded transition"
+                                >
+                                  {isExpanded ? (
+                                    <ChevronDown size={16} />
+                                  ) : (
+                                    <ChevronRight size={16} />
+                                  )}
+                                </button>
+                              </td>
+                              <td className="font-bold">{formatDate(r.date)}</td>
+                              <td className="!text-right text-accent-em font-bold whitespace-nowrap">
+                                {formatRp(r.cash_in)}
+                              </td>
+                              <td className="!text-right text-accent-rd whitespace-nowrap">
+                                {formatRp(r.cash_out)}
+                              </td>
+                              <td
+                                className={`!text-right font-black whitespace-nowrap ${
+                                  r.net_cash >= 0 ? 'text-blue-500' : 'text-accent-rd'
+                                }`}
                               >
-                                {isExpanded ? (
-                                  <ChevronDown size={16} />
-                                ) : (
-                                  <ChevronRight size={16} />
-                                )}
-                              </button>
-                            </td>
-                            <td className="font-bold">{formatDate(r.date)}</td>
-                            <td className="!text-right text-accent-em font-bold whitespace-nowrap">
-                              {formatRp(r.cash_in)}
-                            </td>
-                            <td className="!text-right text-accent-rd whitespace-nowrap">
-                              {formatRp(r.cash_out)}
-                            </td>
-                            <td
-                              className={`!text-right font-black whitespace-nowrap ${
-                                r.net_cash >= 0 ? 'text-blue-500' : 'text-accent-rd'
-                              }`}
-                            >
-                              {formatRp(r.net_cash)}
-                            </td>
-                          </tr>,
-                        ];
+                                {formatRp(r.net_cash)}
+                              </td>
+                            </tr>,
+                          ];
 
-                        if (isExpanded) {
-                          if (isLoading) {
-                            rows.push(
-                              <tr key={`cf-loading-${r.date}`}>
-                                <td colSpan={5} className="text-center py-4">
-                                  <Loader2 size={16} className="loading-spin mx-auto" />
-                                </td>
-                              </tr>
-                            );
-                          } else if (details.length > 0) {
-                            rows.push(
-                              <tr key={`cf-detail-${r.date}`}>
-                                <td colSpan={5} className="p-0 border-y border-border">
-                                  <div className="bg-surface-hv p-2">
-                                    <table className="w-full text-xs text-left">
-                                      <thead>
-                                        <tr className="border-b border-border/50 text-[10px] uppercase text-3">
-                                          <th className="py-1 px-2 font-semibold w-[60px]">
-                                            Waktu
-                                          </th>
-                                          <th className="py-1 px-2 font-semibold">Kategori</th>
-                                          <th className="py-1 px-2 font-semibold w-full">
-                                            Keterangan
-                                          </th>
-                                          <th className="py-1 px-2 font-semibold whitespace-nowrap">
-                                            Metode
-                                          </th>
-                                          <th className="py-1 px-2 font-semibold !text-right whitespace-nowrap">
-                                            Masuk
-                                          </th>
-                                          <th className="py-1 px-2 font-semibold !text-right whitespace-nowrap">
-                                            Keluar
-                                          </th>
-                                        </tr>
-                                      </thead>
-                                      <tbody className="divide-y divide-border/30">
-                                        {details.map((ent, idx) => {
-                                          const isIn = ent.type === 'SALE' || ent.type === 'INCOME';
-                                          const catBadge = ent.category ? (
-                                            <span
-                                              className="bg-surface border border-border px-1.5 py-0.5 rounded leading-none inline-block max-w-[100px] truncate"
-                                              title={ent.category}
-                                            >
-                                              {ent.category}
-                                            </span>
-                                          ) : null;
-                                          return (
-                                            <tr
-                                              key={idx}
-                                              className="hover:bg-surface transition-colors"
-                                            >
-                                              <td className="py-1.5 px-2 font-mono opacity-80 whitespace-nowrap">
-                                                {ent.timestamp.slice(11, 16)}
-                                              </td>
-                                              <td className="py-1.5 px-2">
-                                                <div className="flex items-center gap-1.5">
-                                                  {catBadge}
-                                                  <span className="opacity-70 text-[9px] uppercase tracking-wider">
-                                                    {ent.type}
-                                                  </span>
-                                                </div>
-                                              </td>
-                                              <td className="py-1.5 px-2">
-                                                <div className="font-semibold">{ent.label}</div>
-                                                {ent.notes && (
-                                                  <div
-                                                    className="text-[10px] opacity-60 italic max-w-sm truncate"
-                                                    title={ent.notes}
-                                                  >
-                                                    {ent.notes}
+                          if (isExpanded) {
+                            if (isLoading) {
+                              rows.push(
+                                <tr key={`cf-loading-${r.date}`}>
+                                  <td colSpan={5} className="text-center py-4">
+                                    <Loader2 size={16} className="loading-spin mx-auto" />
+                                  </td>
+                                </tr>
+                              );
+                            } else if (details.length > 0) {
+                              rows.push(
+                                <tr key={`cf-detail-${r.date}`}>
+                                  <td colSpan={5} className="p-0 border-y border-border">
+                                    <div className="bg-surface-hv p-2 tbl-container">
+                                      <table className="w-full text-xs text-left">
+                                        <thead>
+                                          <tr className="border-b border-border/50 text-[10px] uppercase text-3">
+                                            <th className="py-1 px-2 font-semibold w-[60px]">
+                                              Waktu
+                                            </th>
+                                            <th className="py-1 px-2 font-semibold">Kategori</th>
+                                            <th className="py-1 px-2 font-semibold w-full">
+                                              Keterangan
+                                            </th>
+                                            <th className="py-1 px-2 font-semibold whitespace-nowrap">
+                                              Metode
+                                            </th>
+                                            <th className="py-1 px-2 font-semibold !text-right whitespace-nowrap">
+                                              Masuk
+                                            </th>
+                                            <th className="py-1 px-2 font-semibold !text-right whitespace-nowrap">
+                                              Keluar
+                                            </th>
+                                          </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-border/30">
+                                          {details.map((ent, idx) => {
+                                            const isIn =
+                                              ent.type === 'SALE' || ent.type === 'INCOME';
+                                            const catBadge = ent.category ? (
+                                              <span
+                                                className="bg-surface border border-border px-1.5 py-0.5 rounded leading-none inline-block max-w-[100px] truncate"
+                                                title={ent.category}
+                                              >
+                                                {ent.category}
+                                              </span>
+                                            ) : null;
+                                            return (
+                                              <tr
+                                                key={idx}
+                                                className="hover:bg-surface transition-colors"
+                                              >
+                                                <td className="py-1.5 px-2 font-mono opacity-80 whitespace-nowrap">
+                                                  {ent.timestamp.slice(11, 16)}
+                                                </td>
+                                                <td className="py-1.5 px-2">
+                                                  <div className="flex items-center gap-1.5">
+                                                    {catBadge}
+                                                    <span className="opacity-70 text-[9px] uppercase tracking-wider">
+                                                      {ent.type}
+                                                    </span>
                                                   </div>
-                                                )}
-                                              </td>
-                                              <td className="py-1.5 px-2 opacity-80 whitespace-nowrap">
-                                                {methodLabel(ent.payment_method)}
-                                              </td>
-                                              <td className="py-1.5 px-2 !text-right font-bold text-accent-em whitespace-nowrap">
-                                                {isIn ? `+${formatRp(ent.amount)}` : '-'}
-                                              </td>
-                                              <td className="py-1.5 px-2 !text-right font-bold text-accent-rd whitespace-nowrap">
-                                                {!isIn ? `-${formatRp(ent.amount)}` : '-'}
-                                              </td>
-                                            </tr>
-                                          );
-                                        })}
-                                      </tbody>
-                                    </table>
-                                  </div>
-                                </td>
-                              </tr>
-                            );
-                          } else {
-                            rows.push(
-                              <tr key={`cf-empty-${r.date}`}>
-                                <td colSpan={5} className="text-center py-4 text-xs opacity-50">
-                                  No transaction details
-                                </td>
-                              </tr>
-                            );
+                                                </td>
+                                                <td className="py-1.5 px-2">
+                                                  <div className="font-semibold">{ent.label}</div>
+                                                  {ent.notes && (
+                                                    <div
+                                                      className="text-[10px] opacity-60 italic max-w-sm truncate"
+                                                      title={ent.notes}
+                                                    >
+                                                      {ent.notes}
+                                                    </div>
+                                                  )}
+                                                </td>
+                                                <td className="py-1.5 px-2 opacity-80 whitespace-nowrap">
+                                                  {methodLabel(ent.payment_method)}
+                                                </td>
+                                                <td className="py-1.5 px-2 !text-right font-bold text-accent-em whitespace-nowrap">
+                                                  {isIn ? `+${formatRp(ent.amount)}` : '-'}
+                                                </td>
+                                                <td className="py-1.5 px-2 !text-right font-bold text-accent-rd whitespace-nowrap">
+                                                  {!isIn ? `-${formatRp(ent.amount)}` : '-'}
+                                                </td>
+                                              </tr>
+                                            );
+                                          })}
+                                        </tbody>
+                                      </table>
+                                    </div>
+                                  </td>
+                                </tr>
+                              );
+                            } else {
+                              rows.push(
+                                <tr key={`cf-empty-${r.date}`}>
+                                  <td colSpan={5} className="text-center py-4 text-xs opacity-50">
+                                    No transaction details
+                                  </td>
+                                </tr>
+                              );
+                            }
                           }
-                        }
 
-                        return rows;
-                      })}
-                  </tbody>
-                </table>
+                          return rows;
+                        })}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           )}
 
           {tab === 'valuation' && (
-            <div className="card overflow-hidden">
-              <div className="p-5 border-b bg-indigo-500/5 flex justify-between items-end">
+            <div className="card" style={{ padding: 0 }}>
+              <div
+                className="p-5 border-b bg-indigo-500/5 flex justify-between items-end"
+                style={{ padding: '20px' }}
+              >
                 <h3 className="font-black text-lg">💰 Valuasi Persediaan</h3>
                 <div className="text-right">
                   <div className="text-[10px] font-bold uppercase text-3">Grand Total</div>
@@ -1308,32 +1323,34 @@ export default function UnifiedReportsPage() {
                   </div>
                 </div>
               </div>
-              <table className="tbl text-sm">
-                <thead>
-                  <tr>
-                    <th className="w-[30%]">Produk</th>
-                    <th className="w-[15%]">SKU</th>
-                    <th className="!text-right w-[15%]">Stok</th>
-                    <th className="!text-right w-[20%]">Harga Beli</th>
-                    <th className="!text-right w-[20%]">Subtotal</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(valuation?.rows ?? []).map((r, i) => (
-                    <tr key={`${r.product_id}-${i}`}>
-                      <td className="font-bold">{r.product_name}</td>
-                      <td className="text-xs font-mono opacity-50">{r.sku}</td>
-                      <td className="!text-right font-bold">
-                        {r.quantity} {r.unit}
-                      </td>
-                      <td className="!text-right opacity-60">{formatRp(r.cost_price)}</td>
-                      <td className="!text-right font-black text-indigo-500">
-                        {formatRp(r.total_value)}
-                      </td>
+              <div className="tbl-container">
+                <table className="tbl text-sm">
+                  <thead>
+                    <tr>
+                      <th className="w-[30%]">Produk</th>
+                      <th className="w-[15%]">SKU</th>
+                      <th className="!text-right w-[15%]">Stok</th>
+                      <th className="!text-right w-[20%]">Harga Beli</th>
+                      <th className="!text-right w-[20%]">Subtotal</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {(valuation?.rows ?? []).map((r, i) => (
+                      <tr key={`${r.product_id}-${i}`}>
+                        <td className="font-bold">{r.product_name}</td>
+                        <td className="text-xs font-mono opacity-50">{r.sku}</td>
+                        <td className="!text-right font-bold">
+                          {r.quantity} {r.unit}
+                        </td>
+                        <td className="!text-right opacity-60">{formatRp(r.cost_price)}</td>
+                        <td className="!text-right font-black text-indigo-500">
+                          {formatRp(r.total_value)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
         </div>
