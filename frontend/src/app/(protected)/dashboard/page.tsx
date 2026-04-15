@@ -40,6 +40,15 @@ import {
   Cell,
 } from 'recharts';
 
+interface StatCard {
+  label: string;
+  value: string;
+  icon: React.ElementType;
+  color: string;
+  bg: string;
+  alert: boolean;
+}
+
 export default function DashboardPage() {
   type PayablesSummary = {
     overdue_debt?: number;
@@ -192,13 +201,14 @@ export default function DashboardPage() {
     .reverse()
     .slice(0, 3);
 
-  const statCards = [
+  const statCards: StatCard[] = [
     {
       label: 'Total Penjualan (30 hari)',
       value: formatRp(summary?.total_sales ?? 0),
       icon: TrendingUp,
       color: '#10b981',
       bg: 'rgba(16,185,129,0.10)',
+      alert: false,
     },
     {
       label: 'Total Transaksi (30 hari)',
@@ -206,6 +216,7 @@ export default function DashboardPage() {
       icon: ShoppingBag,
       color: '#6366f1',
       bg: 'rgba(99,102,241,0.10)',
+      alert: false,
     },
     {
       label: 'Penjualan Hari Ini',
@@ -213,6 +224,7 @@ export default function DashboardPage() {
       icon: ArrowUpRight,
       color: '#0884f6',
       bg: 'rgba(8,132,246,0.10)',
+      alert: false,
     },
     {
       label: 'Laba Bersih (30 hari)',
@@ -220,6 +232,7 @@ export default function DashboardPage() {
       icon: Wallet,
       color: '#8b5cf6',
       bg: 'rgba(139,92,246,0.10)',
+      alert: false,
     },
   ];
 
@@ -262,7 +275,7 @@ export default function DashboardPage() {
           marginBottom: 24,
         }}
       >
-        {statCards.map(({ label, value, icon: Icon, color, bg, alert }, i) => {
+        {statCards.map(({ label, value, icon: Icon, color, bg, alert }: StatCard, i) => {
           const isCurrency = value.startsWith('Rp');
           const displayValue = isCurrency ? value.replace('Rp', '').trim() : value;
 
