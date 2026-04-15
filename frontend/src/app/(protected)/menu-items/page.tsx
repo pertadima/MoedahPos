@@ -588,7 +588,7 @@ export default function MenuItemsPage() {
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {/* Sell price */}
+                  {/* Category */}
                   <div>
                     <label
                       style={{
@@ -599,20 +599,27 @@ export default function MenuItemsPage() {
                         color: 'var(--text-2)',
                       }}
                     >
-                      Harga Jual (Rp)
+                      Kategori{' '}
+                      <span
+                        style={{ fontSize: '0.72rem', color: 'var(--text-3)', fontWeight: 400 }}
+                      >
+                        (opsional)
+                      </span>
                     </label>
-                    <input
+                    <select
                       className="input"
-                      type="text"
-                      placeholder="0"
-                      onFocus={e => e.target.select()}
-                      value={form.sell_price ? Number(form.sell_price).toLocaleString('id-ID') : ''}
-                      onChange={e => {
-                        const val = e.target.value.replace(/[^0-9]/g, '');
-                        setForm(f => ({ ...f, sell_price: val }));
-                      }}
-                    />
+                      value={form.category_id}
+                      onChange={e => setForm(f => ({ ...f, category_id: e.target.value }))}
+                    >
+                      <option value="">— Tidak ada —</option>
+                      {categories.map(c => (
+                        <option key={c.id} value={c.id}>
+                          {c.name}
+                        </option>
+                      ))}
+                    </select>
                   </div>
+
                   {/* Tax */}
                   <div>
                     <label
@@ -635,7 +642,7 @@ export default function MenuItemsPage() {
                       Gunakan PPN default toko
                     </label>
                     {!form.use_global_tax && (
-                      <>
+                      <div className="reveal-animate">
                         <label
                           style={{
                             display: 'block',
@@ -656,39 +663,9 @@ export default function MenuItemsPage() {
                           value={form.tax_percentage}
                           onChange={e => setForm(f => ({ ...f, tax_percentage: e.target.value }))}
                         />
-                      </>
+                      </div>
                     )}
                   </div>
-                </div>
-
-                {/* Category */}
-                <div>
-                  <label
-                    style={{
-                      display: 'block',
-                      fontSize: '0.8rem',
-                      fontWeight: 600,
-                      marginBottom: 5,
-                      color: 'var(--text-2)',
-                    }}
-                  >
-                    Kategori{' '}
-                    <span style={{ fontSize: '0.72rem', color: 'var(--text-3)', fontWeight: 400 }}>
-                      (opsional)
-                    </span>
-                  </label>
-                  <select
-                    className="input"
-                    value={form.category_id}
-                    onChange={e => setForm(f => ({ ...f, category_id: e.target.value }))}
-                  >
-                    <option value="">— Tidak ada —</option>
-                    {categories.map(c => (
-                      <option key={c.id} value={c.id}>
-                        {c.name}
-                      </option>
-                    ))}
-                  </select>
                 </div>
 
                 {/* Description */}
@@ -971,7 +948,7 @@ export default function MenuItemsPage() {
                   </div>
                 </div>
 
-                {/* HPP Summary Card */}
+                {/* HPP Summary Calculation Block */}
                 {typeof products !== 'undefined' &&
                   (() => {
                     const ingredientCost = form.ingredients.reduce((acc, ing) => {
@@ -988,6 +965,8 @@ export default function MenuItemsPage() {
                     const currentPrice = parseFloat(form.sell_price) || 0;
 
                     const showSummary = totalHpp > 0;
+                    prevHppRef.current = totalHpp;
+
                     if (!showSummary) return null;
 
                     let marginPct = 0;
@@ -996,8 +975,6 @@ export default function MenuItemsPage() {
                       profit = currentPrice - totalHpp;
                       marginPct = (profit / totalHpp) * 100;
                     }
-
-                    prevHppRef.current = totalHpp;
 
                     return (
                       <div
@@ -1102,7 +1079,6 @@ export default function MenuItemsPage() {
                             style={{
                               display: 'flex',
                               justifyContent: 'space-between',
-                              marginBottom: 14,
                               fontSize: '0.82rem',
                             }}
                           >
@@ -1117,91 +1093,109 @@ export default function MenuItemsPage() {
                             </span>
                           </div>
                         )}
-                        <div
-                          style={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: 8,
-                          }}
-                        >
-                          <div className="flex gap-2">
-                            <div
-                              style={{
-                                flex: 1,
-                                display: 'flex',
-                                alignItems: 'center',
-                                background: 'var(--bg-base)',
-                                border: '1px solid var(--border-md)',
-                                borderRadius: 8,
-                                padding: '0 12px',
-                              }}
-                            >
-                              <span
-                                style={{
-                                  fontSize: '0.75rem',
-                                  color: 'var(--text-3)',
-                                  fontWeight: 600,
-                                  whiteSpace: 'nowrap',
-                                }}
-                              >
-                                Harga Jual (Rp)
-                              </span>
-                              <input
-                                type="text"
-                                placeholder="0"
-                                style={{
-                                  flex: 1,
-                                  textAlign: 'right',
-                                  fontSize: '0.8rem',
-                                  padding: '8px 0',
-                                  background: 'transparent',
-                                  border: 'none',
-                                  outline: 'none',
-                                  color: 'var(--text-1)',
-                                }}
-                                onFocus={e => e.target.select()}
-                                value={
-                                  form.sell_price
-                                    ? Number(form.sell_price).toLocaleString('id-ID')
-                                    : ''
-                                }
-                                onChange={e => {
-                                  const val = e.target.value.replace(/[^0-9]/g, '');
-                                  setForm(f => ({ ...f, sell_price: val }));
-                                }}
-                              />
-                            </div>
-                          </div>
-                          <div className="flex gap-2">
-                            <button
-                              type="button"
-                              className="btn btn-secondary flex-1 text-xs"
-                              onClick={() =>
-                                setForm(f => ({
-                                  ...f,
-                                  sell_price: String(Math.round(suggestedPriceMin)),
-                                }))
-                              }
-                            >
-                              Set 30%
-                            </button>
-                            <button
-                              type="button"
-                              className="btn btn-primary flex-1 text-xs"
-                              onClick={() =>
-                                setForm(f => ({
-                                  ...f,
-                                  sell_price: String(Math.round(suggestedPriceMax)),
-                                }))
-                              }
-                            >
-                              Set 45%
-                            </button>
-                          </div>
-                        </div>
                       </div>
                     );
                   })()}
+
+                {/* Harga Jual - Permanent at Bottom */}
+                <div
+                  style={{
+                    marginTop: 10,
+                    padding: 18,
+                    background: 'rgba(8, 132, 246, 0.04)',
+                    borderRadius: 12,
+                    border: '1px solid rgba(8, 132, 246, 0.12)',
+                  }}
+                >
+                  <div
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 8,
+                    }}
+                  >
+                    <div className="flex gap-2">
+                      <div
+                        style={{
+                          flex: 1,
+                          display: 'flex',
+                          alignItems: 'center',
+                          background: 'var(--bg-base)',
+                          border: '1px solid var(--border-md)',
+                          borderRadius: 8,
+                          padding: '0 12px',
+                        }}
+                      >
+                        <span
+                          style={{
+                            fontSize: '0.75rem',
+                            color: 'var(--text-3)',
+                            fontWeight: 600,
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          Harga Jual (Rp)
+                        </span>
+                        <input
+                          type="text"
+                          placeholder="0"
+                          style={{
+                            flex: 1,
+                            textAlign: 'right',
+                            fontSize: '0.8rem',
+                            padding: '8px 0',
+                            background: 'transparent',
+                            border: 'none',
+                            outline: 'none',
+                            color: 'var(--text-1)',
+                          }}
+                          onFocus={e => e.target.select()}
+                          value={
+                            form.sell_price ? Number(form.sell_price).toLocaleString('id-ID') : ''
+                          }
+                          onChange={e => {
+                            const val = e.target.value.replace(/[^0-9]/g, '');
+                            setForm(f => ({ ...f, sell_price: val }));
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Quick set price buttons (Visible only if HPP known) */}
+                    {prevHppRef.current > 0 && (
+                      <div className="flex gap-2 reveal-animate">
+                        <button
+                          type="button"
+                          className="btn btn-secondary flex-1 text-xs"
+                          style={{ padding: '6px 0' }}
+                          onClick={() => {
+                            const suggestedPriceMin = prevHppRef.current * 1.3;
+                            setForm(f => ({
+                              ...f,
+                              sell_price: String(Math.round(suggestedPriceMin)),
+                            }));
+                          }}
+                        >
+                          Set 30%
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-primary flex-1 text-xs"
+                          style={{ padding: '6px 0' }}
+                          onClick={() => {
+                            const suggestedPriceMax = prevHppRef.current * 1.45;
+                            setForm(f => ({
+                              ...f,
+                              sell_price: String(Math.round(suggestedPriceMax)),
+                            }));
+                          }}
+                        >
+                          Set 45%
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
 
                 {formError && (
                   <div
