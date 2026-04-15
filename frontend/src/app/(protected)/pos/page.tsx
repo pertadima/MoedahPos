@@ -1769,47 +1769,56 @@ export default function POSPage() {
               return (
                 <div
                   key={item.product.id}
-                  className="cart-item"
-                  style={
-                    isDiscounted
-                      ? {
-                          background:
-                            'linear-gradient(135deg, rgba(239,68,68,0.06), rgba(239,68,68,0.02))',
-                          border: '1px solid rgba(239,68,68,0.12)',
-                        }
-                      : undefined
-                  }
+                  className={`cart-item ${isDiscounted ? 'is-discounted' : ''}`}
                 >
-                  {/* Name row */}
-                  <div
+                  {/* Remove Button (Absolute positioned for minimalism) */}
+                  <button
+                    className="btn btn-ghost"
                     style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'flex-start',
+                      position: 'absolute',
+                      right: 4,
+                      top: 4,
+                      padding: '4px',
+                      color: 'var(--text-3)',
+                      opacity: 0.6,
+                    }}
+                    onClick={() => {
+                      dispatch({ type: 'REMOVE', id: item.product.id });
+                      if (expandedDiscountId === item.product.id) setExpandedDiscountId(null);
                     }}
                   >
-                    <div className="cart-item-name" style={{ flex: 1, paddingRight: 8 }}>
+                    <X size={14} />
+                  </button>
+
+                  <div className="cart-item-header">
+                    <div className="cart-item-name">
                       {item.menuItemId && (
-                        <span style={{ fontSize: '0.65rem', color: '#fb923c', marginRight: 4 }}>
+                        <span style={{ fontSize: '0.7rem', color: '#fb923c', marginRight: 5 }}>
                           🍽
                         </span>
                       )}
                       {item.product.name}
                     </div>
-                    <button
-                      className="btn btn-ghost btn-sm"
-                      style={{ padding: '2px 4px', color: 'var(--accent-rd)' }}
-                      onClick={() => {
-                        dispatch({ type: 'REMOVE', id: item.product.id });
-                        if (expandedDiscountId === item.product.id) setExpandedDiscountId(null);
-                      }}
-                    >
-                      <X size={13} />
-                    </button>
+                    <div className="cart-item-total">
+                      {isDiscounted && (
+                        <div
+                          style={{
+                            fontSize: '0.7rem',
+                            color: 'var(--text-3)',
+                            textDecoration: 'line-through',
+                            fontWeight: 500,
+                            lineHeight: 1,
+                            marginBottom: 2,
+                          }}
+                        >
+                          {formatRp(item.originalPrice * item.quantity)}
+                        </div>
+                      )}
+                      {formatRp(item.subtotal)}
+                    </div>
                   </div>
 
-                  {/* Qty + subtotal row */}
-                  <div className="cart-item-row">
+                  <div className="cart-item-body">
                     <div className="qty-ctrl">
                       <button
                         className="qty-btn"
@@ -1821,7 +1830,7 @@ export default function POSPage() {
                           })
                         }
                       >
-                        <Minus size={12} />
+                        <Minus size={13} />
                       </button>
                       <span className="qty-val">{item.quantity}</span>
                       <button
@@ -1834,103 +1843,43 @@ export default function POSPage() {
                           })
                         }
                       >
-                        <Plus size={12} />
+                        <Plus size={13} />
                       </button>
                     </div>
-                    <div style={{ textAlign: 'right' }}>
-                      {isDiscounted && (
-                        <div
-                          style={{
-                            fontSize: '0.68rem',
-                            color: 'var(--text-3)',
-                            textDecoration: 'line-through',
-                          }}
-                        >
-                          {formatRp(item.originalPrice * item.quantity)}
-                        </div>
-                      )}
-                      <span
-                        style={{
-                          fontWeight: 700,
-                          fontSize: '0.85rem',
-                          color: isDiscounted ? 'var(--accent-rd)' : 'var(--accent-em)',
-                          transition: 'color 0.2s ease',
-                        }}
-                      >
-                        {formatRp(item.subtotal)}
-                      </span>
-                    </div>
-                  </div>
 
-                  {/* Price detail + discount trigger row */}
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      gap: 6,
-                    }}
-                  >
-                    <div style={{ fontSize: '0.72rem', color: 'var(--text-3)' }}>
-                      {formatRp(item.unitPrice)} × {item.quantity}
-                      {item.product.tax_rate > 0 && ` · PPN ${item.product.tax_rate}%`}
-                      {costPrice > 0 && (
-                        <span
-                          style={{
-                            marginLeft: 6,
-                            color: isBelowCost ? '#f87171' : 'var(--text-3)',
-                            fontWeight: isBelowCost ? 600 : 400,
-                          }}
-                        >
-                          · {costLabel}: {formatRp(costPrice)}
-                        </span>
-                      )}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      {/* Detailed Price Context */}
+                      <div className="cart-item-details" style={{ textAlign: 'right' }}>
+                        <div>
+                          {formatRp(item.unitPrice)} × {item.quantity}
+                        </div>
+                        {item.product.tax_rate > 0 && (
+                          <div style={{ fontSize: '0.65rem', opacity: 0.8 }}>
+                            + PPN {item.product.tax_rate}%
+                          </div>
+                        )}
+                        {costPrice > 0 && (
+                          <div
+                            style={{
+                              fontSize: '0.65rem',
+                              color: isBelowCost ? '#f87171' : 'var(--text-3)',
+                              fontWeight: isBelowCost ? 700 : 500,
+                            }}
+                          >
+                            {costLabel}: {formatRp(costPrice)}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Discount Trigger */}
+                      <button
+                        className={`btn-discount-trigger ${isDiscounted ? 'active' : ''}`}
+                        onClick={() => setExpandedDiscountId(isExpanded ? null : item.product.id)}
+                      >
+                        <Tag size={10} />
+                        {isDiscounted && discBadge ? discBadge : 'Diskon'}
+                      </button>
                     </div>
-                    {/* Discount trigger / badge */}
-                    {isDiscounted && discBadge ? (
-                      <button
-                        onClick={() => setExpandedDiscountId(isExpanded ? null : item.product.id)}
-                        title="Ubah diskon"
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: 3,
-                          padding: '2px 7px',
-                          borderRadius: 5,
-                          fontSize: '0.65rem',
-                          fontWeight: 700,
-                          background: 'rgba(239,68,68,0.12)',
-                          color: 'var(--accent-rd)',
-                          cursor: 'pointer',
-                          border: 'none',
-                          transition: 'all 0.15s ease',
-                        }}
-                      >
-                        <Tag size={9} />
-                        {discBadge}
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => setExpandedDiscountId(isExpanded ? null : item.product.id)}
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: 4,
-                          padding: '3px 10px',
-                          borderRadius: 6,
-                          fontSize: '0.7rem',
-                          fontWeight: 600,
-                          color: 'var(--text-3)',
-                          background: 'transparent',
-                          border: '1px dashed var(--border-md)',
-                          cursor: 'pointer',
-                          transition: 'all 0.18s ease',
-                        }}
-                      >
-                        <Tag size={9} />
-                        Diskon
-                      </button>
-                    )}
                   </div>
 
                   {/* Collapsible discount panel */}
