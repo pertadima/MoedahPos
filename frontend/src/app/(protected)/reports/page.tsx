@@ -681,27 +681,29 @@ export default function UnifiedReportsPage() {
       </div>
 
       <div
-        className="card reveal-animate inline-flex p-1 gap-1 mb-5 bg-surface border-none shadow-sm"
+        className="reveal-animate overflow-x-auto scrollbar-none mb-5"
         style={{ animationDelay: '0.22s' }}
       >
-        {TAB_CONFIG.map(({ key, label, icon: TabIcon }) => (
-          <button
-            key={key}
-            onClick={() => setTab(key)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all duration-200 transform ${
-              tab === key
-                ? 'bg-accent-em text-white shadow-md scale-105 active:scale-95'
-                : 'text-3 hover:bg-surface-hv hover:scale-102 active:scale-95'
-            }`}
-          >
-            {TAB_DATASETS[key].some(dataset => loadingState[dataset]) ? (
-              <Loader2 size={14} className="loading-spin" />
-            ) : (
-              <TabIcon size={14} />
-            )}
-            {label}
-          </button>
-        ))}
+        <div className="card inline-flex p-1 gap-1 bg-surface border-none shadow-sm min-w-max">
+          {TAB_CONFIG.map(({ key, label, icon: TabIcon }) => (
+            <button
+              key={key}
+              onClick={() => setTab(key)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all duration-200 transform whitespace-nowrap flex-shrink-0 ${
+                tab === key
+                  ? 'bg-accent-em text-white shadow-md scale-105 active:scale-95'
+                  : 'text-3 hover:bg-surface-hv hover:scale-102 active:scale-95'
+              }`}
+            >
+              {TAB_DATASETS[key].some(dataset => loadingState[dataset]) ? (
+                <Loader2 size={14} className="loading-spin" />
+              ) : (
+                <TabIcon size={14} />
+              )}
+              {label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {showTabLoader ? (
