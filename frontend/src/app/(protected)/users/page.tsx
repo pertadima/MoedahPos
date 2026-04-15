@@ -906,6 +906,7 @@ export default function UsersPage() {
     <div className="w-full p-6">
       {/* ── Header ── */}
       <div
+        className="reveal-animate"
         style={{
           display: 'flex',
           justifyContent: 'space-between',
@@ -929,12 +930,14 @@ export default function UsersPage() {
 
       {/* ── Filters ── */}
       <div
+        className="reveal-animate"
         style={{
           display: 'flex',
           gap: 8,
           marginBottom: 16,
           flexWrap: 'wrap',
           alignItems: 'center',
+          animationDelay: '0.05s',
         }}
       >
         <div style={{ position: 'relative', flex: 1, minWidth: 200 }}>
@@ -982,18 +985,55 @@ export default function UsersPage() {
 
       {/* ── Summary ── */}
       <div
-        style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 12, marginBottom: 16 }}
+        className="reveal-animate"
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(3,1fr)',
+          gap: 12,
+          marginBottom: 16,
+          animationDelay: '0.1s',
+        }}
       >
         {[
-          { label: 'Total Pengguna', val: total, color: '#6366f1' },
-          { label: 'Aktif', val: users.filter(u => u.is_active).length, color: '#10b981' },
-          { label: 'Nonaktif', val: users.filter(u => !u.is_active).length, color: '#f59e0b' },
-        ].map(({ label, val, color }) => (
-          <div key={label} className="stat-card" style={{ padding: '14px 16px' }}>
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-3)', marginBottom: 4 }}>
-              {label}
+          {
+            label: 'Total Pengguna',
+            val: total.toString(),
+            icon: Users,
+            color: '#6366f1',
+            bg: 'rgba(99,102,241,0.1)',
+          },
+          {
+            label: 'Aktif',
+            val: users.filter(u => u.is_active).length.toString(),
+            icon: CheckCircle2,
+            color: '#10b981',
+            bg: 'rgba(16,185,129,0.1)',
+          },
+          {
+            label: 'Nonaktif',
+            val: users.filter(u => !u.is_active).length.toString(),
+            icon: XCircle,
+            color: '#f59e0b',
+            bg: 'rgba(245,158,11,0.1)',
+          },
+        ].map(({ label, val, color, icon: Icon, bg }, i) => (
+          <div
+            key={label}
+            className="stat-card reveal-animate"
+            data-tooltip={`${label}: ${val}`}
+            style={{ animationDelay: `${0.15 + i * 0.05}s` }}
+          >
+            <div className="stat-icon" style={{ background: bg }}>
+              <Icon size={22} style={{ color }} />
             </div>
-            <div style={{ fontWeight: 800, fontSize: '1.4rem', color }}>{val}</div>
+            <div style={{ minWidth: 0, flex: 1 }}>
+              <div className="stat-val">
+                <span className="stat-number">{val}</span>
+              </div>
+              <div className="stat-label" title={label}>
+                {label}
+              </div>
+            </div>
           </div>
         ))}
       </div>
@@ -1024,7 +1064,7 @@ export default function UsersPage() {
       )}
 
       {/* ── Table ── */}
-      <div className="card" style={{ overflow: 'hidden' }}>
+      <div className="card reveal-animate" style={{ overflow: 'hidden', animationDelay: '0.15s' }}>
         {loading ? (
           <div style={{ display: 'flex', justifyContent: 'center', padding: 48 }}>
             <Loader2 size={26} className="loading-spin" style={{ color: 'var(--accent-em)' }} />
@@ -1047,10 +1087,15 @@ export default function UsersPage() {
               </tr>
             </thead>
             <tbody>
-              {users.map(u => (
+              {users.map((u, i) => (
                 <tr
                   key={u.id}
-                  style={{ cursor: 'pointer', opacity: u.is_active ? 1 : 0.6 }}
+                  className="reveal-animate"
+                  style={{
+                    cursor: 'pointer',
+                    opacity: u.is_active ? 1 : 0.6,
+                    animationDelay: `${0.2 + i * 0.02}s`,
+                  }}
                   onClick={() => openDetail(u)}
                 >
                   <td>

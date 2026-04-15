@@ -358,18 +358,48 @@ export default function Sidebar() {
               ))}
             </select>
             {selectedStore && (
-              <div className="flex items-center gap-2 mt-1.5">
-                <span className="badge badge-blue" style={{ textTransform: 'capitalize' }}>
+              <div className="flex items-center gap-2 mt-2 px-0.5">
+                <span
+                  style={{
+                    background: 'var(--bg-card)',
+                    color: 'var(--text-3)',
+                    fontSize: '0.6rem',
+                    fontWeight: 800,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    padding: '2px 7px',
+                    borderRadius: 5,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 4,
+                    border: '1px solid var(--border-md)',
+                  }}
+                >
+                  <UserRound size={10} strokeWidth={3} />
                   {selectedStore.role}
                 </span>
                 <span
-                  className="badge"
                   style={{
-                    background: isRestaurant ? 'rgba(251,146,60,0.10)' : 'rgba(16,185,129,0.10)',
-                    color: isRestaurant ? '#fb923c' : '#10b981',
+                    background: isRestaurant ? 'rgba(249,115,22,0.04)' : 'rgba(16,185,129,0.04)',
+                    color: isRestaurant ? '#f97316' : '#10b981',
+                    fontSize: '0.6rem',
+                    fontWeight: 800,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    padding: '2px 7px',
+                    borderRadius: 5,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 4,
+                    border: `1px solid ${isRestaurant ? 'rgba(249,115,22,0.15)' : 'rgba(16,185,129,0.15)'}`,
                   }}
                 >
-                  {isRestaurant ? '🍽️ Restoran' : '🏪 Retail'}
+                  {isRestaurant ? (
+                    <UtensilsCrossed size={10} strokeWidth={3} />
+                  ) : (
+                    <Store size={10} strokeWidth={3} />
+                  )}
+                  {isRestaurant ? 'Restaurant' : 'Retail'}
                 </span>
               </div>
             )}

@@ -92,6 +92,7 @@ function ExpensesPage() {
   return (
     <div className="w-full p-6">
       <div
+        className="reveal-animate"
         style={{
           display: 'flex',
           justifyContent: 'space-between',
@@ -123,11 +124,13 @@ function ExpensesPage() {
       </div>
 
       <div
+        className="reveal-animate"
         style={{
           display: 'flex',
           gap: 16,
           marginBottom: 24,
           borderBottom: '1px solid var(--border)',
+          animationDelay: '0.1s',
         }}
       >
         <button
@@ -167,6 +170,7 @@ function ExpensesPage() {
       {activeTab === 'riwayat' ? (
         <>
           <div
+            className="reveal-animate"
             style={{
               background: 'var(--bg-card)',
               padding: 16,
@@ -177,6 +181,7 @@ function ExpensesPage() {
               gap: 16,
               alignItems: 'flex-end',
               flexWrap: 'wrap',
+              animationDelay: '0.15s',
             }}
           >
             <div style={{ flex: '1 1 180px' }}>
@@ -231,12 +236,14 @@ function ExpensesPage() {
             </div>
           ) : expenses.length === 0 ? (
             <div
+              className="reveal-animate"
               style={{
                 textAlign: 'center',
                 padding: '60px 20px',
                 background: 'var(--bg-card)',
                 borderRadius: 12,
                 border: '1px dashed var(--border)',
+                animationDelay: '0.2s',
               }}
             >
               <Wallet size={48} style={{ color: 'var(--text-4)', margin: '0 auto 16px' }} />
@@ -251,11 +258,13 @@ function ExpensesPage() {
             </div>
           ) : (
             <div
+              className="reveal-animate"
               style={{
                 background: 'var(--bg-card)',
                 borderRadius: 12,
                 border: '1px solid var(--border)',
                 overflow: 'hidden',
+                animationDelay: '0.2s',
               }}
             >
               <div style={{ overflowX: 'auto' }}>
@@ -271,8 +280,12 @@ function ExpensesPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {expenses.map(exp => (
-                      <tr key={exp.id}>
+                    {expenses.map((exp, i) => (
+                      <tr
+                        key={exp.id}
+                        className="reveal-animate"
+                        style={{ animationDelay: `${0.25 + i * 0.02}s` }}
+                      >
                         <td>{formatDate(exp.expense_date)}</td>
                         <td>
                           <span
@@ -687,7 +700,7 @@ function RecurringExpensesView({ categories }: { categories: ExpenseCategory[] }
 
   return (
     <>
-      <div style={{ marginBottom: 16 }}>
+      <div className="reveal-animate" style={{ marginBottom: 16 }}>
         <button
           onClick={() => {
             setEditTarget(null);
@@ -707,12 +720,14 @@ function RecurringExpensesView({ categories }: { categories: ExpenseCategory[] }
         </div>
       ) : routines.length === 0 ? (
         <div
+          className="reveal-animate"
           style={{
             textAlign: 'center',
             padding: '60px 20px',
             background: 'var(--bg-card)',
             borderRadius: 12,
             border: '1px dashed var(--border)',
+            animationDelay: '0.1s',
           }}
         >
           <Calendar size={48} style={{ color: 'var(--text-4)', margin: '0 auto 16px' }} />
@@ -725,11 +740,13 @@ function RecurringExpensesView({ categories }: { categories: ExpenseCategory[] }
         </div>
       ) : (
         <div
+          className="reveal-animate"
           style={{
             background: 'var(--bg-card)',
             borderRadius: 12,
             border: '1px solid var(--border)',
             overflow: 'hidden',
+            animationDelay: '0.1s',
           }}
         >
           <div style={{ overflowX: 'auto' }}>
@@ -746,8 +763,12 @@ function RecurringExpensesView({ categories }: { categories: ExpenseCategory[] }
                 </tr>
               </thead>
               <tbody>
-                {routines.map(rt => (
-                  <tr key={rt.id}>
+                {routines.map((rt, i) => (
+                  <tr
+                    key={rt.id}
+                    className="reveal-animate"
+                    style={{ animationDelay: `${0.15 + i * 0.02}s` }}
+                  >
                     <td>
                       <div style={{ fontWeight: 600 }}>{rt.name}</div>
                       <div style={{ fontSize: '0.8rem', color: 'var(--text-3)' }}>

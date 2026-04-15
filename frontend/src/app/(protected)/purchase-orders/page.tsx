@@ -21,6 +21,9 @@ import {
   BadgeCheck,
   Clock,
   Eye,
+  Check,
+  Trash2,
+  FileText,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { purchaseOrdersApi, suppliersApi, storesApi } from '@/lib/api/store-apis';
@@ -2005,6 +2008,7 @@ export default function PurchaseOrdersPage() {
   const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [showNotesPop, setShowNotesPop] = useState(false);
 
   const storeId = selectedStore?.store_id;
 
@@ -2183,20 +2187,26 @@ export default function PurchaseOrdersPage() {
     setForm(f => ({ ...f, items: [...f.items, { product_id: '', quantity: 1, unit_cost: 0 }] }));
   const removeItem = (i: number) =>
     setForm(f => ({ ...f, items: f.items.filter((_, idx) => idx !== i) }));
-  const updateItem = (i: number, k: keyof ItemRow, v: string | number) => {
+  const updateItem = (i: number, update: Partial<ItemRow>) => {
     setForm(f => ({
       ...f,
       items: f.items.map((item, idx) => {
         if (idx !== i) return item;
-        if (k === 'product_id') {
-          const p = products.get(String(v));
-          return { ...item, product_id: String(v), unit_cost: p?.cost_price ?? item.unit_cost };
+        const next = { ...item, ...update };
+        if (update.product_id) {
+          const p = products.get(String(update.product_id));
+          if (p) {
+            next.unit_cost = p.cost_price > 0 ? p.cost_price : next.unit_cost;
+            next.product_name = p.name;
+            next.product_sku = p.sku;
+            next.unit = p.unit;
+          }
         }
-        return { ...item, [k]: Number(v) };
+        return next;
       }),
     }));
   };
-  const runningTotal = form.items.reduce((s, it) => s + it.quantity * it.unit_cost, 0);
+  const calculateTotal = () => form.items.reduce((s, it) => s + it.quantity * it.unit_cost, 0);
 
   const handleCreate = async () => {
     if (!storeId) return;
@@ -2232,6 +2242,7 @@ export default function PurchaseOrdersPage() {
     <div className="w-full p-6">
       {/* Header */}
       <div
+        className="reveal-animate"
         style={{
           display: 'flex',
           justifyContent: 'space-between',
@@ -2261,11 +2272,13 @@ export default function PurchaseOrdersPage() {
       {/* Payable Summary Cards */}
       {payable && (
         <div
+          className="reveal-animate"
           style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))',
             gap: 12,
             marginBottom: 20,
+            animationDelay: '0.1s',
           }}
         >
           {[
@@ -2287,8 +2300,12 @@ export default function PurchaseOrdersPage() {
               icon: AlertCircle,
               color: '#ef4444',
             },
-          ].map(({ label, val, icon: Icon, color }) => (
-            <div key={label} className="card" style={{ padding: '14px 16px' }}>
+          ].map(({ label, val, icon: Icon, color }, i) => (
+            <div
+              key={label}
+              className="card reveal-animate"
+              style={{ padding: '14px 16px', animationDelay: `${0.1 + i * 0.05}s` }}
+            >
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                 <Icon size={16} style={{ color }} />
                 <span style={{ fontSize: '0.72rem', color: 'var(--text-3)', fontWeight: 600 }}>
@@ -2298,7 +2315,10 @@ export default function PurchaseOrdersPage() {
               <div style={{ fontWeight: 800, fontSize: '1.1rem', color }}>{formatRp(val)}</div>
             </div>
           ))}
-          <div className="card" style={{ padding: '14px 16px' }}>
+          <div
+            className="card reveal-animate"
+            style={{ padding: '14px 16px', animationDelay: '0.25s' }}
+          >
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
               <Clock size={16} style={{ color: '#f59e0b' }} />
               <span style={{ fontSize: '0.72rem', color: 'var(--text-3)', fontWeight: 600 }}>
@@ -2319,7 +2339,7 @@ export default function PurchaseOrdersPage() {
       )}
 
       {/* List */}
-      <div className="card" style={{ overflow: 'hidden' }}>
+      <div className="card reveal-animate" style={{ overflow: 'hidden', animationDelay: '0.3s' }}>
         {loading ? (
           <div style={{ display: 'flex', justifyContent: 'center', padding: 40 }}>
             <Loader2 size={24} className="loading-spin" style={{ color: 'var(--accent-em)' }} />
@@ -2347,15 +2367,17 @@ export default function PurchaseOrdersPage() {
               </tr>
             </thead>
             <tbody>
-              {orders.map(po => {
+              {orders.map((po, i) => {
                 const ps = po.payment_status ?? 'unpaid';
                 const isExpanded = expandedRow === po.id;
 
                 return (
                   <Fragment key={po.id}>
                     <tr
+                      className="reveal-animate"
                       style={{
                         background: isExpanded ? 'var(--bg-elevated)' : 'transparent',
+                        animationDelay: `${0.35 + i * 0.02}s`,
                       }}
                     >
                       <td
@@ -2499,7 +2521,7 @@ export default function PurchaseOrdersPage() {
                     {isExpanded && (
                       <tr>
                         <td
-                          colSpan={10}
+                          colSpan={11}
                           style={{ padding: 0, borderBottom: '2px solid var(--accent-em)' }}
                         >
                           <div style={{ background: 'var(--bg-card)' }}>
@@ -2566,222 +2588,497 @@ export default function PurchaseOrdersPage() {
         />
       )}
 
-      {/* Create Modal */}
+      {/* ── Create / Edit PO Sidebar ─────────────────────────────────────────── */}
       {showModal && (
-        <div className="modal-overlay" onClick={() => setShowModal(false)}>
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 1000,
+            display: 'flex',
+            justifyContent: 'flex-end',
+          }}
+          onClick={() => setShowModal(false)}
+        >
+          <style>{`
+            @keyframes slideInRight {
+              from { transform: translateX(100%); }
+              to { transform: translateX(0); }
+            }
+            @keyframes slideInUp {
+              from { transform: translateY(10px); opacity: 0; }
+              to { transform: translateY(0); opacity: 1; }
+            }
+          `}</style>
+          {/* Backdrop */}
           <div
-            className="modal-box"
-            style={{ maxWidth: 580, maxHeight: '90vh', overflowY: 'auto' }}
+            style={{
+              position: 'absolute',
+              inset: 0,
+              background: 'rgba(0,0,0,0.4)',
+              backdropFilter: 'blur(3px)',
+            }}
+          />
+          {/* Sidebar drawer content */}
+          <div
+            className="card"
+            style={{
+              position: 'relative',
+              width: '100%',
+              maxWidth: 620,
+              height: '100%',
+              borderRadius: 0,
+              padding: 0,
+              display: 'flex',
+              flexDirection: 'column',
+              boxShadow: '-8px 0 32px rgba(0,0,0,0.15)',
+              animation: 'slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+            }}
             onClick={e => e.stopPropagation()}
           >
+            {/* Header */}
             <div
               style={{
+                padding: '20px 24px',
+                borderBottom: '1px solid var(--border)',
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                marginBottom: 18,
+                background: 'var(--bg-card)',
               }}
             >
-              <h2 style={{ fontWeight: 800 }}>Buat Pembelian</h2>
-              <button className="btn btn-ghost btn-sm" onClick={() => setShowModal(false)}>
-                <X size={15} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <ClipboardList size={22} style={{ color: 'var(--accent-em)' }} />
+                <h2 style={{ fontWeight: 800, fontSize: '1.2rem', margin: 0 }}>Buat Pembelian</h2>
+              </div>
+              <button
+                onClick={() => setShowModal(false)}
+                className="btn btn-ghost btn-sm"
+                style={{ padding: 6 }}
+              >
+                <X size={20} />
               </button>
             </div>
-            {error && (
-              <div
-                style={{
-                  background: 'rgba(239,68,68,0.12)',
-                  borderRadius: 8,
-                  padding: '8px 12px',
-                  color: '#f87171',
-                  fontSize: '0.83rem',
-                  marginBottom: 14,
-                  border: '1px solid rgba(239,68,68,0.3)',
-                }}
-              >
-                {error}
-              </div>
-            )}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-              <div className="input-group">
-                <label className="input-label">Supplier (opsional)</label>
-                <SearchableSelect
-                  value={form.supplier_id}
-                  onChange={v => setForm(f => ({ ...f, supplier_id: v }))}
-                  placeholder="Tanpa Supplier"
-                  options={suppliers.map(s => ({ value: s.id, label: s.name }))}
-                />
-              </div>
-              <div className="input-group">
-                <label className="input-label">Catatan (opsional)</label>
-                <input
-                  className="input"
-                  value={form.notes}
-                  onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
-                  placeholder="Catatan pemesanan..."
-                />
-              </div>
-              <div>
+
+            {/* Scrollable Form Body */}
+            <div style={{ flex: 1, overflowY: 'auto', padding: '24px' }}>
+              {error && (
                 <div
                   style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    marginBottom: 10,
+                    background: 'rgba(239,68,68,0.12)',
+                    border: '1px solid rgba(239,68,68,0.3)',
+                    borderRadius: 10,
+                    padding: '12px 16px',
+                    color: '#f87171',
+                    fontSize: '0.85rem',
+                    marginBottom: 20,
                   }}
                 >
-                  <label className="input-label" style={{ margin: 0 }}>
-                    Item Pembelian
+                  {error}
+                </div>
+              )}
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+                {/* Supplier Selection */}
+                <div className="input-group">
+                  <label
+                    className="input-label"
+                    style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+                  >
+                    <User size={14} style={{ color: 'var(--text-3)' }} /> Supplier
                   </label>
-                  <button className="btn btn-ghost btn-sm" onClick={addItem}>
-                    <Plus size={13} /> Tambah Item
-                  </button>
+                  <SearchableSelect
+                    placeholder="Pilih Supplier..."
+                    options={suppliers.map(s => ({ value: s.id, label: s.name }))}
+                    value={form.supplier_id}
+                    onChange={v => setForm(f => ({ ...f, supplier_id: v }))}
+                  />
                 </div>
-                <div
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: '1fr 90px 130px auto',
-                    gap: 6,
-                    padding: '0 4px 6px',
-                  }}
-                >
-                  {['PRODUK', 'QTY', 'HARGA BELI/UNIT', ''].map(h => (
-                    <span
-                      key={h}
-                      style={{ fontSize: '0.7rem', color: 'var(--text-3)', fontWeight: 700 }}
-                    >
-                      {h}
-                    </span>
-                  ))}
-                </div>
-                {form.items.map((item, i) => {
-                  const sp = products.get(item.product_id);
-                  const lineTotal = item.quantity * item.unit_cost;
-                  return (
-                    <div key={i} style={{ marginBottom: 8 }}>
-                      <div
-                        style={{
-                          display: 'grid',
-                          gridTemplateColumns: '1fr 90px 130px auto',
-                          gap: 6,
-                        }}
-                      >
-                        <ProductSearchSelect
-                          storeId={storeId ?? ''}
-                          value={item.product_id}
-                          selectedName={
-                            item.product_name ||
-                            (item.product_id ? products.get(item.product_id)?.name : undefined)
-                          }
-                          onSelect={p => {
-                            // Cache the product for cost_price lookup
-                            setProducts(prev => new Map(prev).set(p.id, p));
-                            setForm(f => ({
-                              ...f,
-                              items: f.items.map((it, idx) =>
-                                idx !== i
-                                  ? it
-                                  : {
-                                      ...it,
-                                      product_id: p.id,
-                                      product_name: p.name,
-                                      product_sku: p.sku,
-                                      unit: p.unit,
-                                      unit_cost: p.cost_price > 0 ? p.cost_price : it.unit_cost,
-                                    }
-                              ),
-                            }));
-                          }}
-                        />
-                        <input
-                          type="number"
-                          className="input"
-                          placeholder="Qty"
-                          min={1}
-                          value={item.quantity}
-                          onChange={e => updateItem(i, 'quantity', e.target.value)}
-                        />
-                        <input
-                          type="text"
-                          className="input"
-                          placeholder="Harga beli"
-                          value={formatNumberInput(item.unit_cost)}
-                          onChange={e =>
-                            updateItem(i, 'unit_cost', parseNumberInput(e.target.value))
-                          }
-                        />
-                        <button
-                          className="btn btn-ghost btn-sm"
-                          style={{ color: 'var(--accent-rd)', alignSelf: 'center' }}
-                          onClick={() => removeItem(i)}
-                        >
-                          <X size={13} />
-                        </button>
-                      </div>
-                      {(sp || item.product_id) && (
-                        <div
-                          style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            padding: '4px 4px 0',
-                            fontSize: '0.72rem',
-                            color: 'var(--text-3)',
-                          }}
-                        >
-                          <span>
-                            SKU: {sp?.sku || item.product_sku || '—'} · Stok: {sp?.stock_qty ?? '?'}{' '}
-                            {sp?.unit || item.unit || ''} · HPP:{' '}
-                            {formatRp(sp?.cost_price || item.unit_cost)}
-                          </span>
-                          {lineTotal > 0 && (
-                            <span style={{ color: 'var(--accent-em)', fontWeight: 600 }}>
-                              = {formatRp(lineTotal)}
-                            </span>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-                {runningTotal > 0 && (
+
+                {/* Items Section */}
+                <div>
                   <div
                     style={{
-                      marginTop: 10,
-                      padding: '10px 14px',
-                      background: 'rgba(16,185,129,0.08)',
-                      border: '1px solid rgba(16,185,129,0.25)',
-                      borderRadius: 10,
                       display: 'flex',
                       justifyContent: 'space-between',
+                      alignItems: 'center',
+                      marginBottom: 12,
                     }}
                   >
-                    <span style={{ fontSize: '0.85rem', color: 'var(--text-2)' }}>
-                      Total Estimasi
+                    <label
+                      className="input-label"
+                      style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 6 }}
+                    >
+                      <Package size={14} style={{ color: 'var(--text-3)' }} /> Item Pembelian
+                    </label>
+                    <span
+                      style={{
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                        color: 'var(--accent-em)',
+                        background: 'var(--bg-elevated)',
+                        padding: '2px 8px',
+                        borderRadius: 6,
+                      }}
+                    >
+                      {form.items.length} Item
                     </span>
-                    <span style={{ fontWeight: 800, color: '#10b981' }}>
-                      {formatRp(runningTotal)}
-                    </span>
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    {form.items.map((item, i) => {
+                      const lineTotal = item.quantity * item.unit_cost;
+                      return (
+                        <div
+                          key={i}
+                          style={{
+                            background: 'var(--bg-elevated)',
+                            borderRadius: 12,
+                            padding: '12px 14px',
+                            border: '1px solid var(--border)',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: 12,
+                            position: 'relative',
+                            transition: 'all 0.2s ease',
+                          }}
+                        >
+                          {/* Line 1: Product, Qty, Price & Delete */}
+                          <div style={{ display: 'flex', gap: 10, alignItems: 'flex-end' }}>
+                            <div
+                              style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 3 }}
+                            >
+                              <label
+                                style={{
+                                  fontSize: '0.6rem',
+                                  color: 'var(--text-3)',
+                                  fontWeight: 700,
+                                  textTransform: 'uppercase',
+                                  letterSpacing: '0.025em',
+                                }}
+                              >
+                                Produk
+                              </label>
+                              <ProductSearchSelect
+                                storeId={storeId ?? ''}
+                                value={item.product_id}
+                                selectedName={
+                                  item.product_name ||
+                                  (item.product_id
+                                    ? products.get(item.product_id)?.name
+                                    : undefined)
+                                }
+                                onSelect={p => {
+                                  setProducts(prev => new Map(prev).set(p.id, p));
+                                  updateItem(i, {
+                                    product_id: p.id,
+                                    product_name: p.name,
+                                    product_sku: p.sku,
+                                    unit: p.unit,
+                                    unit_cost: p.cost_price || 0,
+                                  });
+                                }}
+                              />
+                            </div>
+                            <div
+                              style={{
+                                width: 64,
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: 3,
+                              }}
+                            >
+                              <label
+                                style={{
+                                  fontSize: '0.6rem',
+                                  color: 'var(--text-3)',
+                                  fontWeight: 700,
+                                  textTransform: 'uppercase',
+                                  letterSpacing: '0.025em',
+                                }}
+                              >
+                                Jumlah
+                              </label>
+                              <input
+                                type="number"
+                                className="input"
+                                style={{ height: 32, fontSize: '0.8rem', padding: '0 8px' }}
+                                placeholder="Qty"
+                                min={1}
+                                value={item.quantity}
+                                onFocus={e => e.target.select()}
+                                onChange={e => updateItem(i, { quantity: +e.target.value })}
+                              />
+                            </div>
+                            <div
+                              style={{
+                                paddingBottom: 10,
+                                fontSize: '0.9rem',
+                                color: 'var(--text-3)',
+                                opacity: 0.6,
+                              }}
+                            >
+                              ×
+                            </div>
+                            <div
+                              style={{
+                                width: 120,
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: 3,
+                              }}
+                            >
+                              <label
+                                style={{
+                                  fontSize: '0.6rem',
+                                  color: 'var(--text-3)',
+                                  fontWeight: 700,
+                                  textTransform: 'uppercase',
+                                  letterSpacing: '0.025em',
+                                }}
+                              >
+                                Harga / Item
+                              </label>
+                              <input
+                                type="text"
+                                className="input"
+                                style={{ height: 32, fontSize: '0.8rem', padding: '0 8px' }}
+                                placeholder="Harga"
+                                onFocus={e => e.target.select()}
+                                value={formatNumberInput(String(item.unit_cost))}
+                                onChange={e =>
+                                  updateItem(i, { unit_cost: parseNumberInput(e.target.value) })
+                                }
+                              />
+                            </div>
+                            <div style={{ paddingBottom: 2 }}>
+                              <button
+                                className="btn btn-ghost btn-sm"
+                                style={{
+                                  color: '#ef4444',
+                                  padding: 4,
+                                  height: 32,
+                                  width: 32,
+                                  borderRadius: 8,
+                                }}
+                                onClick={() => removeItem(i)}
+                                disabled={form.items.length === 1}
+                              >
+                                <Trash2 size={15} />
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Line 2: SKU, Unit & Total Price */}
+                          <div
+                            style={{
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                              paddingTop: 8,
+                              borderTop: '1px dashed var(--border)',
+                              marginTop: 0,
+                            }}
+                          >
+                            <div
+                              style={{
+                                fontSize: '0.7rem',
+                                color: 'var(--text-3)',
+                                fontWeight: 500,
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 6,
+                              }}
+                            >
+                              <span style={{ opacity: 0.7 }}>{item.product_sku || '—'}</span>
+                              <span style={{ opacity: 0.3 }}>·</span>
+                              <span
+                                style={{
+                                  background: 'var(--bg-card)',
+                                  padding: '1px 5px',
+                                  borderRadius: 4,
+                                  fontSize: '0.65rem',
+                                }}
+                              >
+                                {item.unit || 'pcs'}
+                              </span>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                              <span
+                                style={{
+                                  fontSize: '0.6rem',
+                                  color: 'var(--text-3)',
+                                  textTransform: 'uppercase',
+                                  fontWeight: 700,
+                                  letterSpacing: '0.05em',
+                                }}
+                              >
+                                Total
+                              </span>
+                              <span
+                                style={{
+                                  fontWeight: 800,
+                                  fontSize: '1.05rem',
+                                  color: 'var(--accent-em)',
+                                }}
+                              >
+                                {formatRp(lineTotal)}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <button
+                    className="btn btn-ghost"
+                    style={{
+                      width: '100%',
+                      marginTop: 12,
+                      border: '1px dashed var(--border)',
+                      padding: '12px',
+                      fontSize: '0.85rem',
+                      borderRadius: 12,
+                    }}
+                    onClick={addItem}
+                  >
+                    <Plus size={14} /> Tambah Item Lain
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Consolidated Inline High-Density Footer */}
+            <div
+              style={{
+                padding: '12px 24px',
+                background: 'var(--bg-card)',
+                borderTop: '1px solid var(--border)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 16,
+                boxShadow: '0 -4px 12px rgba(0,0,0,0.05)',
+                position: 'relative',
+              }}
+            >
+              {/* Notes Icon & Popover */}
+              <div style={{ position: 'relative' }}>
+                <button
+                  onClick={() => setShowNotesPop(!showNotesPop)}
+                  className={`btn ${form.notes ? 'btn-primary' : 'btn-ghost'}`}
+                  style={{
+                    padding: 8,
+                    height: 40,
+                    width: 40,
+                    borderRadius: 12,
+                    transition: 'all 0.2s ease',
+                  }}
+                  title="Catatan"
+                >
+                  <FileText size={20} />
+                </button>
+                {showNotesPop && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      bottom: 'calc(100% + 12px)',
+                      left: -12,
+                      width: 320,
+                      background: 'var(--bg-card)',
+                      border: '1px solid var(--border)',
+                      borderRadius: 12,
+                      padding: 16,
+                      boxShadow: '0 10px 40px rgba(0,0,0,0.2)',
+                      zIndex: 100,
+                      animation: 'slideInUp 0.15s cubic-bezier(0, 0, 0.2, 1)',
+                    }}
+                  >
+                    <label
+                      style={{
+                        fontSize: '0.65rem',
+                        fontWeight: 800,
+                        textTransform: 'uppercase',
+                        color: 'var(--text-3)',
+                        display: 'block',
+                        marginBottom: 10,
+                        letterSpacing: '0.05em',
+                      }}
+                    >
+                      Catatan Pembelian
+                    </label>
+                    <textarea
+                      autoFocus
+                      className="input"
+                      rows={4}
+                      placeholder="Masukkan catatan pembelian..."
+                      style={{ resize: 'none', fontSize: '0.85rem', padding: '10px 12px' }}
+                      value={form.notes}
+                      onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
+                    />
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 12 }}>
+                      <button
+                        className="btn btn-primary btn-sm"
+                        onClick={() => setShowNotesPop(false)}
+                      >
+                        Selesai
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
-            </div>
-            <div style={{ display: 'flex', gap: 8, marginTop: 20 }}>
-              <button
-                className="btn btn-secondary"
-                style={{ flex: 1 }}
-                onClick={() => setShowModal(false)}
-              >
-                Batal
-              </button>
-              <button
-                className="btn btn-primary"
-                style={{ flex: 1 }}
-                disabled={saving}
-                onClick={handleCreate}
-              >
-                {saving ? <Loader2 size={15} className="loading-spin" /> : <Plus size={15} />}
-                {saving ? 'Menyimpan...' : 'Buat PO'}
-              </button>
+
+              {/* Total Display */}
+              <div style={{ flex: 1 }}>
+                <div
+                  style={{
+                    fontSize: '0.65rem',
+                    color: 'var(--text-3)',
+                    fontWeight: 700,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    marginBottom: 2,
+                  }}
+                >
+                  Grand Total
+                </div>
+                <div
+                  style={{
+                    fontSize: '1.25rem',
+                    fontWeight: 800,
+                    color: 'var(--accent-em)',
+                    lineHeight: 1,
+                  }}
+                >
+                  {formatRp(calculateTotal())}
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <button
+                  className="btn btn-ghost"
+                  onClick={() => setShowModal(false)}
+                  style={{ height: 40, padding: '0 12px', fontSize: '0.85rem' }}
+                >
+                  Batal
+                </button>
+                <button
+                  className="btn btn-primary"
+                  disabled={saving || calculateTotal() === 0}
+                  style={{
+                    height: 40,
+                    padding: '0 16px',
+                    gap: 8,
+                    fontWeight: 700,
+                    minWidth: 100,
+                  }}
+                  onClick={handleCreate}
+                >
+                  {saving ? <Loader2 size={16} className="loading-spin" /> : <Check size={16} />}
+                  Simpan
+                </button>
+              </div>
             </div>
           </div>
         </div>

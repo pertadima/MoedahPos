@@ -169,6 +169,7 @@ export default function IncomesPage() {
     <div className="w-full p-6">
       {/* Header */}
       <div
+        className="reveal-animate"
         style={{
           display: 'flex',
           justifyContent: 'space-between',
@@ -210,20 +211,23 @@ export default function IncomesPage() {
       {/* Summary cards */}
       {incomes.length > 0 && (
         <div
+          className="reveal-animate"
           style={{
             display: 'flex',
             gap: 12,
             marginBottom: 20,
             flexWrap: 'wrap',
+            animationDelay: '0.1s',
           }}
         >
           <div
-            className="card"
+            className="card reveal-animate"
             style={{
               padding: '14px 20px',
               borderTop: '3px solid #10b981',
               flex: '1 1 180px',
               minWidth: 180,
+              animationDelay: '0.1s',
             }}
           >
             <div
@@ -245,11 +249,16 @@ export default function IncomesPage() {
               {incomes.length} catatan
             </div>
           </div>
-          {byMethodTotals.map(([method, total]) => (
+          {byMethodTotals.map(([method, total], idx) => (
             <div
               key={method}
-              className="card"
-              style={{ padding: '14px 20px', flex: '1 1 160px', minWidth: 150 }}
+              className="card reveal-animate"
+              style={{
+                padding: '14px 20px',
+                flex: '1 1 160px',
+                minWidth: 150,
+                animationDelay: `${0.12 + idx * 0.03}s`,
+              }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
                 <span style={{ color: '#10b981' }}>{methodIcon(method)}</span>
@@ -273,6 +282,7 @@ export default function IncomesPage() {
 
       {/* Filters */}
       <div
+        className="reveal-animate"
         style={{
           background: 'var(--bg-card)',
           padding: 16,
@@ -283,6 +293,7 @@ export default function IncomesPage() {
           gap: 12,
           alignItems: 'flex-end',
           flexWrap: 'wrap',
+          animationDelay: '0.15s',
         }}
       >
         <div style={{ flex: '1 1 180px' }}>
@@ -341,12 +352,14 @@ export default function IncomesPage() {
         </div>
       ) : incomes.length === 0 ? (
         <div
+          className="reveal-animate"
           style={{
             textAlign: 'center',
             padding: '60px 20px',
             background: 'var(--bg-card)',
             borderRadius: 12,
             border: '1px dashed var(--border)',
+            animationDelay: '0.2s',
           }}
         >
           <TrendingUp size={48} style={{ color: 'var(--text-4)', margin: '0 auto 16px' }} />
@@ -361,11 +374,13 @@ export default function IncomesPage() {
         </div>
       ) : (
         <div
+          className="reveal-animate"
           style={{
             background: 'var(--bg-card)',
             borderRadius: 12,
             border: '1px solid var(--border)',
             overflow: 'hidden',
+            animationDelay: '0.2s',
           }}
         >
           <div style={{ overflowX: 'auto' }}>
@@ -382,8 +397,12 @@ export default function IncomesPage() {
                 </tr>
               </thead>
               <tbody>
-                {incomes.map(inc => (
-                  <tr key={inc.id}>
+                {incomes.map((inc, i) => (
+                  <tr
+                    key={inc.id}
+                    className="reveal-animate"
+                    style={{ animationDelay: `${0.25 + i * 0.02}s` }}
+                  >
                     <td style={{ fontWeight: 600 }}>{formatDate(inc.income_date)}</td>
                     <td>
                       <span

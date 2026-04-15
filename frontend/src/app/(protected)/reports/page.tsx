@@ -186,23 +186,85 @@ function methodIcon(m: string) {
   return <CreditCard size={14} />;
 }
 
+function AnimatedCounter({
+  value,
+  duration = 1000,
+  isCurrency = true,
+  isPercentage = false,
+}: {
+  value: number;
+  duration?: number;
+  isCurrency?: boolean;
+  isPercentage?: boolean;
+}) {
+  const [displayValue, setDisplayValue] = useState(0);
+
+  useEffect(() => {
+    let startTime: number | null = null;
+    let animationFrameId: number;
+    const startValue = displayValue;
+    const diff = value - startValue;
+
+    const animate = (timestamp: number) => {
+      if (!startTime) startTime = timestamp;
+      const elapsed = timestamp - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+
+      // Smooth ease-out quintic
+      const eased = 1 - Math.pow(1 - progress, 5);
+
+      const current = startValue + diff * eased;
+      setDisplayValue(current);
+
+      if (progress < 1) {
+        animationFrameId = requestAnimationFrame(animate);
+      }
+    };
+
+    animationFrameId = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(animationFrameId);
+  }, [value, duration]);
+
+  if (isCurrency) {
+    const isNeg = displayValue < 0;
+    return (
+      <>
+        {isNeg && '− '}
+        {formatRp(Math.abs(displayValue))}
+      </>
+    );
+  }
+
+  if (isPercentage) {
+    return <>{displayValue.toFixed(1)}%</>;
+  }
+
+  return <>{Math.round(displayValue).toLocaleString('id-ID')}</>;
+}
+
 function UnifiedCard({
   label,
   value,
   icon: Icon,
   color,
   sub,
+  index = 0,
+  isPercentage = false,
+  isCurrency = true,
 }: {
   label: string;
   value: number;
   icon: React.ElementType;
   color: string;
   sub?: string;
+  index?: number;
+  isPercentage?: boolean;
+  isCurrency?: boolean;
 }) {
   const isNeg = value < 0;
   return (
     <div
-      className="card"
+      className="card reveal-animate shadow-hover"
       style={{
         padding: '16px 20px',
         display: 'flex',
@@ -211,6 +273,8 @@ function UnifiedCard({
         flex: 1,
         minWidth: 180,
         borderTop: `3px solid ${color}`,
+        animationDelay: `${0.1 + index * 0.05}s`,
+        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
       }}
     >
       <div className="flex justify-between items-start">
@@ -220,18 +284,21 @@ function UnifiedCard({
             className="text-xl font-black mt-1"
             style={{ color: isNeg ? '#ef4444' : 'var(--text-1)' }}
           >
-            {isNeg && '− '}
-            {formatRp(Math.abs(value))}
+            <AnimatedCounter
+              value={value}
+              isCurrency={isCurrency && !isPercentage}
+              isPercentage={isPercentage}
+            />
           </div>
         </div>
         <div
-          className="w-8 h-8 rounded-lg flex items-center justify-center"
+          className="w-9 h-9 rounded-xl flex items-center justify-center"
           style={{ background: `${color}15`, color }}
         >
-          <Icon size={18} />
+          <Icon size={18} style={{ animation: 'iconPulse 2s infinite ease-in-out' }} />
         </div>
       </div>
-      {sub && <div className="text-[10px] text-3 mt-2">{sub}</div>}
+      {sub && <div className="text-[10px] text-3 mt-2 font-medium opacity-80">{sub}</div>}
     </div>
   );
 }
@@ -485,7 +552,7 @@ export default function UnifiedReportsPage() {
 
   return (
     <div className="w-full p-6">
-      <div className="flex justify-between items-start mb-6 flex-wrap gap-4">
+      <div className="reveal-animate flex justify-between items-start mb-6 flex-wrap gap-4">
         <div>
           <h1 className="page-title" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <BarChart3 size={22} style={{ color: 'var(--accent-em)' }} />
@@ -545,25 +612,30 @@ export default function UnifiedReportsPage() {
               value={cfData?.total_cash_in ?? 0}
               icon={TrendingUp}
               color="#10b981"
+              index={0}
             />
             <UnifiedCard
               label="Cash OUT"
               value={cfData?.total_cash_out ?? 0}
               icon={TrendingDown}
               color="#ef4444"
+              index={1}
             />
             <UnifiedCard
               label="Net Cash"
               value={cfData?.net_cash ?? 0}
               icon={ArrowUpRight}
               color={(cfData?.net_cash ?? 0) >= 0 ? '#3b82f6' : '#ef4444'}
+              index={2}
             />
-            <div className="card flex flex-col justify-center px-5 border-t-2 border-indigo-500">
-              <div className="text-[10px] font-bold text-3 uppercase">Total Days</div>
-              <div className="text-2xl font-black text-indigo-500 mt-1">
-                {cfData?.rows.length ?? 0}
-              </div>
-            </div>
+            <UnifiedCard
+              label="Total Days"
+              value={cfData?.rows.length ?? 0}
+              icon={Calendar}
+              color="#6366f1"
+              index={3}
+              isCurrency={false}
+            />
           </>
         ) : tab === 'valuation' ? (
           <UnifiedCard
@@ -571,6 +643,7 @@ export default function UnifiedReportsPage() {
             value={valuation?.grand_total ?? 0}
             icon={Warehouse}
             color="#6366f1"
+            index={0}
           />
         ) : (
           <>
@@ -579,30 +652,38 @@ export default function UnifiedReportsPage() {
               value={summary?.total_sales ?? 0}
               icon={TrendingUp}
               color="#10b981"
+              index={0}
             />
             <UnifiedCard
               label="Laba Kotor"
               value={summary?.gross_profit ?? 0}
               icon={Activity}
               color="#f59e0b"
+              index={1}
             />
             <UnifiedCard
               label="Laba Bersih"
               value={summary?.net_profit ?? 0}
               icon={Activity}
               color="#3b82f6"
+              index={2}
             />
-            <div className="card flex flex-col justify-center px-5 border-t-2 border-indigo-500">
-              <div className="text-[10px] font-bold text-3 uppercase">Avg Margin</div>
-              <div className="text-2xl font-black text-indigo-500 mt-1">
-                {(summary?.profit_margin ?? 0).toFixed(1)}%
-              </div>
-            </div>
+            <UnifiedCard
+              label="Avg Margin"
+              value={summary?.profit_margin ?? 0}
+              icon={TrendingUp}
+              color="#6366f1"
+              index={3}
+              isPercentage={true}
+            />
           </>
         )}
       </div>
 
-      <div className="card inline-flex p-1 gap-1 mb-5 bg-surface border-none shadow-sm">
+      <div
+        className="card reveal-animate inline-flex p-1 gap-1 mb-5 bg-surface border-none shadow-sm"
+        style={{ animationDelay: '0.22s' }}
+      >
         {TAB_CONFIG.map(({ key, label, icon: TabIcon }) => (
           <button
             key={key}

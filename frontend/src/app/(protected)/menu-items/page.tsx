@@ -11,7 +11,6 @@ import {
   Loader2,
   ChevronDown,
   ChevronUp,
-  AlertTriangle,
   FlaskConical,
   Package,
 } from 'lucide-react';
@@ -66,7 +65,11 @@ export default function MenuItemsPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const [modal, setModal] = useState<{ open: boolean; mode: 'create' | 'edit'; item?: MenuItem }>({
+  const [sidebar, setSidebar] = useState<{
+    open: boolean;
+    mode: 'create' | 'edit';
+    item?: MenuItem;
+  }>({
     open: false,
     mode: 'create',
   });
@@ -97,15 +100,13 @@ export default function MenuItemsPage() {
         categoriesApi.list(storeId),
         productsApi.list(storeId, { page: 1, per_page: 200 }),
       ]);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      setItems((menuRes.data as any).data ?? menuRes.data ?? []);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      setCategories((catRes.data as any).data ?? catRes.data ?? []);
+      const menuData = (menuRes.data as unknown as { data: MenuItem[] }).data ?? menuRes.data ?? [];
+      const catData = (catRes.data as unknown as { data: Category[] }).data ?? catRes.data ?? [];
+      const prodData = (prodRes.data as unknown as { data: Product[] }).data ?? [];
 
-      // prodRes.data is PaginatedData<Product>, so its array is prodRes.data.data
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const paginatedProducts = prodRes.data as any;
-      setProducts(paginatedProducts.data ?? []);
+      setItems(menuData);
+      setCategories(catData);
+      setProducts(prodData);
     } catch {
       showToast('Gagal memuat data', 'error');
     } finally {
@@ -117,12 +118,12 @@ export default function MenuItemsPage() {
     fetchAll();
   }, [fetchAll]);
 
-  // ── Modal ──────────────────────────────────────────────────────────────────
+  // ── Sidebar Logic ──────────────────────────────────────────────────────────
 
   const openCreate = () => {
     setForm(emptyForm());
     setFormError('');
-    setModal({ open: true, mode: 'create' });
+    setSidebar({ open: true, mode: 'create' });
   };
 
   const openEdit = (item: MenuItem) => {
@@ -147,11 +148,11 @@ export default function MenuItemsPage() {
       })),
     });
     setFormError('');
-    setModal({ open: true, mode: 'edit', item });
+    setSidebar({ open: true, mode: 'edit', item });
   };
 
-  const closeModal = () => {
-    setModal({ open: false, mode: 'create' });
+  const closeSidebar = () => {
+    setSidebar({ open: false, mode: 'create' });
     setProductSearch('');
   };
 
@@ -213,17 +214,17 @@ export default function MenuItemsPage() {
       ingredients: form.ingredients.map(i => ({ product_id: i.productId, quantity: i.quantity })),
     };
     try {
-      if (modal.mode === 'create') {
+      if (sidebar.mode === 'create') {
         await menuItemsApi.create(storeId, payload);
         showToast('Menu berhasil ditambahkan ✓', 'success');
-      } else if (modal.item) {
-        await menuItemsApi.update(storeId, modal.item.id, payload);
+      } else if (sidebar.item) {
+        await menuItemsApi.update(storeId, sidebar.item.id, payload);
         showToast('Menu berhasil diperbarui ✓', 'success');
       } else {
         setFormError('Menu tidak ditemukan');
         return;
       }
-      closeModal();
+      closeSidebar();
       fetchAll();
     } catch (error) {
       setFormError(getErrorMessage(error, 'Terjadi kesalahan'));
@@ -296,6 +297,7 @@ export default function MenuItemsPage() {
 
       {/* Header */}
       <div
+        className="reveal-animate"
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -325,7 +327,10 @@ export default function MenuItemsPage() {
           <Loader2 size={28} className="loading-spin" style={{ color: 'var(--accent-em)' }} />
         </div>
       ) : items.length === 0 ? (
-        <div className="empty-state card" style={{ padding: 60 }}>
+        <div
+          className="empty-state card reveal-animate"
+          style={{ padding: 60, animationDelay: '0.1s' }}
+        >
           <UtensilsCrossed size={48} style={{ color: 'var(--text-3)' }} />
           <p style={{ fontWeight: 600, color: 'var(--text-2)' }}>Belum ada menu</p>
           <p style={{ fontSize: '0.85rem' }}>
@@ -334,10 +339,14 @@ export default function MenuItemsPage() {
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {items.map(item => {
+          {items.map((item, i) => {
             const isExpanded = expanded === item.id;
             return (
-              <div key={item.id} className="card" style={{ padding: 0, overflow: 'hidden' }}>
+              <div
+                key={item.id}
+                className="card reveal-animate"
+                style={{ padding: 0, overflow: 'hidden', animationDelay: `${0.1 + i * 0.02}s` }}
+              >
                 <div
                   style={{
                     display: 'flex',
@@ -473,38 +482,59 @@ export default function MenuItemsPage() {
         </div>
       )}
 
-      {/* ── Create / Edit Modal ─────────────────────────────────────────────── */}
-      {modal.open && (
+      {/* ── Create / Edit Sidebar ─────────────────────────────────────────────── */}
+      {sidebar.open && (
         <div
           style={{
             position: 'fixed',
             inset: 0,
             zIndex: 1000,
-            background: 'rgba(0,0,0,0.65)',
-            backdropFilter: 'blur(4px)',
             display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: 16,
+            justifyContent: 'flex-end',
           }}
+          onClick={closeSidebar}
         >
+          <style>{`
+            @keyframes slideInRight {
+              from { transform: translateX(100%); }
+              to { transform: translateX(0); }
+            }
+          `}</style>
+          {/* Backdrop */}
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              background: 'rgba(0,0,0,0.4)',
+              backdropFilter: 'blur(3px)',
+            }}
+          />
+          {/* Sidebar drawer content */}
           <div
             className="card"
             style={{
+              position: 'relative',
               width: '100%',
               maxWidth: 560,
-              padding: 28,
-              maxHeight: '90vh',
-              overflowY: 'auto',
-              animation: 'slideIn 0.2s ease',
+              height: '100%',
+              borderRadius: 0,
+              padding: 0,
+              display: 'flex',
+              flexDirection: 'column',
+              boxShadow: '-8px 0 32px rgba(0,0,0,0.15)',
+              animation: 'slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
             }}
+            onClick={e => e.stopPropagation()}
           >
+            {/* Header */}
             <div
               style={{
+                padding: '20px 24px',
+                borderBottom: '1px solid var(--border)',
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                marginBottom: 20,
+                background: 'var(--bg-card)',
               }}
             >
               <div
@@ -517,45 +547,25 @@ export default function MenuItemsPage() {
                 }}
               >
                 <UtensilsCrossed size={18} style={{ color: '#fb923c' }} />
-                {modal.mode === 'create' ? 'Tambah Menu Item' : `Edit: ${modal.item?.name}`}
+                {sidebar.mode === 'create' ? 'Tambah Menu Item' : `Edit: ${sidebar.item?.name}`}
               </div>
-              <button onClick={closeModal} className="btn btn-ghost btn-sm" style={{ padding: 6 }}>
+              <button
+                onClick={closeSidebar}
+                className="btn btn-ghost btn-sm"
+                style={{ padding: 6 }}
+              >
                 <X size={16} />
               </button>
             </div>
 
-            <form onSubmit={handleSubmit}>
-              {/* Name */}
-              <div style={{ marginBottom: 14 }}>
-                <label
-                  style={{
-                    display: 'block',
-                    fontSize: '0.8rem',
-                    fontWeight: 600,
-                    marginBottom: 5,
-                    color: 'var(--text-2)',
-                  }}
-                >
-                  Nama Menu <span style={{ color: '#ef4444' }}>*</span>
-                </label>
-                <input
-                  className="input"
-                  placeholder="cth. Nasi Goreng Spesial"
-                  autoFocus
-                  value={form.name}
-                  onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                />
-              </div>
-
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: '1fr 1fr',
-                  gap: 12,
-                  marginBottom: 14,
-                }}
+            {/* Scrollable Form Body */}
+            <div style={{ flex: 1, overflowY: 'auto', padding: '24px' }}>
+              <form
+                id="menu-form"
+                onSubmit={handleSubmit}
+                style={{ display: 'flex', flexDirection: 'column', gap: 20 }}
               >
-                {/* Sell price */}
+                {/* Name */}
                 <div>
                   <label
                     style={{
@@ -566,293 +576,304 @@ export default function MenuItemsPage() {
                       color: 'var(--text-2)',
                     }}
                   >
-                    Harga Jual (Rp)
+                    Nama Menu <span style={{ color: '#ef4444' }}>*</span>
                   </label>
                   <input
                     className="input"
-                    type="text"
-                    placeholder="0"
-                    onFocus={e => e.target.select()}
-                    value={form.sell_price ? Number(form.sell_price).toLocaleString('id-ID') : ''}
-                    onChange={e => {
-                      const val = e.target.value.replace(/[^0-9]/g, '');
-                      setForm(f => ({ ...f, sell_price: val }));
-                    }}
+                    placeholder="cth. Nasi Goreng Spesial"
+                    autoFocus
+                    value={form.name}
+                    onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
                   />
                 </div>
-                {/* Tax */}
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* Category */}
+                  <div>
+                    <label
+                      style={{
+                        display: 'block',
+                        fontSize: '0.8rem',
+                        fontWeight: 600,
+                        marginBottom: 5,
+                        color: 'var(--text-2)',
+                      }}
+                    >
+                      Kategori{' '}
+                      <span
+                        style={{ fontSize: '0.72rem', color: 'var(--text-3)', fontWeight: 400 }}
+                      >
+                        (opsional)
+                      </span>
+                    </label>
+                    <select
+                      className="input"
+                      value={form.category_id}
+                      onChange={e => setForm(f => ({ ...f, category_id: e.target.value }))}
+                    >
+                      <option value="">— Tidak ada —</option>
+                      {categories.map(c => (
+                        <option key={c.id} value={c.id}>
+                          {c.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Tax */}
+                  <div>
+                    <label
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 8,
+                        fontSize: '0.8rem',
+                        fontWeight: 600,
+                        marginBottom: form.use_global_tax ? 15 : 5,
+                        color: 'var(--text-2)',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={form.use_global_tax}
+                        onChange={e => setForm(f => ({ ...f, use_global_tax: e.target.checked }))}
+                      />
+                      Gunakan PPN default toko
+                    </label>
+                    {!form.use_global_tax && (
+                      <div className="reveal-animate">
+                        <label
+                          style={{
+                            display: 'block',
+                            fontSize: '0.8rem',
+                            fontWeight: 600,
+                            marginBottom: 5,
+                            color: 'var(--text-2)',
+                          }}
+                        >
+                          Custom PPN (%)
+                        </label>
+                        <input
+                          className="input"
+                          type="number"
+                          min={0}
+                          max={100}
+                          placeholder="10"
+                          value={form.tax_percentage}
+                          onChange={e => setForm(f => ({ ...f, tax_percentage: e.target.value }))}
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Description */}
                 <div>
                   <label
                     style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 8,
+                      display: 'block',
                       fontSize: '0.8rem',
                       fontWeight: 600,
-                      marginBottom: form.use_global_tax ? 15 : 5,
+                      marginBottom: 5,
                       color: 'var(--text-2)',
-                      cursor: 'pointer',
                     }}
                   >
-                    <input
-                      type="checkbox"
-                      checked={form.use_global_tax}
-                      onChange={e => setForm(f => ({ ...f, use_global_tax: e.target.checked }))}
-                    />
-                    Gunakan PPN default toko
+                    Deskripsi
                   </label>
-                  {!form.use_global_tax && (
-                    <>
-                      <label
-                        style={{
-                          display: 'block',
-                          fontSize: '0.8rem',
-                          fontWeight: 600,
-                          marginBottom: 5,
-                          color: 'var(--text-2)',
-                        }}
-                      >
-                        Custom PPN (%)
-                      </label>
-                      <input
-                        className="input"
-                        type="number"
-                        min={0}
-                        max={100}
-                        placeholder="10"
-                        value={form.tax_percentage}
-                        onChange={e => setForm(f => ({ ...f, tax_percentage: e.target.value }))}
-                      />
-                    </>
-                  )}
-                </div>
-              </div>
-
-              {/* Category */}
-              <div style={{ marginBottom: 14 }}>
-                <label
-                  style={{
-                    display: 'block',
-                    fontSize: '0.8rem',
-                    fontWeight: 600,
-                    marginBottom: 5,
-                    color: 'var(--text-2)',
-                  }}
-                >
-                  Kategori{' '}
-                  <span style={{ fontSize: '0.72rem', color: 'var(--text-3)', fontWeight: 400 }}>
-                    (opsional)
-                  </span>
-                </label>
-                <select
-                  className="input"
-                  value={form.category_id}
-                  onChange={e => setForm(f => ({ ...f, category_id: e.target.value }))}
-                >
-                  <option value="">— Tidak ada —</option>
-                  {categories.map(c => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Description */}
-              <div style={{ marginBottom: 18 }}>
-                <label
-                  style={{
-                    display: 'block',
-                    fontSize: '0.8rem',
-                    fontWeight: 600,
-                    marginBottom: 5,
-                    color: 'var(--text-2)',
-                  }}
-                >
-                  Deskripsi
-                </label>
-                <textarea
-                  className="input"
-                  rows={2}
-                  placeholder="Deskripsi singkat menu…"
-                  value={form.description}
-                  onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-                  style={{ resize: 'vertical', minHeight: 56 }}
-                />
-              </div>
-
-              {/* Ingredients */}
-              <div style={{ marginBottom: 18 }}>
-                <div
-                  style={{
-                    fontSize: '0.8rem',
-                    fontWeight: 700,
-                    color: 'var(--text-1)',
-                    marginBottom: 10,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 6,
-                  }}
-                >
-                  <FlaskConical size={14} style={{ color: '#fb923c' }} />
-                  Komposisi Bahan
-                  <span style={{ fontSize: '0.7rem', color: 'var(--text-3)', fontWeight: 400 }}>
-                    — stok yang dipakai saat menu ini dijual
-                  </span>
-                </div>
-
-                {/* Added ingredients */}
-                {form.ingredients.length > 0 && (
-                  <div
-                    style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 10 }}
-                  >
-                    {form.ingredients.map(ing => (
-                      <div
-                        key={ing.productId}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 10,
-                          padding: '8px 12px',
-                          background: 'var(--bg-elevated)',
-                          borderRadius: 8,
-                          border: '1px solid var(--border)',
-                        }}
-                      >
-                        <Package size={13} style={{ color: '#fb923c', flexShrink: 0 }} />
-                        <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                          <span style={{ fontSize: '0.82rem', color: 'var(--text-1)' }}>
-                            {ing.productName}
-                          </span>
-                          {(() => {
-                            const p = products.find(x => x.id === ing.productId);
-                            const cost = (p?.cost_price || 0) * ing.quantity;
-                            return (
-                              <span style={{ fontSize: '0.7rem', color: 'var(--text-3)' }}>
-                                {formatRp(p?.cost_price || 0)}/{ing.unit} = {formatRp(cost)}
-                              </span>
-                            );
-                          })()}
-                        </div>
-                        <input
-                          type="number"
-                          min={0.01}
-                          step={0.01}
-                          value={ing.quantity}
-                          onChange={e =>
-                            updateIngredientQty(ing.productId, parseFloat(e.target.value) || 0)
-                          }
-                          style={{
-                            width: 70,
-                            background: 'var(--bg-base)',
-                            border: '1px solid var(--border-md)',
-                            borderRadius: 6,
-                            padding: '3px 7px',
-                            color: 'var(--text-1)',
-                            fontSize: '0.8rem',
-                            textAlign: 'right',
-                          }}
-                        />
-                        <span style={{ fontSize: '0.75rem', color: 'var(--text-3)', minWidth: 32 }}>
-                          {ing.unit}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => removeIngredient(ing.productId)}
-                          style={{
-                            background: 'none',
-                            border: 'none',
-                            cursor: 'pointer',
-                            color: '#ef4444',
-                            padding: 0,
-                          }}
-                        >
-                          <X size={14} />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Product search */}
-                <div style={{ position: 'relative' }}>
-                  <input
+                  <textarea
                     className="input"
-                    placeholder="Cari produk/bahan untuk ditambahkan…"
-                    value={productSearch}
-                    onChange={e => setProductSearch(e.target.value)}
+                    rows={2}
+                    placeholder="Deskripsi singkat menu…"
+                    value={form.description}
+                    onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
+                    style={{ resize: 'vertical', minHeight: 56 }}
                   />
-                  {productSearch && filteredProducts.length > 0 && (
-                    <div
-                      style={{
-                        position: 'absolute',
-                        top: '100%',
-                        left: 0,
-                        right: 0,
-                        zIndex: 100,
-                        background: 'var(--bg-card)',
-                        border: '1px solid var(--border-md)',
-                        borderRadius: 8,
-                        marginTop: 4,
-                        boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
-                        overflow: 'hidden',
-                      }}
-                    >
-                      {filteredProducts.map(p => (
-                        <button
-                          key={p.id}
-                          type="button"
-                          onClick={() => addIngredient(p)}
-                          style={{
-                            display: 'flex',
-                            width: '100%',
-                            alignItems: 'center',
-                            gap: 10,
-                            padding: '9px 14px',
-                            background: 'none',
-                            border: 'none',
-                            cursor: 'pointer',
-                            textAlign: 'left',
-                          }}
-                          className="category-row"
-                        >
-                          <Package size={13} style={{ color: 'var(--text-3)', flexShrink: 0 }} />
-                          <span style={{ flex: 1, fontSize: '0.82rem', color: 'var(--text-1)' }}>
-                            {p.name}
-                          </span>
-                          <span style={{ fontSize: '0.72rem', color: 'var(--text-3)' }}>
-                            {p.unit}
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
                 </div>
 
-                {/* Biaya Tambahan */}
-                <div style={{ marginBottom: 18 }}>
+                {/* Ingredients */}
+                <div>
                   <div
                     style={{
                       fontSize: '0.8rem',
                       fontWeight: 700,
                       color: 'var(--text-1)',
                       marginBottom: 10,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 6,
+                    }}
+                  >
+                    <FlaskConical size={14} style={{ color: '#fb923c' }} />
+                    Komposisi Bahan
+                    <span style={{ fontSize: '0.7rem', color: 'var(--text-3)', fontWeight: 400 }}>
+                      — stok yang dipakai saat menu ini dijual
+                    </span>
+                  </div>
+
+                  {/* Added ingredients */}
+                  {form.ingredients.length > 0 && (
+                    <div
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 10,
+                        marginBottom: 14,
+                      }}
+                    >
+                      {form.ingredients.map(ing => (
+                        <div
+                          key={ing.productId}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 12,
+                            padding: '10px 14px',
+                            background: 'var(--bg-elevated)',
+                            borderRadius: 10,
+                            border: '1px solid var(--border)',
+                          }}
+                        >
+                          <Package size={14} style={{ color: '#fb923c', flexShrink: 0 }} />
+                          <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                            <span
+                              style={{
+                                fontSize: '0.85rem',
+                                color: 'var(--text-1)',
+                                fontWeight: 600,
+                              }}
+                            >
+                              {ing.productName}
+                            </span>
+                            {(() => {
+                              const p = products.find(x => x.id === ing.productId);
+                              const cost = (p?.cost_price || 0) * ing.quantity;
+                              return (
+                                <span style={{ fontSize: '0.72rem', color: 'var(--text-3)' }}>
+                                  {formatRp(p?.cost_price || 0)}/{ing.unit} = {formatRp(cost)}
+                                </span>
+                              );
+                            })()}
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <input
+                              type="number"
+                              min={0.01}
+                              step={0.01}
+                              value={ing.quantity}
+                              onChange={e =>
+                                updateIngredientQty(ing.productId, parseFloat(e.target.value) || 0)
+                              }
+                              style={{
+                                width: 64,
+                                background: 'var(--bg-base)',
+                                border: '1px solid var(--border-md)',
+                                borderRadius: 6,
+                                padding: '4px 6px',
+                                color: 'var(--text-1)',
+                                fontSize: '0.8rem',
+                                textAlign: 'right',
+                              }}
+                            />
+                            <span
+                              style={{ fontSize: '0.75rem', color: 'var(--text-3)', minWidth: 32 }}
+                            >
+                              {ing.unit}
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => removeIngredient(ing.productId)}
+                            className="btn btn-ghost btn-sm"
+                            style={{ color: '#ef4444', padding: 4 }}
+                          >
+                            <X size={15} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Product search */}
+                  <div style={{ position: 'relative' }}>
+                    <input
+                      className="input"
+                      placeholder="Cari produk/bahan untuk ditambahkan…"
+                      value={productSearch}
+                      onChange={e => setProductSearch(e.target.value)}
+                    />
+                    {productSearch && filteredProducts.length > 0 && (
+                      <div
+                        style={{
+                          position: 'absolute',
+                          top: '100%',
+                          left: 0,
+                          right: 0,
+                          zIndex: 100,
+                          background: 'var(--bg-card)',
+                          border: '1px solid var(--border-md)',
+                          borderRadius: 10,
+                          marginTop: 6,
+                          boxShadow: '0 10px 30px rgba(0,0,0,0.25)',
+                          overflow: 'hidden',
+                        }}
+                      >
+                        {filteredProducts.map(p => (
+                          <button
+                            key={p.id}
+                            type="button"
+                            onClick={() => addIngredient(p)}
+                            style={{
+                              display: 'flex',
+                              width: '100%',
+                              alignItems: 'center',
+                              gap: 12,
+                              padding: '10px 16px',
+                              background: 'none',
+                              border: 'none',
+                              cursor: 'pointer',
+                              textAlign: 'left',
+                            }}
+                            className="category-row hover:bg-muted"
+                          >
+                            <Package size={14} style={{ color: 'var(--text-3)', flexShrink: 0 }} />
+                            <span style={{ flex: 1, fontSize: '0.85rem', color: 'var(--text-1)' }}>
+                              {p.name}
+                            </span>
+                            <span style={{ fontSize: '0.75rem', color: 'var(--text-3)' }}>
+                              {p.unit}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Biaya Tambahan */}
+                <div>
+                  <div
+                    style={{
+                      fontSize: '0.85rem',
+                      fontWeight: 700,
+                      color: 'var(--text-1)',
+                      marginBottom: 12,
                     }}
                   >
                     Biaya Tambahan
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+                  <div className="grid grid-cols-3 gap-3">
                     <div>
                       <label
                         style={{
                           display: 'block',
-                          fontSize: '0.75rem',
+                          fontSize: '0.72rem',
                           fontWeight: 600,
-                          marginBottom: 5,
+                          marginBottom: 4,
                           color: 'var(--text-2)',
                         }}
                       >
-                        Packaging
+                        Packaging (Rp)
                       </label>
                       <input
                         className="input"
@@ -874,13 +895,13 @@ export default function MenuItemsPage() {
                       <label
                         style={{
                           display: 'block',
-                          fontSize: '0.75rem',
+                          fontSize: '0.72rem',
                           fontWeight: 600,
-                          marginBottom: 5,
+                          marginBottom: 4,
                           color: 'var(--text-2)',
                         }}
                       >
-                        Overhead
+                        Overhead (Rp)
                       </label>
                       <input
                         className="input"
@@ -902,13 +923,13 @@ export default function MenuItemsPage() {
                       <label
                         style={{
                           display: 'block',
-                          fontSize: '0.75rem',
+                          fontSize: '0.72rem',
                           fontWeight: 600,
-                          marginBottom: 5,
+                          marginBottom: 4,
                           color: 'var(--text-2)',
                         }}
                       >
-                        Tenaga Kerja
+                        Tenaga Kerja (Rp)
                       </label>
                       <input
                         className="input"
@@ -927,6 +948,7 @@ export default function MenuItemsPage() {
                   </div>
                 </div>
 
+                {/* HPP Summary Calculation Block */}
                 {typeof products !== 'undefined' &&
                   (() => {
                     const ingredientCost = form.ingredients.reduce((acc, ing) => {
@@ -943,6 +965,8 @@ export default function MenuItemsPage() {
                     const currentPrice = parseFloat(form.sell_price) || 0;
 
                     const showSummary = totalHpp > 0;
+                    prevHppRef.current = totalHpp;
+
                     if (!showSummary) return null;
 
                     let marginPct = 0;
@@ -952,34 +976,16 @@ export default function MenuItemsPage() {
                       marginPct = (profit / totalHpp) * 100;
                     }
 
-                    const isHppIncreased = totalHpp > prevHppRef.current && prevHppRef.current > 0;
-                    prevHppRef.current = totalHpp;
-
                     return (
                       <div
                         style={{
-                          marginTop: 12,
-                          padding: 14,
-                          background: 'var(--bg-elevated)',
-                          borderRadius: 8,
-                          border: '1px solid var(--border-md)',
+                          marginTop: 10,
+                          padding: 18,
+                          background: 'rgba(8, 132, 246, 0.04)',
+                          borderRadius: 12,
+                          border: '1px solid rgba(8, 132, 246, 0.12)',
                         }}
                       >
-                        <style>{`
-                          @keyframes bumpRed {
-                            0% { transform: scale(1); color: var(--text-1); }
-                            30% { transform: scale(1.1); color: #ef4444; }
-                            100% { transform: scale(1); color: var(--text-1); }
-                          }
-                          @keyframes bumpNormal {
-                            0% { transform: scale(1); }
-                            30% { transform: scale(1.05); }
-                            100% { transform: scale(1); }
-                          }
-                          .animate-hpp {
-                            display: inline-block;
-                          }
-                        `}</style>
                         <div
                           style={{
                             marginBottom: 12,
@@ -991,8 +997,8 @@ export default function MenuItemsPage() {
                             style={{
                               display: 'flex',
                               justifyContent: 'space-between',
-                              fontSize: '0.75rem',
-                              marginBottom: 4,
+                              fontSize: '0.78rem',
+                              marginBottom: 6,
                               color: 'var(--text-2)',
                             }}
                           >
@@ -1003,8 +1009,8 @@ export default function MenuItemsPage() {
                             style={{
                               display: 'flex',
                               justifyContent: 'space-between',
-                              fontSize: '0.75rem',
-                              marginBottom: 4,
+                              fontSize: '0.78rem',
+                              marginBottom: 6,
                               color: 'var(--text-2)',
                             }}
                           >
@@ -1015,8 +1021,8 @@ export default function MenuItemsPage() {
                             style={{
                               display: 'flex',
                               justifyContent: 'space-between',
-                              fontSize: '0.75rem',
-                              marginBottom: 4,
+                              fontSize: '0.78rem',
+                              marginBottom: 6,
                               color: 'var(--text-2)',
                             }}
                           >
@@ -1027,7 +1033,7 @@ export default function MenuItemsPage() {
                             style={{
                               display: 'flex',
                               justifyContent: 'space-between',
-                              fontSize: '0.75rem',
+                              fontSize: '0.78rem',
                               color: 'var(--text-2)',
                             }}
                           >
@@ -1039,20 +1045,17 @@ export default function MenuItemsPage() {
                           style={{
                             display: 'flex',
                             justifyContent: 'space-between',
-                            marginBottom: 10,
-                            fontSize: '0.85rem',
+                            marginBottom: 12,
+                            fontSize: '0.9rem',
                           }}
                         >
-                          <span style={{ color: 'var(--text-1)', fontWeight: 600 }}>Total HPP</span>
+                          <span style={{ color: 'var(--text-1)', fontWeight: 700 }}>Total HPP</span>
                           <span
                             key={totalHpp}
-                            className="animate-hpp"
                             style={{
-                              fontWeight: 700,
+                              fontWeight: 800,
                               color: 'var(--text-1)',
-                              animation: isHppIncreased
-                                ? 'bumpRed 0.8s ease'
-                                : 'bumpNormal 0.4s ease',
+                              fontSize: '1rem',
                             }}
                           >
                             {formatRp(totalHpp)}
@@ -1062,12 +1065,12 @@ export default function MenuItemsPage() {
                           style={{
                             display: 'flex',
                             justifyContent: 'space-between',
-                            marginBottom: 10,
-                            fontSize: '0.8rem',
+                            marginBottom: 12,
+                            fontSize: '0.82rem',
                           }}
                         >
-                          <span style={{ color: 'var(--text-3)' }}>Saran Harga (30% - 45%)</span>
-                          <span style={{ color: 'var(--brand)', fontWeight: 600 }}>
+                          <span style={{ color: 'var(--text-3)' }}>Saran Harga (30-45%)</span>
+                          <span style={{ color: 'var(--brand)', fontWeight: 700 }}>
                             {formatRp(suggestedPriceMin)} - {formatRp(suggestedPriceMax)}
                           </span>
                         </div>
@@ -1076,195 +1079,237 @@ export default function MenuItemsPage() {
                             style={{
                               display: 'flex',
                               justifyContent: 'space-between',
-                              marginBottom: 10,
-                              fontSize: '0.8rem',
+                              fontSize: '0.82rem',
                             }}
                           >
-                            <span style={{ color: 'var(--text-3)' }}>Profit saat ini (Margin)</span>
+                            <span style={{ color: 'var(--text-3)' }}>Profit (Margin)</span>
                             <span
                               style={{
                                 color: marginPct >= 30 ? 'var(--brand)' : '#ef4444',
-                                fontWeight: 600,
+                                fontWeight: 700,
                               }}
                             >
                               {formatRp(profit)} ({marginPct.toFixed(1)}%)
                             </span>
                           </div>
                         )}
-                        <div
-                          style={{
-                            display: 'flex',
-                            gap: 8,
-                            alignItems: 'center',
-                            justifyContent: 'flex-end',
-                            marginTop: 12,
-                          }}
-                        >
-                          <input
-                            type="text"
-                            placeholder="Kustom Harga..."
-                            style={{
-                              width: 120,
-                              textAlign: 'right',
-                              fontSize: '0.8rem',
-                              padding: '6px 10px',
-                              borderRadius: 6,
-                              border: '1px solid var(--border-md)',
-                              background: 'var(--bg-base)',
-                              color: 'var(--text-1)',
-                            }}
-                            onFocus={e => e.target.select()}
-                            value={
-                              form.sell_price ? Number(form.sell_price).toLocaleString('id-ID') : ''
-                            }
-                            onChange={e => {
-                              const val = e.target.value.replace(/[^0-9]/g, '');
-                              setForm(f => ({ ...f, sell_price: val }));
-                            }}
-                          />
-                          <button
-                            type="button"
-                            className="btn btn-ghost btn-sm"
-                            onClick={() =>
-                              setForm(f => ({
-                                ...f,
-                                sell_price: String(Math.round(suggestedPriceMin)),
-                              }))
-                            }
-                          >
-                            Set Margin 30%
-                          </button>
-                          <button
-                            type="button"
-                            className="btn btn-primary btn-sm"
-                            onClick={() =>
-                              setForm(f => ({
-                                ...f,
-                                sell_price: String(Math.round(suggestedPriceMax)),
-                              }))
-                            }
-                          >
-                            Set Margin 45%
-                          </button>
-                        </div>
                       </div>
                     );
                   })()}
-              </div>
 
-              {formError && (
+                {/* Harga Jual - Permanent at Bottom */}
                 <div
                   style={{
-                    background: 'rgba(239,68,68,0.12)',
-                    border: '1px solid rgba(239,68,68,0.3)',
-                    borderRadius: 8,
-                    padding: '10px 14px',
-                    marginBottom: 14,
-                    fontSize: '0.82rem',
-                    color: '#ef4444',
+                    marginTop: 10,
+                    padding: 18,
+                    background: 'rgba(8, 132, 246, 0.04)',
+                    borderRadius: 12,
+                    border: '1px solid rgba(8, 132, 246, 0.12)',
                   }}
                 >
-                  {formError}
-                </div>
-              )}
+                  <div
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 8,
+                    }}
+                  >
+                    <div className="flex gap-2">
+                      <div
+                        style={{
+                          flex: 1,
+                          display: 'flex',
+                          alignItems: 'center',
+                          background: 'var(--bg-base)',
+                          border: '1px solid var(--border-md)',
+                          borderRadius: 8,
+                          padding: '0 12px',
+                        }}
+                      >
+                        <span
+                          style={{
+                            fontSize: '0.75rem',
+                            color: 'var(--text-3)',
+                            fontWeight: 600,
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          Harga Jual (Rp)
+                        </span>
+                        <input
+                          type="text"
+                          placeholder="0"
+                          style={{
+                            flex: 1,
+                            textAlign: 'right',
+                            fontSize: '0.8rem',
+                            padding: '8px 0',
+                            background: 'transparent',
+                            border: 'none',
+                            outline: 'none',
+                            color: 'var(--text-1)',
+                          }}
+                          onFocus={e => e.target.select()}
+                          value={
+                            form.sell_price ? Number(form.sell_price).toLocaleString('id-ID') : ''
+                          }
+                          onChange={e => {
+                            const val = e.target.value.replace(/[^0-9]/g, '');
+                            setForm(f => ({ ...f, sell_price: val }));
+                          }}
+                        />
+                      </div>
+                    </div>
 
-              <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-                <button type="button" className="btn btn-ghost" onClick={closeModal}>
-                  Batal
-                </button>
-                <button
-                  type="submit"
-                  className="btn btn-primary"
-                  disabled={submitting}
-                  style={{ gap: 8 }}
-                >
-                  {submitting ? (
-                    <>
-                      <Loader2 size={14} className="loading-spin" /> Menyimpan...
-                    </>
-                  ) : (
-                    <>
-                      <Check size={14} /> Simpan
-                    </>
-                  )}
-                </button>
-              </div>
-            </form>
+                    {/* Quick set price buttons (Visible only if HPP known) */}
+                    {prevHppRef.current > 0 && (
+                      <div className="flex gap-2 reveal-animate">
+                        <button
+                          type="button"
+                          className="btn btn-secondary flex-1 text-xs"
+                          style={{ padding: '6px 0' }}
+                          onClick={() => {
+                            const suggestedPriceMin = prevHppRef.current * 1.3;
+                            setForm(f => ({
+                              ...f,
+                              sell_price: String(Math.round(suggestedPriceMin)),
+                            }));
+                          }}
+                        >
+                          Set 30%
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-primary flex-1 text-xs"
+                          style={{ padding: '6px 0' }}
+                          onClick={() => {
+                            const suggestedPriceMax = prevHppRef.current * 1.45;
+                            setForm(f => ({
+                              ...f,
+                              sell_price: String(Math.round(suggestedPriceMax)),
+                            }));
+                          }}
+                        >
+                          Set 45%
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {formError && (
+                  <div
+                    style={{
+                      background: 'rgba(239,68,68,0.12)',
+                      border: '1px solid rgba(239,68,68,0.3)',
+                      borderRadius: 10,
+                      padding: '12px 16px',
+                      fontSize: '0.85rem',
+                      color: '#ef4444',
+                    }}
+                  >
+                    {formError}
+                  </div>
+                )}
+              </form>
+            </div>
+
+            {/* Footer */}
+            <div
+              style={{
+                padding: '20px 24px',
+                borderTop: '1px solid var(--border)',
+                display: 'flex',
+                gap: 12,
+                justifyContent: 'flex-end',
+                background: 'var(--bg-card)',
+              }}
+            >
+              <button type="button" className="btn btn-ghost" onClick={closeSidebar}>
+                Batal
+              </button>
+              <button
+                type="submit"
+                form="menu-form"
+                className="btn btn-primary"
+                disabled={submitting}
+                style={{ minWidth: 120 }}
+              >
+                {submitting ? (
+                  <>
+                    <Loader2 size={16} className="loading-spin mr-2" /> Menyimpan...
+                  </>
+                ) : (
+                  <>
+                    <Check size={16} className="mr-2" /> Simpan Menu
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       )}
 
-      {/* ── Delete Confirm ─────────────────────────────────────────────────── */}
-      {deleteConfirm.open && deleteConfirm.item && (
+      {/* Delete Confirmation Modal */}
+      {deleteConfirm.open && (
         <div
           style={{
             position: 'fixed',
             inset: 0,
-            zIndex: 1000,
+            zIndex: 1100,
             background: 'rgba(0,0,0,0.6)',
             backdropFilter: 'blur(4px)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            padding: 16,
+            padding: 20,
           }}
         >
           <div
             className="card"
-            style={{
-              width: '100%',
-              maxWidth: 380,
-              padding: 28,
-              textAlign: 'center',
-              animation: 'slideIn 0.2s ease',
-            }}
+            style={{ width: '100%', maxWidth: 400, padding: 32, textAlign: 'center' }}
           >
             <div
               style={{
-                width: 48,
-                height: 48,
+                width: 64,
+                height: 64,
                 borderRadius: '50%',
-                background: 'rgba(239,68,68,0.15)',
+                background: 'rgba(239,68,68,0.1)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                margin: '0 auto 14px',
+                margin: '0 auto 20px',
               }}
             >
-              <AlertTriangle size={22} style={{ color: '#ef4444' }} />
+              <Trash2 size={32} style={{ color: '#ef4444' }} />
             </div>
-            <div style={{ fontWeight: 700, fontSize: '1rem', marginBottom: 8 }}>Hapus Menu?</div>
-            <div
+            <h3
               style={{
-                fontSize: '0.85rem',
-                color: 'var(--text-2)',
-                marginBottom: 20,
-                lineHeight: 1.6,
+                fontSize: '1.2rem',
+                fontWeight: 700,
+                marginBottom: 8,
+                color: 'var(--text-1)',
               }}
             >
-              Menu <strong>&ldquo;{deleteConfirm.item.name}&rdquo;</strong> akan dihapus
-              (soft-delete).
-            </div>
-            <div style={{ display: 'flex', gap: 10 }}>
+              Hapus Menu?
+            </h3>
+            <p style={{ fontSize: '0.9rem', color: 'var(--text-3)', marginBottom: 28 }}>
+              Anda akan menghapus &ldquo;{deleteConfirm.item?.name}&rdquo;. Tindakan ini tidak dapat
+              dibatalkan.
+            </p>
+            <div style={{ display: 'flex', gap: 12 }}>
               <button
-                className="btn btn-ghost"
+                className="btn btn-ghost flex-1"
                 onClick={() => setDeleteConfirm({ open: false })}
-                style={{ flex: 1 }}
               >
                 Batal
               </button>
               <button
-                className="btn"
+                className="btn btn-primary flex-1"
+                style={{ background: '#ef4444' }}
                 onClick={handleDelete}
-                style={{
-                  flex: 1,
-                  gap: 8,
-                  background: 'rgba(239,68,68,0.15)',
-                  color: '#ef4444',
-                  border: '1px solid rgba(239,68,68,0.3)',
-                }}
               >
-                <Trash2 size={14} /> Hapus
+                Ya, Hapus
               </button>
             </div>
           </div>

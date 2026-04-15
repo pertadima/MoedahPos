@@ -271,6 +271,7 @@ export default function ExpenseCategoriesPage() {
     <div className="w-full p-6 max-w-[1400px] mx-auto">
       {/* Header */}
       <div
+        className="reveal-animate"
         style={{
           display: 'flex',
           justifyContent: 'space-between',
@@ -290,7 +291,7 @@ export default function ExpenseCategoriesPage() {
       </div>
 
       {/* Table */}
-      <div className="card" style={{ overflow: 'hidden' }}>
+      <div className="card reveal-animate" style={{ overflow: 'hidden', animationDelay: '0.1s' }}>
         {loading ? (
           <div style={{ display: 'flex', justifyContent: 'center', padding: 40 }}>
             <Loader2 size={24} className="loading-spin" style={{ color: 'var(--accent-em)' }} />
@@ -312,8 +313,12 @@ export default function ExpenseCategoriesPage() {
               </tr>
             </thead>
             <tbody>
-              {categories.map(c => (
-                <tr key={c.id} style={{ opacity: c.is_active ? 1 : 0.6 }}>
+              {categories.map((c, i) => (
+                <tr
+                  key={c.id}
+                  className="reveal-animate"
+                  style={{ opacity: c.is_active ? 1 : 0.6, animationDelay: `${0.15 + i * 0.02}s` }}
+                >
                   <td style={{ fontWeight: 600 }}>{c.name}</td>
                   <td style={{ color: 'var(--text-2)', fontSize: '0.85rem' }}>
                     {c.description || '—'}

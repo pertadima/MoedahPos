@@ -16,6 +16,8 @@ import {
   CreditCard,
   Loader2,
   Eye,
+  TrendingUp,
+  ShoppingBag,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { transactionsApi } from '@/lib/api/transactions';
@@ -837,7 +839,7 @@ export default function TransactionsPage() {
   return (
     <div className="w-full p-6">
       {/* ── Header ── */}
-      <div style={{ marginBottom: 20 }}>
+      <div style={{ marginBottom: 20 }} className="reveal-animate">
         <h1 className="page-title" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <Receipt size={22} style={{ color: 'var(--accent-em)' }} />
           Riwayat Transaksi
@@ -847,6 +849,7 @@ export default function TransactionsPage() {
 
       {/* ── Preset Tabs ── */}
       <div
+        className="reveal-animate"
         style={{
           display: 'flex',
           gap: 4,
@@ -856,6 +859,7 @@ export default function TransactionsPage() {
           padding: 4,
           width: 'fit-content',
           border: '1px solid var(--border)',
+          animationDelay: '0.1s',
         }}
       >
         {PRESETS.map(p => (
@@ -881,12 +885,14 @@ export default function TransactionsPage() {
 
       {/* ── Filter Row ── */}
       <div
+        className="reveal-animate"
         style={{
           display: 'flex',
           gap: 8,
           marginBottom: 16,
           flexWrap: 'wrap',
           alignItems: 'center',
+          animationDelay: '0.15s',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -962,19 +968,52 @@ export default function TransactionsPage() {
           }}
         >
           {[
-            { label: 'Total Transaksi', val: meta.total, color: '#6366f1' },
-            { label: 'Selesai', val: completedCount, color: '#10b981' },
-            { label: 'Total Penjualan', val: formatRp(totalRevenue), color: '#f59e0b', big: true },
-          ].map(({ label, val, color, big }) => (
-            <div key={label} className="stat-card" style={{ padding: '14px 16px' }}>
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-3)', marginBottom: 4 }}>
-                {label}
+            {
+              label: 'Total Transaksi',
+              val: meta.total.toString(),
+              icon: ShoppingBag,
+              color: '#6366f1',
+              bg: 'rgba(99,102,241,0.1)',
+            },
+            {
+              label: 'Selesai',
+              val: completedCount.toString(),
+              icon: CheckCircle2,
+              color: '#10b981',
+              bg: 'rgba(16,185,129,0.1)',
+            },
+            {
+              label: 'Total Penjualan',
+              val: formatRp(totalRevenue),
+              icon: TrendingUp,
+              color: '#f59e0b',
+              bg: 'rgba(245,158,11,0.1)',
+            },
+          ].map(({ label, val, color, icon: Icon, bg }, i) => {
+            const isCurrency = val.startsWith('Rp');
+            const displayValue = isCurrency ? val.replace('Rp', '').trim() : val;
+            return (
+              <div
+                key={label}
+                className="stat-card reveal-animate"
+                data-tooltip={`${label}: ${val}`}
+                style={{ animationDelay: `${0.25 + i * 0.05}s` }}
+              >
+                <div className="stat-icon" style={{ background: bg }}>
+                  <Icon size={22} style={{ color }} />
+                </div>
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <div className="stat-val">
+                    {isCurrency && <span className="stat-currency">Rp</span>}
+                    <span className="stat-number">{displayValue}</span>
+                  </div>
+                  <div className="stat-label" title={label}>
+                    {label}
+                  </div>
+                </div>
               </div>
-              <div style={{ fontWeight: 800, fontSize: big ? '1.1rem' : '1.4rem', color }}>
-                {val}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
@@ -1004,7 +1043,7 @@ export default function TransactionsPage() {
       )}
 
       {/* ── Table ── */}
-      <div className="card" style={{ overflow: 'hidden' }}>
+      <div className="card reveal-animate" style={{ overflow: 'hidden', animationDelay: '0.4s' }}>
         {loading ? (
           <div style={{ display: 'flex', justifyContent: 'center', padding: 48 }}>
             <Loader2 size={26} className="loading-spin" style={{ color: 'var(--accent-em)' }} />
@@ -1029,8 +1068,13 @@ export default function TransactionsPage() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map(txn => (
-                <tr key={txn.id} style={{ cursor: 'pointer' }} onClick={() => openDetail(txn)}>
+              {filtered.map((txn, i) => (
+                <tr
+                  key={txn.id}
+                  className="reveal-animate"
+                  style={{ cursor: 'pointer', animationDelay: `${0.45 + i * 0.02}s` }}
+                  onClick={() => openDetail(txn)}
+                >
                   <td>
                     <span
                       style={{

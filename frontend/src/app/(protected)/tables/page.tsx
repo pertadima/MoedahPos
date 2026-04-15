@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import {
   Grid3x3,
   Plus,
@@ -11,6 +11,9 @@ import {
   Loader2,
   Users,
   AlertTriangle,
+  LayoutDashboard,
+  CheckCircle2,
+  Clock,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { usePermission } from '@/hooks/usePermission';
@@ -22,16 +25,35 @@ import { getErrorMessage } from '@/lib/utils';
 
 const STATUS_CONFIG: Record<
   TableStatus,
-  { label: string; color: string; bg: string; dot: string }
+  { label: string; color: string; bg: string; dot: string; furniture: string }
 > = {
-  available: { label: 'Tersedia', color: '#10b981', bg: 'rgba(16,185,129,0.12)', dot: '#10b981' },
-  occupied: { label: 'Terisi', color: '#ef4444', bg: 'rgba(239,68,68,0.12)', dot: '#ef4444' },
-  reserved: { label: 'Reservasi', color: '#f59e0b', bg: 'rgba(245,158,11,0.12)', dot: '#f59e0b' },
+  available: {
+    label: 'Tersedia',
+    color: '#047857',
+    bg: '#ecfdf5',
+    dot: '#10b981',
+    furniture: '#c6f6d5',
+  },
+  occupied: {
+    label: 'Sedang Makan',
+    color: '#be123c',
+    bg: '#fff1f2',
+    dot: '#f43f5e',
+    furniture: '#fed7e2',
+  },
+  reserved: {
+    label: 'Dipesan',
+    color: '#1e40af',
+    bg: '#eff6ff',
+    dot: '#3b82f6',
+    furniture: '#dbeafe',
+  },
   unavailable: {
     label: 'Tidak Tersedia',
-    color: '#6b7280',
-    bg: 'rgba(107,114,128,0.12)',
+    color: '#4b5563',
+    bg: '#f3f4f6',
     dot: '#6b7280',
+    furniture: '#e5e7eb',
   },
 };
 
@@ -55,6 +77,17 @@ export default function TablesPage() {
   const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
   const [form, setForm] = useState({ table_number: '', capacity: 4, notes: '' });
   const [formError, setFormError] = useState('');
+
+  const stats = useMemo(() => {
+    return {
+      total: tables.length,
+      available: tables.filter(t => t.status === 'available').length,
+      occupied: tables.filter(t => t.status === 'occupied').length,
+      reserved: tables.filter(t => t.status === 'reserved').length,
+    };
+  }, [tables]);
+
+  // ── Components ────────────────────────────────────────────────────────────────
 
   const storeId = selectedStore?.store_id ?? '';
 
@@ -181,11 +214,9 @@ export default function TablesPage() {
       </div>
     );
 
-  const available = tables.filter(t => t.status === 'available').length;
-  const occupied = tables.filter(t => t.status === 'occupied').length;
-
   return (
-    <div className="w-full p-6">
+    <div className="w-full p-4 sm:p-6">
+      {/* 1. Main Floor Plan Area */}
       {/* Toast */}
       {toast && (
         <div
@@ -210,54 +241,74 @@ export default function TablesPage() {
       )}
 
       {/* Header */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginBottom: 24,
-        }}
-      >
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-7">
         <div>
-          <h1 className="page-title" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <Grid3x3 size={22} style={{ color: '#fb923c' }} />
-            Manajemen Meja
+          <h1 className="page-title">
+            <LayoutDashboard size={20} style={{ color: 'var(--brand)' }} />
+            Kelola Meja
           </h1>
           <p className="page-subtitle">
             {selectedStore.store_name} · {tables.length} meja
           </p>
         </div>
-        {can('products.create') && (
-          <button className="btn btn-primary" onClick={openCreate} style={{ gap: 8 }}>
-            <Plus size={16} /> Tambah Meja
-          </button>
-        )}
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+          {can('products.create') && (
+            <button className="btn btn-primary" onClick={openCreate} style={{ gap: 8 }}>
+              <Plus size={16} /> Tambah Meja
+            </button>
+          )}
+        </div>
       </div>
 
-      {/* Stats */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(3, 1fr)',
-          gap: 12,
-          marginBottom: 24,
-        }}
-      >
-        {[
-          { label: 'Total Meja', value: tables.length, color: 'var(--accent-em)' },
-          { label: 'Tersedia', value: available, color: '#10b981' },
-          { label: 'Terisi', value: occupied, color: '#ef4444' },
-        ].map(stat => (
-          <div key={stat.label} className="stat-card" style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: '1.8rem', fontWeight: 700, color: stat.color }}>
-              {stat.value}
+      {/* 2. Legend / Stats Section (Dashboard Style) */}
+      {!loading && (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          {[
+            {
+              label: 'Total Meja',
+              count: stats.total,
+              icon: Grid3x3,
+              color: 'var(--text-2)',
+              bg: 'var(--bg-elevated)',
+            },
+            {
+              label: 'Tersedia',
+              count: stats.available,
+              icon: CheckCircle2,
+              color: '#10b981',
+              bg: 'rgba(16,185,129,0.10)',
+            },
+            {
+              label: 'Sedang Makan',
+              count: stats.occupied,
+              icon: Users,
+              color: '#ef4444',
+              bg: 'rgba(239,68,68,0.10)',
+            },
+            {
+              label: 'Dipesan',
+              count: stats.reserved,
+              icon: Clock,
+              color: '#3b82f6',
+              bg: 'rgba(59,130,246,0.10)',
+            },
+          ].map((s, i) => (
+            <div key={i} className="stat-card" data-tooltip={`${s.label}: ${s.count}`}>
+              <div className="stat-icon" style={{ background: s.bg }}>
+                <s.icon size={22} style={{ color: s.color }} />
+              </div>
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <div className="stat-val">
+                  <span className="stat-number">{s.count}</span>
+                </div>
+                <div className="stat-label">{s.label}</div>
+              </div>
             </div>
-            <div style={{ fontSize: '0.78rem', color: 'var(--text-3)' }}>{stat.label}</div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
-      {/* Table grid */}
+      {/* Grid & Content */}
       {loading ? (
         <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}>
           <Loader2 size={28} className="loading-spin" style={{ color: 'var(--accent-em)' }} />
@@ -271,108 +322,117 @@ export default function TablesPage() {
           </p>
         </div>
       ) : (
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
-            gap: 14,
-          }}
-        >
-          {tables.map(table => {
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 min-h-[400px]">
+          {tables.map((table, i) => {
             const cfg = STATUS_CONFIG[table.status as TableStatus];
             const isUpdating = statusUpdating === table.id;
             return (
-              <div key={table.id} className="card" style={{ padding: 0, overflow: 'hidden' }}>
-                {/* Status strip */}
-                <div style={{ height: 4, background: cfg.dot }} />
-                <div style={{ padding: '14px 14px 10px' }}>
-                  {/* Table number */}
-                  <div
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'flex-start',
-                      marginBottom: 10,
-                    }}
-                  >
+              <div
+                key={table.id}
+                className={`table-card table-card-animate ${table.status !== 'available' ? 'active' : ''}`}
+                style={{
+                  animationDelay: `${i * 0.05}s`,
+                  borderColor: table.status !== 'available' ? cfg.color : 'var(--border)',
+                  background:
+                    table.status === 'occupied'
+                      ? 'rgba(239, 68, 68, 0.02)'
+                      : table.status === 'reserved'
+                        ? 'rgba(59, 130, 246, 0.02)'
+                        : 'var(--bg-card)',
+                  boxShadow: table.status !== 'available' ? `0 0 0 1px ${cfg.color}11` : 'none',
+                }}
+                onClick={() => openEdit(table)}
+              >
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'flex-start',
+                    marginBottom: 12,
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                     <div>
-                      <div style={{ fontWeight: 700, fontSize: '1.1rem', color: 'var(--text-1)' }}>
+                      <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-1)' }}>
                         Meja {table.table_number}
                       </div>
                       <div
                         style={{
+                          fontSize: '0.75rem',
+                          color: 'var(--text-3)',
                           display: 'flex',
                           alignItems: 'center',
                           gap: 4,
-                          fontSize: '0.72rem',
-                          color: 'var(--text-3)',
                         }}
                       >
-                        <Users size={11} /> {table.capacity} orang
+                        <Users size={12} /> {table.capacity} orang
                       </div>
                     </div>
-                    <div
-                      style={{
-                        fontSize: '0.66rem',
-                        padding: '3px 7px',
-                        borderRadius: 6,
-                        fontWeight: 600,
-                        background: cfg.bg,
-                        color: cfg.color,
-                      }}
-                    >
-                      {cfg.label}
-                    </div>
                   </div>
+                  <span
+                    style={{
+                      padding: '4px 8px',
+                      borderRadius: 6,
+                      fontSize: '0.65rem',
+                      fontWeight: 700,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.02em',
+                      background: cfg.bg,
+                      color: cfg.color,
+                    }}
+                  >
+                    {cfg.label}
+                  </span>
+                </div>
 
-                  {/* Status selector */}
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    marginTop: 16,
+                    paddingTop: 16,
+                    borderTop: '1px solid var(--border)',
+                  }}
+                  onClick={e => e.stopPropagation()}
+                >
                   <select
                     value={table.status}
                     disabled={isUpdating}
                     onChange={e => handleStatusChange(table, e.target.value as TableStatus)}
+                    className="select-minimal"
                     style={{
-                      width: '100%',
-                      background: 'var(--bg-elevated)',
-                      border: `1px solid var(--border-md)`,
-                      borderRadius: 6,
-                      padding: '5px 8px',
-                      color: 'var(--text-1)',
                       fontSize: '0.75rem',
-                      cursor: 'pointer',
-                      outline: 'none',
-                      marginBottom: 10,
+                      height: 32,
+                      width: 'auto',
+                      padding: '0 28px 0 10px',
+                      backgroundColor: 'var(--bg-elevated)',
+                      borderRadius: 6,
+                      fontWeight: 600,
+                      flex: 1,
+                      marginRight: 8,
                     }}
                   >
-                    <option value="available">🟢 Tersedia</option>
-                    <option value="occupied">🔴 Terisi</option>
-                    <option value="reserved">🟡 Reservasi</option>
+                    <option value="available">Tersedia</option>
+                    <option value="occupied">Sedang Makan</option>
+                    <option value="reserved">Dipesan</option>
                   </select>
 
-                  {/* Actions */}
-                  <div style={{ display: 'flex', gap: 6 }}>
-                    {can('products.update') && (
-                      <button
-                        className="btn btn-ghost btn-sm"
-                        onClick={() => openEdit(table)}
-                        style={{ flex: 1, justifyContent: 'center', padding: '5px' }}
-                      >
-                        <Pencil size={13} />
-                      </button>
-                    )}
-                    {can('products.delete') && (
-                      <button
-                        className="btn btn-ghost btn-sm"
-                        onClick={() => setDeleteConfirm({ open: true, table })}
-                        style={{
-                          flex: 1,
-                          justifyContent: 'center',
-                          padding: '5px',
-                          color: 'rgba(239,68,68,0.7)',
-                        }}
-                      >
-                        <Trash2 size={13} />
-                      </button>
-                    )}
+                  <div style={{ display: 'flex', gap: 4 }}>
+                    <button
+                      className="btn btn-ghost btn-xs"
+                      onClick={() => openEdit(table)}
+                      style={{ width: 32, height: 32, padding: 0 }}
+                    >
+                      <Pencil size={14} />
+                    </button>
+                    <button
+                      className="btn btn-ghost btn-xs"
+                      onClick={() => setDeleteConfirm({ open: true, table })}
+                      style={{ width: 32, height: 32, padding: 0, color: '#ef4444' }}
+                    >
+                      <Trash2 size={14} />
+                    </button>
                   </div>
                 </div>
               </div>
@@ -381,7 +441,6 @@ export default function TablesPage() {
         </div>
       )}
 
-      {/* ── Create / Edit Modal ──────────────────────────────────────────────── */}
       {modal.open && (
         <div
           style={{

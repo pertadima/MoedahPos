@@ -40,6 +40,15 @@ import {
   Cell,
 } from 'recharts';
 
+interface StatCard {
+  label: string;
+  value: string;
+  icon: React.ElementType;
+  color: string;
+  bg: string;
+  alert: boolean;
+}
+
 export default function DashboardPage() {
   type PayablesSummary = {
     overdue_debt?: number;
@@ -192,13 +201,14 @@ export default function DashboardPage() {
     .reverse()
     .slice(0, 3);
 
-  const statCards = [
+  const statCards: StatCard[] = [
     {
       label: 'Total Penjualan (30 hari)',
       value: formatRp(summary?.total_sales ?? 0),
       icon: TrendingUp,
       color: '#10b981',
       bg: 'rgba(16,185,129,0.10)',
+      alert: false,
     },
     {
       label: 'Total Transaksi (30 hari)',
@@ -206,14 +216,7 @@ export default function DashboardPage() {
       icon: ShoppingBag,
       color: '#6366f1',
       bg: 'rgba(99,102,241,0.10)',
-    },
-    {
-      label: 'Stok Menipis',
-      value: lowStock.length.toString(),
-      icon: AlertTriangle,
-      color: '#f59e0b',
-      bg: 'rgba(245,158,11,0.10)',
-      alert: lowStock.length > 0,
+      alert: false,
     },
     {
       label: 'Penjualan Hari Ini',
@@ -221,6 +224,7 @@ export default function DashboardPage() {
       icon: ArrowUpRight,
       color: '#0884f6',
       bg: 'rgba(8,132,246,0.10)',
+      alert: false,
     },
     {
       label: 'Laba Bersih (30 hari)',
@@ -228,6 +232,7 @@ export default function DashboardPage() {
       icon: Wallet,
       color: '#8b5cf6',
       bg: 'rgba(139,92,246,0.10)',
+      alert: false,
     },
   ];
 
@@ -241,19 +246,11 @@ export default function DashboardPage() {
     boxShadow: 'var(--shadow-md)',
   };
   const axisTickStyle = { fill: 'var(--text-3)', fontSize: 11 };
-
-  const getStatFontSize = (val: string) => {
-    const len = val.length;
-    if (len <= 8) return '1.875rem';
-    if (len <= 12) return '1.5rem';
-    return '1.25rem';
-  };
-
   /* ── Render ────────────────────────────────────────────────────────────── */
   return (
     <div className="w-full" style={{ padding: '24px 28px 40px', maxWidth: 1400, margin: '0 auto' }}>
       {/* ── Page Header ── */}
-      <div style={{ marginBottom: 28 }}>
+      <div style={{ marginBottom: 28 }} className="reveal-animate">
         <h1 className="page-title">
           <LayoutDashboard size={20} style={{ color: 'var(--brand)' }} />
           Dashboard
@@ -278,25 +275,27 @@ export default function DashboardPage() {
           marginBottom: 24,
         }}
       >
-        {statCards.map(({ label, value, icon: Icon, color, bg, alert }) => {
+        {statCards.map(({ label, value, icon: Icon, color, bg, alert }: StatCard, i) => {
           const isCurrency = value.startsWith('Rp');
           const displayValue = isCurrency ? value.replace('Rp', '').trim() : value;
-          const fontSize = getStatFontSize(displayValue);
 
           return (
-            <div key={label} className="stat-card">
+            <div
+              key={label}
+              className="stat-card reveal-animate"
+              data-tooltip={`${label}: ${value}`}
+              style={{ animationDelay: `${0.1 + i * 0.05}s` }}
+            >
               <div className="stat-icon" style={{ background: bg }}>
                 <Icon size={22} style={{ color }} />
               </div>
               <div style={{ minWidth: 0, flex: 1 }}>
-                <div className="stat-label" title={label}>
-                  {label}
-                </div>
                 <div className="stat-val" style={{ color: alert ? '#f59e0b' : 'var(--text-1)' }}>
                   {isCurrency && <span className="stat-currency">Rp</span>}
-                  <span className="stat-number" style={{ fontSize }}>
-                    {displayValue}
-                  </span>
+                  <span className="stat-number">{displayValue}</span>
+                </div>
+                <div className="stat-label" title={label}>
+                  {label}
                 </div>
               </div>
             </div>
@@ -316,7 +315,7 @@ export default function DashboardPage() {
         {/* Left column */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           {/* Sales trend chart */}
-          <div className="card" style={{ padding: 22 }}>
+          <div className="card reveal-animate" style={{ padding: 22, animationDelay: '0.35s' }}>
             <div style={{ marginBottom: 18 }}>
               <div className="type-subheading">Tren Penjualan (30 hari)</div>
               <div className="type-caption" style={{ marginTop: 2 }}>
@@ -359,7 +358,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Cashier revenue bar chart */}
-          <div className="card" style={{ padding: 22 }}>
+          <div className="card reveal-animate" style={{ padding: 22, animationDelay: '0.45s' }}>
             <div
               style={{
                 display: 'flex',
@@ -441,7 +440,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Product performance */}
-          <div className="card" style={{ padding: 22 }}>
+          <div className="card reveal-animate" style={{ padding: 22, animationDelay: '0.55s' }}>
             <div
               style={{
                 display: 'flex',
@@ -572,7 +571,10 @@ export default function DashboardPage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           {/* Low stock alert */}
           {lowStock.length > 0 && (
-            <div className="card" style={{ padding: 18, borderColor: 'rgba(245,158,11,0.25)' }}>
+            <div
+              className="card reveal-animate"
+              style={{ padding: 18, borderColor: 'rgba(245,158,11,0.25)', animationDelay: '0.65s' }}
+            >
               <div className="flex justify-between items-center" style={{ marginBottom: 14 }}>
                 <div className="flex items-center gap-2">
                   <AlertTriangle size={15} style={{ color: '#f59e0b' }} />
@@ -612,7 +614,7 @@ export default function DashboardPage() {
           )}
 
           {/* Purchase payables summary */}
-          <div className="card" style={{ padding: 18 }}>
+          <div className="card reveal-animate" style={{ padding: 18, animationDelay: '0.75s' }}>
             <div className="type-subheading" style={{ marginBottom: 14 }}>
               Hutang Pembelian
             </div>
@@ -633,7 +635,10 @@ export default function DashboardPage() {
           </div>
 
           {/* Recent transactions */}
-          <div className="card" style={{ padding: 18, flex: 1 }}>
+          <div
+            className="card reveal-animate"
+            style={{ padding: 18, flex: 1, animationDelay: '0.85s' }}
+          >
             <div className="type-subheading" style={{ marginBottom: 14 }}>
               Transaksi Terakhir
             </div>

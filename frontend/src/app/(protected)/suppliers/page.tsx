@@ -85,6 +85,7 @@ export default function SuppliersPage() {
   return (
     <div className="w-full p-6">
       <div
+        className="reveal-animate"
         style={{
           display: 'flex',
           justifyContent: 'space-between',
@@ -106,7 +107,10 @@ export default function SuppliersPage() {
         )}
       </div>
 
-      <div style={{ position: 'relative', maxWidth: 360, marginBottom: 16 }}>
+      <div
+        className="reveal-animate"
+        style={{ position: 'relative', maxWidth: 360, marginBottom: 16, animationDelay: '0.1s' }}
+      >
         <Search
           size={15}
           style={{
@@ -126,7 +130,7 @@ export default function SuppliersPage() {
         />
       </div>
 
-      <div className="card" style={{ overflow: 'hidden' }}>
+      <div className="card reveal-animate" style={{ overflow: 'hidden', animationDelay: '0.15s' }}>
         {loading ? (
           <div style={{ display: 'flex', justifyContent: 'center', padding: 40 }}>
             <Loader2 size={24} className="loading-spin" style={{ color: 'var(--accent-em)' }} />
@@ -150,8 +154,12 @@ export default function SuppliersPage() {
               </tr>
             </thead>
             <tbody>
-              {suppliers.map(s => (
-                <tr key={s.id}>
+              {suppliers.map((s, i) => (
+                <tr
+                  key={s.id}
+                  className="reveal-animate"
+                  style={{ animationDelay: `${0.2 + i * 0.02}s` }}
+                >
                   <td style={{ fontWeight: 600 }}>{s.name}</td>
                   <td style={{ color: 'var(--text-2)' }}>{s.contact_name || '–'}</td>
                   <td

@@ -15,7 +15,6 @@ import {
   ShoppingBag,
   UserRound,
   ArrowLeft,
-  Coffee,
   Clock,
   Users,
   Tag,
@@ -1043,15 +1042,32 @@ export default function POSPage() {
   if (isRestaurant && !selectedTable && !isTakeAway) {
     return (
       <>
-        <div style={{ padding: '24px 28px', minHeight: '100vh' }}>
+        <div
+          style={{ padding: '28px 32px', minHeight: '100vh', background: 'var(--bg-app)' }}
+          className="reveal-animate"
+        >
           {/* Header */}
-          <div className="flex items-center justify-between" style={{ marginBottom: 28 }}>
+          <div className="flex items-center justify-between" style={{ marginBottom: 32 }}>
             <div>
-              <h1 className="page-title">
-                <UtensilsCrossed size={20} style={{ color: 'var(--brand)' }} />
+              <h1 className="page-title" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div
+                  style={{
+                    background: 'rgba(8,132,246,0.1)',
+                    color: 'var(--brand)',
+                    padding: 8,
+                    borderRadius: 12,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <UtensilsCrossed size={22} />
+                </div>
                 Pilih Meja
               </h1>
-              <p className="page-subtitle">{selectedStore.store_name}</p>
+              <p className="page-subtitle" style={{ marginLeft: 42 }}>
+                {selectedStore.store_name}
+              </p>
             </div>
 
             {/* Take Away shortcut button */}
@@ -1062,134 +1078,92 @@ export default function POSPage() {
                 setError('');
                 setHoldError('');
               }}
-              className="btn"
+              className="btn shadow-hover"
               style={{
-                background: 'rgba(245,158,11,0.10)',
-                border: '1.5px solid rgba(245,158,11,0.35)',
+                background: 'rgba(245,158,11,0.08)',
+                border: '1px solid rgba(245,158,11,0.25)',
                 color: '#d97706',
-                fontWeight: 600,
-                gap: 6,
-                padding: '8px 16px',
-                borderRadius: 12,
+                fontWeight: 700,
+                gap: 8,
+                padding: '10px 20px',
+                borderRadius: 14,
+                transition: 'all 0.2s ease',
               }}
             >
-              <ShoppingBag size={15} />
-              Take Away
+              <ShoppingBag size={18} />
+              Bungkus / Take Away
             </button>
           </div>
 
           {tablesLoading ? (
-            <div style={{ display: 'flex', justifyContent: 'center', padding: 64 }}>
-              <Loader2 size={32} className="loading-spin" style={{ color: 'var(--brand)' }} />
+            <div style={{ display: 'flex', justifyContent: 'center', padding: 80 }}>
+              <Loader2 size={40} className="loading-spin" style={{ color: 'var(--brand)' }} />
             </div>
           ) : tables.length === 0 ? (
-            <div className="empty-state">
-              <Coffee size={40} />
-              <p>Belum ada meja. Tambahkan meja di menu Manajemen Meja.</p>
+            <div className="empty-state" style={{ marginTop: 40 }}>
+              <UtensilsCrossed size={48} />
+              <p style={{ fontSize: '1.1rem', fontWeight: 500 }}>Belum ada meja yang terdaftar.</p>
+              <p style={{ color: 'var(--text-3)', fontSize: '0.9rem' }}>
+                Tambahkan konfigurasi meja Anda di menu Manajemen Meja.
+              </p>
             </div>
           ) : (
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))',
-                gap: 16,
-              }}
-            >
-              {tables.map(table => {
+            <div className="pos-table-grid">
+              {tables.map((table, i) => {
                 const draft = tablesDraftMap[table.id];
                 const hasOrder = !!draft;
                 const isOccupied = table.status === 'occupied' || hasOrder;
                 const isUnavailable = table.status === 'unavailable';
 
+                const statusClass = isUnavailable
+                  ? 'unavailable'
+                  : isOccupied
+                    ? 'occupied'
+                    : 'available';
+
                 return (
                   <button
                     key={table.id}
+                    className={`pos-table-card ${statusClass} reveal-animate shadow-hover`}
                     onClick={() => !isUnavailable && handleSelectTable(table)}
-                    style={{
-                      background: isUnavailable
-                        ? 'var(--bg-elevated)'
-                        : isOccupied
-                          ? 'linear-gradient(135deg, rgba(255,167,36,0.15), rgba(255,167,36,0.05))'
-                          : 'linear-gradient(135deg, rgba(8,132,246,0.12), rgba(8,132,246,0.04))',
-                      border: isUnavailable
-                        ? '1.5px solid var(--border)'
-                        : isOccupied
-                          ? '1.5px solid rgba(255,167,36,0.5)'
-                          : '1.5px solid rgba(8,132,246,0.35)',
-                      borderRadius: 16,
-                      padding: '20px 16px',
-                      cursor: isUnavailable ? 'not-allowed' : 'pointer',
-                      opacity: isUnavailable ? 0.5 : 1,
-                      textAlign: 'center',
-                      transition: 'all 0.18s',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      gap: 8,
-                      position: 'relative',
-                    }}
+                    style={{ animationDelay: `${i * 0.04}s` }}
                   >
-                    {/* Status dot */}
-                    <div
-                      style={{
-                        width: 10,
-                        height: 10,
-                        borderRadius: '50%',
-                        background: isUnavailable
-                          ? 'var(--text-3)'
+                    <div className="pos-table-icon-wrapper">
+                      <UtensilsCrossed size={24} strokeWidth={2.5} />
+                    </div>
+
+                    <div className="pos-table-number">Meja {table.table_number}</div>
+
+                    <div className="pos-table-capacity">
+                      <Users size={12} strokeWidth={2.5} />
+                      <span>{table.capacity} Kursi</span>
+                    </div>
+
+                    <div className={`status-${statusClass}`}>
+                      <div className="pos-table-status-pill">
+                        {isUnavailable
+                          ? 'Offline'
                           : isOccupied
-                            ? '#FFA724'
-                            : '#22c55e',
-                        position: 'absolute',
-                        top: 12,
-                        right: 12,
-                        boxShadow:
-                          isOccupied && !isUnavailable ? '0 0 8px rgba(255,167,36,0.6)' : 'none',
-                      }}
-                    />
-
-                    <div style={{ fontSize: '2rem' }}>🪑</div>
-                    <div style={{ fontWeight: 800, fontSize: '1.05rem', color: 'var(--text-1)' }}>
-                      Meja {table.table_number}
-                    </div>
-                    <div
-                      style={{
-                        fontSize: '0.75rem',
-                        color: 'var(--text-2)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 4,
-                      }}
-                    >
-                      <Users size={11} /> {table.capacity} kursi
-                    </div>
-
-                    {hasOrder && draft ? (
-                      <div
-                        style={{
-                          background: 'rgba(255,167,36,0.18)',
-                          borderRadius: 8,
-                          padding: '4px 8px',
-                          fontSize: '0.72rem',
-                          color: '#FFA724',
-                          fontWeight: 600,
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 4,
-                        }}
-                      >
-                        <Clock size={10} />
-                        {draft.items.length} item · {formatRp(draft.total)}
+                            ? hasOrder
+                              ? 'Draf Aktif'
+                              : 'Terisi'
+                            : 'Tersedia'}
                       </div>
-                    ) : (
+                    </div>
+
+                    {hasOrder && draft && (
                       <div
                         style={{
-                          fontSize: '0.72rem',
-                          fontWeight: 600,
-                          color: isUnavailable ? 'var(--text-3)' : 'var(--brand)',
+                          marginTop: 6,
+                          fontSize: '0.68rem',
+                          color: 'var(--accent-em)',
+                          fontWeight: 700,
+                          background: 'rgba(8,132,246,0.06)',
+                          padding: '2px 8px',
+                          borderRadius: 6,
                         }}
                       >
-                        {isUnavailable ? 'Tidak Tersedia' : 'Tersedia'}
+                        {draft.items.length} item · {formatRp(draft.total)}
                       </div>
                     )}
                   </button>
@@ -1209,7 +1183,7 @@ export default function POSPage() {
       {/* ── LEFT: Catalog ── */}
       <div className="pos-catalog">
         {/* ── Catalog header row: mode badge + search ── */}
-        <div className="flex items-center gap-2" style={{ marginBottom: 10 }}>
+        <div className="flex items-center gap-2 reveal-animate" style={{ marginBottom: 10 }}>
           {isRestaurant && (selectedTable || isTakeAway) && (
             <button
               onClick={handleBackToTables}
@@ -1269,7 +1243,7 @@ export default function POSPage() {
         </div>
 
         {/* Category Tabs */}
-        <div className="category-tabs">
+        <div className="category-tabs reveal-animate" style={{ animationDelay: '0.1s' }}>
           <button
             className={`cat-tab ${activeCat === 'all' ? 'active' : ''}`}
             onClick={() => setActiveCat('all')}
@@ -1336,13 +1310,14 @@ export default function POSPage() {
             </div>
           ) : (
             <div className="product-grid">
-              {filteredMenuItems.map(m => {
+              {filteredMenuItems.map((m, i) => {
                 const inCart = cart.find(i => i.menuItemId === m.id);
                 return (
                   <div
                     key={m.id}
-                    className="product-card"
+                    className="product-card reveal-animate"
                     onClick={() => dispatch({ type: 'ADD_MENU', item: m })}
+                    style={{ animationDelay: `${0.2 + i * 0.012}s` }}
                   >
                     {/* In-cart quantity badge */}
                     {inCart && (
@@ -1406,14 +1381,15 @@ export default function POSPage() {
           </div>
         ) : (
           <div className="product-grid">
-            {filteredProducts.map(p => {
+            {filteredProducts.map((p, i) => {
               const inCart = cart.find(i => i.product.id === p.id && !i.menuItemId);
               const outOfStock = (p.stock_qty ?? 1) <= 0;
               return (
                 <div
                   key={p.id}
-                  className={`product-card ${outOfStock ? 'out-of-stock' : ''}`}
+                  className={`product-card ${outOfStock ? 'out-of-stock' : ''} reveal-animate`}
                   onClick={() => !outOfStock && dispatch({ type: 'ADD_PRODUCT', product: p })}
+                  style={{ animationDelay: `${0.2 + i * 0.012}s` }}
                 >
                   {/* In-cart quantity badge */}
                   {inCart && (
@@ -1793,47 +1769,56 @@ export default function POSPage() {
               return (
                 <div
                   key={item.product.id}
-                  className="cart-item"
-                  style={
-                    isDiscounted
-                      ? {
-                          background:
-                            'linear-gradient(135deg, rgba(239,68,68,0.06), rgba(239,68,68,0.02))',
-                          border: '1px solid rgba(239,68,68,0.12)',
-                        }
-                      : undefined
-                  }
+                  className={`cart-item ${isDiscounted ? 'is-discounted' : ''}`}
                 >
-                  {/* Name row */}
-                  <div
+                  {/* Remove Button (Absolute positioned for minimalism) */}
+                  <button
+                    className="btn btn-ghost"
                     style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'flex-start',
+                      position: 'absolute',
+                      right: 4,
+                      top: 4,
+                      padding: '4px',
+                      color: 'var(--text-3)',
+                      opacity: 0.6,
+                    }}
+                    onClick={() => {
+                      dispatch({ type: 'REMOVE', id: item.product.id });
+                      if (expandedDiscountId === item.product.id) setExpandedDiscountId(null);
                     }}
                   >
-                    <div className="cart-item-name" style={{ flex: 1, paddingRight: 8 }}>
+                    <X size={14} />
+                  </button>
+
+                  <div className="cart-item-header">
+                    <div className="cart-item-name">
                       {item.menuItemId && (
-                        <span style={{ fontSize: '0.65rem', color: '#fb923c', marginRight: 4 }}>
+                        <span style={{ fontSize: '0.7rem', color: '#fb923c', marginRight: 5 }}>
                           🍽
                         </span>
                       )}
                       {item.product.name}
                     </div>
-                    <button
-                      className="btn btn-ghost btn-sm"
-                      style={{ padding: '2px 4px', color: 'var(--accent-rd)' }}
-                      onClick={() => {
-                        dispatch({ type: 'REMOVE', id: item.product.id });
-                        if (expandedDiscountId === item.product.id) setExpandedDiscountId(null);
-                      }}
-                    >
-                      <X size={13} />
-                    </button>
+                    <div className="cart-item-total">
+                      {isDiscounted && (
+                        <div
+                          style={{
+                            fontSize: '0.7rem',
+                            color: 'var(--text-3)',
+                            textDecoration: 'line-through',
+                            fontWeight: 500,
+                            lineHeight: 1,
+                            marginBottom: 2,
+                          }}
+                        >
+                          {formatRp(item.originalPrice * item.quantity)}
+                        </div>
+                      )}
+                      {formatRp(item.subtotal)}
+                    </div>
                   </div>
 
-                  {/* Qty + subtotal row */}
-                  <div className="cart-item-row">
+                  <div className="cart-item-body">
                     <div className="qty-ctrl">
                       <button
                         className="qty-btn"
@@ -1845,7 +1830,7 @@ export default function POSPage() {
                           })
                         }
                       >
-                        <Minus size={12} />
+                        <Minus size={13} />
                       </button>
                       <span className="qty-val">{item.quantity}</span>
                       <button
@@ -1858,103 +1843,43 @@ export default function POSPage() {
                           })
                         }
                       >
-                        <Plus size={12} />
+                        <Plus size={13} />
                       </button>
                     </div>
-                    <div style={{ textAlign: 'right' }}>
-                      {isDiscounted && (
-                        <div
-                          style={{
-                            fontSize: '0.68rem',
-                            color: 'var(--text-3)',
-                            textDecoration: 'line-through',
-                          }}
-                        >
-                          {formatRp(item.originalPrice * item.quantity)}
-                        </div>
-                      )}
-                      <span
-                        style={{
-                          fontWeight: 700,
-                          fontSize: '0.85rem',
-                          color: isDiscounted ? 'var(--accent-rd)' : 'var(--accent-em)',
-                          transition: 'color 0.2s ease',
-                        }}
-                      >
-                        {formatRp(item.subtotal)}
-                      </span>
-                    </div>
-                  </div>
 
-                  {/* Price detail + discount trigger row */}
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      gap: 6,
-                    }}
-                  >
-                    <div style={{ fontSize: '0.72rem', color: 'var(--text-3)' }}>
-                      {formatRp(item.unitPrice)} × {item.quantity}
-                      {item.product.tax_rate > 0 && ` · PPN ${item.product.tax_rate}%`}
-                      {costPrice > 0 && (
-                        <span
-                          style={{
-                            marginLeft: 6,
-                            color: isBelowCost ? '#f87171' : 'var(--text-3)',
-                            fontWeight: isBelowCost ? 600 : 400,
-                          }}
-                        >
-                          · {costLabel}: {formatRp(costPrice)}
-                        </span>
-                      )}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      {/* Detailed Price Context */}
+                      <div className="cart-item-details" style={{ textAlign: 'right' }}>
+                        <div>
+                          {formatRp(item.unitPrice)} × {item.quantity}
+                        </div>
+                        {item.product.tax_rate > 0 && (
+                          <div style={{ fontSize: '0.65rem', opacity: 0.8 }}>
+                            + PPN {item.product.tax_rate}%
+                          </div>
+                        )}
+                        {costPrice > 0 && (
+                          <div
+                            style={{
+                              fontSize: '0.65rem',
+                              color: isBelowCost ? '#f87171' : 'var(--text-3)',
+                              fontWeight: isBelowCost ? 700 : 500,
+                            }}
+                          >
+                            {costLabel}: {formatRp(costPrice)}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Discount Trigger */}
+                      <button
+                        className={`btn-discount-trigger ${isDiscounted ? 'active' : ''}`}
+                        onClick={() => setExpandedDiscountId(isExpanded ? null : item.product.id)}
+                      >
+                        <Tag size={10} />
+                        {isDiscounted && discBadge ? discBadge : 'Diskon'}
+                      </button>
                     </div>
-                    {/* Discount trigger / badge */}
-                    {isDiscounted && discBadge ? (
-                      <button
-                        onClick={() => setExpandedDiscountId(isExpanded ? null : item.product.id)}
-                        title="Ubah diskon"
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: 3,
-                          padding: '2px 7px',
-                          borderRadius: 5,
-                          fontSize: '0.65rem',
-                          fontWeight: 700,
-                          background: 'rgba(239,68,68,0.12)',
-                          color: 'var(--accent-rd)',
-                          cursor: 'pointer',
-                          border: 'none',
-                          transition: 'all 0.15s ease',
-                        }}
-                      >
-                        <Tag size={9} />
-                        {discBadge}
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => setExpandedDiscountId(isExpanded ? null : item.product.id)}
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: 4,
-                          padding: '3px 10px',
-                          borderRadius: 6,
-                          fontSize: '0.7rem',
-                          fontWeight: 600,
-                          color: 'var(--text-3)',
-                          background: 'transparent',
-                          border: '1px dashed var(--border-md)',
-                          cursor: 'pointer',
-                          transition: 'all 0.18s ease',
-                        }}
-                      >
-                        <Tag size={9} />
-                        Diskon
-                      </button>
-                    )}
                   </div>
 
                   {/* Collapsible discount panel */}

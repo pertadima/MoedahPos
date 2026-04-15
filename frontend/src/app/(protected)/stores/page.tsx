@@ -241,6 +241,7 @@ export default function StoresPage() {
 
       {/* Header */}
       <div
+        className="reveal-animate"
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -263,7 +264,10 @@ export default function StoresPage() {
       </div>
 
       {/* Search bar */}
-      <div style={{ position: 'relative', marginBottom: 20, maxWidth: 380 }}>
+      <div
+        className="reveal-animate"
+        style={{ position: 'relative', marginBottom: 20, maxWidth: 380, animationDelay: '0.1s' }}
+      >
         <Search
           size={15}
           style={{
@@ -289,7 +293,10 @@ export default function StoresPage() {
           <Loader2 size={28} className="loading-spin" style={{ color: 'var(--accent-em)' }} />
         </div>
       ) : stores.length === 0 ? (
-        <div className="empty-state card" style={{ padding: 60 }}>
+        <div
+          className="empty-state card reveal-animate"
+          style={{ padding: 60, animationDelay: '0.1s' }}
+        >
           <Store size={48} style={{ color: 'var(--text-3)' }} />
           <p style={{ fontWeight: 600, color: 'var(--text-2)' }}>
             {search ? 'Tidak ditemukan' : 'Belum ada toko'}
@@ -308,7 +315,7 @@ export default function StoresPage() {
             gap: 16,
           }}
         >
-          {stores.map(store => {
+          {stores.map((store, idx) => {
             const typeCfg =
               STORE_TYPE_CONFIG[store.store_type as 'retail' | 'restaurant'] ??
               STORE_TYPE_CONFIG.retail;
@@ -316,8 +323,13 @@ export default function StoresPage() {
             return (
               <div
                 key={store.id}
-                className="card"
-                style={{ padding: 0, overflow: 'hidden', opacity: store.is_active ? 1 : 0.65 }}
+                className="card reveal-animate"
+                style={{
+                  padding: 0,
+                  overflow: 'hidden',
+                  opacity: store.is_active ? 1 : 0.65,
+                  animationDelay: `${0.15 + idx * 0.03}s`,
+                }}
               >
                 {/* Top accent strip */}
                 <div

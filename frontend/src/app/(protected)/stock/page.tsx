@@ -233,6 +233,7 @@ interface StockRowProps {
   onToggle: () => void;
   canUpdateStock: boolean;
   onSaveMinStock: (productId: string, storeId: string, value: number) => Promise<void>;
+  index?: number;
 }
 
 function StockRow({
@@ -243,6 +244,7 @@ function StockRow({
   onToggle,
   canUpdateStock,
   onSaveMinStock,
+  index = 0,
 }: StockRowProps) {
   const hasBatches = batches.length > 0;
 
@@ -251,10 +253,12 @@ function StockRow({
       {/* ── Main product row ─────────────────────────────── */}
       <tr
         onClick={hasBatches ? onToggle : undefined}
+        className="reveal-animate"
         style={{
           cursor: hasBatches ? 'pointer' : 'default',
           background: isExpanded ? 'var(--bg-hover, rgba(255,255,255,0.04))' : undefined,
           transition: 'background 0.12s',
+          animationDelay: `${0.25 + index * 0.02}s`,
         }}
       >
         {/* Expand icon */}
@@ -613,6 +617,7 @@ export default function StockPage() {
     <div className="w-full p-6">
       {/* Header */}
       <div
+        className="reveal-animate"
         style={{
           display: 'flex',
           justifyContent: 'space-between',
@@ -639,6 +644,7 @@ export default function StockPage() {
 
       {/* Tabs */}
       <div
+        className="reveal-animate"
         style={{
           display: 'flex',
           gap: 4,
@@ -648,6 +654,7 @@ export default function StockPage() {
           marginBottom: 16,
           width: 'fit-content',
           border: '1px solid var(--border)',
+          animationDelay: '0.1s',
         }}
       >
         {TABS.map(([v, l]) => (
@@ -677,9 +684,13 @@ export default function StockPage() {
         </div>
       ) : tab === 'stok' ? (
         // ── Combined Stock + Batch (expandable) ─────────────────────────────
-        <div className="card" style={{ overflow: 'hidden' }}>
+        <div
+          className="card reveal-animate"
+          style={{ overflow: 'hidden', animationDelay: '0.15s' }}
+        >
           {/* Search & Legend */}
           <div
+            className="reveal-animate"
             style={{
               padding: '10px 16px',
               borderBottom: '1px solid var(--border)',
@@ -688,6 +699,7 @@ export default function StockPage() {
               alignItems: 'center',
               gap: 16,
               flexWrap: 'wrap',
+              animationDelay: '0.2s',
             }}
           >
             <div style={{ position: 'relative', width: 280, maxWidth: '100%' }}>
@@ -743,7 +755,7 @@ export default function StockPage() {
               </tr>
             </thead>
             <tbody>
-              {paginatedLevels.map(level => (
+              {paginatedLevels.map((level, i) => (
                 <StockRow
                   key={level.product_id}
                   level={level}
@@ -753,6 +765,7 @@ export default function StockPage() {
                   onToggle={() => toggleExpand(level.product_id)}
                   canUpdateStock={canUpdateStock}
                   onSaveMinStock={handleSaveMinStock}
+                  index={i}
                 />
               ))}
             </tbody>

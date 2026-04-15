@@ -523,6 +523,7 @@ export default function CustomersPage() {
     <div className="w-full p-6">
       {/* Header */}
       <div
+        className="reveal-animate"
         style={{
           display: 'flex',
           justifyContent: 'space-between',
@@ -547,7 +548,10 @@ export default function CustomersPage() {
       </div>
 
       {/* Search */}
-      <div style={{ position: 'relative', marginBottom: 16, maxWidth: 360 }}>
+      <div
+        className="reveal-animate"
+        style={{ position: 'relative', marginBottom: 16, maxWidth: 360, animationDelay: '0.1s' }}
+      >
         <Search
           size={15}
           style={{
@@ -568,7 +572,7 @@ export default function CustomersPage() {
       </div>
 
       {/* Table */}
-      <div className="card" style={{ overflow: 'hidden' }}>
+      <div className="card reveal-animate" style={{ overflow: 'hidden', animationDelay: '0.2s' }}>
         {loading ? (
           <div style={{ display: 'flex', justifyContent: 'center', padding: 40 }}>
             <Loader2 size={24} className="loading-spin" style={{ color: 'var(--accent-em)' }} />
@@ -592,8 +596,16 @@ export default function CustomersPage() {
                 </tr>
               </thead>
               <tbody>
-                {customers.map(c => (
-                  <tr key={c.id} style={{ cursor: 'pointer' }} onClick={() => setDetail(c)}>
+                {customers.map((c, i) => (
+                  <tr
+                    key={c.id}
+                    className="reveal-animate"
+                    style={{
+                      cursor: 'pointer',
+                      animationDelay: `${0.25 + i * 0.02}s`,
+                    }}
+                    onClick={() => setDetail(c)}
+                  >
                     <td>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                         <div
