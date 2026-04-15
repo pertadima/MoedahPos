@@ -291,7 +291,7 @@ export default function ExpenseCategoriesPage() {
       </div>
 
       {/* Table */}
-      <div className="card reveal-animate" style={{ overflow: 'hidden', animationDelay: '0.1s' }}>
+      <div className="card reveal-animate" style={{ padding: 0, animationDelay: '0.1s' }}>
         {loading ? (
           <div style={{ display: 'flex', justifyContent: 'center', padding: 40 }}>
             <Loader2 size={24} className="loading-spin" style={{ color: 'var(--accent-em)' }} />
@@ -302,93 +302,98 @@ export default function ExpenseCategoriesPage() {
             <p>Belum ada kategori pengeluaran</p>
           </div>
         ) : (
-          <table className="tbl">
-            <thead>
-              <tr>
-                <th>Nama Kategori</th>
-                <th>Deskripsi</th>
-                <th>Status</th>
-                <th>Ditambahkan</th>
-                <th style={{ textAlign: 'right' }}>Aksi</th>
-              </tr>
-            </thead>
-            <tbody>
-              {categories.map((c, i) => (
-                <tr
-                  key={c.id}
-                  className="reveal-animate"
-                  style={{ opacity: c.is_active ? 1 : 0.6, animationDelay: `${0.15 + i * 0.02}s` }}
-                >
-                  <td style={{ fontWeight: 600 }}>{c.name}</td>
-                  <td style={{ color: 'var(--text-2)', fontSize: '0.85rem' }}>
-                    {c.description || '—'}
-                  </td>
-                  <td>
-                    {c.is_active ? (
-                      <span
-                        style={{
-                          padding: '4px 8px',
-                          borderRadius: 6,
-                          fontSize: '0.72rem',
-                          fontWeight: 700,
-                          background: 'rgba(16,185,129,0.1)',
-                          color: '#10b981',
-                        }}
-                      >
-                        Aktif
-                      </span>
-                    ) : (
-                      <span
-                        style={{
-                          padding: '4px 8px',
-                          borderRadius: 6,
-                          fontSize: '0.72rem',
-                          fontWeight: 700,
-                          background: 'rgba(239,68,68,0.1)',
-                          color: '#ef4444',
-                        }}
-                      >
-                        Tidak Aktif
-                      </span>
-                    )}
-                  </td>
-                  <td style={{ color: 'var(--text-3)', fontSize: '0.8rem' }}>
-                    {formatDate(c.created_at)}
-                  </td>
-                  <td>
-                    <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end' }}>
-                      <button
-                        className="btn btn-ghost btn-sm"
-                        onClick={() => setForm(c)}
-                        title="Edit"
-                      >
-                        <Edit3 size={13} />
-                      </button>
-                      {c.is_active ? (
-                        <button
-                          className="btn btn-ghost btn-sm"
-                          style={{ color: '#f59e0b' }}
-                          onClick={() => setDeleting(c)}
-                          title="Nonaktifkan"
-                        >
-                          <Archive size={13} />
-                        </button>
-                      ) : (
-                        <button
-                          className="btn btn-ghost btn-sm"
-                          style={{ color: '#10b981' }}
-                          onClick={() => handleToggleActive(c)}
-                          title="Aktifkan Kembali"
-                        >
-                          <Play size={13} />
-                        </button>
-                      )}
-                    </div>
-                  </td>
+          <div className="tbl-container">
+            <table className="tbl">
+              <thead>
+                <tr>
+                  <th>Nama Kategori</th>
+                  <th>Deskripsi</th>
+                  <th>Status</th>
+                  <th>Ditambahkan</th>
+                  <th style={{ textAlign: 'right' }}>Aksi</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {categories.map((c, i) => (
+                  <tr
+                    key={c.id}
+                    className="reveal-animate"
+                    style={{
+                      opacity: c.is_active ? 1 : 0.6,
+                      animationDelay: `${0.15 + i * 0.02}s`,
+                    }}
+                  >
+                    <td style={{ fontWeight: 600 }}>{c.name}</td>
+                    <td style={{ color: 'var(--text-2)', fontSize: '0.85rem' }}>
+                      {c.description || '—'}
+                    </td>
+                    <td>
+                      {c.is_active ? (
+                        <span
+                          style={{
+                            padding: '4px 8px',
+                            borderRadius: 6,
+                            fontSize: '0.72rem',
+                            fontWeight: 700,
+                            background: 'rgba(16,185,129,0.1)',
+                            color: '#10b981',
+                          }}
+                        >
+                          Aktif
+                        </span>
+                      ) : (
+                        <span
+                          style={{
+                            padding: '4px 8px',
+                            borderRadius: 6,
+                            fontSize: '0.72rem',
+                            fontWeight: 700,
+                            background: 'rgba(239,68,68,0.1)',
+                            color: '#ef4444',
+                          }}
+                        >
+                          Tidak Aktif
+                        </span>
+                      )}
+                    </td>
+                    <td style={{ color: 'var(--text-3)', fontSize: '0.8rem' }}>
+                      {formatDate(c.created_at)}
+                    </td>
+                    <td>
+                      <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end' }}>
+                        <button
+                          className="btn btn-ghost btn-sm"
+                          onClick={() => setForm(c)}
+                          title="Edit"
+                        >
+                          <Edit3 size={13} />
+                        </button>
+                        {c.is_active ? (
+                          <button
+                            className="btn btn-ghost btn-sm"
+                            style={{ color: '#f59e0b' }}
+                            onClick={() => setDeleting(c)}
+                            title="Nonaktifkan"
+                          >
+                            <Archive size={13} />
+                          </button>
+                        ) : (
+                          <button
+                            className="btn btn-ghost btn-sm"
+                            style={{ color: '#10b981' }}
+                            onClick={() => handleToggleActive(c)}
+                            title="Aktifkan Kembali"
+                          >
+                            <Play size={13} />
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 

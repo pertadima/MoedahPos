@@ -379,12 +379,12 @@ export default function IncomesPage() {
             background: 'var(--bg-card)',
             borderRadius: 12,
             border: '1px solid var(--border)',
-            overflow: 'hidden',
+            padding: 0,
             animationDelay: '0.2s',
           }}
         >
-          <div style={{ overflowX: 'auto' }}>
-            <table className="tbl" style={{ width: '100%', minWidth: 700 }}>
+          <div className="tbl-container">
+            <table className="tbl">
               <thead>
                 <tr>
                   <th>Tanggal</th>

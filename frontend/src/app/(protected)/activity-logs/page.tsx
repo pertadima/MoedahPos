@@ -638,7 +638,7 @@ export default function ActivityLogPage() {
           </div>
         ) : (
           <>
-            <div style={{ overflowX: 'auto' }}>
+            <div className="tbl-container">
               <table className="tbl">
                 <thead>
                   <tr>

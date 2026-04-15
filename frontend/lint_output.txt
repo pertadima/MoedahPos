@@ -1,0 +1,92 @@
+
+> frontend@0.1.0 lint
+> eslint src/
+
+
+/Users/pertadima/Downloads/moedah-pos/frontend/src/app/(protected)/activity-logs/page.tsx
+  659:14  error  Parsing error: Expected corresponding closing tag for JSX fragment
+
+/Users/pertadima/Downloads/moedah-pos/frontend/src/app/(protected)/products/page.tsx
+  118:38  warning  `import()` type annotations are forbidden  @typescript-eslint/consistent-type-imports
+
+/Users/pertadima/Downloads/moedah-pos/frontend/src/app/(protected)/reports/page.tsx
+  226:6  warning  React Hook useEffect has a missing dependency: 'displayValue'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/Users/pertadima/Downloads/moedah-pos/frontend/src/app/(protected)/stock/page.tsx
+  687:8  error  Parsing error: JSX expressions must have one parent element
+
+/Users/pertadima/Downloads/moedah-pos/frontend/src/components/layout/Sidebar.tsx
+  255:9  warning  The 'allGroups' conditional could make the dependencies of useMemo Hook (at line 286) change on every render. Move it inside the useMemo callback. Alternatively, wrap the initialization of 'allGroups' in its own useMemo() Hook  react-hooks/exhaustive-deps
+
+/Users/pertadima/Downloads/moedah-pos/frontend/src/lib/api/activity-logs.ts
+  12:13  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/pertadima/Downloads/moedah-pos/frontend/src/lib/api/store-apis.ts
+   44:59  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  104:20  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  107:13  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  109:14  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  111:13  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  119:48  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  121:13  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  123:14  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  132:20  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  134:32  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  135:41  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  136:52  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  145:20  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  151:20  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  157:20  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  159:48  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  169:20  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  175:20  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  180:20  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  194:20  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  204:20  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  214:20  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  217:13  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  218:49  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  219:55  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  221:13  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  222:55  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  226:44  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  245:20  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  247:32  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  248:38  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  249:49  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  250:40  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  252:14  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  254:13  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  258:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  265:20  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  267:46  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  268:57  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  269:46  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  286:20  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  288:55  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  290:13  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  295:18  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  296:55  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  305:20  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  308:14  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  310:13  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  312:16  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  319:20  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  321:46  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  322:57  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  323:46  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  340:20  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  342:55  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  344:13  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  345:55  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/pertadima/Downloads/moedah-pos/frontend/src/lib/api/termins.ts
+  109:10  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  115:10  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  125:10  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+
+/Users/pertadima/Downloads/moedah-pos/frontend/src/lib/auth/AuthContext.tsx
+  26:9  warning  The 'stores' logical expression could make the dependencies of useCallback Hook (at line 98) change on every render. To fix this, wrap the initialization of 'stores' in its own useMemo() Hook  react-hooks/exhaustive-deps
+
+✖ 67 problems (2 errors, 65 warnings)
+

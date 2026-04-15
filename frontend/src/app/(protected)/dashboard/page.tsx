@@ -248,7 +248,7 @@ export default function DashboardPage() {
   const axisTickStyle = { fill: 'var(--text-3)', fontSize: 11 };
   /* ── Render ────────────────────────────────────────────────────────────── */
   return (
-    <div className="w-full" style={{ padding: '24px 28px 40px', maxWidth: 1400, margin: '0 auto' }}>
+    <div className="w-full p-4 md:p-6 lg:p-8" style={{ maxWidth: 1400, margin: '0 auto' }}>
       {/* ── Page Header ── */}
       <div style={{ marginBottom: 28 }} className="reveal-animate">
         <h1 className="page-title">
@@ -267,14 +267,7 @@ export default function DashboardPage() {
       </div>
 
       {/* ── Stat Cards ── */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-          gap: 14,
-          marginBottom: 24,
-        }}
-      >
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         {statCards.map(({ label, value, icon: Icon, color, bg, alert }: StatCard, i) => {
           const isCurrency = value.startsWith('Rp');
           const displayValue = isCurrency ? value.replace('Rp', '').trim() : value;
@@ -304,14 +297,7 @@ export default function DashboardPage() {
       </div>
 
       {/* ── Charts + Right Sidebar ── */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 320px',
-          gap: 16,
-          alignItems: 'start',
-        }}
-      >
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4 lg:gap-6 items-start">
         {/* Left column */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           {/* Sales trend chart */}
@@ -467,7 +453,7 @@ export default function DashboardPage() {
               </select>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
               {/* Top products */}
               <div>
                 <div className="flex items-center gap-1.5" style={{ marginBottom: 12 }}>

@@ -263,12 +263,12 @@ function ExpensesPage() {
                 background: 'var(--bg-card)',
                 borderRadius: 12,
                 border: '1px solid var(--border)',
-                overflow: 'hidden',
+                padding: 0,
                 animationDelay: '0.2s',
               }}
             >
-              <div style={{ overflowX: 'auto' }}>
-                <table className="tbl" style={{ width: '100%', minWidth: 600 }}>
+              <div className="tbl-container">
+                <table className="tbl">
                   <thead>
                     <tr>
                       <th>Tanggal</th>
@@ -745,12 +745,12 @@ function RecurringExpensesView({ categories }: { categories: ExpenseCategory[] }
             background: 'var(--bg-card)',
             borderRadius: 12,
             border: '1px solid var(--border)',
-            overflow: 'hidden',
+            padding: 0,
             animationDelay: '0.1s',
           }}
         >
-          <div style={{ overflowX: 'auto' }}>
-            <table className="tbl" style={{ width: '100%', minWidth: 700 }}>
+          <div className="tbl-container">
+            <table className="tbl">
               <thead>
                 <tr>
                   <th>Nama Templat</th>

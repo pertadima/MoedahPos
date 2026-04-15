@@ -1043,7 +1043,7 @@ export default function TransactionsPage() {
       )}
 
       {/* ── Table ── */}
-      <div className="card reveal-animate" style={{ overflow: 'hidden', animationDelay: '0.4s' }}>
+      <div className="card reveal-animate" style={{ padding: 0, animationDelay: '0.4s' }}>
         {loading ? (
           <div style={{ display: 'flex', justifyContent: 'center', padding: 48 }}>
             <Loader2 size={26} className="loading-spin" style={{ color: 'var(--accent-em)' }} />
@@ -1054,133 +1054,141 @@ export default function TransactionsPage() {
             <p>Tidak ada transaksi pada periode ini</p>
           </div>
         ) : (
-          <table className="tbl">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Waktu</th>
-                <th>Kasir</th>
-                <th>Pelanggan</th>
-                <th>Metode</th>
-                <th>Total</th>
-                <th>Status</th>
-                <th style={{ width: 60 }} />
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((txn, i) => (
-                <tr
-                  key={txn.id}
-                  className="reveal-animate"
-                  style={{ cursor: 'pointer', animationDelay: `${0.45 + i * 0.02}s` }}
-                  onClick={() => openDetail(txn)}
-                >
-                  <td>
-                    <span
-                      style={{
-                        fontFamily: 'monospace',
-                        fontSize: '0.8rem',
-                        color: 'var(--text-2)',
-                      }}
-                    >
-                      #{txn.id.slice(0, 8).toUpperCase()}
-                    </span>
-                  </td>
-                  <td>
-                    <div style={{ fontSize: '0.82rem' }}>
-                      {new Date(txn.created_at).toLocaleDateString('id-ID', {
-                        day: '2-digit',
-                        month: 'short',
-                      })}
-                    </div>
-                    <div style={{ fontSize: '0.72rem', color: 'var(--text-3)' }}>
-                      {new Date(txn.created_at).toLocaleTimeString('id-ID', { timeStyle: 'short' })}
-                    </div>
-                  </td>
-                  <td>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <div
+          <div className="tbl-container">
+            <table className="tbl">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Waktu</th>
+                  <th>Kasir</th>
+                  <th>Pelanggan</th>
+                  <th>Metode</th>
+                  <th>Total</th>
+                  <th>Status</th>
+                  <th style={{ width: 60 }} />
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((txn, i) => (
+                  <tr
+                    key={txn.id}
+                    className="reveal-animate"
+                    style={{ cursor: 'pointer', animationDelay: `${0.45 + i * 0.02}s` }}
+                    onClick={() => openDetail(txn)}
+                  >
+                    <td>
+                      <span
                         style={{
-                          width: 26,
-                          height: 26,
-                          borderRadius: '50%',
-                          background: 'rgba(99,102,241,0.15)',
-                          flexShrink: 0,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: '0.65rem',
-                          fontWeight: 700,
-                          color: '#818cf8',
+                          fontFamily: 'monospace',
+                          fontSize: '0.8rem',
+                          color: 'var(--text-2)',
                         }}
                       >
-                        {txn.cashier_name
-                          ?.split(' ')
-                          .map(w => w[0])
-                          .join('')
-                          .slice(0, 2)
-                          .toUpperCase()}
+                        #{txn.id.slice(0, 8).toUpperCase()}
+                      </span>
+                    </td>
+                    <td>
+                      <div style={{ fontSize: '0.82rem' }}>
+                        {new Date(txn.created_at).toLocaleDateString('id-ID', {
+                          day: '2-digit',
+                          month: 'short',
+                        })}
                       </div>
-                      <span style={{ fontSize: '0.85rem' }}>{txn.cashier_name}</span>
-                    </div>
-                  </td>
-                  <td>
-                    {txn.customer_name ? (
+                      <div style={{ fontSize: '0.72rem', color: 'var(--text-3)' }}>
+                        {new Date(txn.created_at).toLocaleTimeString('id-ID', {
+                          timeStyle: 'short',
+                        })}
+                      </div>
+                    </td>
+                    <td>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                         <div
                           style={{
-                            width: 24,
-                            height: 24,
+                            width: 26,
+                            height: 26,
                             borderRadius: '50%',
+                            background: 'rgba(99,102,241,0.15)',
                             flexShrink: 0,
-                            background:
-                              'linear-gradient(135deg, rgba(16,185,129,0.3), rgba(16,185,129,0.15))',
-                            border: '1.5px solid rgba(16,185,129,0.4)',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            fontSize: '0.62rem',
-                            fontWeight: 800,
-                            color: '#10b981',
+                            fontSize: '0.65rem',
+                            fontWeight: 700,
+                            color: '#818cf8',
                           }}
                         >
-                          {txn.customer_name.charAt(0).toUpperCase()}
+                          {txn.cashier_name
+                            ?.split(' ')
+                            .map(w => w[0])
+                            .join('')
+                            .slice(0, 2)
+                            .toUpperCase()}
                         </div>
-                        <span style={{ fontSize: '0.83rem', fontWeight: 500 }}>
-                          {txn.customer_name}
-                        </span>
+                        <span style={{ fontSize: '0.85rem' }}>{txn.cashier_name}</span>
                       </div>
-                    ) : (
-                      <span
-                        style={{ color: 'var(--text-3)', fontStyle: 'italic', fontSize: '0.8rem' }}
-                      >
-                        –
-                      </span>
-                    )}
-                  </td>
-                  <td>
-                    <PayBadge method={txn.payment_method} />
-                  </td>
-                  <td style={{ fontWeight: 700, color: 'var(--accent-em)' }}>
-                    {formatRp(txn.total)}
-                  </td>
-                  <td>
-                    <StatusBadge status={txn.status} />
-                  </td>
-                  <td
-                    onClick={e => {
-                      e.stopPropagation();
-                      openDetail(txn);
-                    }}
-                  >
-                    <button className="btn btn-ghost btn-sm" style={{ padding: '4px 6px' }}>
-                      <Eye size={14} />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                    </td>
+                    <td>
+                      {txn.customer_name ? (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <div
+                            style={{
+                              width: 24,
+                              height: 24,
+                              borderRadius: '50%',
+                              flexShrink: 0,
+                              background:
+                                'linear-gradient(135deg, rgba(16,185,129,0.3), rgba(16,185,129,0.15))',
+                              border: '1.5px solid rgba(16,185,129,0.4)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '0.62rem',
+                              fontWeight: 800,
+                              color: '#10b981',
+                            }}
+                          >
+                            {txn.customer_name.charAt(0).toUpperCase()}
+                          </div>
+                          <span style={{ fontSize: '0.83rem', fontWeight: 500 }}>
+                            {txn.customer_name}
+                          </span>
+                        </div>
+                      ) : (
+                        <span
+                          style={{
+                            color: 'var(--text-3)',
+                            fontStyle: 'italic',
+                            fontSize: '0.8rem',
+                          }}
+                        >
+                          –
+                        </span>
+                      )}
+                    </td>
+                    <td>
+                      <PayBadge method={txn.payment_method} />
+                    </td>
+                    <td style={{ fontWeight: 700, color: 'var(--accent-em)' }}>
+                      {formatRp(txn.total)}
+                    </td>
+                    <td>
+                      <StatusBadge status={txn.status} />
+                    </td>
+                    <td
+                      onClick={e => {
+                        e.stopPropagation();
+                        openDetail(txn);
+                      }}
+                    >
+                      <button className="btn btn-ghost btn-sm" style={{ padding: '4px 6px' }}>
+                        <Eye size={14} />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 
