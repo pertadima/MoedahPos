@@ -60,6 +60,8 @@
   --brand-dk: #0670d4;
   --brand-lt: #3fa3ff;
 
+  --bg-app: var(--bg-base);
+
   /* Theme aliases */
   --bg-surface: var(--bg-card);
   --bg-surface-hv: var(--bg-hover);
@@ -101,6 +103,8 @@
   --brand: #0884f6;
   --brand-dk: #0670d4;
   --brand-lt: #3fa3ff;
+
+  --bg-app: var(--bg-base);
 
   --accent-em: #0884f6;
   --accent-em-dk: #0670d4;
@@ -1292,20 +1296,28 @@ body {
 
 /* ── 17. Restaurant POS Table Selection ─────────────────────────────────── */
 .pos-table-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 1.25rem;
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)) !important;
+  gap: 1.25rem !important;
   width: 100%;
+  margin: 0 auto;
 }
 
 .pos-table-card {
-  @apply flex flex-col items-center gap-3 relative transition-all duration-200 cursor-pointer;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 0.75rem;
+  position: relative;
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: 20px;
   padding: 1.75rem 1.25rem;
   box-shadow: var(--shadow-sm);
   text-align: center;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  width: 100%;
 }
 
 .pos-table-card:hover:not(.unavailable) {
