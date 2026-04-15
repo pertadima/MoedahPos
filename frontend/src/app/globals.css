@@ -539,8 +539,16 @@ body {
     Row hover uses bg-elevated — no heavy highlight.
   */
   .tbl {
-    @apply w-full text-sm;
+    width: 100%;
+    min-width: 600px;
+    @apply text-sm;
     border-collapse: collapse;
+  }
+  .tbl-container {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    position: relative;
   }
   .tbl thead tr {
     border-bottom: 1px solid var(--border-md);

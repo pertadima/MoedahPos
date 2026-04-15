@@ -130,7 +130,7 @@ export default function SuppliersPage() {
         />
       </div>
 
-      <div className="card reveal-animate" style={{ overflow: 'hidden', animationDelay: '0.15s' }}>
+      <div className="card reveal-animate" style={{ padding: 0, animationDelay: '0.15s' }}>
         {loading ? (
           <div style={{ display: 'flex', justifyContent: 'center', padding: 40 }}>
             <Loader2 size={24} className="loading-spin" style={{ color: 'var(--accent-em)' }} />
@@ -141,63 +141,71 @@ export default function SuppliersPage() {
             <p>Belum ada supplier</p>
           </div>
         ) : (
-          <table className="tbl">
-            <thead>
-              <tr>
-                <th>Nama</th>
-                <th>Kontak</th>
-                <th>Telepon</th>
-                <th>Email</th>
-                <th>Status</th>
-                <th>Dibuat</th>
-                <th />
-              </tr>
-            </thead>
-            <tbody>
-              {suppliers.map((s, i) => (
-                <tr
-                  key={s.id}
-                  className="reveal-animate"
-                  style={{ animationDelay: `${0.2 + i * 0.02}s` }}
-                >
-                  <td style={{ fontWeight: 600 }}>{s.name}</td>
-                  <td style={{ color: 'var(--text-2)' }}>{s.contact_name || '–'}</td>
-                  <td
-                    style={{ color: 'var(--text-2)', fontFamily: 'monospace', fontSize: '0.82rem' }}
-                  >
-                    {s.phone || '–'}
-                  </td>
-                  <td style={{ color: 'var(--text-2)', fontSize: '0.82rem' }}>{s.email || '–'}</td>
-                  <td>
-                    <span className={`badge ${s.is_active ? 'badge-green' : 'badge-gray'}`}>
-                      {s.is_active ? 'Aktif' : 'Nonaktif'}
-                    </span>
-                  </td>
-                  <td style={{ color: 'var(--text-3)', fontSize: '0.8rem' }}>
-                    {formatDate(s.created_at)}
-                  </td>
-                  <td>
-                    <div style={{ display: 'flex', gap: 4 }}>
-                      {can('suppliers.update') && (
-                        <button className="btn btn-ghost btn-sm" onClick={() => openEdit(s)}>
-                          <Pencil size={13} />
-                        </button>
-                      )}
-                      {can('suppliers.delete') && (
-                        <button
-                          className="btn btn-ghost btn-sm"
-                          style={{ color: 'var(--accent-rd)' }}
-                          onClick={() => handleDelete(s.id)}
-                        >
-                          <Trash2 size={13} />
-                        </button>
-                      )}
-                    </div>
-                  </td>
+          <div className="tbl-container">
+            <table className="tbl">
+              <thead>
+                <tr>
+                  <th>Nama</th>
+                  <th>Kontak</th>
+                  <th>Telepon</th>
+                  <th>Email</th>
+                  <th>Status</th>
+                  <th>Dibuat</th>
+                  <th />
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {suppliers.map((s, i) => (
+                  <tr
+                    key={s.id}
+                    className="reveal-animate"
+                    style={{ animationDelay: `${0.2 + i * 0.02}s` }}
+                  >
+                    <td style={{ fontWeight: 600 }}>{s.name}</td>
+                    <td style={{ color: 'var(--text-2)' }}>{s.contact_name || '–'}</td>
+                    <td
+                      style={{
+                        color: 'var(--text-2)',
+                        fontFamily: 'monospace',
+                        fontSize: '0.82rem',
+                      }}
+                    >
+                      {s.phone || '–'}
+                    </td>
+                    <td style={{ color: 'var(--text-2)', fontSize: '0.82rem' }}>
+                      {s.email || '–'}
+                    </td>
+                    <td>
+                      <span className={`badge ${s.is_active ? 'badge-green' : 'badge-gray'}`}>
+                        {s.is_active ? 'Aktif' : 'Nonaktif'}
+                      </span>
+                    </td>
+                    <td style={{ color: 'var(--text-3)', fontSize: '0.8rem' }}>
+                      {formatDate(s.created_at)}
+                    </td>
+                    <td>
+                      <div style={{ display: 'flex', gap: 4 }}>
+                        {can('suppliers.update') && (
+                          <button className="btn btn-ghost btn-sm" onClick={() => openEdit(s)}>
+                            <Pencil size={13} />
+                          </button>
+                        )}
+                        {can('suppliers.delete') && (
+                          <button
+                            className="btn btn-ghost btn-sm"
+                            style={{ color: 'var(--accent-rd)' }}
+                            onClick={() => handleDelete(s.id)}
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 

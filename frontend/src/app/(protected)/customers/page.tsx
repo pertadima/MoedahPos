@@ -572,7 +572,7 @@ export default function CustomersPage() {
       </div>
 
       {/* Table */}
-      <div className="card reveal-animate" style={{ overflow: 'hidden', animationDelay: '0.2s' }}>
+      <div className="card reveal-animate" style={{ padding: 0, animationDelay: '0.2s' }}>
         {loading ? (
           <div style={{ display: 'flex', justifyContent: 'center', padding: 40 }}>
             <Loader2 size={24} className="loading-spin" style={{ color: 'var(--accent-em)' }} />
@@ -584,125 +584,127 @@ export default function CustomersPage() {
           </div>
         ) : (
           <>
-            <table className="tbl">
-              <thead>
-                <tr>
-                  <th>Nama</th>
-                  <th>Telepon</th>
-                  <th>Email</th>
-                  <th>Alamat</th>
-                  <th>Terdaftar</th>
-                  <th>Aksi</th>
-                </tr>
-              </thead>
-              <tbody>
-                {customers.map((c, i) => (
-                  <tr
-                    key={c.id}
-                    className="reveal-animate"
-                    style={{
-                      cursor: 'pointer',
-                      animationDelay: `${0.25 + i * 0.02}s`,
-                    }}
-                    onClick={() => setDetail(c)}
-                  >
-                    <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <div
-                          style={{
-                            width: 32,
-                            height: 32,
-                            borderRadius: '50%',
-                            background:
-                              'linear-gradient(135deg, var(--accent-in), var(--accent-em))',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontWeight: 700,
-                            fontSize: '0.8rem',
-                            color: '#fff',
-                            flexShrink: 0,
-                          }}
-                        >
-                          {c.name.charAt(0).toUpperCase()}
-                        </div>
-                        <span style={{ fontWeight: 600 }}>{c.name}</span>
-                      </div>
-                    </td>
-                    <td style={{ color: 'var(--text-2)', fontSize: '0.85rem' }}>
-                      {c.phone ? (
-                        <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                          <Phone size={12} />
-                          {c.phone}
-                        </span>
-                      ) : (
-                        '—'
-                      )}
-                    </td>
-                    <td style={{ color: 'var(--text-2)', fontSize: '0.85rem' }}>
-                      {c.email ?? '—'}
-                    </td>
-                    <td
+            <div className="tbl-container">
+              <table className="tbl">
+                <thead>
+                  <tr>
+                    <th>Nama</th>
+                    <th>Telepon</th>
+                    <th>Email</th>
+                    <th>Alamat</th>
+                    <th>Terdaftar</th>
+                    <th>Aksi</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {customers.map((c, i) => (
+                    <tr
+                      key={c.id}
+                      className="reveal-animate"
                       style={{
-                        color: 'var(--text-3)',
-                        fontSize: '0.82rem',
-                        maxWidth: 180,
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
+                        cursor: 'pointer',
+                        animationDelay: `${0.25 + i * 0.02}s`,
                       }}
+                      onClick={() => setDetail(c)}
                     >
-                      {c.address ?? '—'}
-                    </td>
-                    <td style={{ color: 'var(--text-3)', fontSize: '0.8rem' }}>
-                      {formatDate(c.created_at)}
-                    </td>
-                    <td>
-                      <div style={{ display: 'flex', gap: 4 }}>
-                        {can('sales.create') && (
-                          <button
-                            className="btn btn-ghost btn-sm"
-                            onClick={e => {
-                              e.stopPropagation();
-                              setForm(c);
-                            }}
-                            title="Edit"
-                          >
-                            <Edit3 size={13} />
-                          </button>
-                        )}
-                        {can('sales.create') && (
-                          <button
-                            title="Nonaktifkan"
+                      <td>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                          <div
                             style={{
+                              width: 32,
+                              height: 32,
+                              borderRadius: '50%',
+                              background:
+                                'linear-gradient(135deg, var(--accent-in), var(--accent-em))',
                               display: 'flex',
                               alignItems: 'center',
-                              gap: 3,
-                              padding: '4px 6px',
-                              borderRadius: 6,
-                              border: '1px solid rgba(245,158,11,0.35)',
-                              background: 'rgba(245,158,11,0.08)',
-                              color: '#f59e0b',
-                              cursor: 'pointer',
-                              fontSize: '0.72rem',
-                            }}
-                            onClick={e => {
-                              e.stopPropagation();
-                              setDeleting(c);
+                              justifyContent: 'center',
+                              fontWeight: 700,
+                              fontSize: '0.8rem',
+                              color: '#fff',
+                              flexShrink: 0,
                             }}
                           >
-                            <Archive size={12} />
-                          </button>
+                            {c.name.charAt(0).toUpperCase()}
+                          </div>
+                          <span style={{ fontWeight: 600 }}>{c.name}</span>
+                        </div>
+                      </td>
+                      <td style={{ color: 'var(--text-2)', fontSize: '0.85rem' }}>
+                        {c.phone ? (
+                          <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                            <Phone size={12} />
+                            {c.phone}
+                          </span>
+                        ) : (
+                          '—'
                         )}
-                        <button className="btn btn-ghost btn-sm" onClick={() => setDetail(c)}>
-                          <ChevronRight size={14} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                      </td>
+                      <td style={{ color: 'var(--text-2)', fontSize: '0.85rem' }}>
+                        {c.email ?? '—'}
+                      </td>
+                      <td
+                        style={{
+                          color: 'var(--text-3)',
+                          fontSize: '0.82rem',
+                          maxWidth: 180,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {c.address ?? '—'}
+                      </td>
+                      <td style={{ color: 'var(--text-3)', fontSize: '0.8rem' }}>
+                        {formatDate(c.created_at)}
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', gap: 4 }}>
+                          {can('sales.create') && (
+                            <button
+                              className="btn btn-ghost btn-sm"
+                              onClick={e => {
+                                e.stopPropagation();
+                                setForm(c);
+                              }}
+                              title="Edit"
+                            >
+                              <Edit3 size={13} />
+                            </button>
+                          )}
+                          {can('sales.create') && (
+                            <button
+                              title="Nonaktifkan"
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 3,
+                                padding: '4px 6px',
+                                borderRadius: 6,
+                                border: '1px solid rgba(245,158,11,0.35)',
+                                background: 'rgba(245,158,11,0.08)',
+                                color: '#f59e0b',
+                                cursor: 'pointer',
+                                fontSize: '0.72rem',
+                              }}
+                              onClick={e => {
+                                e.stopPropagation();
+                                setDeleting(c);
+                              }}
+                            >
+                              <Archive size={12} />
+                            </button>
+                          )}
+                          <button className="btn btn-ghost btn-sm" onClick={() => setDetail(c)}>
+                            <ChevronRight size={14} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
 
             {/* Pagination */}
             {total > PER_PAGE && (

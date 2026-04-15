@@ -684,10 +684,7 @@ export default function StockPage() {
         </div>
       ) : tab === 'stok' ? (
         // ── Combined Stock + Batch (expandable) ─────────────────────────────
-        <div
-          className="card reveal-animate"
-          style={{ overflow: 'hidden', animationDelay: '0.15s' }}
-        >
+        <div className="card reveal-animate" style={{ padding: 0, animationDelay: '0.15s' }}>
           {/* Search & Legend */}
           <div
             className="reveal-animate"
@@ -741,35 +738,37 @@ export default function StockPage() {
             </div>
           </div>
 
-          <table className="tbl">
-            <thead>
-              <tr>
-                <th style={{ width: 36 }} />
-                <th>Produk</th>
-                <th>SKU</th>
-                <th>Stok Saat Ini</th>
-                <th>Qty Batch (FIFO)</th>
-                <th>Rata-rata HPP</th>
-                <th>Min Stok</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {paginatedLevels.map((level, i) => (
-                <StockRow
-                  key={level.product_id}
-                  level={level}
-                  summary={summaryMap.get(level.product_id)}
-                  batches={batchMap.get(level.product_id) ?? []}
-                  isExpanded={expanded.has(level.product_id)}
-                  onToggle={() => toggleExpand(level.product_id)}
-                  canUpdateStock={canUpdateStock}
-                  onSaveMinStock={handleSaveMinStock}
-                  index={i}
-                />
-              ))}
-            </tbody>
-          </table>
+          <div className="tbl-container">
+            <table className="tbl">
+              <thead>
+                <tr>
+                  <th style={{ width: 36 }} />
+                  <th>Produk</th>
+                  <th>SKU</th>
+                  <th>Stok Saat Ini</th>
+                  <th>Qty Batch (FIFO)</th>
+                  <th>Rata-rata HPP</th>
+                  <th>Min Stok</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {paginatedLevels.map((level, i) => (
+                  <StockRow
+                    key={level.product_id}
+                    level={level}
+                    summary={summaryMap.get(level.product_id)}
+                    batches={batchMap.get(level.product_id) ?? []}
+                    isExpanded={expanded.has(level.product_id)}
+                    onToggle={() => toggleExpand(level.product_id)}
+                    canUpdateStock={canUpdateStock}
+                    onSaveMinStock={handleSaveMinStock}
+                    index={i}
+                  />
+                ))}
+              </tbody>
+            </table>
+          </div>
 
           {/* Pagination Controls */}
           {totalPages > 1 && (
@@ -819,60 +818,64 @@ export default function StockPage() {
         </div>
       ) : (
         // ── Riwayat Mutasi ──────────────────────────────────────────────────
-        <div className="card" style={{ overflow: 'hidden' }}>
-          <table className="tbl">
-            <thead>
-              <tr>
-                <th>Produk</th>
-                <th>Tipe</th>
-                <th>Delta</th>
-                <th>Catatan</th>
-                <th>Oleh</th>
-                <th>Waktu</th>
-              </tr>
-            </thead>
-            <tbody>
-              {movements.map(m => (
-                <tr key={m.id}>
-                  <td style={{ fontWeight: 600 }}>{m.product_name}</td>
-                  <td>
-                    <span
-                      className={`badge ${
-                        m.ref_type === 'sale' || m.ref_type === 'void_deduct'
-                          ? 'badge-red'
-                          : m.ref_type === 'purchase' || m.ref_type === 'void'
-                            ? 'badge-green'
-                            : 'badge-blue'
-                      }`}
-                    >
-                      {m.ref_type}
-                    </span>
-                  </td>
-                  <td
-                    style={{
-                      fontWeight: 700,
-                      color: m.quantity_delta < 0 ? 'var(--accent-rd)' : 'var(--accent-em)',
-                    }}
-                  >
-                    {m.quantity_delta > 0 ? (
-                      <TrendingUp size={13} style={{ display: 'inline', marginRight: 4 }} />
-                    ) : (
-                      <TrendingDown size={13} style={{ display: 'inline', marginRight: 4 }} />
-                    )}
-                    {m.quantity_delta > 0 ? '+' : ''}
-                    {m.quantity_delta}
-                  </td>
-                  <td style={{ color: 'var(--text-2)', fontSize: '0.82rem' }}>{m.notes || '–'}</td>
-                  <td style={{ color: 'var(--text-2)', fontSize: '0.82rem' }}>
-                    {m.created_by_name}
-                  </td>
-                  <td style={{ color: 'var(--text-3)', fontSize: '0.8rem' }}>
-                    {formatDateTime(m.created_at)}
-                  </td>
+        <div className="card" style={{ padding: 0 }}>
+          <div className="tbl-container">
+            <table className="tbl">
+              <thead>
+                <tr>
+                  <th>Produk</th>
+                  <th>Tipe</th>
+                  <th>Delta</th>
+                  <th>Catatan</th>
+                  <th>Oleh</th>
+                  <th>Waktu</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {movements.map(m => (
+                  <tr key={m.id}>
+                    <td style={{ fontWeight: 600 }}>{m.product_name}</td>
+                    <td>
+                      <span
+                        className={`badge ${
+                          m.ref_type === 'sale' || m.ref_type === 'void_deduct'
+                            ? 'badge-red'
+                            : m.ref_type === 'purchase' || m.ref_type === 'void'
+                              ? 'badge-green'
+                              : 'badge-blue'
+                        }`}
+                      >
+                        {m.ref_type}
+                      </span>
+                    </td>
+                    <td
+                      style={{
+                        fontWeight: 700,
+                        color: m.quantity_delta < 0 ? 'var(--accent-rd)' : 'var(--accent-em)',
+                      }}
+                    >
+                      {m.quantity_delta > 0 ? (
+                        <TrendingUp size={13} style={{ display: 'inline', marginRight: 4 }} />
+                      ) : (
+                        <TrendingDown size={13} style={{ display: 'inline', marginRight: 4 }} />
+                      )}
+                      {m.quantity_delta > 0 ? '+' : ''}
+                      {m.quantity_delta}
+                    </td>
+                    <td style={{ color: 'var(--text-2)', fontSize: '0.82rem' }}>
+                      {m.notes || '–'}
+                    </td>
+                    <td style={{ color: 'var(--text-2)', fontSize: '0.82rem' }}>
+                      {m.created_by_name}
+                    </td>
+                    <td style={{ color: 'var(--text-3)', fontSize: '0.8rem' }}>
+                      {formatDateTime(m.created_at)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 

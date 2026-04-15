@@ -234,7 +234,7 @@ export default function PriceHistoryPage() {
       </div>
 
       {/* Table */}
-      <div className="card reveal-animate" style={{ overflow: 'hidden', animationDelay: '0.2s' }}>
+      <div className="card reveal-animate" style={{ padding: 0, animationDelay: '0.2s' }}>
         {loading ? (
           <div style={{ display: 'flex', justifyContent: 'center', padding: 40 }}>
             <Loader2 size={24} className="loading-spin" style={{ color: 'var(--accent-em)' }} />
@@ -248,130 +248,132 @@ export default function PriceHistoryPage() {
             </span>
           </div>
         ) : (
-          <table className="tbl">
-            <thead>
-              <tr>
-                <th>Produk</th>
-                <th>Sumber</th>
-                <th>Harga Beli / HPP</th>
-                <th>Harga Jual / HJ</th>
-                <th>Diubah Oleh</th>
-                <th>Waktu</th>
-                <th>Catatan</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((row, i) => {
-                const costChanged = Math.abs(row.new_cost - row.old_cost) > 0.001;
-                const sellChanged = Math.abs(row.new_sell - row.old_sell) > 0.001;
-                return (
-                  <tr
-                    key={row.id}
-                    className="reveal-animate"
-                    style={{ animationDelay: `${0.25 + i * 0.02}s` }}
-                  >
-                    {/* Product */}
-                    <td>
-                      <div style={{ fontWeight: 600, maxWidth: 220 }}>{row.product_name}</div>
-                    </td>
-
-                    {/* Source */}
-                    <td>
-                      <SourceBadge source={row.source} />
-                    </td>
-
-                    {/* Cost section */}
-                    <td>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                        {costChanged ? (
-                          <PricePair old={row.old_cost} next={row.new_cost} />
-                        ) : (
-                          <span style={{ color: 'var(--text-3)', fontSize: '0.82rem' }}>
-                            {formatRp(row.old_cost)}
-                          </span>
-                        )}
-                        <DeltaBadge old={row.old_cost} next={row.new_cost} label="HPP baru" />
-                      </div>
-                    </td>
-
-                    {/* Sell section */}
-                    <td>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                        {sellChanged ? (
-                          <PricePair old={row.old_sell} next={row.new_sell} />
-                        ) : (
-                          <span style={{ color: 'var(--text-3)', fontSize: '0.82rem' }}>
-                            {formatRp(row.old_sell)}
-                          </span>
-                        )}
-                        <DeltaBadge old={row.old_sell} next={row.new_sell} label="HJ baru" />
-                      </div>
-                    </td>
-
-                    {/* Changed by */}
-                    <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <div
-                          style={{
-                            width: 28,
-                            height: 28,
-                            borderRadius: '50%',
-                            background: 'var(--accent-in)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontSize: '0.7rem',
-                            fontWeight: 700,
-                            color: '#fff',
-                            flexShrink: 0,
-                          }}
-                        >
-                          {row.changed_by_name.charAt(0).toUpperCase()}
-                        </div>
-                        <span style={{ fontSize: '0.82rem' }}>{row.changed_by_name}</span>
-                      </div>
-                    </td>
-
-                    {/* Timestamp */}
-                    <td
-                      style={{ whiteSpace: 'nowrap', color: 'var(--text-2)', fontSize: '0.8rem' }}
+          <div className="tbl-container">
+            <table className="tbl">
+              <thead>
+                <tr>
+                  <th>Produk</th>
+                  <th>Sumber</th>
+                  <th>Harga Beli / HPP</th>
+                  <th>Harga Jual / HJ</th>
+                  <th>Diubah Oleh</th>
+                  <th>Waktu</th>
+                  <th>Catatan</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((row, i) => {
+                  const costChanged = Math.abs(row.new_cost - row.old_cost) > 0.001;
+                  const sellChanged = Math.abs(row.new_sell - row.old_sell) > 0.001;
+                  return (
+                    <tr
+                      key={row.id}
+                      className="reveal-animate"
+                      style={{ animationDelay: `${0.25 + i * 0.02}s` }}
                     >
-                      <div>
-                        {new Date(row.changed_at).toLocaleDateString('id-ID', {
-                          day: '2-digit',
-                          month: 'short',
-                          year: 'numeric',
-                        })}
-                      </div>
-                      <div style={{ color: 'var(--text-3)', fontSize: '0.72rem' }}>
-                        {new Date(row.changed_at).toLocaleTimeString('id-ID', {
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
-                      </div>
-                    </td>
+                      {/* Product */}
+                      <td>
+                        <div style={{ fontWeight: 600, maxWidth: 220 }}>{row.product_name}</div>
+                      </td>
 
-                    {/* Notes */}
-                    <td style={{ maxWidth: 200 }}>
-                      {row.notes ? (
-                        <span
-                          style={{
-                            fontSize: '0.78rem',
-                            color: 'var(--text-2)',
-                            fontStyle: 'italic',
-                          }}
-                        >
-                          {row.notes}
-                        </span>
-                      ) : (
-                        <span style={{ color: 'var(--text-3)', fontSize: '0.78rem' }}>—</span>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                      {/* Source */}
+                      <td>
+                        <SourceBadge source={row.source} />
+                      </td>
+
+                      {/* Cost section */}
+                      <td>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                          {costChanged ? (
+                            <PricePair old={row.old_cost} next={row.new_cost} />
+                          ) : (
+                            <span style={{ color: 'var(--text-3)', fontSize: '0.82rem' }}>
+                              {formatRp(row.old_cost)}
+                            </span>
+                          )}
+                          <DeltaBadge old={row.old_cost} next={row.new_cost} label="HPP baru" />
+                        </div>
+                      </td>
+
+                      {/* Sell section */}
+                      <td>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                          {sellChanged ? (
+                            <PricePair old={row.old_sell} next={row.new_sell} />
+                          ) : (
+                            <span style={{ color: 'var(--text-3)', fontSize: '0.82rem' }}>
+                              {formatRp(row.old_sell)}
+                            </span>
+                          )}
+                          <DeltaBadge old={row.old_sell} next={row.new_sell} label="HJ baru" />
+                        </div>
+                      </td>
+
+                      {/* Changed by */}
+                      <td>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <div
+                            style={{
+                              width: 28,
+                              height: 28,
+                              borderRadius: '50%',
+                              background: 'var(--accent-in)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '0.7rem',
+                              fontWeight: 700,
+                              color: '#fff',
+                              flexShrink: 0,
+                            }}
+                          >
+                            {row.changed_by_name.charAt(0).toUpperCase()}
+                          </div>
+                          <span style={{ fontSize: '0.82rem' }}>{row.changed_by_name}</span>
+                        </div>
+                      </td>
+
+                      {/* Timestamp */}
+                      <td
+                        style={{ whiteSpace: 'nowrap', color: 'var(--text-2)', fontSize: '0.8rem' }}
+                      >
+                        <div>
+                          {new Date(row.changed_at).toLocaleDateString('id-ID', {
+                            day: '2-digit',
+                            month: 'short',
+                            year: 'numeric',
+                          })}
+                        </div>
+                        <div style={{ color: 'var(--text-3)', fontSize: '0.72rem' }}>
+                          {new Date(row.changed_at).toLocaleTimeString('id-ID', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </div>
+                      </td>
+
+                      {/* Notes */}
+                      <td style={{ maxWidth: 200 }}>
+                        {row.notes ? (
+                          <span
+                            style={{
+                              fontSize: '0.78rem',
+                              color: 'var(--text-2)',
+                              fontStyle: 'italic',
+                            }}
+                          >
+                            {row.notes}
+                          </span>
+                        ) : (
+                          <span style={{ color: 'var(--text-3)', fontSize: '0.78rem' }}>—</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 

@@ -233,7 +233,7 @@ export default function ProductsPage() {
       </div>
 
       {/* Table */}
-      <div className="card reveal-animate" style={{ overflow: 'hidden', animationDelay: '0.2s' }}>
+      <div className="card reveal-animate" style={{ padding: 0, animationDelay: '0.2s' }}>
         {loading ? (
           <div style={{ display: 'flex', justifyContent: 'center', padding: 40 }}>
             <Loader2 size={24} className="loading-spin" style={{ color: 'var(--accent-em)' }} />
@@ -244,82 +244,88 @@ export default function ProductsPage() {
             <p>Belum ada {productLabelLower}</p>
           </div>
         ) : (
-          <table className="tbl">
-            <thead>
-              <tr>
-                <th>{productLabel}</th>
-                <th>SKU</th>
-                <th>Stok</th>
-                <th>Harga Jual</th>
-                <th>Harga Beli</th>
-                <th>PPN</th>
-                <th>Status</th>
-                <th />
-              </tr>
-            </thead>
-            <tbody>
-              {products.map((p, i) => (
-                <tr
-                  key={p.id}
-                  className="reveal-animate"
-                  style={{ animationDelay: `${0.25 + i * 0.02}s` }}
-                >
-                  <td>
-                    <div style={{ fontWeight: 600 }}>{p.name}</div>
-                    {p.category_name && (
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-3)' }}>
-                        {p.category_name}
-                      </div>
-                    )}
-                  </td>
-                  <td
-                    style={{ color: 'var(--text-2)', fontFamily: 'monospace', fontSize: '0.82rem' }}
-                  >
-                    {p.sku}
-                  </td>
-                  <td>
-                    {p.stock_qty !== undefined ? (
-                      <span
-                        className={`badge ${p.stock_qty <= 0 ? 'badge-red' : p.stock_qty <= 5 ? 'badge-amber' : 'badge-green'}`}
-                      >
-                        {p.stock_qty} {p.unit}
-                      </span>
-                    ) : (
-                      '–'
-                    )}
-                  </td>
-                  <td style={{ fontWeight: 600, color: 'var(--accent-em)' }}>
-                    {formatRp(p.sell_price)}
-                  </td>
-                  <td style={{ color: 'var(--text-2)' }}>{formatRp(p.cost_price)}</td>
-                  <td style={{ color: 'var(--text-2)' }}>{p.tax_rate}%</td>
-                  <td>
-                    <span className={`badge ${p.is_active ? 'badge-green' : 'badge-gray'}`}>
-                      {p.is_active ? 'Aktif' : 'Nonaktif'}
-                    </span>
-                  </td>
-                  <td>
-                    <div style={{ display: 'flex', gap: 4 }}>
-                      {can('products.update') && (
-                        <button className="btn btn-ghost btn-sm" onClick={() => openEdit(p)}>
-                          <Pencil size={13} />
-                        </button>
-                      )}
-                      {can('products.delete') && (
-                        <button
-                          className="btn btn-ghost btn-sm"
-                          style={{ color: 'var(--accent-rd)' }}
-                          onClick={() => handleDelete(p.id)}
-                        >
-                          <Trash2 size={13} />
-                        </button>
-                      )}
-                    </div>
-                  </td>
+          <div className="tbl-container">
+            <table className="tbl">
+              <thead>
+                <tr>
+                  <th>{productLabel}</th>
+                  <th>SKU</th>
+                  <th>Stok</th>
+                  <th>Harga Jual</th>
+                  <th>Harga Beli</th>
+                  <th>PPN</th>
+                  <th>Status</th>
+                  <th />
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {products.map((p, i) => (
+                  <tr
+                    key={p.id}
+                    className="reveal-animate"
+                    style={{ animationDelay: `${0.25 + i * 0.02}s` }}
+                  >
+                    <td>
+                      <div style={{ fontWeight: 600 }}>{p.name}</div>
+                      {p.category_name && (
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-3)' }}>
+                          {p.category_name}
+                        </div>
+                      )}
+                    </td>
+                    <td
+                      style={{
+                        color: 'var(--text-2)',
+                        fontFamily: 'monospace',
+                        fontSize: '0.82rem',
+                      }}
+                    >
+                      {p.sku}
+                    </td>
+                    <td>
+                      {p.stock_qty !== undefined ? (
+                        <span
+                          className={`badge ${p.stock_qty <= 0 ? 'badge-red' : p.stock_qty <= 5 ? 'badge-amber' : 'badge-green'}`}
+                        >
+                          {p.stock_qty} {p.unit}
+                        </span>
+                      ) : (
+                        '–'
+                      )}
+                    </td>
+                    <td style={{ fontWeight: 600, color: 'var(--accent-em)' }}>
+                      {formatRp(p.sell_price)}
+                    </td>
+                    <td style={{ color: 'var(--text-2)' }}>{formatRp(p.cost_price)}</td>
+                    <td style={{ color: 'var(--text-2)' }}>{p.tax_rate}%</td>
+                    <td>
+                      <span className={`badge ${p.is_active ? 'badge-green' : 'badge-gray'}`}>
+                        {p.is_active ? 'Aktif' : 'Nonaktif'}
+                      </span>
+                    </td>
+                    <td>
+                      <div style={{ display: 'flex', gap: 4 }}>
+                        {can('products.update') && (
+                          <button className="btn btn-ghost btn-sm" onClick={() => openEdit(p)}>
+                            <Pencil size={13} />
+                          </button>
+                        )}
+                        {can('products.delete') && (
+                          <button
+                            className="btn btn-ghost btn-sm"
+                            style={{ color: 'var(--accent-rd)' }}
+                            onClick={() => handleDelete(p.id)}
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
         {/* Pagination */}
         {totalPages > 1 && (

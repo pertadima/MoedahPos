@@ -1064,7 +1064,7 @@ export default function UsersPage() {
       )}
 
       {/* ── Table ── */}
-      <div className="card reveal-animate" style={{ overflow: 'hidden', animationDelay: '0.15s' }}>
+      <div className="card reveal-animate" style={{ padding: 0, animationDelay: '0.15s' }}>
         {loading ? (
           <div style={{ display: 'flex', justifyContent: 'center', padding: 48 }}>
             <Loader2 size={26} className="loading-spin" style={{ color: 'var(--accent-em)' }} />
@@ -1075,103 +1075,109 @@ export default function UsersPage() {
             <p>Tidak ada pengguna</p>
           </div>
         ) : (
-          <table className="tbl">
-            <thead>
-              <tr>
-                <th>Pengguna</th>
-                <th>Email</th>
-                <th>Toko</th>
-                <th>Peran</th>
-                <th>Status</th>
-                <th style={{ width: 80 }} />
-              </tr>
-            </thead>
-            <tbody>
-              {users.map((u, i) => (
-                <tr
-                  key={u.id}
-                  className="reveal-animate"
-                  style={{
-                    cursor: 'pointer',
-                    opacity: u.is_active ? 1 : 0.6,
-                    animationDelay: `${0.2 + i * 0.02}s`,
-                  }}
-                  onClick={() => openDetail(u)}
-                >
-                  <td>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <Avatar name={u.name} size={30} />
-                      <div style={{ fontWeight: 600, fontSize: '0.88rem' }}>{u.name}</div>
-                    </div>
-                  </td>
-                  <td style={{ fontSize: '0.82rem', color: 'var(--text-2)' }}>{u.email}</td>
-                  <td>
-                    <span
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: 4,
-                        fontSize: '0.78rem',
-                        color: 'var(--text-2)',
-                      }}
-                    >
-                      <Store size={11} /> {u.store_count} toko
-                    </span>
-                  </td>
-                  <td>
-                    {u.stores && u.stores.length > 0 ? (
-                      <RoleBadge name={u.stores[0].role_name} />
-                    ) : (
-                      <span
-                        style={{ color: 'var(--text-3)', fontStyle: 'italic', fontSize: '0.8rem' }}
-                      >
-                        —
-                      </span>
-                    )}
-                  </td>
-                  <td>
-                    <StatusBadge active={u.is_active} />
-                  </td>
-                  <td onClick={e => e.stopPropagation()}>
-                    <div style={{ display: 'flex', gap: 4 }}>
-                      {can('users.update') && (
-                        <button
-                          className="btn btn-ghost btn-sm"
-                          onClick={() => {
-                            setEditUser(u);
-                          }}
-                          title="Edit"
-                        >
-                          <Edit3 size={13} />
-                        </button>
-                      )}
-                      {can('users.update') && u.is_active && (
-                        <button
-                          title="Nonaktifkan"
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            padding: '4px 6px',
-                            borderRadius: 6,
-                            border: '1px solid rgba(245,158,11,0.35)',
-                            background: 'rgba(245,158,11,0.08)',
-                            color: '#f59e0b',
-                            cursor: 'pointer',
-                          }}
-                          onClick={() => setDeactivating(u)}
-                        >
-                          <Archive size={12} />
-                        </button>
-                      )}
-                      <button className="btn btn-ghost btn-sm" onClick={() => openDetail(u)}>
-                        <ChevronRight size={14} />
-                      </button>
-                    </div>
-                  </td>
+          <div className="tbl-container">
+            <table className="tbl">
+              <thead>
+                <tr>
+                  <th>Pengguna</th>
+                  <th>Email</th>
+                  <th>Toko</th>
+                  <th>Peran</th>
+                  <th>Status</th>
+                  <th style={{ width: 80 }} />
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {users.map((u, i) => (
+                  <tr
+                    key={u.id}
+                    className="reveal-animate"
+                    style={{
+                      cursor: 'pointer',
+                      opacity: u.is_active ? 1 : 0.6,
+                      animationDelay: `${0.2 + i * 0.02}s`,
+                    }}
+                    onClick={() => openDetail(u)}
+                  >
+                    <td>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <Avatar name={u.name} size={30} />
+                        <div style={{ fontWeight: 600, fontSize: '0.88rem' }}>{u.name}</div>
+                      </div>
+                    </td>
+                    <td style={{ fontSize: '0.82rem', color: 'var(--text-2)' }}>{u.email}</td>
+                    <td>
+                      <span
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 4,
+                          fontSize: '0.78rem',
+                          color: 'var(--text-2)',
+                        }}
+                      >
+                        <Store size={11} /> {u.store_count} toko
+                      </span>
+                    </td>
+                    <td>
+                      {u.stores && u.stores.length > 0 ? (
+                        <RoleBadge name={u.stores[0].role_name} />
+                      ) : (
+                        <span
+                          style={{
+                            color: 'var(--text-3)',
+                            fontStyle: 'italic',
+                            fontSize: '0.8rem',
+                          }}
+                        >
+                          —
+                        </span>
+                      )}
+                    </td>
+                    <td>
+                      <StatusBadge active={u.is_active} />
+                    </td>
+                    <td onClick={e => e.stopPropagation()}>
+                      <div style={{ display: 'flex', gap: 4 }}>
+                        {can('users.update') && (
+                          <button
+                            className="btn btn-ghost btn-sm"
+                            onClick={() => {
+                              setEditUser(u);
+                            }}
+                            title="Edit"
+                          >
+                            <Edit3 size={13} />
+                          </button>
+                        )}
+                        {can('users.update') && u.is_active && (
+                          <button
+                            title="Nonaktifkan"
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              padding: '4px 6px',
+                              borderRadius: 6,
+                              border: '1px solid rgba(245,158,11,0.35)',
+                              background: 'rgba(245,158,11,0.08)',
+                              color: '#f59e0b',
+                              cursor: 'pointer',
+                            }}
+                            onClick={() => setDeactivating(u)}
+                          >
+                            <Archive size={12} />
+                          </button>
+                        )}
+                        <button className="btn btn-ghost btn-sm" onClick={() => openDetail(u)}>
+                          <ChevronRight size={14} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 
