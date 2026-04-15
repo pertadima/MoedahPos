@@ -19,6 +19,7 @@ import {
   ShoppingCart,
   Warehouse,
 } from 'lucide-react';
+import DatePicker from '@/components/ui/DatePicker';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { reportsApi } from '@/lib/api/store-apis';
 import { transactionsApi } from '@/lib/api/transactions';
@@ -552,7 +553,7 @@ export default function UnifiedReportsPage() {
 
   return (
     <div className="w-full p-6">
-      <div className="reveal-animate flex justify-between items-start mb-6 flex-wrap gap-4">
+      <div className="reveal-animate flex justify-between items-start mb-6 flex-wrap gap-4 relative z-20">
         <div>
           <h1 className="page-title" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <BarChart3 size={22} style={{ color: 'var(--accent-em)' }} />
@@ -563,21 +564,12 @@ export default function UnifiedReportsPage() {
           </p>
         </div>
 
-        <div className="card flex items-center gap-2 p-1.5 px-3">
-          <Calendar size={14} className="text-3" />
-          <input
-            type="date"
-            className="input-subtle text-xs w-32 border-none bg-transparent"
-            value={dateFrom}
-            onChange={e => setDateFrom(e.target.value)}
-          />
-          <span className="text-3 text-[10px] opacity-40">TO</span>
-          <input
-            type="date"
-            className="input-subtle text-xs w-32 border-none bg-transparent"
-            value={dateTo}
-            onChange={e => setDateTo(e.target.value)}
-          />
+        <div className="flex items-center gap-3">
+          <div className="card flex items-center gap-2 p-1 px-2 h-9">
+            <DatePicker value={dateFrom} onChange={setDateFrom} variant="minimal" />
+            <span className="text-3 text-[10px] opacity-40 font-bold">TO</span>
+            <DatePicker value={dateTo} onChange={setDateTo} variant="minimal" />
+          </div>
           <button
             className="btn btn-primary btn-xs px-3 ml-2"
             onClick={refreshCurrentTab}

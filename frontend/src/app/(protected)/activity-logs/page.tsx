@@ -19,6 +19,7 @@ import {
   ChevronUp,
   Loader2,
 } from 'lucide-react';
+import DatePicker from '@/components/ui/DatePicker';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { activityLogsApi, type ActivityLog } from '@/lib/api/activity-logs';
 import { storesApi } from '@/lib/api/store-apis';
@@ -426,13 +427,7 @@ export default function ActivityLogPage() {
             >
               <CalendarDays size={12} /> Dari Tanggal
             </label>
-            <input
-              type="date"
-              className="input"
-              style={{ fontWeight: 600 }}
-              value={dateFrom}
-              onChange={e => setDateFrom(e.target.value)}
-            />
+            <DatePicker value={dateFrom} onChange={setDateFrom} className="w-full h-[38px]" />
           </div>
           <div className="input-group">
             <label
@@ -449,13 +444,7 @@ export default function ActivityLogPage() {
             >
               <CalendarDays size={12} /> Sampai Tanggal
             </label>
-            <input
-              type="date"
-              className="input"
-              style={{ fontWeight: 600 }}
-              value={dateTo}
-              onChange={e => setDateTo(e.target.value)}
-            />
+            <DatePicker value={dateTo} onChange={setDateTo} className="w-full h-[38px]" />
           </div>
           <div className="input-group">
             <label

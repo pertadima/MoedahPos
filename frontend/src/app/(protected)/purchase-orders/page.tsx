@@ -20,11 +20,12 @@ import {
   AlertCircle,
   BadgeCheck,
   Clock,
-  Eye,
   Check,
   Trash2,
   FileText,
+  Eye,
 } from 'lucide-react';
+import DatePicker from '@/components/ui/DatePicker';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { purchaseOrdersApi, suppliersApi, storesApi } from '@/lib/api/store-apis';
 import { productsApi } from '@/lib/api/products';
@@ -916,19 +917,11 @@ function TerminModal({ po, storeId, onSuccess, onCancel }: TerminModalProps) {
               >
                 Jatuh Tempo
               </label>
-              <input
-                id={`td-${i}`}
-                type="date"
+              <DatePicker
                 value={row.due_date}
-                onChange={e => updateRow(i, 'due_date', e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '6px 7px',
-                  borderRadius: 7,
-                  border: '1px solid var(--border)',
-                  background: 'var(--bg-card)',
-                  color: 'var(--text-1)',
-                }}
+                onChange={val => updateRow(i, 'due_date', val)}
+                className="w-full h-[32px]"
+                showPresets={false}
               />
             </div>
             <div>
@@ -1113,22 +1106,7 @@ function PayTerminModal({ termin, storeId, poId, onSuccess, onCancel }: PayTermi
           },
           {
             label: 'Tanggal Bayar',
-            el: (
-              <input
-                id="pay-dt"
-                type="date"
-                value={date}
-                onChange={e => setDate(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '8px 12px',
-                  borderRadius: 8,
-                  border: '1px solid var(--border)',
-                  background: 'var(--bg-card)',
-                  color: 'var(--text-1)',
-                }}
-              />
-            ),
+            el: <DatePicker value={date} onChange={setDate} className="w-full h-[38px]" />,
           },
           {
             label: 'Metode',

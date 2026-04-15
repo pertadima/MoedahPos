@@ -19,6 +19,7 @@ import {
   TrendingUp,
   ShoppingBag,
 } from 'lucide-react';
+import DatePicker from '@/components/ui/DatePicker';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { transactionsApi } from '@/lib/api/transactions';
 import { formatRp } from '@/lib/utils';
@@ -897,26 +898,22 @@ export default function TransactionsPage() {
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <CalendarDays size={14} style={{ color: 'var(--text-3)' }} />
-          <input
-            type="date"
-            className="input"
-            style={{ width: 145 }}
+          <DatePicker
             value={dateFrom}
-            onChange={e => {
-              setDateFrom(e.target.value);
+            onChange={val => {
+              setDateFrom(val);
               setPreset('custom');
             }}
+            className="w-[145px]"
           />
           <span style={{ color: 'var(--text-3)', fontSize: '0.85rem' }}>s/d</span>
-          <input
-            type="date"
-            className="input"
-            style={{ width: 145 }}
+          <DatePicker
             value={dateTo}
-            onChange={e => {
-              setDateTo(e.target.value);
+            onChange={val => {
+              setDateTo(val);
               setPreset('custom');
             }}
+            className="w-[145px]"
           />
         </div>
 
