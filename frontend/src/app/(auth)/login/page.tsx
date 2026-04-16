@@ -562,84 +562,118 @@ export default function LoginPage() {
                 >
                   {slide.title}
                 </h2>
-                <p style={{ fontSize: '1rem', opacity: 0.85, lineHeight: 1.5, margin: 0 }}>
+                <p
+                  style={{
+                    fontSize: '1rem',
+                    opacity: 0.85,
+                    lineHeight: 1.5,
+                    margin: 0,
+                    display: '-webkit-box',
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical',
+                    overflow: 'hidden',
+                    height: '3rem',
+                  }}
+                >
                   {slide.subtitle}
                 </p>
               </div>
             </div>
           ))}
 
-          {/* Navigation Controls */}
+          {/* Navigation Arrows */}
+          <button
+            onClick={prevSlide}
+            style={{
+              position: 'absolute',
+              left: 20,
+              top: '50%',
+              width: 44,
+              height: 44,
+              borderRadius: '14px',
+              background: 'rgba(255,255,255,0.08)',
+              backdropFilter: 'blur(8px)',
+              border: '1px solid rgba(255,255,255,0.1)',
+              color: 'white',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              zIndex: 20,
+              transform: 'translateY(-50%)',
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.background = 'rgba(255,255,255,0.15)';
+              e.currentTarget.style.transform = 'translateY(-50%) translateX(-6px)';
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.background = 'rgba(255,255,255,0.08)';
+              e.currentTarget.style.transform = 'translateY(-50%) translateX(0)';
+            }}
+          >
+            <ChevronLeft size={24} strokeWidth={2.5} />
+          </button>
+
+          <button
+            onClick={nextSlide}
+            style={{
+              position: 'absolute',
+              right: 20,
+              top: '50%',
+              width: 44,
+              height: 44,
+              borderRadius: '14px',
+              background: 'rgba(255,255,255,0.08)',
+              backdropFilter: 'blur(8px)',
+              border: '1px solid rgba(255,255,255,0.1)',
+              color: 'white',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              zIndex: 20,
+              transform: 'translateY(-50%)',
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.background = 'rgba(255,255,255,0.15)';
+              e.currentTarget.style.transform = 'translateY(-50%) translateX(6px)';
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.background = 'rgba(255,255,255,0.08)';
+              e.currentTarget.style.transform = 'translateY(-50%) translateX(0)';
+            }}
+          >
+            <ChevronRight size={24} strokeWidth={2.5} />
+          </button>
+
+          {/* Bottom Indicators */}
           <div
             style={{
               position: 'absolute',
-              bottom: 60,
+              bottom: 40,
               display: 'flex',
+              gap: 8,
               alignItems: 'center',
-              gap: 20,
               zIndex: 10,
             }}
           >
-            <button
-              onClick={prevSlide}
-              style={{
-                width: 48,
-                height: 48,
-                borderRadius: '50%',
-                background: 'rgba(255,255,255,0.1)',
-                border: '1px solid rgba(255,255,255,0.1)',
-                color: 'white',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                transition: 'all 0.2s',
-              }}
-              onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.2)')}
-              onMouseLeave={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.1)')}
-            >
-              <ChevronLeft size={24} />
-            </button>
-
-            {/* Dots */}
-            <div style={{ display: 'flex', gap: 10 }}>
-              {SLIDES.map((_, i) => (
-                <div
-                  key={i}
-                  onClick={() => setCurrentSlide(i)}
-                  style={{
-                    width: currentSlide === i ? 24 : 8,
-                    height: 8,
-                    borderRadius: 4,
-                    background: 'white',
-                    opacity: currentSlide === i ? 1 : 0.4,
-                    cursor: 'pointer',
-                    transition: 'all 0.3s ease',
-                  }}
-                />
-              ))}
-            </div>
-
-            <button
-              onClick={nextSlide}
-              style={{
-                width: 48,
-                height: 48,
-                borderRadius: '50%',
-                background: 'rgba(255,255,255,0.1)',
-                border: '1px solid rgba(255,255,255,0.1)',
-                color: 'white',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                transition: 'all 0.2s',
-              }}
-              onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.2)')}
-              onMouseLeave={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.1)')}
-            >
-              <ChevronRight size={24} />
-            </button>
+            {SLIDES.map((_, i) => (
+              <div
+                key={i}
+                onClick={() => setCurrentSlide(i)}
+                style={{
+                  width: currentSlide === i ? 36 : 10,
+                  height: 5,
+                  borderRadius: 10,
+                  background: 'white',
+                  opacity: currentSlide === i ? 1 : 0.25,
+                  cursor: 'pointer',
+                  transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                }}
+              />
+            ))}
           </div>
         </div>
       </div>
