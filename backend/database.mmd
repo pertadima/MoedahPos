@@ -353,7 +353,7 @@ erDiagram
         UUID id PK
         UUID store_id FK
         UUID category_id FK
-        DECIMAL amount
+        NUMERIC amount
         DATE income_date
         VARCHAR payment_method
         VARCHAR reference
@@ -366,7 +366,7 @@ erDiagram
         UUID id PK
         UUID user_id FK
         UUID store_id FK
-        VARCHAR action_type
+        action_type_enum action_type
         VARCHAR module
         UUID reference_id
         JSONB metadata
