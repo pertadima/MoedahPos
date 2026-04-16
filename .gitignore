@@ -17,6 +17,7 @@ backend/*.exe
 backend/*.test
 backend/vendor/
 backend/.env
+backend/.env.prod
 # Keep .env.example
 !backend/.env.example
 
