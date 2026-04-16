@@ -184,7 +184,7 @@ function ExpensesPage() {
               alignItems: 'end',
               animationDelay: '0.15s',
               position: 'relative',
-              zIndex: 50,
+              zIndex: 10,
             }}
           >
             <div>

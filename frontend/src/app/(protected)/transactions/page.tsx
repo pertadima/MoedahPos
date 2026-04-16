@@ -887,14 +887,14 @@ export default function TransactionsPage() {
       <div
         className="reveal-animate"
         style={{
-          display: 'flex',
-          gap: 8,
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+          gap: 12,
           marginBottom: 16,
-          flexWrap: 'wrap',
           alignItems: 'center',
           animationDelay: '0.15s',
           position: 'relative',
-          zIndex: 100,
+          zIndex: 10,
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>

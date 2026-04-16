@@ -411,7 +411,7 @@ export default function ActivityLogPage() {
             gap: 24,
             marginBottom: 16,
             position: 'relative',
-            zIndex: 50,
+            zIndex: 10,
           }}
         >
           <div className="input-group">

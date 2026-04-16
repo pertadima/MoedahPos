@@ -268,6 +268,7 @@ export default function DatePicker({
                             ? 'text-accent-em bg-accent-em/5 ring-1 ring-accent-em/20'
                             : 'text-2 hover:bg-surface-hv hover:text-1'
                       }
+                      focus-visible:ring-2 focus-visible:ring-accent-em focus-visible:ring-offset-2 focus-visible:outline-none focus:outline-none
                     `}
                     style={
                       selected
