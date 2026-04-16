@@ -565,17 +565,32 @@ export default function UnifiedReportsPage() {
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="card flex items-center gap-2 p-1 px-2 h-9">
-            <DatePicker value={dateFrom} onChange={setDateFrom} variant="minimal" />
-            <span className="text-3 text-[10px] opacity-40 font-bold">TO</span>
-            <DatePicker value={dateTo} onChange={setDateTo} variant="minimal" />
+          <div
+            className="card flex items-center gap-2 px-4 shadow-sm"
+            style={{ height: 44, borderRadius: 22, background: 'var(--bg-card)' }}
+          >
+            <DatePicker value={dateFrom} onChange={setDateFrom} variant="ghost" />
+            <div
+              style={{
+                fontSize: '10px',
+                fontWeight: 800,
+                color: 'var(--text-3)',
+                letterSpacing: '0.1em',
+                padding: '0 4px',
+                opacity: 0.5,
+              }}
+            >
+              TO
+            </div>
+            <DatePicker value={dateTo} onChange={setDateTo} variant="ghost" />
           </div>
           <button
-            className="btn btn-primary btn-xs px-3 ml-2"
+            className="btn btn-primary px-6 shadow-lg"
+            style={{ height: 44, borderRadius: 22, fontWeight: 700 }}
             onClick={refreshCurrentTab}
             disabled={isActiveTabLoading}
           >
-            {isActiveTabLoading ? <Loader2 size={12} className="loading-spin" /> : 'Update Laporan'}
+            {isActiveTabLoading ? <Loader2 size={16} className="loading-spin" /> : 'Update Laporan'}
           </button>
         </div>
       </div>
