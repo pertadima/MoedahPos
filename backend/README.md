@@ -1,146 +1,108 @@
 # Moedah POS Backend
 
-This is the backend API for the Moedah POS system, built with Go and PostgreSQL.
+Moedah POS is a modern, feature-rich point-of-sale system designed for retail and restaurant businesses. This backend provides a robust RESTful API built with Go and PostgreSQL, focusing on high performance, data integrity, and scalability.
 
-## Prerequisites
+## 🚀 Key Features
+
+- **Multi-Store Management**: Effortlessly handle multiple store locations with centralized control.
+- **Advanced Inventory**: FIFO-based stock batch tracking, automated stock levels, and movement history.
+- **Restaurant Optimization**: Specialized support for table management, menu ingredients (BOM), and KDS (Kitchen Display System) status tracking.
+- **Financial Management**: Integrated tracking for incomes, expenses, recurring costs, and cash flow analysis.
+- **Granular RBAC**: Flexible Role-Based Access Control allowing precise permission management per store.
+- **Comprehensive Auditing**: Detailed activity logs for all critical system actions.
+
+## 🛠 Tech Stack & Dependencies
+
+- **Language**: [Go 1.22+](https://golang.org/)
+- **Database**: [PostgreSQL 16+](https://www.postgresql.org/)
+- **API Router**: [Chi v5](https://github.com/go-chi/chi) - Minimalist and idiomatic.
+- **SQL Extensions**: [Sqlx](https://github.com/jmoiron/sqlx) - For cleaner database interactions.
+- **Migrations**: [Goose](https://github.com/pressly/goose) - Reliable database versioning.
+- **Validation**: [Validator v10](https://github.com/go-playground/validator) - Strict request body validation.
+- **Logging**: [Zerolog](https://github.com/rs/zerolog) - Fast, structured JSON logging.
+- **Security**: JWT for authentication and Argon2/Bcrypt for password hashing.
+
+---
+
+## 🚦 Getting Started
+
+### Prerequisites
 
 - Go 1.22 or later
-- PostgreSQL 16 or later (for local development)
-- Docker and Docker Compose (for containerized development)
+- PostgreSQL 16 or later
+- Docker & Docker Compose (optional, for containerized setup)
 
-## Quick Start with Docker (Recommended)
+### Option 1: Quick Start with Docker (Recommended)
 
-1. **Clone the repository and navigate to the project root:**
+1. **Clone and navigate:**
    ```bash
-   cd /path/to/moedah-pos
+   cd moedah-pos/backend
    ```
 
-2. **Copy the environment file:**
+2. **Configure environment:**
    ```bash
-   cp backend/.env.example backend/.env
+   cp .env.example .env
    ```
 
-3. **Start the services:**
+3. **Launch services:**
    ```bash
    docker-compose up --build
    ```
+   *This automatically handles database setup, migrations, and starts the API on port `8080`.*
 
-   This will:
-   - Start a PostgreSQL database
-   - Build and run the Go backend API
-   - Run database migrations automatically
+### Option 2: Local Development
 
-4. **Access the API:**
-   - API: http://localhost:8080
-   - Database: localhost:5432 (user: moedah, password: moedahsecret, db: moedah_pos)
+1. **Setup Database:**
+   Ensure PostgreSQL is running and create the database:
+   ```sql
+   CREATE DATABASE moedah_pos;
+   ```
 
-## Local Development Setup
+2. **Install dependencies:**
+   ```bash
+   go mod download
+   ```
 
-### 1. Install Dependencies
+3. **Run Migrations:**
+   The app runs migrations automatically on startup if `RUN_MIGRATIONS=true` is set in `.env`. Alternatively:
+   ```bash
+   go run cmd/api/main.go
+   ```
 
-**PostgreSQL:**
-- macOS: `brew install postgresql`
-- Ubuntu: `sudo apt install postgresql postgresql-contrib`
-- Or use Docker: `docker run --name postgres -e POSTGRES_PASSWORD=password -d -p 5432:5432 postgres:16`
+4. **Start the API:**
+   ```bash
+   go run cmd/api/main.go
+   ```
+   API will be available at `http://localhost:8080`.
 
-**Go:**
-- Download from https://golang.org/dl/ or use your package manager
+---
 
-### 2. Set up PostgreSQL Database
+## 📊 Database ERD
 
-```bash
-# Start PostgreSQL service (if using system install)
-sudo systemctl start postgresql  # Linux
-brew services start postgresql   # macOS
+The database schema is maintained in a dedicated Mermaid file for better version control and visibility.
 
-# Create database and user
-createdb moedah_pos
-createuser moedah
-psql -c "ALTER USER moedah PASSWORD 'moedahsecret';"
-psql -c "GRANT ALL PRIVILEGES ON DATABASE moedah_pos TO moedah;"
-```
+- **Diagram File**: [database.mmd](database.mmd)
 
-### 3. Configure Environment
+---
 
-```bash
-cd backend
-cp .env.example .env
-# Edit .env if needed (default values should work for local setup)
-```
-
-### 4. Install Go Dependencies
+## 🛠 Development Commands
 
 ```bash
-go mod download
-```
-
-### 5. Run Database Migrations
-
-```bash
-go run cmd/api/main.go
-```
-
-The application will run migrations on startup if `RUN_MIGRATIONS=true` in your `.env` file.
-
-### 6. Run the Application
-
-```bash
-go run cmd/api/main.go
-```
-
-The API will be available at http://localhost:8080
-
-## Database Schema
-
-See [database.md](database.md) for the complete database schema diagram.
-
-## API Documentation
-
-The API uses REST endpoints. Key features include:
-
-- User authentication and authorization
-- Store management
-- Product and inventory management
-- Purchase orders
-- Transaction processing
-- Restaurant mode with tables and menu items
-
-## Development Commands
-
-```bash
-# Run with hot reload (requires air or similar)
+# Hot reload development
 air
 
-# Run tests
-go test ./...
+# Run all tests
+go test ./... -v
 
-# Run linter
+# Code linting
 golangci-lint run
 
 # Build for production
-go build -ldflags="-w -s" -o server ./cmd/api
+go build -o server ./cmd/api
 ```
 
-## Environment Variables
+---
 
-See `.env.example` for all available configuration options.
+## 📜 License
 
-Key variables:
-- `APP_ENV`: development/production
-- `DB_*`: Database connection settings
-- `JWT_SECRET`: Secret key for JWT tokens
-- `RUN_MIGRATIONS`: Whether to run migrations on startup
-
-## Troubleshooting
-
-**Database connection issues:**
-- Ensure PostgreSQL is running
-- Check DB credentials in `.env`
-- For Docker: wait for postgres healthcheck
-
-**Port conflicts:**
-- Change `APP_PORT` in `.env` if 8080 is in use
-
-**Migration errors:**
-- Ensure database exists and user has permissions
-- Check migration files in `migrations/` directory
+This project is proprietary and confidential. Unauthorized copying is strictly prohibited.

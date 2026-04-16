@@ -1,32 +1,5 @@
 import { api } from './client';
-
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-/** One FIFO stock batch created from a purchase order receipt. */
-export interface StockBatch {
-  id: string;
-  product_id: string;
-  product_name: string;
-  product_sku: string;
-  unit: string;
-  store_id: string;
-  po_id?: string;
-  quantity_remaining: number;
-  purchase_price: number;
-  received_at: string;
-  created_at: string;
-}
-
-/** Per-product summary aggregated across all active batches. */
-export interface BatchStockSummary {
-  product_id: string;
-  product_name: string;
-  product_sku: string;
-  unit: string;
-  total_qty: number;
-  batch_count: number;
-  avg_cost_price: number;
-}
+import type { StockBatch, BatchStockSummary } from '@/types';
 
 // ─── API Calls ────────────────────────────────────────────────────────────────
 

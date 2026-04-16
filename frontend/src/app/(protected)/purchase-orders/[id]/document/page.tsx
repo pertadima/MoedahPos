@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
-import { getPODocument, type PODocumentData, type Termin } from '@/lib/api/termins';
+import { getPODocument } from '@/lib/api/termins';
+import type { PODocumentData, Termin } from '@/types';
 import { useAuth } from '@/lib/auth/AuthContext';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────

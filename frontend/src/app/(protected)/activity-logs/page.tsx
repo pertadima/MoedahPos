@@ -21,9 +21,9 @@ import {
 } from 'lucide-react';
 import DatePicker from '@/components/ui/DatePicker';
 import { useAuth } from '@/lib/auth/AuthContext';
-import { activityLogsApi, type ActivityLog } from '@/lib/api/activity-logs';
+import { activityLogsApi } from '@/lib/api/activity-logs';
 import { storesApi } from '@/lib/api/store-apis';
-import type { PaginatedData, User } from '@/types';
+import type { PaginatedData, User, ActivityLog } from '@/types';
 import { ApiError } from '@/lib/api/client';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
