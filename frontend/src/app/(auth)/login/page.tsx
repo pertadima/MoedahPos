@@ -57,6 +57,7 @@ const SLIDES = [
 ];
 
 export default function LoginPage() {
+  const [mounted, setMounted] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPw, setShowPw] = useState(false);
@@ -70,6 +71,10 @@ export default function LoginPage() {
   // Slider State
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const nextSlide = useCallback(() => {
     setCurrentSlide(prev => (prev + 1) % SLIDES.length);
@@ -154,7 +159,7 @@ export default function LoginPage() {
         >
           <div style={{ position: 'relative', width: 130, height: 36 }}>
             <Image
-              src={isDark ? '/logo-icon-dark.svg' : '/logo-icon-light.svg'}
+              src={mounted && isDark ? '/logo-icon-dark.svg' : '/logo-icon-light.svg'}
               alt="Moedah Logo"
               fill
               style={{ objectFit: 'contain', objectPosition: 'left' }}
@@ -187,7 +192,7 @@ export default function LoginPage() {
               e.currentTarget.style.transform = 'scale(1)';
             }}
           >
-            {isDark ? <Sun size={18} /> : <Moon size={18} />}
+            {mounted ? isDark ? <Sun size={18} /> : <Moon size={18} /> : <Sun size={18} />}
           </button>
         </div>
 
@@ -530,7 +535,7 @@ export default function LoginPage() {
                 }}
               >
                 <Image
-                  src={isDark ? slide.dark : slide.light}
+                  src={mounted && isDark ? slide.dark : slide.light}
                   alt={slide.title}
                   fill
                   style={{ objectFit: 'contain' }}
