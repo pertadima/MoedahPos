@@ -1,11 +1,60 @@
 'use client';
 
-import React, { useState, type FormEvent } from 'react';
+import React, { useState, useEffect, useCallback, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { Mail, Lock, Eye, EyeOff, Loader2 } from 'lucide-react';
+import {
+  Mail,
+  Lock,
+  Eye,
+  EyeOff,
+  Loader2,
+  Sun,
+  Moon,
+  ChevronRight,
+  ChevronLeft,
+} from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { ApiError } from '@/lib/api/client';
+import { useTheme } from '@/lib/theme/ThemeContext';
+
+const SLIDES = [
+  {
+    id: 1,
+    light: '/order-pos-light.png',
+    dark: '/order-pos-dark.png',
+    title: 'Point of Sale yang Mudah',
+    subtitle: 'Kelola pesanan dan transaksi toko Anda dengan cepat dan akurat.',
+  },
+  {
+    id: 2,
+    light: '/order-hpp-light.png',
+    dark: '/order-hpp-dark.png',
+    title: 'Kalkulator HPP Otomatis',
+    subtitle: 'Hitung Harga Pokok Penjualan secara instan untuk margin keuntungan yang lebih baik.',
+  },
+  {
+    id: 3,
+    light: '/order-purchase-light.png',
+    dark: '/order-purchase-dark.png',
+    title: 'Manajemen Purchase Order',
+    subtitle: 'Pantau stok masuk dan kelola pesanan ke supplier dalam satu dashboard.',
+  },
+  {
+    id: 4,
+    light: '/order-report-light.png',
+    dark: '/order-report-dark.png',
+    title: 'Laporan Bisnis Real-time',
+    subtitle: 'Dapatkan wawasan mendalam tentang performa bisnis Anda kapan saja, di mana saja.',
+  },
+  {
+    id: 5,
+    light: '/order-cashflow-light.png',
+    dark: '/order-cashflow-dark.png',
+    title: 'Catatan Arus Kas',
+    subtitle: 'Lacak setiap uang masuk dan keluar dengan detail untuk transparansi finansial.',
+  },
+];
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -16,6 +65,25 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const { login } = useAuth();
   const router = useRouter();
+  const { toggleTheme, isDark } = useTheme();
+
+  // Slider State
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+
+  const nextSlide = useCallback(() => {
+    setCurrentSlide(prev => (prev + 1) % SLIDES.length);
+  }, []);
+
+  const prevSlide = useCallback(() => {
+    setCurrentSlide(prev => (prev - 1 + SLIDES.length) % SLIDES.length);
+  }, []);
+
+  useEffect(() => {
+    if (isPaused) return;
+    const timer = setInterval(nextSlide, 6000);
+    return () => clearInterval(timer);
+  }, [isPaused, nextSlide]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -40,8 +108,10 @@ export default function LoginPage() {
         width: '100vw',
         margin: 0,
         padding: 0,
-        background: '#ffffff',
+        background: 'var(--bg-base)',
+        color: 'var(--text-1)',
         overflow: 'hidden',
+        transition: 'background-color 0.3s ease',
       }}
     >
       {/* Left Section - Login Form */}
@@ -51,34 +121,57 @@ export default function LoginPage() {
           display: 'flex',
           flexDirection: 'column',
           padding: '60px 40px',
-          background: '#ffffff',
-          animation: 'slideInLeft 0.6s ease-out',
+          background: 'var(--bg-card)',
           position: 'relative',
+          zIndex: 10,
+          boxShadow: '20px 0 50px rgba(0,0,0,0.05)',
         }}
+        className="reveal-animate"
       >
-        {/* Logo - Top Left */}
+        {/* Top Header with Logo & Theme Toggle */}
         <div
           style={{
-            position: 'absolute',
-            top: 40,
-            left: 40,
-            animation: 'fadeIn 0.8s ease-out',
-            width: 180,
-            height: 60,
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: 60,
           }}
         >
-          <Image
-            src="/logo-icon-light.svg"
-            alt="Moedah"
-            width={180}
-            height={60}
+          <div style={{ width: 140, height: 40, position: 'relative' }}>
+            <Image
+              src={isDark ? '/logo-icon-dark.svg' : '/logo-icon-light.svg'}
+              alt="Moedah"
+              fill
+              style={{ objectFit: 'contain', objectPosition: 'left' }}
+              priority
+            />
+          </div>
+          <button
+            onClick={toggleTheme}
             style={{
-              display: 'block',
-              width: '180px',
-              height: '60px',
+              padding: '10px',
+              borderRadius: '12px',
+              border: '1px solid var(--border-md)',
+              background: 'var(--bg-elevated)',
+              color: 'var(--text-2)',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all 0.2s ease',
             }}
-            priority
-          />
+            onMouseEnter={e => {
+              e.currentTarget.style.borderColor = 'var(--brand)';
+              e.currentTarget.style.color = 'var(--brand)';
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.borderColor = 'var(--border-md)';
+              e.currentTarget.style.color = 'var(--text-2)';
+            }}
+            aria-label="Toggle Theme"
+          >
+            {isDark ? <Sun size={20} /> : <Moon size={20} />}
+          </button>
         </div>
 
         {/* Centered Content */}
@@ -91,16 +184,22 @@ export default function LoginPage() {
             alignItems: 'center',
           }}
         >
-          <div style={{ width: '100%', maxWidth: 420 }}>
+          <div style={{ width: '100%', maxWidth: 400 }}>
             {/* Header */}
-            <div style={{ marginBottom: 40, animation: 'fadeIn 0.8s ease-out' }}>
+            <div style={{ marginBottom: 40 }}>
               <h1
-                style={{ fontSize: '1.8rem', fontWeight: 800, color: '#1f2937', marginBottom: 8 }}
+                style={{
+                  fontSize: '2rem',
+                  fontWeight: 800,
+                  color: 'var(--text-1)',
+                  marginBottom: 12,
+                  letterSpacing: '-0.02em',
+                }}
               >
-                Selamat Datang Kembali
+                Selamat Datang
               </h1>
-              <p style={{ color: '#6b7280', fontSize: '0.95rem' }}>
-                Masukkan email dan kata sandi Anda untuk mengakses akun Anda.
+              <p style={{ color: 'var(--text-2)', fontSize: '1rem', lineHeight: 1.6 }}>
+                Masuk untuk mengelola operasional bisnis Anda dengan Moedah POS.
               </p>
             </div>
 
@@ -108,16 +207,19 @@ export default function LoginPage() {
             {error && (
               <div
                 style={{
-                  background: '#fee2e2',
-                  border: '1px solid #fecaca',
-                  borderRadius: 8,
-                  padding: '12px 14px',
-                  marginBottom: 20,
-                  color: '#991b1b',
-                  fontSize: '0.85rem',
-                  animation: 'slideDown 0.3s ease-out',
+                  background: 'rgba(239, 68, 68, 0.1)',
+                  border: '1px solid rgba(239, 68, 68, 0.2)',
+                  borderRadius: 12,
+                  padding: '12px 16px',
+                  marginBottom: 24,
+                  color: '#ef4444',
+                  fontSize: '0.9rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 10,
                 }}
               >
+                <div style={{ width: 6, height: 6, background: '#ef4444', borderRadius: '50%' }} />
                 {error}
               </div>
             )}
@@ -128,32 +230,21 @@ export default function LoginPage() {
               style={{
                 display: 'flex',
                 flexDirection: 'column',
-                gap: 16,
-                animation: 'fadeIn 1s ease-out',
+                gap: 20,
               }}
             >
-              {/* Email Field */}
-              <div>
-                <label
-                  style={{
-                    display: 'block',
-                    color: '#374151',
-                    fontSize: '0.9rem',
-                    fontWeight: 500,
-                    marginBottom: 6,
-                  }}
-                >
-                  Email
-                </label>
+              <div className="input-group">
+                <label className="input-label">Email Kantor / Toko</label>
                 <div style={{ position: 'relative' }}>
                   <Mail
-                    size={18}
+                    size={20}
                     style={{
                       position: 'absolute',
-                      left: 12,
+                      left: 14,
                       top: '50%',
                       transform: 'translateY(-50%)',
-                      color: '#9ca3af',
+                      color: 'var(--text-3)',
+                      zIndex: 1,
                     }}
                   />
                   <input
@@ -161,53 +252,44 @@ export default function LoginPage() {
                     required
                     value={email}
                     onChange={e => setEmail(e.target.value)}
-                    placeholder="toko@perusahaan.com"
+                    placeholder="nama@toko.com"
                     style={{
                       width: '100%',
-                      padding: '11px 12px 11px 40px',
-                      border: '1px solid #e5e7eb',
-                      borderRadius: 6,
+                      padding: '14px 16px 14px 46px',
+                      background: 'var(--bg-elevated)',
+                      border: '1px solid var(--border)',
+                      borderRadius: 12,
                       fontSize: '0.95rem',
+                      color: 'var(--text-1)',
                       outline: 'none',
                       transition: 'all 0.2s',
-                      boxSizing: 'border-box',
                     }}
                     onFocus={e => {
-                      e.target.style.borderColor = '#0884F6';
-                      e.target.style.boxShadow = '0 0 0 3px rgba(8, 132, 246, 0.1)';
-                      e.target.style.background = '#f8fbff';
+                      e.target.style.borderColor = 'var(--brand)';
+                      e.target.style.background = 'var(--bg-card)';
+                      e.target.style.boxShadow = '0 0 0 4px rgba(8, 132, 246, 0.1)';
                     }}
                     onBlur={e => {
-                      e.target.style.borderColor = '#e5e7eb';
+                      e.target.style.borderColor = 'var(--border)';
+                      e.target.style.background = 'var(--bg-elevated)';
                       e.target.style.boxShadow = 'none';
-                      e.target.style.background = '#ffffff';
                     }}
                   />
                 </div>
               </div>
 
-              {/* Password Field */}
-              <div>
-                <label
-                  style={{
-                    display: 'block',
-                    color: '#374151',
-                    fontSize: '0.9rem',
-                    fontWeight: 500,
-                    marginBottom: 6,
-                  }}
-                >
-                  Kata Sandi
-                </label>
+              <div className="input-group">
+                <label className="input-label">Kata Sandi</label>
                 <div style={{ position: 'relative' }}>
                   <Lock
-                    size={18}
+                    size={20}
                     style={{
                       position: 'absolute',
-                      left: 12,
+                      left: 14,
                       top: '50%',
                       transform: 'translateY(-50%)',
-                      color: '#9ca3af',
+                      color: 'var(--text-3)',
+                      zIndex: 1,
                     }}
                   />
                   <input
@@ -215,26 +297,27 @@ export default function LoginPage() {
                     required
                     value={password}
                     onChange={e => setPassword(e.target.value)}
-                    placeholder="Masukkan kata sandi Anda"
+                    placeholder="Minimal 8 karakter"
                     style={{
                       width: '100%',
-                      padding: '11px 40px 11px 40px',
-                      border: '1px solid #e5e7eb',
-                      borderRadius: 6,
+                      padding: '14px 48px 14px 46px',
+                      background: 'var(--bg-elevated)',
+                      border: '1px solid var(--border)',
+                      borderRadius: 12,
                       fontSize: '0.95rem',
+                      color: 'var(--text-1)',
                       outline: 'none',
                       transition: 'all 0.2s',
-                      boxSizing: 'border-box',
                     }}
                     onFocus={e => {
-                      e.target.style.borderColor = '#0884F6';
-                      e.target.style.boxShadow = '0 0 0 3px rgba(8, 132, 246, 0.1)';
-                      e.target.style.background = '#f8fbff';
+                      e.target.style.borderColor = 'var(--brand)';
+                      e.target.style.background = 'var(--bg-card)';
+                      e.target.style.boxShadow = '0 0 0 4px rgba(8, 132, 246, 0.1)';
                     }}
                     onBlur={e => {
-                      e.target.style.borderColor = '#e5e7eb';
+                      e.target.style.borderColor = 'var(--border)';
+                      e.target.style.background = 'var(--bg-elevated)';
                       e.target.style.boxShadow = 'none';
-                      e.target.style.background = '#ffffff';
                     }}
                   />
                   <button
@@ -242,93 +325,90 @@ export default function LoginPage() {
                     onClick={() => setShowPw(!showPw)}
                     style={{
                       position: 'absolute',
-                      right: 12,
+                      right: 14,
                       top: '50%',
                       transform: 'translateY(-50%)',
                       background: 'none',
                       border: 'none',
                       cursor: 'pointer',
-                      color: '#9ca3af',
-                      padding: '4px 6px',
+                      color: 'var(--text-3)',
+                      padding: 4,
                       display: 'flex',
                       alignItems: 'center',
                       transition: 'color 0.2s',
+                      zIndex: 1,
                     }}
-                    onMouseEnter={e => (e.currentTarget.style.color = '#6b7280')}
-                    onMouseLeave={e => (e.currentTarget.style.color = '#9ca3af')}
+                    onMouseEnter={e => (e.currentTarget.style.color = 'var(--text-2)')}
+                    onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-3)')}
                   >
-                    {showPw ? <EyeOff size={18} /> : <Eye size={18} />}
+                    {showPw ? <EyeOff size={20} /> : <Eye size={20} />}
                   </button>
                 </div>
               </div>
 
-              {/* Remember Me */}
-              <div style={{ display: 'flex', alignItems: 'center' }}>
-                <input
-                  type="checkbox"
-                  id="remember"
-                  checked={rememberMe}
-                  onChange={e => setRememberMe(e.target.checked)}
-                  style={{
-                    width: 16,
-                    height: 16,
-                    cursor: 'pointer',
-                    accentColor: '#0884F6',
-                  }}
-                />
+              <div
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+              >
                 <label
-                  htmlFor="remember"
                   style={{
-                    marginLeft: 8,
-                    color: '#6b7280',
-                    fontSize: '0.9rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 10,
                     cursor: 'pointer',
                     userSelect: 'none',
+                    fontSize: '0.9rem',
+                    color: 'var(--text-2)',
                   }}
                 >
-                  Ingat Saya
+                  <input
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={e => setRememberMe(e.target.checked)}
+                    style={{
+                      width: 18,
+                      height: 18,
+                      accentColor: 'var(--brand)',
+                      cursor: 'pointer',
+                    }}
+                  />
+                  Tetap masuk
                 </label>
+                <button
+                  type="button"
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: 'var(--brand)',
+                    fontSize: '0.9rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Lupa Sandi?
+                </button>
               </div>
 
-              {/* Login Button */}
               <button
                 type="submit"
                 disabled={loading}
+                className="btn-primary"
                 style={{
                   width: '100%',
-                  padding: '11px',
-                  marginTop: 8,
-                  background: loading ? '#B3D9F2' : '#0884F6',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: 6,
-                  fontSize: '0.95rem',
-                  fontWeight: 600,
-                  cursor: loading ? 'not-allowed' : 'pointer',
-                  transition: 'all 0.2s',
+                  padding: '14px',
+                  borderRadius: 12,
+                  fontSize: '1rem',
+                  fontWeight: 700,
+                  marginTop: 10,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: 8,
-                  boxShadow: loading ? 'none' : '0 2px 8px rgba(8, 132, 246, 0.3)',
-                }}
-                onMouseEnter={e => {
-                  if (!loading) {
-                    e.currentTarget.style.background = '#0670D4';
-                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(8, 132, 246, 0.4)';
-                  }
-                }}
-                onMouseLeave={e => {
-                  if (!loading) {
-                    e.currentTarget.style.background = '#0884F6';
-                    e.currentTarget.style.boxShadow = '0 2px 8px rgba(8, 132, 246, 0.3)';
-                  }
+                  gap: 10,
                 }}
               >
                 {loading ? (
-                  <Loader2 size={18} style={{ animation: 'spin 1s linear infinite' }} />
+                  <Loader2 size={20} style={{ animation: 'spin 1s linear infinite' }} />
                 ) : null}
-                {loading ? 'Masuk...' : 'Masuk'}
+                {loading ? 'Menghubungkan...' : 'Masuk ke Dashboard'}
               </button>
             </form>
           </div>
@@ -337,85 +417,230 @@ export default function LoginPage() {
         {/* Footer */}
         <div
           style={{
-            position: 'absolute',
-            bottom: 20,
-            left: 0,
-            right: 0,
+            marginTop: 40,
             textAlign: 'center',
-            fontSize: '0.8rem',
-            color: '#9ca3af',
+            fontSize: '0.85rem',
+            color: 'var(--text-3)',
           }}
         >
-          <p>Copyright © 2025 Moedah Enterprises LTD.</p>
+          <p>© 2025 Moedah Enterprises. Bangga melayani UKM Indonesia.</p>
         </div>
       </div>
 
-      {/* Right Section - Blue Gradient with Content */}
+      {/* Right Section - Slider Content */}
       <div
         style={{
-          flex: 1,
-          background: 'linear-gradient(135deg, #0884F6 0%, #0670D4 100%)',
+          flex: 1.2,
+          background: 'var(--brand)',
+          position: 'relative',
+          overflow: 'hidden',
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'center',
           alignItems: 'center',
-          padding: '60px 40px',
-          position: 'relative',
-          overflow: 'hidden',
-          animation: 'slideInRight 0.6s ease-out',
         }}
+        onMouseEnter={() => setIsPaused(true)}
+        onMouseLeave={() => setIsPaused(false)}
       >
-        {/* Content */}
+        {/* Animated Background Patterns */}
         <div
           style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            opacity: 0.1,
+            zIndex: 0,
+            pointerEvents: 'none',
+          }}
+        >
+          <div
+            style={{
+              position: 'absolute',
+              top: '-10%',
+              right: '-5%',
+              width: '60%',
+              height: '60%',
+              borderRadius: '50%',
+              background: 'white',
+              filter: 'blur(80px)',
+            }}
+          />
+          <div
+            style={{
+              position: 'absolute',
+              bottom: '-5%',
+              left: '-10%',
+              width: '50%',
+              height: '50%',
+              borderRadius: '50%',
+              background: 'white',
+              filter: 'blur(100px)',
+            }}
+          />
+        </div>
+
+        {/* Slider Container */}
+        <div
+          style={{
+            width: '100%',
+            height: '100%',
             position: 'relative',
             zIndex: 1,
-            textAlign: 'center',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            gap: 30,
-            animation: 'fadeIn 1s ease-out 0.3s backwards',
+            justifyContent: 'center',
+            padding: '40px',
           }}
         >
-          {/* Dashboard Image */}
-          <div
-            style={{
-              animation: 'slideUp 0.8s ease-out 0.5s backwards',
-              borderRadius: 12,
-              overflow: 'hidden',
-              width: '100%',
-              maxWidth: 600,
-            }}
-          >
-            <div style={{ position: 'relative', width: '100%', aspectRatio: '800 / 400' }}>
-              <Image
-                src="/dashboard.webp"
-                alt="Pratinjau Dashboard"
-                fill
-                sizes="(max-width: 768px) 100vw, 800px"
-                style={{ objectFit: 'contain' }}
-                priority
-              />
-            </div>
-          </div>
-
-          {/* Text Below Image */}
-          <div style={{ maxWidth: 350 }}>
-            <h2
+          {SLIDES.map((slide, index) => (
+            <div
+              key={slide.id}
               style={{
-                color: '#fff',
-                fontSize: '1.5rem',
-                fontWeight: 700,
-                marginBottom: 12,
-                lineHeight: 1.3,
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                opacity: currentSlide === index ? 1 : 0,
+                transform: `translateX(${(index - currentSlide) * 20}%)`,
+                transition: 'all 0.8s cubic-bezier(0.165, 0.84, 0.44, 1)',
+                padding: '40px',
+                pointerEvents: currentSlide === index ? 'auto' : 'none',
               }}
             >
-              Kelola restoran dan penjualan Anda dengan efisien.
-            </h2>
-            <p style={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.85rem', marginBottom: 0 }}>
-              Akses dashboard POS Anda untuk mengelola pesanan, inventori, dan penjualan.
-            </p>
+              {/* Image Display */}
+              <div
+                style={{
+                  width: '100%',
+                  maxWidth: 700,
+                  aspectRatio: '16/10',
+                  position: 'relative',
+                  marginBottom: 50,
+                  borderRadius: 16,
+                  overflow: 'hidden',
+                  boxShadow: '0 30px 60px rgba(0,0,0,0.2)',
+                  background: 'rgba(255,255,255,0.05)',
+                  backdropFilter: 'blur(10px)',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  transform: currentSlide === index ? 'translateY(0)' : 'translateY(40px)',
+                  transition: 'all 0.8s cubic-bezier(0.165, 0.84, 0.44, 1) 0.1s',
+                }}
+              >
+                <Image
+                  src={isDark ? slide.dark : slide.light}
+                  alt={slide.title}
+                  fill
+                  style={{ objectFit: 'cover' }}
+                  priority={index === 0}
+                />
+              </div>
+
+              {/* Text Content */}
+              <div
+                style={{
+                  textAlign: 'center',
+                  maxWidth: 500,
+                  color: 'white',
+                  transform: currentSlide === index ? 'translateY(0)' : 'translateY(20px)',
+                  transition: 'all 0.8s cubic-bezier(0.165, 0.84, 0.44, 1) 0.2s',
+                  opacity: currentSlide === index ? 1 : 0,
+                }}
+              >
+                <h2
+                  style={{
+                    fontSize: '2.4rem',
+                    fontWeight: 800,
+                    marginBottom: 16,
+                    letterSpacing: '-0.02em',
+                  }}
+                >
+                  {slide.title}
+                </h2>
+                <p style={{ fontSize: '1.1rem', opacity: 0.9, lineHeight: 1.6 }}>
+                  {slide.subtitle}
+                </p>
+              </div>
+            </div>
+          ))}
+
+          {/* Navigation Controls */}
+          <div
+            style={{
+              position: 'absolute',
+              bottom: 60,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 20,
+              zIndex: 10,
+            }}
+          >
+            <button
+              onClick={prevSlide}
+              style={{
+                width: 48,
+                height: 48,
+                borderRadius: '50%',
+                background: 'rgba(255,255,255,0.1)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                color: 'white',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'all 0.2s',
+              }}
+              onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.2)')}
+              onMouseLeave={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.1)')}
+            >
+              <ChevronLeft size={24} />
+            </button>
+
+            {/* Dots */}
+            <div style={{ display: 'flex', gap: 10 }}>
+              {SLIDES.map((_, i) => (
+                <div
+                  key={i}
+                  onClick={() => setCurrentSlide(i)}
+                  style={{
+                    width: currentSlide === i ? 24 : 8,
+                    height: 8,
+                    borderRadius: 4,
+                    background: 'white',
+                    opacity: currentSlide === i ? 1 : 0.4,
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease',
+                  }}
+                />
+              ))}
+            </div>
+
+            <button
+              onClick={nextSlide}
+              style={{
+                width: 48,
+                height: 48,
+                borderRadius: '50%',
+                background: 'rgba(255,255,255,0.1)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                color: 'white',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'all 0.2s',
+              }}
+              onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.2)')}
+              onMouseLeave={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.1)')}
+            >
+              <ChevronRight size={24} />
+            </button>
           </div>
         </div>
       </div>
@@ -425,53 +650,19 @@ export default function LoginPage() {
           from { transform: rotate(0deg); }
           to { transform: rotate(360deg); }
         }
-        @keyframes slideInLeft {
-          from {
-            opacity: 0;
-            transform: translateX(-30px);
-          }
-          to {
-            opacity: 1;
-            transform: translateX(0);
-          }
-        }
-        @keyframes slideInRight {
-          from {
-            opacity: 0;
-            transform: translateX(30px);
-          }
-          to {
-            opacity: 1;
-            transform: translateX(0);
-          }
-        }
         @keyframes fadeIn {
-          from {
-            opacity: 0;
-          }
-          to {
-            opacity: 1;
-          }
+          from { opacity: 0; }
+          to { opacity: 1; }
         }
-        @keyframes slideDown {
-          from {
-            opacity: 0;
-            transform: translateY(-10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
+        .reveal-animate {
+          animation: fadeIn 0.8s ease-out;
         }
-        @keyframes slideUp {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
+        input:-webkit-autofill,
+        input:-webkit-autofill:hover, 
+        input:-webkit-autofill:focus {
+          -webkit-text-fill-color: var(--text-1);
+          -webkit-box-shadow: 0 0 0px 1000px var(--bg-elevated) inset;
+          transition: background-color 5000s ease-in-out 0s;
         }
       `}</style>
     </div>
