@@ -20,11 +20,13 @@ import {
   AlertCircle,
   BadgeCheck,
   Clock,
-  Eye,
   Check,
   Trash2,
   FileText,
+  Eye,
 } from 'lucide-react';
+import DatePicker from '@/components/ui/DatePicker';
+import Portal from '@/components/ui/Portal';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { purchaseOrdersApi, suppliersApi, storesApi } from '@/lib/api/store-apis';
 import { productsApi } from '@/lib/api/products';
@@ -104,10 +106,53 @@ function SearchableSelect({
 
   const selectedOption = options.find(o => o.value === value);
   const filteredOptions = options.filter(o => o.label.toLowerCase().includes(search.toLowerCase()));
+  const [dropdownStyle, setDropdownStyle] = useState<React.CSSProperties>({});
+  const triggerRef = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open || !triggerRef.current) return;
+    const rect = triggerRef.current.getBoundingClientRect();
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const dropHeight = 300;
+    if (spaceBelow >= dropHeight) {
+      setDropdownStyle({
+        position: 'fixed',
+        top: rect.bottom + 4,
+        left: rect.left,
+        width: rect.width,
+        zIndex: 9999,
+      });
+    } else {
+      setDropdownStyle({
+        position: 'fixed',
+        bottom: window.innerHeight - rect.top + 4,
+        left: rect.left,
+        width: rect.width,
+        zIndex: 9999,
+      });
+    }
+  }, [open]);
+
+  useEffect(() => {
+    function handler(e: MouseEvent) {
+      if (
+        triggerRef.current &&
+        !triggerRef.current.contains(e.target as Node) &&
+        dropdownRef.current &&
+        !dropdownRef.current.contains(e.target as Node)
+      ) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
 
   return (
-    <div ref={wrapperRef} style={{ position: 'relative', width: '100%' }}>
+    <div style={{ position: 'relative', width: '100%' }}>
       <div
+        ref={triggerRef}
         className={className}
         style={{
           cursor: 'pointer',
@@ -135,92 +180,92 @@ function SearchableSelect({
       </div>
 
       {open && (
-        <div
-          style={{
-            position: 'absolute',
-            top: '100%',
-            left: 0,
-            right: 0,
-            zIndex: 3000,
-            background: 'var(--bg-card)',
-            border: '1px solid var(--border)',
-            borderRadius: 8,
-            marginTop: 4,
-            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-            maxHeight: 280,
-            display: 'flex',
-            flexDirection: 'column',
-          }}
-        >
-          <div style={{ padding: 8, borderBottom: '1px solid var(--border)' }}>
-            <input
-              autoFocus
-              className="input"
-              placeholder="Cari..."
-              style={{ width: '100%', height: 32, fontSize: '0.82rem' }}
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-            />
-          </div>
-          <div style={{ overflowY: 'auto', flex: 1, padding: 4 }}>
-            {!value ? null : (
-              <div
-                style={{
-                  padding: '8px 12px',
-                  cursor: 'pointer',
-                  fontSize: '0.82rem',
-                  borderRadius: 6,
-                  color: 'var(--text-3)',
-                }}
-                onClick={() => {
-                  onChange('');
-                  setOpen(false);
-                }}
-                onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-hover)')}
-                onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-              >
-                Tanpa Pilihan / Reset
-              </div>
-            )}
-            {filteredOptions.length === 0 ? (
-              <div
-                style={{
-                  padding: '8px 12px',
-                  fontSize: '0.82rem',
-                  color: 'var(--text-3)',
-                  textAlign: 'center',
-                }}
-              >
-                Tidak ditemukan
-              </div>
-            ) : (
-              filteredOptions.map(o => (
+        <Portal>
+          <div
+            ref={dropdownRef}
+            style={{
+              ...dropdownStyle,
+              position: 'fixed',
+              zIndex: 9999,
+              background: 'var(--bg-card)',
+              border: '1px solid var(--border)',
+              borderRadius: 8,
+              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+              maxHeight: 280,
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+          >
+            <div style={{ padding: 8, borderBottom: '1px solid var(--border)' }}>
+              <input
+                autoFocus
+                className="input"
+                placeholder="Cari..."
+                style={{ width: '100%', height: 32, fontSize: '0.82rem' }}
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+              />
+            </div>
+            <div style={{ overflowY: 'auto', flex: 1, padding: 4 }}>
+              {!value ? null : (
                 <div
-                  key={o.value}
                   style={{
                     padding: '8px 12px',
                     cursor: 'pointer',
                     fontSize: '0.82rem',
                     borderRadius: 6,
-                    background: o.value === value ? 'var(--bg-active)' : 'transparent',
+                    color: 'var(--text-3)',
                   }}
                   onClick={() => {
-                    onChange(o.value);
+                    onChange('');
                     setOpen(false);
                   }}
-                  onMouseEnter={e => {
-                    if (o.value !== value) e.currentTarget.style.background = 'var(--bg-hover)';
-                  }}
-                  onMouseLeave={e => {
-                    if (o.value !== value) e.currentTarget.style.background = 'transparent';
+                  onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-hover)')}
+                  onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                >
+                  Tanpa Pilihan / Reset
+                </div>
+              )}
+              {filteredOptions.length === 0 ? (
+                <div
+                  style={{
+                    padding: '8px 12px',
+                    fontSize: '0.82rem',
+                    color: 'var(--text-3)',
+                    textAlign: 'center',
                   }}
                 >
-                  {o.label}
+                  Tidak ditemukan
                 </div>
-              ))
-            )}
+              ) : (
+                filteredOptions.map(o => (
+                  <div
+                    key={o.value}
+                    style={{
+                      padding: '8px 12px',
+                      cursor: 'pointer',
+                      fontSize: '0.82rem',
+                      borderRadius: 6,
+                      background: o.value === value ? 'var(--bg-active)' : 'transparent',
+                    }}
+                    onClick={() => {
+                      onChange(o.value);
+                      setOpen(false);
+                    }}
+                    onMouseEnter={e => {
+                      if (o.value !== value) e.currentTarget.style.background = 'var(--bg-hover)';
+                    }}
+                    onMouseLeave={e => {
+                      if (o.value !== value) e.currentTarget.style.background = 'transparent';
+                    }}
+                  >
+                    {o.label}
+                  </div>
+                ))
+              )}
+            </div>
           </div>
-        </div>
+        </Portal>
       )}
     </div>
   );
@@ -348,83 +393,53 @@ function ProductSearchSelect({
       </div>
 
       {open && (
-        <div
-          ref={dropdownRef}
-          style={{
-            ...dropdownStyle,
-            background: 'var(--bg-card)',
-            border: '1px solid var(--border)',
-            borderRadius: 8,
-            boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
-            maxHeight: 300,
-            display: 'flex',
-            flexDirection: 'column',
-          }}
-        >
-          <div style={{ padding: 8, borderBottom: '1px solid var(--border)' }}>
-            <input
-              autoFocus
-              className="input"
-              placeholder="Cari nama / SKU produk..."
-              style={{ width: '100%', height: 32, fontSize: '0.82rem' }}
-              value={query}
-              onChange={e => setQuery(e.target.value)}
-            />
-          </div>
-          <div style={{ overflowY: 'auto', flex: 1, padding: 4 }}>
+        <Portal>
+          <div
+            ref={dropdownRef}
+            style={{
+              ...dropdownStyle,
+              maxHeight: 300,
+              background: 'var(--bg-elevated)',
+              border: '1px solid var(--border-md)',
+              borderRadius: 12,
+              zIndex: 9999,
+              overflowY: 'auto',
+              boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
+            }}
+          >
             {searching ? (
-              <div
-                style={{
-                  padding: '12px',
-                  textAlign: 'center',
-                  fontSize: '0.82rem',
-                  color: 'var(--text-3)',
-                }}
-              >
-                Mencari...
+              <div style={{ padding: 16, textAlign: 'center', color: 'var(--text-3)' }}>
+                Searching...
               </div>
             ) : results.length === 0 ? (
-              <div
-                style={{
-                  padding: '12px',
-                  textAlign: 'center',
-                  fontSize: '0.82rem',
-                  color: 'var(--text-3)',
-                }}
-              >
-                {debouncedQuery ? 'Tidak ditemukan' : 'Ketik untuk mencari produk'}
+              <div style={{ padding: 16, textAlign: 'center', color: 'var(--text-3)' }}>
+                Produk tidak ditemukan
               </div>
             ) : (
               results.map(p => (
                 <div
                   key={p.id}
-                  style={{
-                    padding: '8px 12px',
-                    cursor: 'pointer',
-                    fontSize: '0.82rem',
-                    borderRadius: 6,
-                    background: p.id === value ? 'var(--bg-active)' : 'transparent',
-                  }}
                   onClick={() => {
                     onSelect(p);
                     setOpen(false);
                   }}
-                  onMouseEnter={e => {
-                    if (p.id !== value) e.currentTarget.style.background = 'var(--bg-hover)';
+                  style={{
+                    padding: '10px 14px',
+                    cursor: 'pointer',
+                    borderBottom: '1px solid var(--border-light)',
+                    background: value === p.id ? 'var(--bg-surface)' : 'transparent',
                   }}
-                  onMouseLeave={e => {
-                    if (p.id !== value) e.currentTarget.style.background = 'transparent';
-                  }}
+                  className="hover:bg-surface-hv"
                 >
-                  <div style={{ fontWeight: 500 }}>{p.name}</div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-3)' }}>
-                    SKU: {p.sku} · {p.unit}
+                  <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>{p.name}</div>
+                  <div style={{ fontSize: '0.72rem', color: 'var(--text-3)' }}>
+                    {p.sku} • Stok: {p.stock_qty || 0}
                   </div>
                 </div>
               ))
             )}
           </div>
-        </div>
+        </Portal>
       )}
     </div>
   );
@@ -809,222 +824,216 @@ function TerminModal({ po, storeId, onSuccess, onCancel }: TerminModalProps) {
     }
   };
   return (
-    <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        background: 'rgba(0,0,0,0.55)',
-        zIndex: 200,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
-    >
+    <Portal>
       <div
         style={{
-          background: 'var(--bg-card)',
-          borderRadius: 14,
-          padding: 28,
-          width: 620,
-          maxHeight: '85vh',
-          overflowY: 'auto',
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(0,0,0,0.55)',
+          zIndex: 5000,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
         }}
       >
-        <div style={{ fontWeight: 700, fontSize: '1rem', marginBottom: 12 }}>
-          Buat Jadwal Termin — {po.po_number}
-        </div>
-        <div style={{ fontSize: '0.82rem', color: 'var(--text-2)', marginBottom: 14 }}>
-          Total PO: <strong>{formatIDR(po.total_amount)}</strong> · Total termin:{' '}
-          <strong
-            style={{
-              color: Math.abs(totalTermin - po.total_amount) < 0.01 ? '#16a34a' : '#d97706',
-            }}
-          >
-            {formatIDR(totalTermin)}
-          </strong>
-        </div>
-        {rows.map((row, i) => (
-          <div
-            key={i}
-            style={{
-              display: 'grid',
-              gridTemplateColumns: '50px 1fr 1.2fr 1fr 34px',
-              gap: 8,
-              marginBottom: 8,
-              alignItems: 'end',
-            }}
-          >
-            <div>
-              <label
-                style={{
-                  fontSize: '0.72rem',
-                  color: 'var(--text-3)',
-                  display: 'block',
-                  marginBottom: 2,
-                }}
-              >
-                No.
-              </label>
-              <input
-                type="number"
-                value={row.termin_number}
-                disabled
-                style={{
-                  width: '100%',
-                  padding: '6px 7px',
-                  borderRadius: 7,
-                  border: '1px solid var(--border)',
-                  background: 'var(--bg-hover)',
-                  color: 'var(--text-3)',
-                }}
-              />
-            </div>
-            <div>
-              <label
-                style={{
-                  fontSize: '0.72rem',
-                  color: 'var(--text-3)',
-                  display: 'block',
-                  marginBottom: 2,
-                }}
-              >
-                Jumlah (Rp)
-              </label>
-              <input
-                id={`ta-${i}`}
-                type="text"
-                value={formatNumberInput(row.amount)}
-                onChange={e => updateRow(i, 'amount', parseNumberInput(e.target.value))}
-                style={{
-                  width: '100%',
-                  padding: '6px 7px',
-                  borderRadius: 7,
-                  border: '1px solid var(--border)',
-                  background: 'var(--bg-card)',
-                  color: 'var(--text-1)',
-                }}
-              />
-            </div>
-            <div>
-              <label
-                style={{
-                  fontSize: '0.72rem',
-                  color: 'var(--text-3)',
-                  display: 'block',
-                  marginBottom: 2,
-                }}
-              >
-                Jatuh Tempo
-              </label>
-              <input
-                id={`td-${i}`}
-                type="date"
-                value={row.due_date}
-                onChange={e => updateRow(i, 'due_date', e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '6px 7px',
-                  borderRadius: 7,
-                  border: '1px solid var(--border)',
-                  background: 'var(--bg-card)',
-                  color: 'var(--text-1)',
-                }}
-              />
-            </div>
-            <div>
-              <label
-                style={{
-                  fontSize: '0.72rem',
-                  color: 'var(--text-3)',
-                  display: 'block',
-                  marginBottom: 2,
-                }}
-              >
-                Catatan
-              </label>
-              <input
-                type="text"
-                value={row.notes}
-                onChange={e => updateRow(i, 'notes', e.target.value)}
-                placeholder="opsional"
-                style={{
-                  width: '100%',
-                  padding: '6px 7px',
-                  borderRadius: 7,
-                  border: '1px solid var(--border)',
-                  background: 'var(--bg-card)',
-                  color: 'var(--text-1)',
-                }}
-              />
-            </div>
-            <button
-              onClick={() => removeRow(i)}
-              disabled={rows.length === 1}
-              style={{
-                padding: '6px 7px',
-                borderRadius: 7,
-                border: 'none',
-                background: '#fee2e2',
-                color: '#dc2626',
-                cursor: 'pointer',
-              }}
-            >
-              ✕
-            </button>
-          </div>
-        ))}
-        <button
-          id="add-row-btn"
-          onClick={addRow}
+        <div
           style={{
-            marginBottom: 14,
-            padding: '5px 14px',
-            borderRadius: 7,
-            border: '1px dashed var(--border)',
-            background: 'transparent',
-            color: 'var(--text-2)',
-            cursor: 'pointer',
-            fontSize: '0.82rem',
+            background: 'var(--bg-card)',
+            borderRadius: 14,
+            padding: 28,
+            width: 620,
+            maxHeight: '85vh',
+            overflowY: 'auto',
           }}
         >
-          + Tambah Termin
-        </button>
-        {err && (
-          <div style={{ color: '#dc2626', fontSize: '0.82rem', marginBottom: 10 }}>{err}</div>
-        )}
-        <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+          <div style={{ fontWeight: 700, fontSize: '1rem', marginBottom: 12 }}>
+            Buat Jadwal Termin — {po.po_number}
+          </div>
+          <div style={{ fontSize: '0.82rem', color: 'var(--text-2)', marginBottom: 14 }}>
+            Total PO: <strong>{formatIDR(po.total_amount)}</strong> · Total termin:{' '}
+            <strong
+              style={{
+                color: Math.abs(totalTermin - po.total_amount) < 0.01 ? '#16a34a' : '#d97706',
+              }}
+            >
+              {formatIDR(totalTermin)}
+            </strong>
+          </div>
+          {rows.map((row, i) => (
+            <div
+              key={i}
+              style={{
+                display: 'grid',
+                gridTemplateColumns: '50px 1fr 1.2fr 1fr 34px',
+                gap: 8,
+                marginBottom: 8,
+                alignItems: 'end',
+              }}
+            >
+              <div>
+                <label
+                  style={{
+                    fontSize: '0.72rem',
+                    color: 'var(--text-3)',
+                    display: 'block',
+                    marginBottom: 2,
+                  }}
+                >
+                  No.
+                </label>
+                <input
+                  type="number"
+                  value={row.termin_number}
+                  disabled
+                  style={{
+                    width: '100%',
+                    padding: '6px 7px',
+                    borderRadius: 7,
+                    border: '1px solid var(--border)',
+                    background: 'var(--bg-hover)',
+                    color: 'var(--text-3)',
+                  }}
+                />
+              </div>
+              <div>
+                <label
+                  style={{
+                    fontSize: '0.72rem',
+                    color: 'var(--text-3)',
+                    display: 'block',
+                    marginBottom: 2,
+                  }}
+                >
+                  Jumlah (Rp)
+                </label>
+                <input
+                  id={`ta-${i}`}
+                  type="text"
+                  value={formatNumberInput(row.amount)}
+                  onChange={e => updateRow(i, 'amount', parseNumberInput(e.target.value))}
+                  style={{
+                    width: '100%',
+                    padding: '6px 7px',
+                    borderRadius: 7,
+                    border: '1px solid var(--border)',
+                    background: 'var(--bg-card)',
+                    color: 'var(--text-1)',
+                  }}
+                />
+              </div>
+              <div>
+                <label
+                  style={{
+                    fontSize: '0.72rem',
+                    color: 'var(--text-3)',
+                    display: 'block',
+                    marginBottom: 2,
+                  }}
+                >
+                  Jatuh Tempo
+                </label>
+                <DatePicker
+                  value={row.due_date}
+                  onChange={val => updateRow(i, 'due_date', val)}
+                  className="w-full h-[32px]"
+                  showPresets={false}
+                />
+              </div>
+              <div>
+                <label
+                  style={{
+                    fontSize: '0.72rem',
+                    color: 'var(--text-3)',
+                    display: 'block',
+                    marginBottom: 2,
+                  }}
+                >
+                  Catatan
+                </label>
+                <input
+                  type="text"
+                  value={row.notes}
+                  onChange={e => updateRow(i, 'notes', e.target.value)}
+                  placeholder="opsional"
+                  style={{
+                    width: '100%',
+                    padding: '6px 7px',
+                    borderRadius: 7,
+                    border: '1px solid var(--border)',
+                    background: 'var(--bg-card)',
+                    color: 'var(--text-1)',
+                  }}
+                />
+              </div>
+              <button
+                onClick={() => removeRow(i)}
+                disabled={rows.length === 1}
+                style={{
+                  padding: '6px 7px',
+                  borderRadius: 7,
+                  border: 'none',
+                  background: '#fee2e2',
+                  color: '#dc2626',
+                  cursor: 'pointer',
+                }}
+              >
+                ✕
+              </button>
+            </div>
+          ))}
           <button
-            onClick={onCancel}
+            id="add-row-btn"
+            onClick={addRow}
             style={{
-              padding: '8px 18px',
-              borderRadius: 8,
-              border: '1px solid var(--border)',
+              marginBottom: 14,
+              padding: '5px 14px',
+              borderRadius: 7,
+              border: '1px dashed var(--border)',
               background: 'transparent',
               color: 'var(--text-2)',
               cursor: 'pointer',
+              fontSize: '0.82rem',
             }}
           >
-            Batal
+            + Tambah Termin
           </button>
-          <button
-            id="save-schedule-btn"
-            onClick={handleSave}
-            disabled={saving}
-            style={{
-              padding: '8px 18px',
-              borderRadius: 8,
-              border: 'none',
-              background: 'var(--accent-em)',
-              color: '#fff',
-              cursor: 'pointer',
-              fontWeight: 600,
-            }}
-          >
-            {saving ? '…' : 'Simpan Jadwal'}
-          </button>
+          {err && (
+            <div style={{ color: '#dc2626', fontSize: '0.82rem', marginBottom: 10 }}>{err}</div>
+          )}
+          <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+            <button
+              onClick={onCancel}
+              style={{
+                padding: '8px 18px',
+                borderRadius: 8,
+                border: '1px solid var(--border)',
+                background: 'transparent',
+                color: 'var(--text-2)',
+                cursor: 'pointer',
+              }}
+            >
+              Batal
+            </button>
+            <button
+              id="save-schedule-btn"
+              onClick={handleSave}
+              disabled={saving}
+              style={{
+                padding: '8px 18px',
+                borderRadius: 8,
+                border: 'none',
+                background: 'var(--accent-em)',
+                color: '#fff',
+                cursor: 'pointer',
+                fontWeight: 600,
+              }}
+            >
+              {saving ? '…' : 'Simpan Jadwal'}
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+    </Portal>
   );
 }
 
@@ -1073,158 +1082,145 @@ function PayTerminModal({ termin, storeId, poId, onSuccess, onCancel }: PayTermi
     }
   };
   return (
-    <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        background: 'rgba(0,0,0,0.55)',
-        zIndex: 210,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
-    >
-      <div style={{ background: 'var(--bg-card)', borderRadius: 14, padding: 28, width: 420 }}>
-        <div style={{ fontWeight: 700, fontSize: '1rem', marginBottom: 4 }}>
-          Catat Pembayaran — Termin {termin.termin_number}
-        </div>
-        <div style={{ fontSize: '0.82rem', color: 'var(--text-2)', marginBottom: 18 }}>
-          Sisa: <strong style={{ color: '#dc2626' }}>{formatIDR(termin.amount_due)}</strong>
-        </div>
-        {[
-          {
-            label: 'Jumlah Bayar (Rp)',
-            el: (
-              <input
-                id="pay-amt"
-                type="text"
-                value={formatNumberInput(amount)}
-                onChange={e => setAmount(String(parseNumberInput(e.target.value)))}
+    <Portal>
+      <div
+        style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(0,0,0,0.55)',
+          zIndex: 5000,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <div style={{ background: 'var(--bg-card)', borderRadius: 14, padding: 28, width: 420 }}>
+          <div style={{ fontWeight: 700, fontSize: '1rem', marginBottom: 4 }}>
+            Catat Pembayaran — Termin {termin.termin_number}
+          </div>
+          <div style={{ fontSize: '0.82rem', color: 'var(--text-2)', marginBottom: 18 }}>
+            Sisa: <strong style={{ color: '#dc2626' }}>{formatIDR(termin.amount_due)}</strong>
+          </div>
+          {[
+            {
+              label: 'Jumlah Bayar (Rp)',
+              el: (
+                <input
+                  id="pay-amt"
+                  type="text"
+                  value={formatNumberInput(amount)}
+                  onChange={e => setAmount(String(parseNumberInput(e.target.value)))}
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    borderRadius: 8,
+                    border: '1px solid var(--border)',
+                    background: 'var(--bg-card)',
+                    color: 'var(--text-1)',
+                  }}
+                />
+              ),
+            },
+            {
+              label: 'Tanggal Bayar',
+              el: <DatePicker value={date} onChange={setDate} className="w-full h-[38px]" />,
+            },
+            {
+              label: 'Metode',
+              el: (
+                <select
+                  id="pay-mth"
+                  value={method}
+                  onChange={e => setMethod(e.target.value as typeof method)}
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    borderRadius: 8,
+                    border: '1px solid var(--border)',
+                    background: 'var(--bg-card)',
+                    color: 'var(--text-1)',
+                  }}
+                >
+                  {['cash', 'transfer', 'check', 'other'].map(m => (
+                    <option key={m} value={m}>
+                      {m[0].toUpperCase() + m.slice(1)}
+                    </option>
+                  ))}
+                </select>
+              ),
+            },
+            {
+              label: 'Catatan',
+              el: (
+                <input
+                  id="pay-nt"
+                  type="text"
+                  value={notes}
+                  onChange={e => setNotes(e.target.value)}
+                  placeholder="opsional"
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    borderRadius: 8,
+                    border: '1px solid var(--border)',
+                    background: 'var(--bg-card)',
+                    color: 'var(--text-1)',
+                  }}
+                />
+              ),
+            },
+          ].map(({ label, el }) => (
+            <div key={label} style={{ marginBottom: 12 }}>
+              <label
                 style={{
-                  width: '100%',
-                  padding: '8px 12px',
-                  borderRadius: 8,
-                  border: '1px solid var(--border)',
-                  background: 'var(--bg-card)',
-                  color: 'var(--text-1)',
-                }}
-              />
-            ),
-          },
-          {
-            label: 'Tanggal Bayar',
-            el: (
-              <input
-                id="pay-dt"
-                type="date"
-                value={date}
-                onChange={e => setDate(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '8px 12px',
-                  borderRadius: 8,
-                  border: '1px solid var(--border)',
-                  background: 'var(--bg-card)',
-                  color: 'var(--text-1)',
-                }}
-              />
-            ),
-          },
-          {
-            label: 'Metode',
-            el: (
-              <select
-                id="pay-mth"
-                value={method}
-                onChange={e => setMethod(e.target.value as typeof method)}
-                style={{
-                  width: '100%',
-                  padding: '8px 12px',
-                  borderRadius: 8,
-                  border: '1px solid var(--border)',
-                  background: 'var(--bg-card)',
-                  color: 'var(--text-1)',
+                  fontSize: '0.78rem',
+                  color: 'var(--text-2)',
+                  display: 'block',
+                  marginBottom: 4,
                 }}
               >
-                {['cash', 'transfer', 'check', 'other'].map(m => (
-                  <option key={m} value={m}>
-                    {m[0].toUpperCase() + m.slice(1)}
-                  </option>
-                ))}
-              </select>
-            ),
-          },
-          {
-            label: 'Catatan',
-            el: (
-              <input
-                id="pay-nt"
-                type="text"
-                value={notes}
-                onChange={e => setNotes(e.target.value)}
-                placeholder="opsional"
-                style={{
-                  width: '100%',
-                  padding: '8px 12px',
-                  borderRadius: 8,
-                  border: '1px solid var(--border)',
-                  background: 'var(--bg-card)',
-                  color: 'var(--text-1)',
-                }}
-              />
-            ),
-          },
-        ].map(({ label, el }) => (
-          <div key={label} style={{ marginBottom: 12 }}>
-            <label
+                {label}
+              </label>
+              {el}
+            </div>
+          ))}
+          {err && (
+            <div style={{ color: '#dc2626', fontSize: '0.82rem', marginBottom: 10 }}>{err}</div>
+          )}
+          <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 8 }}>
+            <button
+              onClick={onCancel}
               style={{
-                fontSize: '0.78rem',
+                padding: '8px 18px',
+                borderRadius: 8,
+                border: '1px solid var(--border)',
+                background: 'transparent',
                 color: 'var(--text-2)',
-                display: 'block',
-                marginBottom: 4,
+                cursor: 'pointer',
               }}
             >
-              {label}
-            </label>
-            {el}
+              Batal
+            </button>
+            <button
+              id="save-pay-btn"
+              onClick={handleSave}
+              disabled={saving}
+              style={{
+                padding: '8px 18px',
+                borderRadius: 8,
+                border: 'none',
+                background: 'var(--accent-em)',
+                color: '#fff',
+                cursor: 'pointer',
+                fontWeight: 600,
+              }}
+            >
+              {saving ? '…' : 'Catat Pembayaran'}
+            </button>
           </div>
-        ))}
-        {err && (
-          <div style={{ color: '#dc2626', fontSize: '0.82rem', marginBottom: 10 }}>{err}</div>
-        )}
-        <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 8 }}>
-          <button
-            onClick={onCancel}
-            style={{
-              padding: '8px 18px',
-              borderRadius: 8,
-              border: '1px solid var(--border)',
-              background: 'transparent',
-              color: 'var(--text-2)',
-              cursor: 'pointer',
-            }}
-          >
-            Batal
-          </button>
-          <button
-            id="save-pay-btn"
-            onClick={handleSave}
-            disabled={saving}
-            style={{
-              padding: '8px 18px',
-              borderRadius: 8,
-              border: 'none',
-              background: 'var(--accent-em)',
-              color: '#fff',
-              cursor: 'pointer',
-              fontWeight: 600,
-            }}
-          >
-            {saving ? '…' : 'Catat Pembayaran'}
-          </button>
         </div>
       </div>
-    </div>
+    </Portal>
   );
 }
 
@@ -1261,36 +1257,40 @@ function ConfirmModal({ action, po, onConfirm, onCancel, loading }: ConfirmModal
     },
   }[action];
   return (
-    <div className="modal-overlay" onClick={onCancel}>
-      <div className="modal-box" style={{ maxWidth: 420 }} onClick={e => e.stopPropagation()}>
-        <div style={{ textAlign: 'center', padding: '8px 0 16px' }}>
-          <div style={{ marginBottom: 12 }}>{config.icon}</div>
-          <h2 style={{ fontWeight: 800, fontSize: '1.05rem', marginBottom: 10 }}>{config.title}</h2>
-          <p style={{ color: 'var(--text-2)', fontSize: '0.875rem', lineHeight: 1.6 }}>
-            {config.body}
-          </p>
-        </div>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button
-            className="btn btn-secondary"
-            style={{ flex: 1 }}
-            onClick={onCancel}
-            disabled={loading}
-          >
-            Batal
-          </button>
-          <button
-            className={config.confirmClass}
-            style={{ flex: 1 }}
-            onClick={onConfirm}
-            disabled={loading}
-          >
-            {loading ? <Loader2 size={14} className="loading-spin" /> : null}
-            {loading ? 'Memproses...' : config.confirmLabel}
-          </button>
+    <Portal>
+      <div className="modal-overlay" style={{ zIndex: 5000 }} onClick={onCancel}>
+        <div className="modal-box" style={{ maxWidth: 420 }} onClick={e => e.stopPropagation()}>
+          <div style={{ textAlign: 'center', padding: '8px 0 16px' }}>
+            <div style={{ marginBottom: 12 }}>{config.icon}</div>
+            <h2 style={{ fontWeight: 800, fontSize: '1.05rem', marginBottom: 10 }}>
+              {config.title}
+            </h2>
+            <p style={{ color: 'var(--text-2)', fontSize: '0.875rem', lineHeight: 1.6 }}>
+              {config.body}
+            </p>
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button
+              className="btn btn-secondary"
+              style={{ flex: 1 }}
+              onClick={onCancel}
+              disabled={loading}
+            >
+              Batal
+            </button>
+            <button
+              className={config.confirmClass}
+              style={{ flex: 1 }}
+              onClick={onConfirm}
+              disabled={loading}
+            >
+              {loading ? <Loader2 size={14} className="loading-spin" /> : null}
+              {loading ? 'Memproses...' : config.confirmLabel}
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+    </Portal>
   );
 }
 
@@ -1328,83 +1328,83 @@ function PayModal({ po, storeId, onSuccess, onCancel }: PayModalProps) {
   };
 
   return (
-    <div className="modal-overlay" onClick={onCancel}>
-      <div className="modal-box" style={{ maxWidth: 400 }} onClick={e => e.stopPropagation()}>
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: 16,
-          }}
-        >
-          <h2 style={{ fontWeight: 800 }}>Bayar Hutang</h2>
-          <button className="btn btn-ghost btn-sm" onClick={onCancel}>
-            <X size={15} />
-          </button>
-        </div>
-        {/* PO summary */}
-        <div
-          style={{
-            background: 'var(--bg-elevated)',
-            borderRadius: 10,
-            padding: '12px 14px',
-            marginBottom: 16,
-          }}
-        >
-          <div style={{ fontSize: '0.8rem', fontWeight: 700 }}>{po.po_number}</div>
+    <Portal>
+      <div className="modal-overlay" style={{ zIndex: 5000 }} onClick={onCancel}>
+        <div className="modal-box" style={{ maxWidth: 400 }} onClick={e => e.stopPropagation()}>
           <div
             style={{
               display: 'flex',
               justifyContent: 'space-between',
-              marginTop: 6,
-              fontSize: '0.82rem',
+              alignItems: 'center',
+              marginBottom: 16,
             }}
           >
-            <span style={{ color: 'var(--text-3)' }}>Total PO</span>
-            <span style={{ fontWeight: 600 }}>{formatRp(po.total_amount)}</span>
+            <h2 style={{ fontWeight: 800 }}>Bayar Hutang</h2>
+            <button className="btn btn-ghost btn-sm" onClick={onCancel}>
+              <X size={15} />
+            </button>
           </div>
+          {/* PO summary */}
           <div
             style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              marginTop: 4,
-              fontSize: '0.82rem',
+              background: 'var(--bg-elevated)',
+              borderRadius: 10,
+              padding: '12px 14px',
+              marginBottom: 16,
             }}
           >
-            <span style={{ color: 'var(--text-3)' }}>Sudah dibayar</span>
-            <span style={{ color: '#10b981', fontWeight: 600 }}>{formatRp(amountPaid)}</span>
+            <div style={{ fontSize: '0.8rem', fontWeight: 700 }}>{po.po_number}</div>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                marginTop: 6,
+                fontSize: '0.82rem',
+              }}
+            >
+              <span style={{ color: 'var(--text-3)' }}>Total PO</span>
+              <span style={{ fontWeight: 600 }}>{formatRp(po.total_amount)}</span>
+            </div>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                marginTop: 4,
+                fontSize: '0.82rem',
+              }}
+            >
+              <span style={{ color: 'var(--text-3)' }}>Sudah dibayar</span>
+              <span style={{ color: '#10b981', fontWeight: 600 }}>{formatRp(amountPaid)}</span>
+            </div>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                marginTop: 4,
+                fontSize: '0.9rem',
+                borderTop: '1px solid var(--border)',
+                paddingTop: 8,
+              }}
+            >
+              <span style={{ fontWeight: 700 }}>Sisa hutang</span>
+              <span style={{ fontWeight: 800, color: '#ef4444' }}>{formatRp(amountDue)}</span>
+            </div>
           </div>
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              marginTop: 4,
-              fontSize: '0.9rem',
-              borderTop: '1px solid var(--border)',
-              paddingTop: 8,
-            }}
-          >
-            <span style={{ fontWeight: 700 }}>Sisa hutang</span>
-            <span style={{ fontWeight: 800, color: '#ef4444' }}>{formatRp(amountDue)}</span>
-          </div>
-        </div>
-        {error && (
-          <div
-            style={{
-              background: 'rgba(239,68,68,0.1)',
-              borderRadius: 8,
-              padding: '8px 12px',
-              color: '#f87171',
-              fontSize: '0.83rem',
-              marginBottom: 12,
-              border: '1px solid rgba(239,68,68,0.3)',
-            }}
-          >
-            {error}
-          </div>
-        )}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {error && (
+            <div
+              style={{
+                background: 'rgba(239,68,68,0.1)',
+                borderRadius: 8,
+                padding: '8px 12px',
+                color: '#f87171',
+                fontSize: '0.83rem',
+                marginBottom: 12,
+                border: '1px solid rgba(239,68,68,0.3)',
+              }}
+            >
+              {error}
+            </div>
+          )}
           <div className="input-group">
             <label className="input-label">Jumlah Bayar (Rp)</label>
             <input
@@ -1424,23 +1424,23 @@ function PayModal({ po, storeId, onSuccess, onCancel }: PayModalProps) {
               placeholder="Transfer, tunai, dll..."
             />
           </div>
-        </div>
-        <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
-          <button className="btn btn-secondary" style={{ flex: 1 }} onClick={onCancel}>
-            Batal
-          </button>
-          <button
-            className="btn btn-primary"
-            style={{ flex: 1 }}
-            onClick={handleSubmit}
-            disabled={saving}
-          >
-            {saving ? <Loader2 size={14} className="loading-spin" /> : <Wallet size={14} />}
-            {saving ? 'Menyimpan...' : 'Bayar'}
-          </button>
+          <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
+            <button className="btn btn-secondary" style={{ flex: 1 }} onClick={onCancel}>
+              Batal
+            </button>
+            <button
+              className="btn btn-primary"
+              style={{ flex: 1 }}
+              onClick={handleSubmit}
+              disabled={saving}
+            >
+              {saving ? <Loader2 size={14} className="loading-spin" /> : <Wallet size={14} />}
+              {saving ? 'Menyimpan...' : 'Bayar'}
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+    </Portal>
   );
 }
 
@@ -1452,13 +1452,13 @@ interface InvoiceModalProps {
 }
 function InvoiceModal({ po, store, onClose }: InvoiceModalProps) {
   return (
-    <>
-      <div className="modal-overlay no-print" onClick={onClose} />
+    <Portal>
+      <div className="modal-overlay no-print" style={{ zIndex: 5000 }} onClick={onClose} />
       <div
         style={{
           position: 'fixed',
           inset: 0,
-          zIndex: 202,
+          zIndex: 5001,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -1707,7 +1707,7 @@ function InvoiceModal({ po, store, onClose }: InvoiceModalProps) {
         </div>
       </div>
       <style>{`@media print{body>*:not(#portal-root){display:none!important}.no-print{display:none!important}#po-invoice{position:fixed!important;inset:0!important;max-height:none!important;border-radius:0!important;box-shadow:none!important;overflow:visible!important}}`}</style>
-    </>
+    </Portal>
   );
 }
 
@@ -1739,7 +1739,7 @@ function PODetailDrawer({
   const amountDue = po.amount_due ?? po.total_amount - amountPaid;
 
   return (
-    <>
+    <Portal>
       <div
         onClick={onClose}
         style={{
@@ -1747,7 +1747,7 @@ function PODetailDrawer({
           inset: 0,
           background: 'rgba(0,0,0,0.5)',
           backdropFilter: 'blur(2px)',
-          zIndex: 200,
+          zIndex: 5000,
         }}
       />
       <div
@@ -1759,7 +1759,7 @@ function PODetailDrawer({
           width: 'min(720px, 100vw)',
           background: 'var(--bg-card)',
           borderLeft: '1px solid var(--border)',
-          zIndex: 201,
+          zIndex: 5001,
           overflowY: 'auto',
           display: 'flex',
           flexDirection: 'column',
@@ -1984,7 +1984,7 @@ function PODetailDrawer({
           </div>
         </div>
       </div>
-    </>
+    </Portal>
   );
 }
 
@@ -2570,39 +2570,46 @@ export default function PurchaseOrdersPage() {
         />
       )}
       {invoicePO && (
-        <InvoiceModal po={invoicePO} store={storeDetail} onClose={() => setInvoicePO(null)} />
+        <Portal>
+          <InvoiceModal po={invoicePO} store={storeDetail} onClose={() => setInvoicePO(null)} />
+        </Portal>
       )}
       {payingPO && (
-        <PayModal
-          po={payingPO}
-          storeId={storeId ?? ''}
-          onSuccess={handlePaySuccess}
-          onCancel={() => setPayingPO(null)}
-        />
+        <Portal>
+          <PayModal
+            po={payingPO}
+            storeId={storeId ?? ''}
+            onSuccess={handlePaySuccess}
+            onCancel={() => setPayingPO(null)}
+          />
+        </Portal>
       )}
       {confirm && (
-        <ConfirmModal
-          action={confirm.action}
-          po={confirm.po}
-          onConfirm={executeAction}
-          onCancel={() => setConfirm(null)}
-          loading={confirmLoading}
-        />
+        <Portal>
+          <ConfirmModal
+            action={confirm.action}
+            po={confirm.po}
+            onConfirm={executeAction}
+            onCancel={() => setConfirm(null)}
+            loading={confirmLoading}
+          />
+        </Portal>
       )}
 
       {/* ── Create / Edit PO Sidebar ─────────────────────────────────────────── */}
       {showModal && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 1000,
-            display: 'flex',
-            justifyContent: 'flex-end',
-          }}
-          onClick={() => setShowModal(false)}
-        >
-          <style>{`
+        <Portal>
+          <div
+            style={{
+              position: 'fixed',
+              inset: 0,
+              zIndex: 5000,
+              display: 'flex',
+              justifyContent: 'flex-end',
+            }}
+            onClick={() => setShowModal(false)}
+          >
+            <style>{`
             @keyframes slideInRight {
               from { transform: translateX(100%); }
               to { transform: translateX(0); }
@@ -2612,478 +2619,484 @@ export default function PurchaseOrdersPage() {
               to { transform: translateY(0); opacity: 1; }
             }
           `}</style>
-          {/* Backdrop */}
-          <div
-            style={{
-              position: 'absolute',
-              inset: 0,
-              background: 'rgba(0,0,0,0.4)',
-              backdropFilter: 'blur(3px)',
-            }}
-          />
-          {/* Sidebar drawer content */}
-          <div
-            className="card"
-            style={{
-              position: 'relative',
-              width: '100%',
-              maxWidth: 620,
-              height: '100%',
-              borderRadius: 0,
-              padding: 0,
-              display: 'flex',
-              flexDirection: 'column',
-              boxShadow: '-8px 0 32px rgba(0,0,0,0.15)',
-              animation: 'slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
-            }}
-            onClick={e => e.stopPropagation()}
-          >
-            {/* Header */}
+            {/* Backdrop */}
             <div
               style={{
-                padding: '20px 24px',
-                borderBottom: '1px solid var(--border)',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                background: 'var(--bg-card)',
+                position: 'absolute',
+                inset: 0,
+                background: 'rgba(0,0,0,0.4)',
+                backdropFilter: 'blur(3px)',
               }}
+            />
+            {/* Sidebar drawer content */}
+            <div
+              className="card"
+              style={{
+                position: 'relative',
+                width: '100%',
+                maxWidth: 620,
+                height: '100%',
+                borderRadius: 0,
+                padding: 0,
+                display: 'flex',
+                flexDirection: 'column',
+                boxShadow: '-8px 0 32px rgba(0,0,0,0.15)',
+                animation: 'slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+              }}
+              onClick={e => e.stopPropagation()}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <ClipboardList size={22} style={{ color: 'var(--accent-em)' }} />
-                <h2 style={{ fontWeight: 800, fontSize: '1.2rem', margin: 0 }}>Buat Pembelian</h2>
-              </div>
-              <button
-                onClick={() => setShowModal(false)}
-                className="btn btn-ghost btn-sm"
-                style={{ padding: 6 }}
+              {/* Header */}
+              <div
+                style={{
+                  padding: '20px 24px',
+                  borderBottom: '1px solid var(--border)',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  background: 'var(--bg-card)',
+                }}
               >
-                <X size={20} />
-              </button>
-            </div>
-
-            {/* Scrollable Form Body */}
-            <div style={{ flex: 1, overflowY: 'auto', padding: '24px' }}>
-              {error && (
-                <div
-                  style={{
-                    background: 'rgba(239,68,68,0.12)',
-                    border: '1px solid rgba(239,68,68,0.3)',
-                    borderRadius: 10,
-                    padding: '12px 16px',
-                    color: '#f87171',
-                    fontSize: '0.85rem',
-                    marginBottom: 20,
-                  }}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <ClipboardList size={22} style={{ color: 'var(--accent-em)' }} />
+                  <h2 style={{ fontWeight: 800, fontSize: '1.2rem', margin: 0 }}>Buat Pembelian</h2>
+                </div>
+                <button
+                  onClick={() => setShowModal(false)}
+                  className="btn btn-ghost btn-sm"
+                  style={{ padding: 6 }}
                 >
-                  {error}
-                </div>
-              )}
+                  <X size={20} />
+                </button>
+              </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-                {/* Supplier Selection */}
-                <div className="input-group">
-                  <label
-                    className="input-label"
-                    style={{ display: 'flex', alignItems: 'center', gap: 6 }}
-                  >
-                    <User size={14} style={{ color: 'var(--text-3)' }} /> Supplier
-                  </label>
-                  <SearchableSelect
-                    placeholder="Pilih Supplier..."
-                    options={suppliers.map(s => ({ value: s.id, label: s.name }))}
-                    value={form.supplier_id}
-                    onChange={v => setForm(f => ({ ...f, supplier_id: v }))}
-                  />
-                </div>
-
-                {/* Items Section */}
-                <div>
+              {/* Scrollable Form Body */}
+              <div style={{ flex: 1, overflowY: 'auto', padding: '24px' }}>
+                {error && (
                   <div
                     style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      marginBottom: 12,
+                      background: 'rgba(239,68,68,0.12)',
+                      border: '1px solid rgba(239,68,68,0.3)',
+                      borderRadius: 10,
+                      padding: '12px 16px',
+                      color: '#f87171',
+                      fontSize: '0.85rem',
+                      marginBottom: 20,
                     }}
                   >
+                    {error}
+                  </div>
+                )}
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+                  {/* Supplier Selection */}
+                  <div className="input-group">
                     <label
                       className="input-label"
-                      style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 6 }}
+                      style={{ display: 'flex', alignItems: 'center', gap: 6 }}
                     >
-                      <Package size={14} style={{ color: 'var(--text-3)' }} /> Item Pembelian
+                      <User size={14} style={{ color: 'var(--text-3)' }} /> Supplier
                     </label>
-                    <span
+                    <SearchableSelect
+                      placeholder="Pilih Supplier..."
+                      options={suppliers.map(s => ({ value: s.id, label: s.name }))}
+                      value={form.supplier_id}
+                      onChange={v => setForm(f => ({ ...f, supplier_id: v }))}
+                    />
+                  </div>
+
+                  {/* Items Section */}
+                  <div>
+                    <div
                       style={{
-                        fontSize: '0.75rem',
-                        fontWeight: 600,
-                        color: 'var(--accent-em)',
-                        background: 'var(--bg-elevated)',
-                        padding: '2px 8px',
-                        borderRadius: 6,
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        marginBottom: 12,
                       }}
                     >
-                      {form.items.length} Item
-                    </span>
-                  </div>
+                      <label
+                        className="input-label"
+                        style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 6 }}
+                      >
+                        <Package size={14} style={{ color: 'var(--text-3)' }} /> Item Pembelian
+                      </label>
+                      <span
+                        style={{
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                          color: 'var(--accent-em)',
+                          background: 'var(--bg-elevated)',
+                          padding: '2px 8px',
+                          borderRadius: 6,
+                        }}
+                      >
+                        {form.items.length} Item
+                      </span>
+                    </div>
 
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                    {form.items.map((item, i) => {
-                      const lineTotal = item.quantity * item.unit_cost;
-                      return (
-                        <div
-                          key={i}
-                          style={{
-                            background: 'var(--bg-elevated)',
-                            borderRadius: 12,
-                            padding: '12px 14px',
-                            border: '1px solid var(--border)',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: 12,
-                            position: 'relative',
-                            transition: 'all 0.2s ease',
-                          }}
-                        >
-                          {/* Line 1: Product, Qty, Price & Delete */}
-                          <div style={{ display: 'flex', gap: 10, alignItems: 'flex-end' }}>
-                            <div
-                              style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 3 }}
-                            >
-                              <label
-                                style={{
-                                  fontSize: '0.6rem',
-                                  color: 'var(--text-3)',
-                                  fontWeight: 700,
-                                  textTransform: 'uppercase',
-                                  letterSpacing: '0.025em',
-                                }}
-                              >
-                                Produk
-                              </label>
-                              <ProductSearchSelect
-                                storeId={storeId ?? ''}
-                                value={item.product_id}
-                                selectedName={
-                                  item.product_name ||
-                                  (item.product_id
-                                    ? products.get(item.product_id)?.name
-                                    : undefined)
-                                }
-                                onSelect={p => {
-                                  setProducts(prev => new Map(prev).set(p.id, p));
-                                  updateItem(i, {
-                                    product_id: p.id,
-                                    product_name: p.name,
-                                    product_sku: p.sku,
-                                    unit: p.unit,
-                                    unit_cost: p.cost_price || 0,
-                                  });
-                                }}
-                              />
-                            </div>
-                            <div
-                              style={{
-                                width: 64,
-                                display: 'flex',
-                                flexDirection: 'column',
-                                gap: 3,
-                              }}
-                            >
-                              <label
-                                style={{
-                                  fontSize: '0.6rem',
-                                  color: 'var(--text-3)',
-                                  fontWeight: 700,
-                                  textTransform: 'uppercase',
-                                  letterSpacing: '0.025em',
-                                }}
-                              >
-                                Jumlah
-                              </label>
-                              <input
-                                type="number"
-                                className="input"
-                                style={{ height: 32, fontSize: '0.8rem', padding: '0 8px' }}
-                                placeholder="Qty"
-                                min={1}
-                                value={item.quantity}
-                                onFocus={e => e.target.select()}
-                                onChange={e => updateItem(i, { quantity: +e.target.value })}
-                              />
-                            </div>
-                            <div
-                              style={{
-                                paddingBottom: 10,
-                                fontSize: '0.9rem',
-                                color: 'var(--text-3)',
-                                opacity: 0.6,
-                              }}
-                            >
-                              ×
-                            </div>
-                            <div
-                              style={{
-                                width: 120,
-                                display: 'flex',
-                                flexDirection: 'column',
-                                gap: 3,
-                              }}
-                            >
-                              <label
-                                style={{
-                                  fontSize: '0.6rem',
-                                  color: 'var(--text-3)',
-                                  fontWeight: 700,
-                                  textTransform: 'uppercase',
-                                  letterSpacing: '0.025em',
-                                }}
-                              >
-                                Harga / Item
-                              </label>
-                              <input
-                                type="text"
-                                className="input"
-                                style={{ height: 32, fontSize: '0.8rem', padding: '0 8px' }}
-                                placeholder="Harga"
-                                onFocus={e => e.target.select()}
-                                value={formatNumberInput(String(item.unit_cost))}
-                                onChange={e =>
-                                  updateItem(i, { unit_cost: parseNumberInput(e.target.value) })
-                                }
-                              />
-                            </div>
-                            <div style={{ paddingBottom: 2 }}>
-                              <button
-                                className="btn btn-ghost btn-sm"
-                                style={{
-                                  color: '#ef4444',
-                                  padding: 4,
-                                  height: 32,
-                                  width: 32,
-                                  borderRadius: 8,
-                                }}
-                                onClick={() => removeItem(i)}
-                                disabled={form.items.length === 1}
-                              >
-                                <Trash2 size={15} />
-                              </button>
-                            </div>
-                          </div>
-
-                          {/* Line 2: SKU, Unit & Total Price */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                      {form.items.map((item, i) => {
+                        const lineTotal = item.quantity * item.unit_cost;
+                        return (
                           <div
+                            key={i}
                             style={{
+                              background: 'var(--bg-elevated)',
+                              borderRadius: 12,
+                              padding: '12px 14px',
+                              border: '1px solid var(--border)',
                               display: 'flex',
-                              justifyContent: 'space-between',
-                              alignItems: 'center',
-                              paddingTop: 8,
-                              borderTop: '1px dashed var(--border)',
-                              marginTop: 0,
+                              flexDirection: 'column',
+                              gap: 12,
+                              position: 'relative',
+                              transition: 'all 0.2s ease',
                             }}
                           >
+                            {/* Line 1: Product, Qty, Price & Delete */}
+                            <div style={{ display: 'flex', gap: 10, alignItems: 'flex-end' }}>
+                              <div
+                                style={{
+                                  flex: 1,
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  gap: 3,
+                                }}
+                              >
+                                <label
+                                  style={{
+                                    fontSize: '0.6rem',
+                                    color: 'var(--text-3)',
+                                    fontWeight: 700,
+                                    textTransform: 'uppercase',
+                                    letterSpacing: '0.025em',
+                                  }}
+                                >
+                                  Produk
+                                </label>
+                                <ProductSearchSelect
+                                  storeId={storeId ?? ''}
+                                  value={item.product_id}
+                                  selectedName={
+                                    item.product_name ||
+                                    (item.product_id
+                                      ? products.get(item.product_id)?.name
+                                      : undefined)
+                                  }
+                                  onSelect={p => {
+                                    setProducts(prev => new Map(prev).set(p.id, p));
+                                    updateItem(i, {
+                                      product_id: p.id,
+                                      product_name: p.name,
+                                      product_sku: p.sku,
+                                      unit: p.unit,
+                                      unit_cost: p.cost_price || 0,
+                                    });
+                                  }}
+                                />
+                              </div>
+                              <div
+                                style={{
+                                  width: 64,
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  gap: 3,
+                                }}
+                              >
+                                <label
+                                  style={{
+                                    fontSize: '0.6rem',
+                                    color: 'var(--text-3)',
+                                    fontWeight: 700,
+                                    textTransform: 'uppercase',
+                                    letterSpacing: '0.025em',
+                                  }}
+                                >
+                                  Jumlah
+                                </label>
+                                <input
+                                  type="number"
+                                  className="input"
+                                  style={{ height: 32, fontSize: '0.8rem', padding: '0 8px' }}
+                                  placeholder="Qty"
+                                  min={1}
+                                  value={item.quantity}
+                                  onFocus={e => e.target.select()}
+                                  onChange={e => updateItem(i, { quantity: +e.target.value })}
+                                />
+                              </div>
+                              <div
+                                style={{
+                                  paddingBottom: 10,
+                                  fontSize: '0.9rem',
+                                  color: 'var(--text-3)',
+                                  opacity: 0.6,
+                                }}
+                              >
+                                ×
+                              </div>
+                              <div
+                                style={{
+                                  width: 120,
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  gap: 3,
+                                }}
+                              >
+                                <label
+                                  style={{
+                                    fontSize: '0.6rem',
+                                    color: 'var(--text-3)',
+                                    fontWeight: 700,
+                                    textTransform: 'uppercase',
+                                    letterSpacing: '0.025em',
+                                  }}
+                                >
+                                  Harga / Item
+                                </label>
+                                <input
+                                  type="text"
+                                  className="input"
+                                  style={{ height: 32, fontSize: '0.8rem', padding: '0 8px' }}
+                                  placeholder="Harga"
+                                  onFocus={e => e.target.select()}
+                                  value={formatNumberInput(String(item.unit_cost))}
+                                  onChange={e =>
+                                    updateItem(i, { unit_cost: parseNumberInput(e.target.value) })
+                                  }
+                                />
+                              </div>
+                              <div style={{ paddingBottom: 2 }}>
+                                <button
+                                  className="btn btn-ghost btn-sm"
+                                  style={{
+                                    color: '#ef4444',
+                                    padding: 4,
+                                    height: 32,
+                                    width: 32,
+                                    borderRadius: 8,
+                                  }}
+                                  onClick={() => removeItem(i)}
+                                  disabled={form.items.length === 1}
+                                >
+                                  <Trash2 size={15} />
+                                </button>
+                              </div>
+                            </div>
+
+                            {/* Line 2: SKU, Unit & Total Price */}
                             <div
                               style={{
-                                fontSize: '0.7rem',
-                                color: 'var(--text-3)',
-                                fontWeight: 500,
                                 display: 'flex',
+                                justifyContent: 'space-between',
                                 alignItems: 'center',
-                                gap: 6,
+                                paddingTop: 8,
+                                borderTop: '1px dashed var(--border)',
+                                marginTop: 0,
                               }}
                             >
-                              <span style={{ opacity: 0.7 }}>{item.product_sku || '—'}</span>
-                              <span style={{ opacity: 0.3 }}>·</span>
-                              <span
+                              <div
                                 style={{
-                                  background: 'var(--bg-card)',
-                                  padding: '1px 5px',
-                                  borderRadius: 4,
-                                  fontSize: '0.65rem',
-                                }}
-                              >
-                                {item.unit || 'pcs'}
-                              </span>
-                            </div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                              <span
-                                style={{
-                                  fontSize: '0.6rem',
+                                  fontSize: '0.7rem',
                                   color: 'var(--text-3)',
-                                  textTransform: 'uppercase',
-                                  fontWeight: 700,
-                                  letterSpacing: '0.05em',
+                                  fontWeight: 500,
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: 6,
                                 }}
                               >
-                                Total
-                              </span>
-                              <span
-                                style={{
-                                  fontWeight: 800,
-                                  fontSize: '1.05rem',
-                                  color: 'var(--accent-em)',
-                                }}
-                              >
-                                {formatRp(lineTotal)}
-                              </span>
+                                <span style={{ opacity: 0.7 }}>{item.product_sku || '—'}</span>
+                                <span style={{ opacity: 0.3 }}>·</span>
+                                <span
+                                  style={{
+                                    background: 'var(--bg-card)',
+                                    padding: '1px 5px',
+                                    borderRadius: 4,
+                                    fontSize: '0.65rem',
+                                  }}
+                                >
+                                  {item.unit || 'pcs'}
+                                </span>
+                              </div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                <span
+                                  style={{
+                                    fontSize: '0.6rem',
+                                    color: 'var(--text-3)',
+                                    textTransform: 'uppercase',
+                                    fontWeight: 700,
+                                    letterSpacing: '0.05em',
+                                  }}
+                                >
+                                  Total
+                                </span>
+                                <span
+                                  style={{
+                                    fontWeight: 800,
+                                    fontSize: '1.05rem',
+                                    color: 'var(--accent-em)',
+                                  }}
+                                >
+                                  {formatRp(lineTotal)}
+                                </span>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      );
-                    })}
-                  </div>
+                        );
+                      })}
+                    </div>
 
+                    <button
+                      className="btn btn-ghost"
+                      style={{
+                        width: '100%',
+                        marginTop: 12,
+                        border: '1px dashed var(--border)',
+                        padding: '12px',
+                        fontSize: '0.85rem',
+                        borderRadius: 12,
+                      }}
+                      onClick={addItem}
+                    >
+                      <Plus size={14} /> Tambah Item Lain
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Consolidated Inline High-Density Footer */}
+              <div
+                style={{
+                  padding: '12px 24px',
+                  background: 'var(--bg-card)',
+                  borderTop: '1px solid var(--border)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 16,
+                  boxShadow: '0 -4px 12px rgba(0,0,0,0.05)',
+                  position: 'relative',
+                }}
+              >
+                {/* Notes Icon & Popover */}
+                <div style={{ position: 'relative' }}>
+                  <button
+                    onClick={() => setShowNotesPop(!showNotesPop)}
+                    className={`btn ${form.notes ? 'btn-primary' : 'btn-ghost'}`}
+                    style={{
+                      padding: 8,
+                      height: 40,
+                      width: 40,
+                      borderRadius: 12,
+                      transition: 'all 0.2s ease',
+                    }}
+                    title="Catatan"
+                  >
+                    <FileText size={20} />
+                  </button>
+                  {showNotesPop && (
+                    <div
+                      style={{
+                        position: 'absolute',
+                        bottom: 'calc(100% + 12px)',
+                        left: -12,
+                        width: 320,
+                        background: 'var(--bg-card)',
+                        border: '1px solid var(--border)',
+                        borderRadius: 12,
+                        padding: 16,
+                        boxShadow: '0 10px 40px rgba(0,0,0,0.2)',
+                        zIndex: 100,
+                        animation: 'slideInUp 0.15s cubic-bezier(0, 0, 0.2, 1)',
+                      }}
+                    >
+                      <label
+                        style={{
+                          fontSize: '0.65rem',
+                          fontWeight: 800,
+                          textTransform: 'uppercase',
+                          color: 'var(--text-3)',
+                          display: 'block',
+                          marginBottom: 10,
+                          letterSpacing: '0.05em',
+                        }}
+                      >
+                        Catatan Pembelian
+                      </label>
+                      <textarea
+                        autoFocus
+                        className="input"
+                        rows={4}
+                        placeholder="Masukkan catatan pembelian..."
+                        style={{ resize: 'none', fontSize: '0.85rem', padding: '10px 12px' }}
+                        value={form.notes}
+                        onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
+                      />
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 12 }}>
+                        <button
+                          className="btn btn-primary btn-sm"
+                          onClick={() => setShowNotesPop(false)}
+                        >
+                          Selesai
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Total Display */}
+                <div style={{ flex: 1 }}>
+                  <div
+                    style={{
+                      fontSize: '0.65rem',
+                      color: 'var(--text-3)',
+                      fontWeight: 700,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em',
+                      marginBottom: 2,
+                    }}
+                  >
+                    Grand Total
+                  </div>
+                  <div
+                    style={{
+                      fontSize: '1.25rem',
+                      fontWeight: 800,
+                      color: 'var(--accent-em)',
+                      lineHeight: 1,
+                    }}
+                  >
+                    {formatRp(calculateTotal())}
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                   <button
                     className="btn btn-ghost"
-                    style={{
-                      width: '100%',
-                      marginTop: 12,
-                      border: '1px dashed var(--border)',
-                      padding: '12px',
-                      fontSize: '0.85rem',
-                      borderRadius: 12,
-                    }}
-                    onClick={addItem}
+                    onClick={() => setShowModal(false)}
+                    style={{ height: 40, padding: '0 12px', fontSize: '0.85rem' }}
                   >
-                    <Plus size={14} /> Tambah Item Lain
+                    Batal
+                  </button>
+                  <button
+                    className="btn btn-primary"
+                    disabled={saving || calculateTotal() === 0}
+                    style={{
+                      height: 40,
+                      padding: '0 16px',
+                      gap: 8,
+                      fontWeight: 700,
+                      minWidth: 100,
+                    }}
+                    onClick={handleCreate}
+                  >
+                    {saving ? <Loader2 size={16} className="loading-spin" /> : <Check size={16} />}
+                    Simpan
                   </button>
                 </div>
               </div>
             </div>
-
-            {/* Consolidated Inline High-Density Footer */}
-            <div
-              style={{
-                padding: '12px 24px',
-                background: 'var(--bg-card)',
-                borderTop: '1px solid var(--border)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 16,
-                boxShadow: '0 -4px 12px rgba(0,0,0,0.05)',
-                position: 'relative',
-              }}
-            >
-              {/* Notes Icon & Popover */}
-              <div style={{ position: 'relative' }}>
-                <button
-                  onClick={() => setShowNotesPop(!showNotesPop)}
-                  className={`btn ${form.notes ? 'btn-primary' : 'btn-ghost'}`}
-                  style={{
-                    padding: 8,
-                    height: 40,
-                    width: 40,
-                    borderRadius: 12,
-                    transition: 'all 0.2s ease',
-                  }}
-                  title="Catatan"
-                >
-                  <FileText size={20} />
-                </button>
-                {showNotesPop && (
-                  <div
-                    style={{
-                      position: 'absolute',
-                      bottom: 'calc(100% + 12px)',
-                      left: -12,
-                      width: 320,
-                      background: 'var(--bg-card)',
-                      border: '1px solid var(--border)',
-                      borderRadius: 12,
-                      padding: 16,
-                      boxShadow: '0 10px 40px rgba(0,0,0,0.2)',
-                      zIndex: 100,
-                      animation: 'slideInUp 0.15s cubic-bezier(0, 0, 0.2, 1)',
-                    }}
-                  >
-                    <label
-                      style={{
-                        fontSize: '0.65rem',
-                        fontWeight: 800,
-                        textTransform: 'uppercase',
-                        color: 'var(--text-3)',
-                        display: 'block',
-                        marginBottom: 10,
-                        letterSpacing: '0.05em',
-                      }}
-                    >
-                      Catatan Pembelian
-                    </label>
-                    <textarea
-                      autoFocus
-                      className="input"
-                      rows={4}
-                      placeholder="Masukkan catatan pembelian..."
-                      style={{ resize: 'none', fontSize: '0.85rem', padding: '10px 12px' }}
-                      value={form.notes}
-                      onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
-                    />
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 12 }}>
-                      <button
-                        className="btn btn-primary btn-sm"
-                        onClick={() => setShowNotesPop(false)}
-                      >
-                        Selesai
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Total Display */}
-              <div style={{ flex: 1 }}>
-                <div
-                  style={{
-                    fontSize: '0.65rem',
-                    color: 'var(--text-3)',
-                    fontWeight: 700,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.05em',
-                    marginBottom: 2,
-                  }}
-                >
-                  Grand Total
-                </div>
-                <div
-                  style={{
-                    fontSize: '1.25rem',
-                    fontWeight: 800,
-                    color: 'var(--accent-em)',
-                    lineHeight: 1,
-                  }}
-                >
-                  {formatRp(calculateTotal())}
-                </div>
-              </div>
-
-              {/* Actions */}
-              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                <button
-                  className="btn btn-ghost"
-                  onClick={() => setShowModal(false)}
-                  style={{ height: 40, padding: '0 12px', fontSize: '0.85rem' }}
-                >
-                  Batal
-                </button>
-                <button
-                  className="btn btn-primary"
-                  disabled={saving || calculateTotal() === 0}
-                  style={{
-                    height: 40,
-                    padding: '0 16px',
-                    gap: 8,
-                    fontWeight: 700,
-                    minWidth: 100,
-                  }}
-                  onClick={handleCreate}
-                >
-                  {saving ? <Loader2 size={16} className="loading-spin" /> : <Check size={16} />}
-                  Simpan
-                </button>
-              </div>
-            </div>
           </div>
-        </div>
+        </Portal>
       )}
     </div>
   );

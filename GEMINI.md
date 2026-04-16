@@ -16,6 +16,7 @@ Every time a task is completed, you MUST run the following commands to verify th
 - Navigate to `/frontend`
 - Run `npm run lint -- --fix`
 - Run `npx prettier --write .`
+- Run `npm run type-check`
 - **Rule:** Do not report the task as "Done" until these commands pass with zero errors.
 
 ## Coding Style

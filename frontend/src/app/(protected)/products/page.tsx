@@ -17,8 +17,9 @@ import { useAuth } from '@/lib/auth/AuthContext';
 import { usePermission } from '@/hooks/usePermission';
 import { productsApi } from '@/lib/api/products';
 import { stockApi } from '@/lib/api/store-apis';
+import Portal from '@/components/ui/Portal';
 import { formatRp } from '@/lib/utils';
-import type { Product, Category, PaginatedData } from '@/types';
+import type { Product, Category, PaginatedData, StockLevel } from '@/types';
 import { ApiError } from '@/lib/api/client';
 
 export default function ProductsPage() {
@@ -115,7 +116,7 @@ export default function ProductsPage() {
       stockApi
         .levels(storeId)
         .then(res => {
-          const levels = res.data as import('@/types').StockLevel[];
+          const levels = res.data as StockLevel[];
           const level = levels.find(l => l.product_id === p.id);
           setMinStock(level ? String(level.min_quantity) : '0');
         })
@@ -362,318 +363,322 @@ export default function ProductsPage() {
 
       {/* ── Create / Edit Sidebar ─────────────────────────────────────────────── */}
       {sidebar.open && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 1000,
-            display: 'flex',
-            justifyContent: 'flex-end',
-          }}
-          onClick={closeSidebar}
-        >
-          <style>{`
+        <Portal>
+          <div
+            style={{
+              position: 'fixed',
+              inset: 0,
+              zIndex: 5000,
+              display: 'flex',
+              justifyContent: 'flex-end',
+            }}
+            onClick={closeSidebar}
+          >
+            <style>{`
             @keyframes slideInRight {
               from { transform: translateX(100%); }
               to { transform: translateX(0); }
             }
           `}</style>
-          {/* Backdrop */}
-          <div
-            style={{
-              position: 'absolute',
-              inset: 0,
-              background: 'rgba(0,0,0,0.4)',
-              backdropFilter: 'blur(3px)',
-            }}
-          />
-          {/* Sidebar drawer content */}
-          <div
-            className="card"
-            style={{
-              position: 'relative',
-              width: '100%',
-              maxWidth: 480,
-              height: '100%',
-              borderRadius: 0,
-              padding: 0,
-              display: 'flex',
-              flexDirection: 'column',
-              boxShadow: '-8px 0 32px rgba(0,0,0,0.15)',
-              animation: 'slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
-            }}
-            onClick={e => e.stopPropagation()}
-          >
-            {/* Header */}
+            {/* Backdrop */}
             <div
               style={{
-                padding: '20px 24px',
-                borderBottom: '1px solid var(--border)',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                background: 'var(--bg-card)',
+                position: 'absolute',
+                inset: 0,
+                background: 'rgba(0,0,0,0.4)',
+                backdropFilter: 'blur(3px)',
               }}
+            />
+            {/* Sidebar drawer content */}
+            <div
+              className="card"
+              style={{
+                position: 'relative',
+                width: '100%',
+                maxWidth: 480,
+                height: '100%',
+                borderRadius: 0,
+                padding: 0,
+                display: 'flex',
+                flexDirection: 'column',
+                boxShadow: '-8px 0 32px rgba(0,0,0,0.15)',
+                animation: 'slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+              }}
+              onClick={e => e.stopPropagation()}
             >
-              <h2 style={{ fontWeight: 700, fontSize: '1.1rem', margin: 0 }}>
-                {sidebar.mode === 'edit' ? `Edit ${productLabel}` : `Tambah ${productLabel}`}
-              </h2>
-              <button
-                onClick={closeSidebar}
-                className="btn btn-ghost btn-sm"
-                style={{ padding: 6 }}
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            {/* Scrollable Form Body */}
-            <div style={{ flex: 1, overflowY: 'auto', padding: '24px' }}>
-              {error && (
-                <div
-                  style={{
-                    background: 'rgba(239,68,68,0.12)',
-                    border: '1px solid rgba(239,68,68,0.3)',
-                    borderRadius: 10,
-                    padding: '12px 16px',
-                    color: '#f87171',
-                    fontSize: '0.85rem',
-                    marginBottom: 20,
-                  }}
-                >
-                  {error}
-                </div>
-              )}
-
-              <form
-                id="product-form"
-                onSubmit={e => {
-                  e.preventDefault();
-                  handleSave();
+              {/* Header */}
+              <div
+                style={{
+                  padding: '20px 24px',
+                  borderBottom: '1px solid var(--border)',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  background: 'var(--bg-card)',
                 }}
-                style={{ display: 'flex', flexDirection: 'column', gap: 20 }}
               >
-                {/* Basic Info */}
-                <div>
-                  <label className="input-label">Nama {productLabel}</label>
-                  <input
-                    className="input"
-                    autoFocus
-                    placeholder={`cth. ${isRestaurant ? 'Ayam Potong' : 'Ayam Goreng'}`}
-                    value={formData.name}
-                    onChange={f('name')}
-                  />
-                </div>
+                <h2 style={{ fontWeight: 700, fontSize: '1.1rem', margin: 0 }}>
+                  {sidebar.mode === 'edit' ? `Edit ${productLabel}` : `Tambah ${productLabel}`}
+                </h2>
+                <button
+                  onClick={closeSidebar}
+                  className="btn btn-ghost btn-sm"
+                  style={{ padding: 6 }}
+                >
+                  <X size={18} />
+                </button>
+              </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="input-group">
-                    <label className="input-label">SKU</label>
-                    <input
-                      className="input"
-                      placeholder="Otomatis jika kosong"
-                      value={formData.sku}
-                      onChange={f('sku')}
-                    />
-                  </div>
-                  <div className="input-group">
-                    <label className="input-label">Satuan</label>
-                    <input
-                      className="input"
-                      placeholder="pcs, kg, gr, dll"
-                      value={formData.unit}
-                      onChange={f('unit')}
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="input-group">
-                    <label className="input-label">Harga Jual (Rp)</label>
-                    <input
-                      type="text"
-                      className="input"
-                      placeholder="0"
-                      onFocus={e => e.target.select()}
-                      value={
-                        formData.sell_price
-                          ? Number(formData.sell_price).toLocaleString('id-ID')
-                          : ''
-                      }
-                      onChange={e => {
-                        const val = e.target.value.replace(/[^0-9]/g, '');
-                        setFormData(d => ({ ...d, sell_price: val }));
-                      }}
-                    />
-                  </div>
-                  <div className="input-group">
-                    <label className="input-label">Harga Beli (Rp)</label>
-                    <input
-                      type="text"
-                      className="input"
-                      placeholder="0"
-                      onFocus={e => e.target.select()}
-                      value={
-                        formData.cost_price
-                          ? Number(formData.cost_price).toLocaleString('id-ID')
-                          : ''
-                      }
-                      onChange={e => {
-                        const val = e.target.value.replace(/[^0-9]/g, '');
-                        setFormData(d => ({ ...d, cost_price: val }));
-                      }}
-                    />
-                  </div>
-                </div>
-
-                <div className="input-group">
-                  <label
+              {/* Scrollable Form Body */}
+              <div style={{ flex: 1, overflowY: 'auto', padding: '24px' }}>
+                {error && (
+                  <div
                     style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 8,
-                      fontSize: '0.8rem',
-                      fontWeight: 600,
-                      marginBottom: formData.use_global_tax ? 0 : 8,
-                      color: 'var(--text-2)',
-                      cursor: 'pointer',
+                      background: 'rgba(239,68,68,0.12)',
+                      border: '1px solid rgba(239,68,68,0.3)',
+                      borderRadius: 10,
+                      padding: '12px 16px',
+                      color: '#f87171',
+                      fontSize: '0.85rem',
+                      marginBottom: 20,
                     }}
                   >
+                    {error}
+                  </div>
+                )}
+
+                <form
+                  id="product-form"
+                  onSubmit={e => {
+                    e.preventDefault();
+                    handleSave();
+                  }}
+                  style={{ display: 'flex', flexDirection: 'column', gap: 20 }}
+                >
+                  {/* Basic Info */}
+                  <div>
+                    <label className="input-label">Nama {productLabel}</label>
                     <input
-                      type="checkbox"
-                      checked={formData.use_global_tax}
-                      onChange={e => setFormData(d => ({ ...d, use_global_tax: e.target.checked }))}
+                      className="input"
+                      autoFocus
+                      placeholder={`cth. ${isRestaurant ? 'Ayam Potong' : 'Ayam Goreng'}`}
+                      value={formData.name}
+                      onChange={f('name')}
                     />
-                    Gunakan PPN default toko
-                  </label>
-                  {!formData.use_global_tax && (
-                    <div style={{ marginTop: 8 }}>
-                      <label className="input-label">Custom PPN (%)</label>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="input-group">
+                      <label className="input-label">SKU</label>
                       <input
                         className="input"
+                        placeholder="Otomatis jika kosong"
+                        value={formData.sku}
+                        onChange={f('sku')}
+                      />
+                    </div>
+                    <div className="input-group">
+                      <label className="input-label">Satuan</label>
+                      <input
+                        className="input"
+                        placeholder="pcs, kg, gr, dll"
+                        value={formData.unit}
+                        onChange={f('unit')}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="input-group">
+                      <label className="input-label">Harga Jual (Rp)</label>
+                      <input
+                        type="text"
+                        className="input"
+                        placeholder="0"
+                        onFocus={e => e.target.select()}
+                        value={
+                          formData.sell_price
+                            ? Number(formData.sell_price).toLocaleString('id-ID')
+                            : ''
+                        }
+                        onChange={e => {
+                          const val = e.target.value.replace(/[^0-9]/g, '');
+                          setFormData(d => ({ ...d, sell_price: val }));
+                        }}
+                      />
+                    </div>
+                    <div className="input-group">
+                      <label className="input-label">Harga Beli (Rp)</label>
+                      <input
+                        type="text"
+                        className="input"
+                        placeholder="0"
+                        onFocus={e => e.target.select()}
+                        value={
+                          formData.cost_price
+                            ? Number(formData.cost_price).toLocaleString('id-ID')
+                            : ''
+                        }
+                        onChange={e => {
+                          const val = e.target.value.replace(/[^0-9]/g, '');
+                          setFormData(d => ({ ...d, cost_price: val }));
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="input-group">
+                    <label
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 8,
+                        fontSize: '0.8rem',
+                        fontWeight: 600,
+                        marginBottom: formData.use_global_tax ? 0 : 8,
+                        color: 'var(--text-2)',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={formData.use_global_tax}
+                        onChange={e =>
+                          setFormData(d => ({ ...d, use_global_tax: e.target.checked }))
+                        }
+                      />
+                      Gunakan PPN default toko
+                    </label>
+                    {!formData.use_global_tax && (
+                      <div style={{ marginTop: 8 }}>
+                        <label className="input-label">Custom PPN (%)</label>
+                        <input
+                          className="input"
+                          type="number"
+                          min={0}
+                          max={100}
+                          placeholder="10"
+                          value={formData.tax_percentage}
+                          onChange={f('tax_percentage')}
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="input-group">
+                    <label className="input-label">Kategori</label>
+                    <select
+                      className="input"
+                      value={formData.category_id}
+                      onChange={f('category_id')}
+                    >
+                      <option value="">Tanpa Kategori</option>
+                      {categories.map(c => (
+                        <option key={c.id} value={c.id}>
+                          {c.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {!sidebar.item && (
+                    <div className="input-group">
+                      <label className="input-label">Stok Awal</label>
+                      <input
                         type="number"
-                        min={0}
-                        max={100}
-                        placeholder="10"
-                        value={formData.tax_percentage}
-                        onChange={f('tax_percentage')}
+                        className="input"
+                        value={formData.initial_qty}
+                        onChange={f('initial_qty')}
                       />
                     </div>
                   )}
-                </div>
 
-                <div className="input-group">
-                  <label className="input-label">Kategori</label>
-                  <select
-                    className="input"
-                    value={formData.category_id}
-                    onChange={f('category_id')}
+                  <div
+                    className="input-group"
+                    style={{
+                      padding: '16px',
+                      background: 'var(--bg-elevated)',
+                      borderRadius: 12,
+                      border: '1px solid var(--border)',
+                    }}
                   >
-                    <option value="">Tanpa Kategori</option>
-                    {categories.map(c => (
-                      <option key={c.id} value={c.id}>
-                        {c.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {!sidebar.item && (
-                  <div className="input-group">
-                    <label className="input-label">Stok Awal</label>
+                    <label
+                      className="input-label"
+                      style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}
+                    >
+                      Ambeng Stok (Min Stok)
+                      <span
+                        style={{
+                          fontSize: '0.68rem',
+                          color: 'var(--text-3)',
+                          fontWeight: 400,
+                          background: 'var(--border)',
+                          borderRadius: 4,
+                          padding: '1px 6px',
+                        }}
+                      >
+                        Alert
+                      </span>
+                    </label>
                     <input
                       type="number"
                       className="input"
-                      value={formData.initial_qty}
-                      onChange={f('initial_qty')}
+                      min={0}
+                      step={1}
+                      value={minStock}
+                      onChange={e => setMinStock(e.target.value)}
+                      placeholder="0"
                     />
-                  </div>
-                )}
-
-                <div
-                  className="input-group"
-                  style={{
-                    padding: '16px',
-                    background: 'var(--bg-elevated)',
-                    borderRadius: 12,
-                    border: '1px solid var(--border)',
-                  }}
-                >
-                  <label
-                    className="input-label"
-                    style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}
-                  >
-                    Ambeng Stok (Min Stok)
-                    <span
+                    <p
                       style={{
-                        fontSize: '0.68rem',
+                        fontSize: '0.73rem',
                         color: 'var(--text-3)',
-                        fontWeight: 400,
-                        background: 'var(--border)',
-                        borderRadius: 4,
-                        padding: '1px 6px',
+                        marginTop: 8,
+                        lineHeight: 1.4,
                       }}
                     >
-                      Alert
-                    </span>
-                  </label>
-                  <input
-                    type="number"
-                    className="input"
-                    min={0}
-                    step={1}
-                    value={minStock}
-                    onChange={e => setMinStock(e.target.value)}
-                    placeholder="0"
-                  />
-                  <p
-                    style={{
-                      fontSize: '0.73rem',
-                      color: 'var(--text-3)',
-                      marginTop: 8,
-                      lineHeight: 1.4,
-                    }}
-                  >
-                    Sistem akan menandai stok sebagai &ldquo;Menipis&rdquo; ketika stok saat ini ≤
-                    nilai ini.
-                  </p>
-                </div>
-              </form>
-            </div>
+                      Sistem akan menandai stok sebagai &ldquo;Menipis&rdquo; ketika stok saat ini ≤
+                      nilai ini.
+                    </p>
+                  </div>
+                </form>
+              </div>
 
-            {/* Footer */}
-            <div
-              style={{
-                padding: '20px 24px',
-                borderTop: '1px solid var(--border)',
-                display: 'flex',
-                gap: 12,
-                justifyContent: 'flex-end',
-                background: 'var(--bg-card)',
-              }}
-            >
-              <button type="button" className="btn btn-ghost" onClick={closeSidebar}>
-                Batal
-              </button>
-              <button
-                type="submit"
-                form="product-form"
-                className="btn btn-primary"
-                disabled={saving}
-                style={{ minWidth: 130 }}
+              {/* Footer */}
+              <div
+                style={{
+                  padding: '20px 24px',
+                  borderTop: '1px solid var(--border)',
+                  display: 'flex',
+                  gap: 12,
+                  justifyContent: 'flex-end',
+                  background: 'var(--bg-card)',
+                }}
               >
-                {saving ? (
-                  <>
-                    <Loader2 size={16} className="loading-spin mr-2" /> Menyimpan...
-                  </>
-                ) : (
-                  <>
-                    <Check size={16} className="mr-2" /> Simpan {productLabel}
-                  </>
-                )}
-              </button>
+                <button type="button" className="btn btn-ghost" onClick={closeSidebar}>
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  form="product-form"
+                  className="btn btn-primary"
+                  disabled={saving}
+                  style={{ minWidth: 130 }}
+                >
+                  {saving ? (
+                    <>
+                      <Loader2 size={16} className="loading-spin mr-2" /> Menyimpan...
+                    </>
+                  ) : (
+                    <>
+                      <Check size={16} className="mr-2" /> Simpan {productLabel}
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        </Portal>
       )}
     </div>
   );

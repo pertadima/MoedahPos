@@ -1,7 +1,9 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { Wallet, Plus, Loader2, X, Calendar, Edit2, Trash2 } from 'lucide-react';
+import { Wallet, Plus, Loader2, X, Calendar, Edit2, Trash2, History, Zap } from 'lucide-react';
+import DatePicker from '@/components/ui/DatePicker';
+import Portal from '@/components/ui/Portal';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { expensesApi, recurringExpensesApi } from '@/lib/api/store-apis';
 import { ApiError } from '@/lib/api/client';
@@ -124,47 +126,33 @@ function ExpensesPage() {
       </div>
 
       <div
-        className="reveal-animate"
-        style={{
-          display: 'flex',
-          gap: 16,
-          marginBottom: 24,
-          borderBottom: '1px solid var(--border)',
-          animationDelay: '0.1s',
-        }}
+        className="reveal-animate overflow-x-auto scrollbar-none mb-6"
+        style={{ animationDelay: '0.1s' }}
       >
-        <button
-          onClick={() => setActiveTab('riwayat')}
-          style={{
-            background: 'none',
-            border: 'none',
-            padding: '8px 16px',
-            fontSize: '1rem',
-            fontWeight: activeTab === 'riwayat' ? 600 : 400,
-            color: activeTab === 'riwayat' ? 'var(--primary)' : 'var(--text-3)',
-            borderBottom:
-              activeTab === 'riwayat' ? '2px solid var(--primary)' : '2px solid transparent',
-            cursor: 'pointer',
-          }}
-        >
-          Riwayat Pengeluaran
-        </button>
-        <button
-          onClick={() => setActiveTab('rutin')}
-          style={{
-            background: 'none',
-            border: 'none',
-            padding: '8px 16px',
-            fontSize: '1rem',
-            fontWeight: activeTab === 'rutin' ? 600 : 400,
-            color: activeTab === 'rutin' ? 'var(--primary)' : 'var(--text-3)',
-            borderBottom:
-              activeTab === 'rutin' ? '2px solid var(--primary)' : '2px solid transparent',
-            cursor: 'pointer',
-          }}
-        >
-          Pengeluaran Rutin
-        </button>
+        <div className="card inline-flex p-1 gap-1 bg-surface border-none shadow-sm min-w-max">
+          <button
+            onClick={() => setActiveTab('riwayat')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all duration-200 transform whitespace-nowrap flex-shrink-0 ${
+              activeTab === 'riwayat'
+                ? 'bg-accent-em text-white shadow-md scale-105 active:scale-95'
+                : 'text-3 hover:bg-surface-hv hover:scale-102 active:scale-95'
+            }`}
+          >
+            <History size={14} />
+            Riwayat Pengeluaran
+          </button>
+          <button
+            onClick={() => setActiveTab('rutin')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all duration-200 transform whitespace-nowrap flex-shrink-0 ${
+              activeTab === 'rutin'
+                ? 'bg-accent-em text-white shadow-md scale-105 active:scale-95'
+                : 'text-3 hover:bg-surface-hv hover:scale-102 active:scale-95'
+            }`}
+          >
+            <Zap size={14} />
+            Pengeluaran Rutin
+          </button>
+        </div>
       </div>
 
       {activeTab === 'riwayat' ? (
@@ -177,14 +165,16 @@ function ExpensesPage() {
               borderRadius: 12,
               border: '1px solid var(--border)',
               marginBottom: 20,
-              display: 'flex',
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
               gap: 16,
-              alignItems: 'flex-end',
-              flexWrap: 'wrap',
+              alignItems: 'end',
               animationDelay: '0.15s',
+              position: 'relative',
+              zIndex: 10,
             }}
           >
-            <div style={{ flex: '1 1 180px' }}>
+            <div>
               <label className="label">Kategori</label>
               <select
                 className="input"
@@ -200,35 +190,32 @@ function ExpensesPage() {
                 ))}
               </select>
             </div>
-            <div style={{ flex: '1 1 150px' }}>
+            <div>
               <label className="label">Dari Tanggal</label>
-              <input
-                type="date"
-                className="input"
-                style={{ width: '100%', height: 38 }}
+              <DatePicker
                 value={filter.date_from}
-                onChange={e => handleFilterChange('date_from', e.target.value)}
+                onChange={val => handleFilterChange('date_from', val)}
+                className="w-full h-[38px]"
               />
             </div>
-            <div style={{ flex: '1 1 150px' }}>
+            <div>
               <label className="label">Sampai Tanggal</label>
-              <input
-                type="date"
-                className="input"
-                style={{ width: '100%', height: 38 }}
+              <DatePicker
                 value={filter.date_to}
-                onChange={e => handleFilterChange('date_to', e.target.value)}
+                onChange={val => handleFilterChange('date_to', val)}
+                className="w-full h-[38px]"
               />
             </div>
-            <button
-              onClick={() => setFilter({ category_id: '', date_from: '', date_to: '' })}
-              className="btn btn-secondary"
-              style={{ height: 38 }}
-            >
-              Reset
-            </button>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button
+                onClick={() => setFilter({ category_id: '', date_from: '', date_to: '' })}
+                className="btn btn-secondary w-full"
+                style={{ height: 38 }}
+              >
+                Reset
+              </button>
+            </div>
           </div>
-
           {loading && expenses.length === 0 ? (
             <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-3)' }}>
               <Loader2 size={32} className="loading-spin" style={{ margin: '0 auto 12px' }} />
@@ -436,15 +423,17 @@ function ExpensesPage() {
       )}
 
       {showModal && activeTab === 'riwayat' && (
-        <ExpenseModal
-          categories={categories}
-          expense={editTarget}
-          onClose={() => setShowModal(false)}
-          onSuccess={() => {
-            setShowModal(false);
-            loadExpenses();
-          }}
-        />
+        <Portal>
+          <ExpenseModal
+            categories={categories}
+            expense={editTarget}
+            onClose={() => setShowModal(false)}
+            onSuccess={() => {
+              setShowModal(false);
+              loadExpenses();
+            }}
+          />
+        </Portal>
       )}
     </div>
   );
@@ -593,13 +582,10 @@ function ExpenseModal({
 
           <div>
             <label className="label">Tanggal</label>
-            <input
-              type="date"
-              className="input"
-              style={{ width: '100%' }}
+            <DatePicker
               value={form.expense_date}
-              onChange={e => setForm({ ...form, expense_date: e.target.value })}
-              required
+              onChange={val => setForm({ ...form, expense_date: val })}
+              className="w-full h-[38px]"
             />
           </div>
 
@@ -1068,23 +1054,18 @@ function RecurringExpenseModal({
           <div style={{ display: 'flex', gap: 16 }}>
             <div style={{ flex: 1 }}>
               <label className="label">Tanggal Mulai Run</label>
-              <input
-                type="date"
-                className="input"
-                style={{ width: '100%' }}
+              <DatePicker
                 value={form.start_date}
-                onChange={e => setForm({ ...form, start_date: e.target.value })}
-                required
+                onChange={val => setForm({ ...form, start_date: val })}
+                className="w-full h-[38px]"
               />
             </div>
             <div style={{ flex: 1 }}>
               <label className="label">Tanggal Berakhir (Opsional)</label>
-              <input
-                type="date"
-                className="input"
-                style={{ width: '100%' }}
+              <DatePicker
                 value={form.end_date}
-                onChange={e => setForm({ ...form, end_date: e.target.value })}
+                onChange={val => setForm({ ...form, end_date: val })}
+                className="w-full h-[38px]"
               />
             </div>
           </div>

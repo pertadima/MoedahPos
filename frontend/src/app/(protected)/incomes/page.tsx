@@ -13,6 +13,8 @@ import {
   CreditCard,
   Smartphone,
 } from 'lucide-react';
+import DatePicker from '@/components/ui/DatePicker';
+import Portal from '@/components/ui/Portal';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { incomesApi } from '@/lib/api/store-apis';
 import { formatRp, formatDate, parseNumberInput, formatNumberInput } from '@/lib/utils';
@@ -207,7 +209,6 @@ export default function IncomesPage() {
           <Plus size={16} /> Tambah Pemasukan
         </button>
       </div>
-
       {/* Summary cards */}
       {incomes.length > 0 && (
         <div
@@ -218,6 +219,8 @@ export default function IncomesPage() {
             marginBottom: 20,
             flexWrap: 'wrap',
             animationDelay: '0.1s',
+            position: 'relative',
+            zIndex: 20,
           }}
         >
           <div
@@ -279,7 +282,6 @@ export default function IncomesPage() {
           ))}
         </div>
       )}
-
       {/* Filters */}
       <div
         className="reveal-animate"
@@ -289,14 +291,16 @@ export default function IncomesPage() {
           borderRadius: 12,
           border: '1px solid var(--border)',
           marginBottom: 20,
-          display: 'flex',
-          gap: 12,
-          alignItems: 'flex-end',
-          flexWrap: 'wrap',
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+          gap: 16,
+          alignItems: 'end',
           animationDelay: '0.15s',
+          position: 'relative',
+          zIndex: 10,
         }}
       >
-        <div style={{ flex: '1 1 180px' }}>
+        <div>
           <label className="label">Kategori</label>
           <select
             className="input"
@@ -312,38 +316,35 @@ export default function IncomesPage() {
             ))}
           </select>
         </div>
-        <div style={{ flex: '1 1 150px' }}>
+        <div>
           <label className="label">Dari Tanggal</label>
-          <input
-            type="date"
-            className="input"
-            style={{ width: '100%', height: 38 }}
+          <DatePicker
             value={filter.date_from}
-            onChange={e => handleFilterChange('date_from', e.target.value)}
+            onChange={val => handleFilterChange('date_from', val)}
+            className="w-full h-[38px]"
           />
         </div>
-        <div style={{ flex: '1 1 150px' }}>
+        <div>
           <label className="label">Sampai Tanggal</label>
-          <input
-            type="date"
-            className="input"
-            style={{ width: '100%', height: 38 }}
+          <DatePicker
             value={filter.date_to}
-            onChange={e => handleFilterChange('date_to', e.target.value)}
+            onChange={val => handleFilterChange('date_to', val)}
+            className="w-full h-[38px]"
           />
         </div>
-        <button
-          onClick={() => {
-            setFilter({ category_id: '', date_from: '', date_to: '' });
-            setMeta(prev => ({ ...prev, page: 1 }));
-          }}
-          className="btn btn-secondary"
-          style={{ height: 38 }}
-        >
-          Reset
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button
+            onClick={() => {
+              setFilter({ category_id: '', date_from: '', date_to: '' });
+              setMeta(prev => ({ ...prev, page: 1 }));
+            }}
+            className="btn btn-secondary w-full"
+            style={{ height: 38 }}
+          >
+            Reset
+          </button>
+        </div>
       </div>
-
       {/* Table */}
       {loading && incomes.length === 0 ? (
         <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-3)' }}>
@@ -515,18 +516,19 @@ export default function IncomesPage() {
           )}
         </div>
       )}
-
       {/* Modal */}
       {showModal && (
-        <IncomeModal
-          categories={categories}
-          income={editTarget}
-          onClose={() => setShowModal(false)}
-          onSuccess={() => {
-            setShowModal(false);
-            loadIncomes();
-          }}
-        />
+        <Portal>
+          <IncomeModal
+            categories={categories}
+            income={editTarget}
+            onClose={() => setShowModal(false)}
+            onSuccess={() => {
+              setShowModal(false);
+              loadIncomes();
+            }}
+          />
+        </Portal>
       )}
     </div>
   );
@@ -697,16 +699,12 @@ function IncomeModal({
           {/* Date */}
           <div>
             <label className="label">Tanggal</label>
-            <input
-              type="date"
-              className="input"
-              style={{ width: '100%' }}
+            <DatePicker
               value={form.income_date}
-              onChange={e => setForm({ ...form, income_date: e.target.value })}
-              required
+              onChange={val => setForm({ ...form, income_date: val })}
+              className="w-full h-[38px]"
             />
           </div>
-
           {/* Payment method */}
           <div>
             <label className="label">Metode Pembayaran</label>

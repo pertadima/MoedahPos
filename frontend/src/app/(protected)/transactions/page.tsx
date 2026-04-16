@@ -11,7 +11,6 @@ import {
   CheckCircle2,
   XCircle,
   Clock,
-  CalendarDays,
   User,
   CreditCard,
   Loader2,
@@ -19,8 +18,10 @@ import {
   TrendingUp,
   ShoppingBag,
 } from 'lucide-react';
+import DatePicker from '@/components/ui/DatePicker';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { transactionsApi } from '@/lib/api/transactions';
+import Portal from '@/components/ui/Portal';
 import { formatRp } from '@/lib/utils';
 import type { Transaction, PaginatedData } from '@/types';
 import { ApiError } from '@/lib/api/client';
@@ -399,7 +400,7 @@ function DetailDrawer({
       style={{
         position: 'fixed',
         inset: 0,
-        zIndex: 200,
+        zIndex: 5000,
         display: 'flex',
         justifyContent: 'flex-end',
       }}
@@ -888,35 +889,41 @@ export default function TransactionsPage() {
         className="reveal-animate"
         style={{
           display: 'flex',
-          gap: 8,
-          marginBottom: 16,
           flexWrap: 'wrap',
+          gap: 12,
+          marginBottom: 16,
           alignItems: 'center',
           animationDelay: '0.15s',
+          position: 'relative',
+          zIndex: 10,
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <CalendarDays size={14} style={{ color: 'var(--text-3)' }} />
-          <input
-            type="date"
-            className="input"
-            style={{ width: 145 }}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <DatePicker
             value={dateFrom}
-            onChange={e => {
-              setDateFrom(e.target.value);
+            onChange={val => {
+              setDateFrom(val);
               setPreset('custom');
             }}
+            className="w-[180px] h-[38px]"
           />
-          <span style={{ color: 'var(--text-3)', fontSize: '0.85rem' }}>s/d</span>
-          <input
-            type="date"
-            className="input"
-            style={{ width: 145 }}
+          <span
+            style={{
+              color: 'var(--text-3)',
+              fontSize: '0.75rem',
+              fontWeight: 800,
+              textTransform: 'uppercase',
+            }}
+          >
+            s/d
+          </span>
+          <DatePicker
             value={dateTo}
-            onChange={e => {
-              setDateTo(e.target.value);
+            onChange={val => {
+              setDateTo(val);
               setPreset('custom');
             }}
+            className="w-[180px] h-[38px]"
           />
         </div>
 
@@ -931,7 +938,7 @@ export default function TransactionsPage() {
           <option value="voided">Dibatalkan</option>
         </select>
 
-        <div style={{ position: 'relative', flex: 1, minWidth: 200 }}>
+        <div style={{ position: 'relative', flex: 1, minWidth: 180 }}>
           <Search
             size={14}
             style={{
@@ -944,7 +951,7 @@ export default function TransactionsPage() {
           />
           <input
             className="input"
-            style={{ paddingLeft: 32 }}
+            style={{ paddingLeft: 32, width: '100%' }}
             placeholder="Cari ID, kasir, pelanggan..."
             value={search}
             onChange={e => setSearch(e.target.value)}
@@ -962,9 +969,11 @@ export default function TransactionsPage() {
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(3,1fr)',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
             gap: 12,
             marginBottom: 16,
+            position: 'relative',
+            zIndex: 20,
           }}
         >
           {[
@@ -1239,33 +1248,41 @@ export default function TransactionsPage() {
 
       {/* ── Detail Drawer ── */}
       {detailLoading && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 200,
-            background: 'rgba(0,0,0,0.4)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <Loader2 size={32} className="loading-spin" style={{ color: '#fff' }} />
-        </div>
+        <Portal>
+          <div
+            style={{
+              position: 'fixed',
+              inset: 0,
+              zIndex: 5000,
+              background: 'rgba(0,0,0,0.4)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Loader2 size={32} className="loading-spin" style={{ color: '#fff' }} />
+          </div>
+        </Portal>
       )}
       {detail && !detailLoading && (
-        <DetailDrawer
-          txn={detail}
-          onClose={() => setDetail(null)}
-          onReprint={t => {
-            setDetail(null);
-            setReprint(t);
-          }}
-        />
+        <Portal>
+          <DetailDrawer
+            txn={detail}
+            onClose={() => setDetail(null)}
+            onReprint={t => {
+              setDetail(null);
+              setReprint(t);
+            }}
+          />
+        </Portal>
       )}
 
       {/* ── Reprint Modal ── */}
-      {reprint && <ReceiptModal txn={reprint} onClose={() => setReprint(null)} />}
+      {reprint && (
+        <Portal>
+          <ReceiptModal txn={reprint} onClose={() => setReprint(null)} />
+        </Portal>
+      )}
     </div>
   );
 }

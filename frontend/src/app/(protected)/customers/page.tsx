@@ -18,6 +18,7 @@ import {
 import { useAuth } from '@/lib/auth/AuthContext';
 import { usePermission } from '@/hooks/usePermission';
 import { customersApi } from '@/lib/api/store-apis';
+import Portal from '@/components/ui/Portal';
 import { formatDate } from '@/lib/utils';
 import type { Customer, PaginatedData } from '@/types';
 import { ApiError } from '@/lib/api/client';
@@ -70,110 +71,112 @@ function FormModal({ storeId, initial, onSuccess, onClose }: FormModalProps) {
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-box" style={{ maxWidth: 460 }} onClick={e => e.stopPropagation()}>
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: 18,
-          }}
-        >
-          <h2 style={{ fontWeight: 800 }}>{isEdit ? 'Edit Customer' : 'Tambah Customer'}</h2>
-          <button className="btn btn-ghost btn-sm" onClick={onClose}>
-            <X size={15} />
-          </button>
-        </div>
-
-        {error && (
+    <Portal>
+      <div className="modal-overlay" style={{ zIndex: 5000 }} onClick={onClose}>
+        <div className="modal-box" style={{ maxWidth: 460 }} onClick={e => e.stopPropagation()}>
           <div
             style={{
-              background: 'rgba(239,68,68,0.1)',
-              border: '1px solid rgba(239,68,68,0.3)',
-              borderRadius: 8,
-              padding: '8px 12px',
-              color: '#f87171',
-              fontSize: '0.83rem',
-              marginBottom: 14,
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: 18,
             }}
           >
-            {error}
+            <h2 style={{ fontWeight: 800 }}>{isEdit ? 'Edit Customer' : 'Tambah Customer'}</h2>
+            <button className="btn btn-ghost btn-sm" onClick={onClose}>
+              <X size={15} />
+            </button>
           </div>
-        )}
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <div className="input-group">
-            <label className="input-label">
-              Nama <span style={{ color: '#ef4444' }}>*</span>
-            </label>
-            <input
-              className="input"
-              value={form.name}
-              onChange={set('name')}
-              placeholder="Nama lengkap customer"
-              autoFocus
-            />
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+          {error && (
+            <div
+              style={{
+                background: 'rgba(239,68,68,0.1)',
+                border: '1px solid rgba(239,68,68,0.3)',
+                borderRadius: 8,
+                padding: '8px 12px',
+                color: '#f87171',
+                fontSize: '0.83rem',
+                marginBottom: 14,
+              }}
+            >
+              {error}
+            </div>
+          )}
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <div className="input-group">
-              <label className="input-label">Telepon</label>
+              <label className="input-label">
+                Nama <span style={{ color: '#ef4444' }}>*</span>
+              </label>
               <input
                 className="input"
-                value={form.phone}
-                onChange={set('phone')}
-                placeholder="08xx-xxxx-xxxx"
+                value={form.name}
+                onChange={set('name')}
+                placeholder="Nama lengkap customer"
+                autoFocus
+              />
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              <div className="input-group">
+                <label className="input-label">Telepon</label>
+                <input
+                  className="input"
+                  value={form.phone}
+                  onChange={set('phone')}
+                  placeholder="08xx-xxxx-xxxx"
+                />
+              </div>
+              <div className="input-group">
+                <label className="input-label">Email</label>
+                <input
+                  type="email"
+                  className="input"
+                  value={form.email}
+                  onChange={set('email')}
+                  placeholder="email@contoh.com"
+                />
+              </div>
+            </div>
+            <div className="input-group">
+              <label className="input-label">Alamat</label>
+              <input
+                className="input"
+                value={form.address}
+                onChange={set('address')}
+                placeholder="Alamat pengiriman"
               />
             </div>
             <div className="input-group">
-              <label className="input-label">Email</label>
-              <input
-                type="email"
+              <label className="input-label">Catatan</label>
+              <textarea
                 className="input"
-                value={form.email}
-                onChange={set('email')}
-                placeholder="email@contoh.com"
+                value={form.notes}
+                onChange={set('notes')}
+                rows={2}
+                placeholder="Preferensi, alergi, dll..."
+                style={{ resize: 'vertical' }}
               />
             </div>
           </div>
-          <div className="input-group">
-            <label className="input-label">Alamat</label>
-            <input
-              className="input"
-              value={form.address}
-              onChange={set('address')}
-              placeholder="Alamat pengiriman"
-            />
-          </div>
-          <div className="input-group">
-            <label className="input-label">Catatan</label>
-            <textarea
-              className="input"
-              value={form.notes}
-              onChange={set('notes')}
-              rows={2}
-              placeholder="Preferensi, alergi, dll..."
-              style={{ resize: 'vertical' }}
-            />
-          </div>
-        </div>
 
-        <div style={{ display: 'flex', gap: 8, marginTop: 18 }}>
-          <button className="btn btn-secondary" style={{ flex: 1 }} onClick={onClose}>
-            Batal
-          </button>
-          <button
-            className="btn btn-primary"
-            style={{ flex: 1 }}
-            onClick={handleSave}
-            disabled={saving}
-          >
-            {saving ? <Loader2 size={14} className="loading-spin" /> : null}
-            {saving ? 'Menyimpan...' : isEdit ? 'Simpan Perubahan' : 'Tambah Customer'}
-          </button>
+          <div style={{ display: 'flex', gap: 8, marginTop: 18 }}>
+            <button className="btn btn-secondary" style={{ flex: 1 }} onClick={onClose}>
+              Batal
+            </button>
+            <button
+              className="btn btn-primary"
+              style={{ flex: 1 }}
+              onClick={handleSave}
+              disabled={saving}
+            >
+              {saving ? <Loader2 size={14} className="loading-spin" /> : null}
+              {saving ? 'Menyimpan...' : isEdit ? 'Simpan Perubahan' : 'Tambah Customer'}
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+    </Portal>
   );
 }
 
@@ -202,50 +205,52 @@ function DeleteConfirm({
     }
   };
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-box" style={{ maxWidth: 400 }} onClick={e => e.stopPropagation()}>
-        <div style={{ textAlign: 'center', padding: '8px 0 16px' }}>
-          <Archive size={28} style={{ color: '#f59e0b', marginBottom: 12 }} />
-          <h2 style={{ fontWeight: 800, marginBottom: 8 }}>Nonaktifkan Customer?</h2>
-          <p style={{ color: 'var(--text-2)', fontSize: '0.875rem', lineHeight: 1.6 }}>
-            <strong>{customer.name}</strong> akan diarsipkan dan tidak muncul di daftar customer
-            maupun pencarian kasir. Data transaksi tetap tersimpan dan customer dapat dipulihkan
-            dari database jika diperlukan.
-          </p>
-        </div>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button
-            className="btn btn-secondary"
-            style={{ flex: 1 }}
-            onClick={onClose}
-            disabled={loading}
-          >
-            Batal
-          </button>
-          <button
-            style={{
-              flex: 1,
-              background: '#f59e0b',
-              color: '#fff',
-              border: 'none',
-              borderRadius: 8,
-              padding: '8px 0',
-              fontWeight: 700,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 6,
-            }}
-            onClick={handleDelete}
-            disabled={loading}
-          >
-            {loading ? <Loader2 size={14} className="loading-spin" /> : <Archive size={14} />}
-            {loading ? 'Memproses...' : 'Ya, Nonaktifkan'}
-          </button>
+    <Portal>
+      <div className="modal-overlay" style={{ zIndex: 5000 }} onClick={onClose}>
+        <div className="modal-box" style={{ maxWidth: 400 }} onClick={e => e.stopPropagation()}>
+          <div style={{ textAlign: 'center', padding: '8px 0 16px' }}>
+            <Archive size={28} style={{ color: '#f59e0b', marginBottom: 12 }} />
+            <h2 style={{ fontWeight: 800, marginBottom: 8 }}>Nonaktifkan Customer?</h2>
+            <p style={{ color: 'var(--text-2)', fontSize: '0.875rem', lineHeight: 1.6 }}>
+              <strong>{customer.name}</strong> akan diarsipkan dan tidak muncul di daftar customer
+              maupun pencarian kasir. Data transaksi tetap tersimpan dan customer dapat dipulihkan
+              dari database jika diperlukan.
+            </p>
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button
+              className="btn btn-secondary"
+              style={{ flex: 1 }}
+              onClick={onClose}
+              disabled={loading}
+            >
+              Batal
+            </button>
+            <button
+              style={{
+                flex: 1,
+                background: '#f59e0b',
+                color: '#fff',
+                border: 'none',
+                borderRadius: 8,
+                padding: '8px 0',
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 6,
+              }}
+              onClick={handleDelete}
+              disabled={loading}
+            >
+              {loading ? <Loader2 size={14} className="loading-spin" /> : <Archive size={14} />}
+              {loading ? 'Memproses...' : 'Ya, Nonaktifkan'}
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+    </Portal>
   );
 }
 
@@ -267,7 +272,7 @@ function DetailDrawer({
 }) {
   const avatar = customer.name.charAt(0).toUpperCase();
   return (
-    <>
+    <Portal>
       <div
         onClick={onClose}
         style={{
@@ -275,7 +280,7 @@ function DetailDrawer({
           inset: 0,
           background: 'rgba(0,0,0,0.5)',
           backdropFilter: 'blur(2px)',
-          zIndex: 200,
+          zIndex: 5000,
         }}
       />
       <div
@@ -287,7 +292,7 @@ function DetailDrawer({
           width: 400,
           background: 'var(--bg-card)',
           borderLeft: '1px solid var(--border)',
-          zIndex: 201,
+          zIndex: 5001,
           overflowY: 'auto',
           display: 'flex',
           flexDirection: 'column',
@@ -457,7 +462,7 @@ function DetailDrawer({
           </div>
         </div>
       </div>
-    </>
+    </Portal>
   );
 }
 
