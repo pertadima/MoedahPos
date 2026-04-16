@@ -20,16 +20,17 @@ import {
 import { useAuth } from '@/lib/auth/AuthContext';
 import { stockApi } from '@/lib/api/store-apis';
 import { api } from '@/lib/api/client';
-import { stockAdjustmentApi, type CreateAdjustmentInput } from '@/lib/api/stock-adjustments';
+import { stockAdjustmentApi } from '@/lib/api/stock-adjustments';
 import Portal from '@/components/ui/Portal';
-import {
-  getBatchSummary,
-  listBatches,
-  type BatchStockSummary,
-  type StockBatch,
-} from '@/lib/api/stock-batches';
+import { getBatchSummary, listBatches } from '@/lib/api/stock-batches';
 import { formatDateTime } from '@/lib/utils';
-import type { StockLevel, StockMovement } from '@/types';
+import type {
+  StockLevel,
+  StockMovement,
+  CreateAdjustmentInput,
+  BatchStockSummary,
+  StockBatch,
+} from '@/types';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 

@@ -1,14 +1,5 @@
 import { api } from './client';
-import type { Transaction, PaginatedData } from '@/types';
-
-export type TxItemInput = {
-  product_id?: string;
-  menu_item_id?: string;
-  quantity: number;
-  discount_pct: number; // legacy; used when discount_type = 'PERCENTAGE'
-  discount_type?: 'PERCENTAGE' | 'FIXED' | 'OVERRIDE';
-  discount_value?: number; // value for FIXED/OVERRIDE/PERCENTAGE
-};
+import type { Transaction, PaginatedData, TxItemInput } from '@/types';
 
 export const transactionsApi = {
   // ── Existing (retail + restaurant direct checkout) ─────────────────────────

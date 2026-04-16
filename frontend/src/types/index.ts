@@ -455,3 +455,163 @@ export interface Income {
   created_at: string;
   updated_at: string;
 }
+
+// ── Activity Logs ─────────────────────────────────────────────────────────────
+export interface ActivityLog {
+  id: string;
+  user_id: string;
+  user_name: string;
+  store_id: string | null;
+  action_type: string;
+  module: string;
+  reference_id: string | null;
+  metadata: any;
+  created_at: string;
+}
+
+export interface ActivityLogFilter {
+  page?: number;
+  per_page?: number;
+  user_id?: string;
+  module?: string;
+  action_type?: string;
+  start_date?: string;
+  end_date?: string;
+}
+
+// ── Stock Adjustments ─────────────────────────────────────────────────────────
+export interface StockAdjustment {
+  id: string;
+  product_id: string;
+  store_id: string;
+  type: 'IN' | 'OUT';
+  reason: 'DAMAGED' | 'LOST' | 'MANUAL_CORRECTION';
+  quantity: number;
+  notes: string;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+
+  product_name: string;
+  product_sku: string;
+  unit: string;
+  created_by_name: string;
+}
+
+export interface CreateAdjustmentInput {
+  product_id: string;
+  type: 'IN' | 'OUT';
+  reason: 'DAMAGED' | 'LOST' | 'MANUAL_CORRECTION';
+  quantity: number;
+  notes: string;
+}
+
+// ── Stock Batches ─────────────────────────────────────────────────────────────
+/** One FIFO stock batch created from a purchase order receipt. */
+export interface StockBatch {
+  id: string;
+  product_id: string;
+  product_name: string;
+  product_sku: string;
+  unit: string;
+  store_id: string;
+  po_id?: string;
+  quantity_remaining: number;
+  purchase_price: number;
+  received_at: string;
+  created_at: string;
+}
+
+/** Per-product summary aggregated across all active batches. */
+export interface BatchStockSummary {
+  product_id: string;
+  product_name: string;
+  product_sku: string;
+  unit: string;
+  total_qty: number;
+  batch_count: number;
+  avg_cost_price: number;
+}
+
+// ── Termins & PO Debt ─────────────────────────────────────────────────────────
+export interface PaymentRecord {
+  id: string;
+  termin_id: string;
+  amount_paid: number;
+  payment_date: string;
+  payment_method: 'cash' | 'transfer' | 'check' | 'other';
+  notes: string;
+  recorded_by_name: string;
+  created_at: string;
+}
+
+export interface Termin {
+  id: string;
+  po_id: string;
+  termin_number: number;
+  amount: number;
+  due_date: string;
+  status: 'unpaid' | 'partial' | 'paid' | 'overdue';
+  notes: string;
+  amount_paid: number;
+  amount_due: number;
+  is_overdue: boolean;
+  payments: PaymentRecord[];
+  created_at: string;
+}
+
+export interface PODebtSummary {
+  po_id: string;
+  po_number: string;
+  total_amount: number;
+  total_termin: number;
+  total_paid: number;
+  remaining_debt: number;
+  status: 'unpaid' | 'partial' | 'paid';
+  termin_count: number;
+  overdue_count: number;
+}
+
+export interface PODocumentData {
+  doc_type: 'invoice' | 'receipt' | 'termin_agreement';
+  generated_at: string;
+  po: {
+    id: string;
+    po_number: string;
+    supplier_name?: string;
+    total_amount: number;
+    status: string;
+    notes: string;
+    created_at: string;
+  };
+  debt_summary: PODebtSummary;
+  termins: Termin[];
+  supplier_name: string;
+  store_name?: string;
+}
+
+export interface CreateTerminScheduleRequest {
+  termins: {
+    termin_number: number;
+    amount: number;
+    due_date: string; // YYYY-MM-DD
+    notes?: string;
+  }[];
+}
+
+export interface RecordPaymentRequest {
+  amount_paid: number;
+  payment_date: string; // YYYY-MM-DD
+  payment_method: 'cash' | 'transfer' | 'check' | 'other';
+  notes?: string;
+}
+
+// ── Transaction Helper Types ───────────────────────────────────────────────────
+export type TxItemInput = {
+  product_id?: string;
+  menu_item_id?: string;
+  quantity: number;
+  discount_pct: number; // legacy; used when discount_type = 'PERCENTAGE'
+  discount_type?: 'PERCENTAGE' | 'FIXED' | 'OVERRIDE';
+  discount_value?: number; // value for FIXED/OVERRIDE/PERCENTAGE
+};

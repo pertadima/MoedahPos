@@ -31,15 +31,16 @@ import { useAuth } from '@/lib/auth/AuthContext';
 import { purchaseOrdersApi, suppliersApi, storesApi } from '@/lib/api/store-apis';
 import { productsApi } from '@/lib/api/products';
 import { formatRp, formatDate, formatNumberInput, parseNumberInput } from '@/lib/utils';
-import type { PurchaseOrder, Product, Supplier, Store } from '@/types';
+import type {
+  PurchaseOrder,
+  Product,
+  Supplier,
+  Store,
+  Termin,
+  RecordPaymentRequest,
+} from '@/types';
 import { ApiError } from '@/lib/api/client';
-import {
-  listTermins,
-  createTerminSchedule,
-  recordPayment,
-  type Termin,
-  type RecordPaymentRequest,
-} from '@/lib/api/termins';
+import { listTermins, createTerminSchedule, recordPayment } from '@/lib/api/termins';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 const STATUS_BADGE: Record<string, string> = {
