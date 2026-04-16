@@ -106,41 +106,56 @@ export default function LoginPage() {
         display: 'flex',
         height: '100vh',
         width: '100vw',
-        margin: 0,
-        padding: 0,
         background: 'var(--bg-base)',
         color: 'var(--text-1)',
         overflow: 'hidden',
-        transition: 'background-color 0.3s ease',
+        transition: 'background-color 0.4s ease',
       }}
     >
-      {/* Left Section - Login Form */}
+      {/* Left Section - Form Container */}
       <div
         style={{
-          flex: 1,
+          flex: '0 0 520px',
           display: 'flex',
           flexDirection: 'column',
-          padding: '60px 40px',
           background: 'var(--bg-card)',
           position: 'relative',
+          padding: '40px 60px',
           zIndex: 10,
-          boxShadow: '20px 0 50px rgba(0,0,0,0.05)',
+          borderRight: '1px solid var(--border)',
+          boxShadow: '4px 0 24px rgba(0,0,0,0.02)',
         }}
-        className="reveal-animate"
       >
-        {/* Top Header with Logo & Theme Toggle */}
+        {/* Animated Background Element (Subtle) */}
+        <div
+          style={{
+            position: 'absolute',
+            top: '20%',
+            left: '-10%',
+            width: '400px',
+            height: '400px',
+            background: 'var(--brand)',
+            opacity: isDark ? 0.03 : 0.02,
+            filter: 'blur(100px)',
+            borderRadius: '50%',
+            pointerEvents: 'none',
+          }}
+        />
+
+        {/* Header - Logo & Theme Toggle */}
         <div
           style={{
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            marginBottom: 60,
+            marginBottom: 'auto',
+            animation: 'fadeInDown 0.8s cubic-bezier(0.16, 1, 0.3, 1) both',
           }}
         >
-          <div style={{ width: 140, height: 40, position: 'relative' }}>
+          <div style={{ position: 'relative', width: 130, height: 36 }}>
             <Image
               src={isDark ? '/logo-icon-dark.svg' : '/logo-icon-light.svg'}
-              alt="Moedah"
+              alt="Moedah Logo"
               fill
               style={{ objectFit: 'contain', objectPosition: 'left' }}
               priority
@@ -149,7 +164,8 @@ export default function LoginPage() {
           <button
             onClick={toggleTheme}
             style={{
-              padding: '10px',
+              width: 40,
+              height: 40,
               borderRadius: '12px',
               border: '1px solid var(--border-md)',
               background: 'var(--bg-elevated)',
@@ -158,341 +174,326 @@ export default function LoginPage() {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              transition: 'all 0.2s ease',
+              transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
             }}
             onMouseEnter={e => {
               e.currentTarget.style.borderColor = 'var(--brand)';
               e.currentTarget.style.color = 'var(--brand)';
+              e.currentTarget.style.transform = 'scale(1.05)';
             }}
             onMouseLeave={e => {
               e.currentTarget.style.borderColor = 'var(--border-md)';
               e.currentTarget.style.color = 'var(--text-2)';
+              e.currentTarget.style.transform = 'scale(1)';
             }}
-            aria-label="Toggle Theme"
           >
-            {isDark ? <Sun size={20} /> : <Moon size={20} />}
+            {isDark ? <Sun size={18} /> : <Moon size={18} />}
           </button>
         </div>
 
-        {/* Centered Content */}
+        {/* Form Body */}
         <div
-          style={{
-            flex: 1,
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            alignItems: 'center',
-          }}
+          style={{ flex: 2, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}
         >
-          <div style={{ width: '100%', maxWidth: 400 }}>
-            {/* Header */}
-            <div style={{ marginBottom: 40 }}>
-              <h1
-                style={{
-                  fontSize: '2rem',
-                  fontWeight: 800,
-                  color: 'var(--text-1)',
-                  marginBottom: 12,
-                  letterSpacing: '-0.02em',
-                }}
-              >
-                Selamat Datang
-              </h1>
-              <p style={{ color: 'var(--text-2)', fontSize: '1rem', lineHeight: 1.6 }}>
-                Masuk untuk mengelola operasional bisnis Anda dengan Moedah POS.
-              </p>
-            </div>
-
-            {/* Error Message */}
-            {error && (
-              <div
-                style={{
-                  background: 'rgba(239, 68, 68, 0.1)',
-                  border: '1px solid rgba(239, 68, 68, 0.2)',
-                  borderRadius: 12,
-                  padding: '12px 16px',
-                  marginBottom: 24,
-                  color: '#ef4444',
-                  fontSize: '0.9rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 10,
-                }}
-              >
-                <div style={{ width: 6, height: 6, background: '#ef4444', borderRadius: '50%' }} />
-                {error}
-              </div>
-            )}
-
-            {/* Form */}
-            <form
-              onSubmit={handleSubmit}
+          <div style={{ animation: 'fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both' }}>
+            <h1
               style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 20,
+                fontSize: '2.25rem',
+                fontWeight: 800,
+                letterSpacing: '-0.03em',
+                marginBottom: 12,
+                background: 'linear-gradient(to bottom right, var(--text-1), var(--text-2))',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
               }}
             >
-              <div className="input-group">
-                <label className="input-label">Email Kantor / Toko</label>
-                <div style={{ position: 'relative' }}>
-                  <Mail
-                    size={20}
-                    style={{
-                      position: 'absolute',
-                      left: 14,
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      color: 'var(--text-3)',
-                      zIndex: 1,
-                    }}
-                  />
-                  <input
-                    type="email"
-                    required
-                    value={email}
-                    onChange={e => setEmail(e.target.value)}
-                    placeholder="nama@toko.com"
-                    style={{
-                      width: '100%',
-                      padding: '14px 16px 14px 46px',
-                      background: 'var(--bg-elevated)',
-                      border: '1px solid var(--border)',
-                      borderRadius: 12,
-                      fontSize: '0.95rem',
-                      color: 'var(--text-1)',
-                      outline: 'none',
-                      transition: 'all 0.2s',
-                    }}
-                    onFocus={e => {
-                      e.target.style.borderColor = 'var(--brand)';
-                      e.target.style.background = 'var(--bg-card)';
-                      e.target.style.boxShadow = '0 0 0 4px rgba(8, 132, 246, 0.1)';
-                    }}
-                    onBlur={e => {
-                      e.target.style.borderColor = 'var(--border)';
-                      e.target.style.background = 'var(--bg-elevated)';
-                      e.target.style.boxShadow = 'none';
-                    }}
-                  />
-                </div>
-              </div>
+              Selamat datang kembali
+            </h1>
+            <p
+              style={{
+                color: 'var(--text-2)',
+                fontSize: '1rem',
+                lineHeight: 1.6,
+                marginBottom: 40,
+                maxWidth: '90%',
+              }}
+            >
+              Kelola operasional dan pantau performa bisnis Anda dalam satu dashboard terintegrasi.
+            </p>
+          </div>
 
-              <div className="input-group">
-                <label className="input-label">Kata Sandi</label>
-                <div style={{ position: 'relative' }}>
-                  <Lock
-                    size={20}
-                    style={{
-                      position: 'absolute',
-                      left: 14,
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      color: 'var(--text-3)',
-                      zIndex: 1,
-                    }}
-                  />
-                  <input
-                    type={showPw ? 'text' : 'password'}
-                    required
-                    value={password}
-                    onChange={e => setPassword(e.target.value)}
-                    placeholder="Minimal 8 karakter"
-                    style={{
-                      width: '100%',
-                      padding: '14px 48px 14px 46px',
-                      background: 'var(--bg-elevated)',
-                      border: '1px solid var(--border)',
-                      borderRadius: 12,
-                      fontSize: '0.95rem',
-                      color: 'var(--text-1)',
-                      outline: 'none',
-                      transition: 'all 0.2s',
-                    }}
-                    onFocus={e => {
-                      e.target.style.borderColor = 'var(--brand)';
-                      e.target.style.background = 'var(--bg-card)';
-                      e.target.style.boxShadow = '0 0 0 4px rgba(8, 132, 246, 0.1)';
-                    }}
-                    onBlur={e => {
-                      e.target.style.borderColor = 'var(--border)';
-                      e.target.style.background = 'var(--bg-elevated)';
-                      e.target.style.boxShadow = 'none';
-                    }}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPw(!showPw)}
-                    style={{
-                      position: 'absolute',
-                      right: 14,
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      background: 'none',
-                      border: 'none',
-                      cursor: 'pointer',
-                      color: 'var(--text-3)',
-                      padding: 4,
-                      display: 'flex',
-                      alignItems: 'center',
-                      transition: 'color 0.2s',
-                      zIndex: 1,
-                    }}
-                    onMouseEnter={e => (e.currentTarget.style.color = 'var(--text-2)')}
-                    onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-3)')}
-                  >
-                    {showPw ? <EyeOff size={20} /> : <Eye size={20} />}
-                  </button>
-                </div>
-              </div>
-
-              <div
-                style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
-              >
-                <label
+          <form
+            onSubmit={handleSubmit}
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 24,
+            }}
+          >
+            <div
+              style={{ animation: 'fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both' }}
+              className="input-group"
+            >
+              <label className="input-label" style={{ marginBottom: 8, display: 'block' }}>
+                Email Bisnis
+              </label>
+              <div style={{ position: 'relative' }}>
+                <Mail
+                  size={19}
                   style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 10,
-                    cursor: 'pointer',
-                    userSelect: 'none',
-                    fontSize: '0.9rem',
-                    color: 'var(--text-2)',
+                    position: 'absolute',
+                    left: 14,
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    color: 'var(--text-3)',
+                    zIndex: 1,
                   }}
-                >
-                  <input
-                    type="checkbox"
-                    checked={rememberMe}
-                    onChange={e => setRememberMe(e.target.checked)}
-                    style={{
-                      width: 18,
-                      height: 18,
-                      accentColor: 'var(--brand)',
-                      cursor: 'pointer',
-                    }}
-                  />
-                  Tetap masuk
-                </label>
+                />
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  placeholder="admin@bisnisanda.com"
+                  style={{
+                    width: '100%',
+                    padding: '14px 16px 14px 46px',
+                    background: 'var(--bg-elevated)',
+                    border: '1.5px solid var(--border)',
+                    borderRadius: '14px',
+                    fontSize: '0.95rem',
+                    color: 'var(--text-1)',
+                    outline: 'none',
+                    transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+                  }}
+                  onFocus={e => {
+                    e.target.style.borderColor = 'var(--brand)';
+                    e.target.style.background = 'var(--bg-card)';
+                    e.target.style.boxShadow = '0 0 0 4px rgba(8, 132, 246, 0.08)';
+                  }}
+                  onBlur={e => {
+                    e.target.style.borderColor = 'var(--border)';
+                    e.target.style.background = 'var(--bg-elevated)';
+                    e.target.style.boxShadow = 'none';
+                  }}
+                />
+              </div>
+            </div>
+
+            <div
+              style={{ animation: 'fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.3s both' }}
+              className="input-group"
+            >
+              <label className="input-label" style={{ marginBottom: 8, display: 'block' }}>
+                Kata Sandi
+              </label>
+              <div style={{ position: 'relative' }}>
+                <Lock
+                  size={19}
+                  style={{
+                    position: 'absolute',
+                    left: 14,
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    color: 'var(--text-3)',
+                    zIndex: 1,
+                  }}
+                />
+                <input
+                  type={showPw ? 'text' : 'password'}
+                  required
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  style={{
+                    width: '100%',
+                    padding: '14px 48px 14px 46px',
+                    background: 'var(--bg-elevated)',
+                    border: '1.5px solid var(--border)',
+                    borderRadius: '14px',
+                    fontSize: '0.95rem',
+                    color: 'var(--text-1)',
+                    outline: 'none',
+                    transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+                  }}
+                  onFocus={e => {
+                    e.target.style.borderColor = 'var(--brand)';
+                    e.target.style.background = 'var(--bg-card)';
+                    e.target.style.boxShadow = '0 0 0 4px rgba(8, 132, 246, 0.08)';
+                  }}
+                  onBlur={e => {
+                    e.target.style.borderColor = 'var(--border)';
+                    e.target.style.background = 'var(--bg-elevated)';
+                    e.target.style.boxShadow = 'none';
+                  }}
+                />
                 <button
                   type="button"
+                  onClick={() => setShowPw(!showPw)}
                   style={{
+                    position: 'absolute',
+                    right: 14,
+                    top: '50%',
+                    transform: 'translateY(-50%)',
                     background: 'none',
                     border: 'none',
-                    color: 'var(--brand)',
-                    fontSize: '0.9rem',
-                    fontWeight: 600,
                     cursor: 'pointer',
+                    color: 'var(--text-3)',
+                    padding: 4,
+                    display: 'flex',
+                    alignItems: 'center',
+                    transition: 'all 0.2s',
+                    zIndex: 1,
                   }}
                 >
-                  Lupa Sandi?
+                  {showPw ? <EyeOff size={19} /> : <Eye size={19} />}
                 </button>
               </div>
+            </div>
 
-              <button
-                type="submit"
-                disabled={loading}
-                className="btn-primary"
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                animation: 'fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.4s both',
+              }}
+            >
+              <label
                 style={{
-                  width: '100%',
-                  padding: '14px',
-                  borderRadius: 12,
-                  fontSize: '1rem',
-                  fontWeight: 700,
-                  marginTop: 10,
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'center',
                   gap: 10,
+                  cursor: 'pointer',
+                  fontSize: '0.9rem',
+                  color: 'var(--text-2)',
                 }}
               >
-                {loading ? (
-                  <Loader2 size={20} style={{ animation: 'spin 1s linear infinite' }} />
-                ) : null}
-                {loading ? 'Menghubungkan...' : 'Masuk ke Dashboard'}
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={e => setRememberMe(e.target.checked)}
+                  style={{
+                    width: 18,
+                    height: 18,
+                    accentColor: 'var(--brand)',
+                    cursor: 'pointer',
+                  }}
+                />
+                Tetap masuk
+              </label>
+              <button
+                type="button"
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--brand)',
+                  fontSize: '0.9rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                Lupa Sandi?
               </button>
-            </form>
-          </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="btn-primary"
+              style={{
+                width: '100%',
+                padding: '16px',
+                borderRadius: '16px',
+                fontSize: '1rem',
+                fontWeight: 700,
+                marginTop: 8,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 12,
+                animation: 'fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.5s both',
+                boxShadow: '0 8px 20px rgba(8, 132, 246, 0.2)',
+              }}
+            >
+              {loading ? (
+                <Loader2 size={20} style={{ animation: 'spin 1s linear infinite' }} />
+              ) : null}
+              {loading ? 'Menghubungkan...' : 'Masuk ke Akun'}
+            </button>
+          </form>
+
+          {error && (
+            <div
+              style={{
+                marginTop: 24,
+                background: 'rgba(239, 68, 68, 0.08)',
+                border: '1px solid rgba(239, 68, 68, 0.1)',
+                borderRadius: '12px',
+                padding: '12px 16px',
+                color: '#ef4444',
+                fontSize: '0.9rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 10,
+                animation: 'shake 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97) both',
+              }}
+            >
+              <div style={{ width: 6, height: 6, background: '#ef4444', borderRadius: '50%' }} />
+              {error}
+            </div>
+          )}
         </div>
 
         {/* Footer */}
         <div
           style={{
-            marginTop: 40,
+            marginTop: 'auto',
             textAlign: 'center',
             fontSize: '0.85rem',
             color: 'var(--text-3)',
+            animation: 'fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.6s both',
           }}
         >
-          <p>© 2025 Moedah Enterprises. Bangga melayani UKM Indonesia.</p>
+          <p>© 2025 Moedah Enterprises. Built for scale.</p>
         </div>
       </div>
 
-      {/* Right Section - Slider Content */}
+      {/* Right Section - Immersive Slider */}
       <div
         style={{
-          flex: 1.2,
-          background: 'var(--brand)',
+          flex: 1,
+          background: 'linear-gradient(135deg, var(--brand) 0%, var(--brand-dk) 100%)',
           position: 'relative',
           overflow: 'hidden',
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'center',
           alignItems: 'center',
+          transition: 'background 0.4s ease',
         }}
         onMouseEnter={() => setIsPaused(true)}
         onMouseLeave={() => setIsPaused(false)}
       >
-        {/* Animated Background Patterns */}
-        <div
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            opacity: 0.1,
-            zIndex: 0,
-            pointerEvents: 'none',
-          }}
-        >
-          <div
-            style={{
-              position: 'absolute',
-              top: '-10%',
-              right: '-5%',
-              width: '60%',
-              height: '60%',
-              borderRadius: '50%',
-              background: 'white',
-              filter: 'blur(80px)',
-            }}
-          />
-          <div
-            style={{
-              position: 'absolute',
-              bottom: '-5%',
-              left: '-10%',
-              width: '50%',
-              height: '50%',
-              borderRadius: '50%',
-              background: 'white',
-              filter: 'blur(100px)',
-            }}
-          />
+        {/* Animated Background Orbs */}
+        <div className="orb-container">
+          <div className="orb orb-1" />
+          <div className="orb orb-2" />
+          <div className="orb orb-3" />
         </div>
 
-        {/* Slider Container */}
+        {/* Slider Logic */}
         <div
           style={{
             width: '100%',
             height: '100%',
             position: 'relative',
-            zIndex: 1,
+            zIndex: 2,
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            padding: '40px',
+            padding: '60px',
           }}
         >
           {SLIDES.map((slide, index) => (
@@ -500,33 +501,32 @@ export default function LoginPage() {
               key={slide.id}
               style={{
                 position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
+                inset: 0,
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
                 opacity: currentSlide === index ? 1 : 0,
-                transform: `translateX(${(index - currentSlide) * 20}%)`,
-                transition: 'all 0.8s cubic-bezier(0.165, 0.84, 0.44, 1)',
-                padding: '40px',
-                pointerEvents: currentSlide === index ? 'auto' : 'none',
+                transform: `scale(${currentSlide === index ? 1 : 0.9}) translateY(${currentSlide === index ? 0 : 20}px)`,
+                visibility: currentSlide === index ? 'visible' : 'hidden',
+                transition: 'all 0.8s cubic-bezier(0.16, 1, 0.3, 1)',
+                padding: '60px',
               }}
             >
-              {/* Image Display */}
+              {/* Image with Floating Effect */}
               <div
                 style={{
                   width: '100%',
-                  maxWidth: 700,
+                  maxWidth: 800,
                   aspectRatio: '16/10',
                   position: 'relative',
-                  marginBottom: 40,
-                  borderRadius: 16,
+                  marginBottom: 30,
+                  borderRadius: 24,
                   overflow: 'hidden',
+                  boxShadow: 'none',
                   transform: currentSlide === index ? 'translateY(0)' : 'translateY(40px)',
-                  transition: 'all 0.8s cubic-bezier(0.165, 0.84, 0.44, 1) 0.1s',
+                  transition: 'all 1s cubic-bezier(0.16, 1, 0.3, 1) 0.1s',
+                  animation: currentSlide === index ? 'float 6s ease-in-out infinite' : 'none',
                 }}
               >
                 <Image
@@ -542,19 +542,18 @@ export default function LoginPage() {
               <div
                 style={{
                   textAlign: 'center',
-                  maxWidth: 550,
+                  maxWidth: 600,
                   color: 'white',
                   transform: currentSlide === index ? 'translateY(0)' : 'translateY(20px)',
-                  transition: 'all 0.8s cubic-bezier(0.165, 0.84, 0.44, 1) 0.2s',
-                  opacity: currentSlide === index ? 1 : 0,
+                  transition: 'all 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.2s',
                 }}
               >
                 <h2
                   style={{
-                    fontSize: '1.85rem',
+                    fontSize: '1.6rem',
                     fontWeight: 800,
                     marginBottom: 12,
-                    letterSpacing: '-0.02em',
+                    letterSpacing: '-0.03em',
                     whiteSpace: 'nowrap',
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
@@ -564,9 +563,9 @@ export default function LoginPage() {
                 </h2>
                 <p
                   style={{
-                    fontSize: '1rem',
-                    opacity: 0.85,
-                    lineHeight: 1.5,
+                    fontSize: '0.95rem',
+                    opacity: 0.8,
+                    lineHeight: 1.6,
                     margin: 0,
                     display: '-webkit-box',
                     WebkitLineClamp: 2,
@@ -581,96 +580,37 @@ export default function LoginPage() {
             </div>
           ))}
 
-          {/* Navigation Arrows */}
+          {/* Side Arrows - Aligned to Image Center */}
           <button
             onClick={prevSlide}
-            style={{
-              position: 'absolute',
-              left: 20,
-              top: '50%',
-              width: 44,
-              height: 44,
-              borderRadius: '14px',
-              background: 'rgba(255,255,255,0.08)',
-              backdropFilter: 'blur(8px)',
-              border: '1px solid rgba(255,255,255,0.1)',
-              color: 'white',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-              zIndex: 20,
-              transform: 'translateY(-50%)',
-            }}
-            onMouseEnter={e => {
-              e.currentTarget.style.background = 'rgba(255,255,255,0.15)';
-              e.currentTarget.style.transform = 'translateY(-50%) translateX(-6px)';
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.background = 'rgba(255,255,255,0.08)';
-              e.currentTarget.style.transform = 'translateY(-50%) translateX(0)';
-            }}
+            className="nav-btn nav-btn-left"
+            style={{ top: '42%', width: 48, height: 48, borderRadius: '15px' }}
+            aria-label="Previous Slide"
           >
-            <ChevronLeft size={24} strokeWidth={2.5} />
+            <ChevronLeft size={24} strokeWidth={2} />
           </button>
 
           <button
             onClick={nextSlide}
-            style={{
-              position: 'absolute',
-              right: 20,
-              top: '50%',
-              width: 44,
-              height: 44,
-              borderRadius: '14px',
-              background: 'rgba(255,255,255,0.08)',
-              backdropFilter: 'blur(8px)',
-              border: '1px solid rgba(255,255,255,0.1)',
-              color: 'white',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-              zIndex: 20,
-              transform: 'translateY(-50%)',
-            }}
-            onMouseEnter={e => {
-              e.currentTarget.style.background = 'rgba(255,255,255,0.15)';
-              e.currentTarget.style.transform = 'translateY(-50%) translateX(6px)';
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.background = 'rgba(255,255,255,0.08)';
-              e.currentTarget.style.transform = 'translateY(-50%) translateX(0)';
-            }}
+            className="nav-btn nav-btn-right"
+            style={{ top: '42%', width: 48, height: 48, borderRadius: '15px' }}
+            aria-label="Next Slide"
           >
-            <ChevronRight size={24} strokeWidth={2.5} />
+            <ChevronRight size={24} strokeWidth={2} />
           </button>
 
-          {/* Bottom Indicators */}
-          <div
-            style={{
-              position: 'absolute',
-              bottom: 40,
-              display: 'flex',
-              gap: 8,
-              alignItems: 'center',
-              zIndex: 10,
-            }}
-          >
+          {/* Progress Indicators */}
+          <div className="progress-container">
             {SLIDES.map((_, i) => (
               <div
                 key={i}
                 onClick={() => setCurrentSlide(i)}
+                className={`progress-bar ${currentSlide === i ? 'active' : ''}`}
                 style={{
-                  width: currentSlide === i ? 36 : 10,
-                  height: 5,
-                  borderRadius: 10,
-                  background: 'white',
-                  opacity: currentSlide === i ? 1 : 0.25,
-                  cursor: 'pointer',
-                  transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                  width: currentSlide === i ? 10 : 6,
+                  height: currentSlide === i ? 10 : 6,
+                  borderRadius: '50%',
+                  opacity: currentSlide === i ? 1 : 0.3,
                 }}
               />
             ))}
@@ -679,17 +619,116 @@ export default function LoginPage() {
       </div>
 
       <style>{`
+        /* ── Modern Keyframes ── */
         @keyframes spin {
           from { transform: rotate(0deg); }
           to { transform: rotate(360deg); }
         }
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
+        @keyframes fadeInUp {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
         }
-        .reveal-animate {
-          animation: fadeIn 0.8s ease-out;
+        @keyframes fadeInDown {
+          from { opacity: 0; transform: translateY(-20px); }
+          to { opacity: 1; transform: translateY(0); }
         }
+        @keyframes shake {
+          10%, 90% { transform: translateX(-1px); }
+          20%, 80% { transform: translateX(2px); }
+          30%, 50%, 70% { transform: translateX(-4px); }
+          40%, 60% { transform: translateX(4px); }
+        }
+        @keyframes float {
+          0% { transform: translateY(0px); }
+          50% { transform: translateY(-12px); }
+          100% { transform: translateY(0px); }
+        }
+        @keyframes orbit {
+          from { transform: rotate(0deg) translateX(40px) rotate(0deg); }
+          to { transform: rotate(360deg) translateX(40px) rotate(-360deg); }
+        }
+
+        /* ── Dynamic Layout Styles ── */
+        .nav-btn {
+          position: absolute;
+          top: 50%;
+          width: 54px;
+          height: 54px;
+          border-radius: 18px;
+          background: rgba(255, 255, 255, 0.1);
+          backdrop-filter: blur(12px);
+          border: 1px solid rgba(255, 255, 255, 0.15);
+          color: white;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+          z-index: 20;
+          transform: translateY(-50%);
+        }
+        .nav-btn:hover {
+          background: rgba(255, 255, 255, 0.2);
+          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        }
+        .nav-btn-left { left: 40px; }
+        .nav-btn-left:hover { transform: translateY(-50%) translateX(-8px); }
+        .nav-btn-right { right: 40px; }
+        .nav-btn-right:hover { transform: translateY(-50%) translateX(8px); }
+
+        .progress-container {
+          position: absolute;
+          bottom: 50px;
+          display: flex;
+          gap: 12px;
+          align-items: center;
+          z-index: 10;
+        }
+        .progress-bar {
+          background: white;
+          cursor: pointer;
+          transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        /* ── Animated Background Orbs ── */
+        .orb-container {
+          position: absolute;
+          inset: 0;
+          pointer-events: none;
+        }
+        .orb {
+          position: absolute;
+          border-radius: 50%;
+          filter: blur(140px);
+          opacity: 0.3;
+          animation: float 10s ease-in-out infinite alternate;
+        }
+        .orb-1 {
+          width: 600px;
+          height: 600px;
+          background: var(--brand);
+          top: -200px;
+          right: -200px;
+        }
+        .orb-2 {
+          width: 500px;
+          height: 500px;
+          background: var(--brand-dk);
+          bottom: -150px;
+          left: -150px;
+          animation-delay: -3s;
+        }
+        .orb-3 {
+          width: 300px;
+          height: 300px;
+          background: var(--brand-lt);
+          top: 40%;
+          left: 30%;
+          opacity: 0.1;
+          animation-delay: -7s;
+        }
+
+        /* ── Form Fine-tuning ── */
         input:-webkit-autofill,
         input:-webkit-autofill:hover, 
         input:-webkit-autofill:focus {
