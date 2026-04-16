@@ -433,7 +433,7 @@ function ProductSearchSelect({
                 >
                   <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>{p.name}</div>
                   <div style={{ fontSize: '0.72rem', color: 'var(--text-3)' }}>
-                    {p.sku} • Stok: {p.stock}
+                    {p.sku} • Stok: {p.stock_qty || 0}
                   </div>
                 </div>
               ))
