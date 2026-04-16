@@ -522,13 +522,9 @@ export default function LoginPage() {
                   maxWidth: 700,
                   aspectRatio: '16/10',
                   position: 'relative',
-                  marginBottom: 50,
+                  marginBottom: 40,
                   borderRadius: 16,
                   overflow: 'hidden',
-                  boxShadow: '0 30px 60px rgba(0,0,0,0.2)',
-                  background: 'rgba(255,255,255,0.05)',
-                  backdropFilter: 'blur(10px)',
-                  border: '1px solid rgba(255,255,255,0.1)',
                   transform: currentSlide === index ? 'translateY(0)' : 'translateY(40px)',
                   transition: 'all 0.8s cubic-bezier(0.165, 0.84, 0.44, 1) 0.1s',
                 }}
@@ -537,7 +533,7 @@ export default function LoginPage() {
                   src={isDark ? slide.dark : slide.light}
                   alt={slide.title}
                   fill
-                  style={{ objectFit: 'cover' }}
+                  style={{ objectFit: 'contain' }}
                   priority={index === 0}
                 />
               </div>
@@ -546,7 +542,7 @@ export default function LoginPage() {
               <div
                 style={{
                   textAlign: 'center',
-                  maxWidth: 500,
+                  maxWidth: 550,
                   color: 'white',
                   transform: currentSlide === index ? 'translateY(0)' : 'translateY(20px)',
                   transition: 'all 0.8s cubic-bezier(0.165, 0.84, 0.44, 1) 0.2s',
@@ -555,15 +551,18 @@ export default function LoginPage() {
               >
                 <h2
                   style={{
-                    fontSize: '2.4rem',
+                    fontSize: '1.85rem',
                     fontWeight: 800,
-                    marginBottom: 16,
+                    marginBottom: 12,
                     letterSpacing: '-0.02em',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
                   }}
                 >
                   {slide.title}
                 </h2>
-                <p style={{ fontSize: '1.1rem', opacity: 0.9, lineHeight: 1.6 }}>
+                <p style={{ fontSize: '1rem', opacity: 0.85, lineHeight: 1.5, margin: 0 }}>
                   {slide.subtitle}
                 </p>
               </div>
