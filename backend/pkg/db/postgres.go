@@ -31,10 +31,17 @@ func Connect(cfg *config.DBConfig, log zerolog.Logger) (*sqlx.DB, error) {
 		return nil, fmt.Errorf("pinging db: %w", err)
 	}
 
-	log.Info().
+	event := log.Info().
 		Str("host", cfg.Host).
-		Str("name", cfg.Name).
-		Msg("connected to postgres")
+		Str("name", cfg.Name)
+
+	if cfg.LogDSN {
+		event.Str("dsn", cfg.DSN())
+	} else {
+		event.Str("dsn", cfg.MaskedDSN())
+	}
+
+	event.Msg("connected to postgres")
 
 	return db, nil
 }

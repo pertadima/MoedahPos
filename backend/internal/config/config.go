@@ -33,6 +33,7 @@ type DBConfig struct {
 	MaxOpenConns    int
 	MaxIdleConns    int
 	ConnMaxLifetime time.Duration
+	LogDSN          bool
 }
 
 type JWTConfig struct {
@@ -71,6 +72,7 @@ func Load() (*Config, error) {
 			MaxOpenConns:    getEnvInt("DB_MAX_OPEN_CONNS", 25),
 			MaxIdleConns:    getEnvInt("DB_MAX_IDLE_CONNS", 10),
 			ConnMaxLifetime: getEnvDuration("DB_CONN_MAX_LIFETIME", 5*time.Minute),
+			LogDSN:          getEnvBool("DB_LOG_DSN", false),
 		},
 		JWT: JWTConfig{
 			Secret:     getEnv("JWT_SECRET", ""),
@@ -98,6 +100,14 @@ func (c *DBConfig) DSN() string {
 	return fmt.Sprintf(
 		"host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
 		c.Host, c.Port, c.User, c.Password, c.Name, c.SSLMode,
+	)
+}
+
+// MaskedDSN returns the PostgreSQL connection string with the password hidden.
+func (c *DBConfig) MaskedDSN() string {
+	return fmt.Sprintf(
+		"host=%s port=%s user=%s password=**** dbname=%s sslmode=%s",
+		c.Host, c.Port, c.User, c.Name, c.SSLMode,
 	)
 }
 
