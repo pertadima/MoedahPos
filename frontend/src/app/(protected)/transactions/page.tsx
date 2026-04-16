@@ -887,8 +887,8 @@ export default function TransactionsPage() {
       <div
         className="reveal-animate"
         style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+          display: 'flex',
+          flexWrap: 'wrap',
           gap: 12,
           marginBottom: 16,
           alignItems: 'center',
@@ -937,7 +937,7 @@ export default function TransactionsPage() {
           <option value="voided">Dibatalkan</option>
         </select>
 
-        <div style={{ position: 'relative', flex: 1, minWidth: 200 }}>
+        <div style={{ position: 'relative', flex: 1, minWidth: 180 }}>
           <Search
             size={14}
             style={{
@@ -950,7 +950,7 @@ export default function TransactionsPage() {
           />
           <input
             className="input"
-            style={{ paddingLeft: 32 }}
+            style={{ paddingLeft: 32, width: '100%' }}
             placeholder="Cari ID, kasir, pelanggan..."
             value={search}
             onChange={e => setSearch(e.target.value)}
@@ -968,9 +968,11 @@ export default function TransactionsPage() {
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(3,1fr)',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
             gap: 12,
             marginBottom: 16,
+            position: 'relative',
+            zIndex: 20,
           }}
         >
           {[

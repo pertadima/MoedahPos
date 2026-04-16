@@ -218,6 +218,8 @@ export default function IncomesPage() {
             marginBottom: 20,
             flexWrap: 'wrap',
             animationDelay: '0.1s',
+            position: 'relative',
+            zIndex: 20,
           }}
         >
           <div
