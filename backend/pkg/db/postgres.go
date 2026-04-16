@@ -17,6 +17,18 @@ import (
 
 // Connect establishes a PostgreSQL connection pool using sqlx.
 func Connect(cfg *config.DBConfig, log zerolog.Logger) (*sqlx.DB, error) {
+	// Log connection attempt with DSN (if enabled)
+	connLog := log.Info().
+		Str("host", cfg.Host).
+		Str("name", cfg.Name)
+
+	if cfg.LogDSN {
+		connLog.Str("dsn", cfg.DSN())
+	} else {
+		connLog.Str("dsn", cfg.MaskedDSN())
+	}
+	connLog.Msg("attempting to connect to postgres")
+
 	db, err := sqlx.Open("postgres", cfg.DSN())
 	if err != nil {
 		return nil, fmt.Errorf("opening db: %w", err)
@@ -31,17 +43,7 @@ func Connect(cfg *config.DBConfig, log zerolog.Logger) (*sqlx.DB, error) {
 		return nil, fmt.Errorf("pinging db: %w", err)
 	}
 
-	event := log.Info().
-		Str("host", cfg.Host).
-		Str("name", cfg.Name)
-
-	if cfg.LogDSN {
-		event.Str("dsn", cfg.DSN())
-	} else {
-		event.Str("dsn", cfg.MaskedDSN())
-	}
-
-	event.Msg("connected to postgres")
+	log.Info().Msg("successfully connected to postgres")
 
 	return db, nil
 }
