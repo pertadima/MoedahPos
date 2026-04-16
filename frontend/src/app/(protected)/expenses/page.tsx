@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { Wallet, Plus, Loader2, X, Calendar, Edit2, Trash2 } from 'lucide-react';
+import { Wallet, Plus, Loader2, X, Calendar, Edit2, Trash2, History, Zap } from 'lucide-react';
 import DatePicker from '@/components/ui/DatePicker';
 import Portal from '@/components/ui/Portal';
 import { useAuth } from '@/lib/auth/AuthContext';
@@ -126,47 +126,33 @@ function ExpensesPage() {
       </div>
 
       <div
-        className="reveal-animate"
-        style={{
-          display: 'flex',
-          gap: 16,
-          marginBottom: 24,
-          borderBottom: '1px solid var(--border)',
-          animationDelay: '0.1s',
-        }}
+        className="reveal-animate overflow-x-auto scrollbar-none mb-6"
+        style={{ animationDelay: '0.1s' }}
       >
-        <button
-          onClick={() => setActiveTab('riwayat')}
-          style={{
-            background: 'none',
-            border: 'none',
-            padding: '8px 16px',
-            fontSize: '1rem',
-            fontWeight: activeTab === 'riwayat' ? 600 : 400,
-            color: activeTab === 'riwayat' ? 'var(--primary)' : 'var(--text-3)',
-            borderBottom:
-              activeTab === 'riwayat' ? '2px solid var(--primary)' : '2px solid transparent',
-            cursor: 'pointer',
-          }}
-        >
-          Riwayat Pengeluaran
-        </button>
-        <button
-          onClick={() => setActiveTab('rutin')}
-          style={{
-            background: 'none',
-            border: 'none',
-            padding: '8px 16px',
-            fontSize: '1rem',
-            fontWeight: activeTab === 'rutin' ? 600 : 400,
-            color: activeTab === 'rutin' ? 'var(--primary)' : 'var(--text-3)',
-            borderBottom:
-              activeTab === 'rutin' ? '2px solid var(--primary)' : '2px solid transparent',
-            cursor: 'pointer',
-          }}
-        >
-          Pengeluaran Rutin
-        </button>
+        <div className="card inline-flex p-1 gap-1 bg-surface border-none shadow-sm min-w-max">
+          <button
+            onClick={() => setActiveTab('riwayat')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all duration-200 transform whitespace-nowrap flex-shrink-0 ${
+              activeTab === 'riwayat'
+                ? 'bg-accent-em text-white shadow-md scale-105 active:scale-95'
+                : 'text-3 hover:bg-surface-hv hover:scale-102 active:scale-95'
+            }`}
+          >
+            <History size={14} />
+            Riwayat Pengeluaran
+          </button>
+          <button
+            onClick={() => setActiveTab('rutin')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all duration-200 transform whitespace-nowrap flex-shrink-0 ${
+              activeTab === 'rutin'
+                ? 'bg-accent-em text-white shadow-md scale-105 active:scale-95'
+                : 'text-3 hover:bg-surface-hv hover:scale-102 active:scale-95'
+            }`}
+          >
+            <Zap size={14} />
+            Pengeluaran Rutin
+          </button>
+        </div>
       </div>
 
       {activeTab === 'riwayat' ? (
