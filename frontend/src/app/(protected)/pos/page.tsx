@@ -24,6 +24,7 @@ import { useAuth } from '@/lib/auth/AuthContext';
 import { productsApi } from '@/lib/api/products';
 import { menuItemsApi, customersApi, tablesApi } from '@/lib/api/store-apis';
 import { transactionsApi } from '@/lib/api/transactions';
+import Portal from '@/components/ui/Portal';
 import { formatRp, productEmoji } from '@/lib/utils';
 import type {
   Product,
@@ -2427,14 +2428,20 @@ export default function POSPage() {
 
       {/* ── Modals ── */}
       {showPayment && (
-        <PaymentModal
-          total={total}
-          onClose={() => setShowPayment(false)}
-          onConfirm={handleConfirmPayment}
-          loading={payLoading}
-        />
+        <Portal>
+          <PaymentModal
+            total={total}
+            onClose={() => setShowPayment(false)}
+            onConfirm={handleConfirmPayment}
+            loading={payLoading}
+          />
+        </Portal>
       )}
-      {receipt && <ReceiptModal txn={receipt} onClose={() => setReceipt(null)} />}
+      {receipt && (
+        <Portal>
+          <ReceiptModal txn={receipt} onClose={() => setReceipt(null)} />
+        </Portal>
+      )}
     </div>
   );
 }

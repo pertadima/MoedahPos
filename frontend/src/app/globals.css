@@ -212,7 +212,7 @@ body,
   }
   to {
     opacity: 1;
-    transform: scale(1) translateY(0);
+    transform: none;
   }
 }
 
@@ -605,7 +605,7 @@ body {
     top: 0;
     background: var(--bg-card);
     border-right: 1px solid var(--border);
-    @apply flex flex-col z-[2000] overflow-y-auto;
+    @apply flex flex-col z-[2100] overflow-y-auto;
   }
   .sidebar-expanded {
     width: 240px;
@@ -843,7 +843,7 @@ body {
     height: 64px;
     background: var(--bg-card);
     border-bottom: 1px solid var(--border);
-    @apply flex items-center justify-between px-7 sticky top-0 z-30;
+    @apply flex items-center justify-between px-7 sticky top-0 z-[1000];
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
   }
@@ -1431,7 +1431,7 @@ body {
 
 /* ── 18. Payment Modal ───────────────────────────────────────────────────── */
 .modal-overlay {
-  @apply fixed inset-0 z-[3000] flex items-center justify-center p-4;
+  @apply fixed inset-0 z-[5000] flex items-center justify-center p-4;
   background: rgba(7, 12, 26, 0.6);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
@@ -1592,7 +1592,7 @@ body {
   pointer-events: none;
   opacity: 0;
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  z-index: 4000;
+  z-index: 6000;
   box-shadow: 0 12px 24px -6px rgba(0, 0, 0, 0.4);
   border: 1px solid rgba(255, 255, 255, 0.1);
   text-align: center;
@@ -1638,7 +1638,7 @@ body {
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: none;
   }
 }
 @keyframes modalIn {
@@ -1648,7 +1648,7 @@ body {
   }
   to {
     opacity: 1;
-    transform: scale(1) translateY(0);
+    transform: none;
   }
 }
 @keyframes fadeIn {
@@ -1666,7 +1666,7 @@ body {
   position: fixed;
   inset: 0;
   background: rgba(7, 12, 26, 0.5);
-  z-index: 1900;
+  z-index: 2000;
   backdrop-filter: blur(3px);
   -webkit-backdrop-filter: blur(3px);
 }

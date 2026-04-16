@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Tag, Plus, Loader2, Edit3, Archive, Play, X } from 'lucide-react';
 import { incomesApi } from '@/lib/api/store-apis';
+import Portal from '@/components/ui/Portal';
 import { formatDate } from '@/lib/utils';
 import { ApiError } from '@/lib/api/client';
 import type { Category } from '@/types';
@@ -61,7 +62,8 @@ function FormModal({ initial, onSuccess, onClose }: FormModalProps) {
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <Portal>
+      <div className="modal-overlay" style={{ zIndex: 5000 }} onClick={onClose}>
       <div className="modal-box" style={{ maxWidth: 460 }} onClick={e => e.stopPropagation()}>
         <div
           style={{
@@ -153,6 +155,7 @@ function FormModal({ initial, onSuccess, onClose }: FormModalProps) {
         </div>
       </div>
     </div>
+  </Portal>
   );
 }
 
@@ -179,7 +182,8 @@ function DeleteConfirm({
     }
   };
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <Portal>
+      <div className="modal-overlay" style={{ zIndex: 5000 }} onClick={onClose}>
       <div className="modal-box" style={{ maxWidth: 400 }} onClick={e => e.stopPropagation()}>
         <div style={{ textAlign: 'center', padding: '8px 0 16px' }}>
           <Archive size={28} style={{ color: '#f59e0b', marginBottom: 12 }} />
@@ -222,6 +226,7 @@ function DeleteConfirm({
         </div>
       </div>
     </div>
+  </Portal>
   );
 }
 

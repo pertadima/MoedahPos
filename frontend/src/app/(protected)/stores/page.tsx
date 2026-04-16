@@ -20,6 +20,7 @@ import {
   ToggleRight,
 } from 'lucide-react';
 import { usePermission } from '@/hooks/usePermission';
+import Portal from '@/components/ui/Portal';
 import { storesApi } from '@/lib/api/store-apis';
 import type { Store as StoreType, PaginatedData } from '@/types';
 import { formatDate, getErrorMessage } from '@/lib/utils';
@@ -218,25 +219,28 @@ export default function StoresPage() {
     <div className="w-full p-6">
       {/* Toast */}
       {toast && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 20,
-            right: 20,
-            zIndex: 9999,
-            background: toast.type === 'success' ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)',
-            border: `1px solid ${toast.type === 'success' ? '#10b981' : '#ef4444'}`,
-            color: toast.type === 'success' ? '#10b981' : '#ef4444',
-            padding: '12px 20px',
-            borderRadius: 10,
-            fontWeight: 600,
-            fontSize: '0.85rem',
-            backdropFilter: 'blur(12px)',
-            animation: 'slideIn 0.2s ease',
-          }}
-        >
-          {toast.msg}
-        </div>
+        <Portal>
+          <div
+            style={{
+              position: 'fixed',
+              top: 20,
+              right: 20,
+              zIndex: 9999,
+              background:
+                toast.type === 'success' ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)',
+              border: `1px solid ${toast.type === 'success' ? '#10b981' : '#ef4444'}`,
+              color: toast.type === 'success' ? '#10b981' : '#ef4444',
+              padding: '12px 20px',
+              borderRadius: 10,
+              fontWeight: 600,
+              fontSize: '0.85rem',
+              backdropFilter: 'blur(12px)',
+              animation: 'slideIn 0.2s ease',
+            }}
+          >
+            {toast.msg}
+          </div>
+        </Portal>
       )}
 
       {/* Header */}
@@ -568,19 +572,20 @@ export default function StoresPage() {
 
       {/* ── Create / Edit Modal ─────────────────────────────────────────────── */}
       {modal.open && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 1000,
-            background: 'rgba(0,0,0,0.65)',
-            backdropFilter: 'blur(4px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: 16,
-          }}
-        >
+        <Portal>
+          <div
+            style={{
+              position: 'fixed',
+              inset: 0,
+              zIndex: 5000,
+              background: 'rgba(0,0,0,0.65)',
+              backdropFilter: 'blur(4px)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: 16,
+            }}
+          >
           <div
             className="card"
             style={{ width: '100%', maxWidth: 520, padding: 28, animation: 'slideIn 0.2s ease' }}
@@ -884,23 +889,25 @@ export default function StoresPage() {
             </form>
           </div>
         </div>
-      )}
+      </Portal>
+    )}
 
       {/* ── Delete Confirmation ─────────────────────────────────────────────── */}
       {deleteConfirm.open && deleteConfirm.store && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 1000,
-            background: 'rgba(0,0,0,0.65)',
-            backdropFilter: 'blur(4px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: 16,
-          }}
-        >
+        <Portal>
+          <div
+            style={{
+              position: 'fixed',
+              inset: 0,
+              zIndex: 5000,
+              background: 'rgba(0,0,0,0.65)',
+              backdropFilter: 'blur(4px)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: 16,
+            }}
+          >
           <div
             className="card"
             style={{
@@ -979,7 +986,8 @@ export default function StoresPage() {
             </div>
           </div>
         </div>
-      )}
+      </Portal>
+    )}
     </div>
   );
 }

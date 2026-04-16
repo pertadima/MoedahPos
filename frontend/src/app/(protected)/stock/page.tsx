@@ -21,6 +21,7 @@ import { useAuth } from '@/lib/auth/AuthContext';
 import { stockApi } from '@/lib/api/store-apis';
 import { api } from '@/lib/api/client';
 import { stockAdjustmentApi, type CreateAdjustmentInput } from '@/lib/api/stock-adjustments';
+import Portal from '@/components/ui/Portal';
 import {
   getBatchSummary,
   listBatches,
@@ -881,28 +882,31 @@ export default function StockPage() {
 
       {/* ── Create Modal ─────────────────────────────────────────────────────── */}
       {isModalOpen && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 1000,
-            background: 'rgba(0,0,0,0.6)',
-            backdropFilter: 'blur(4px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: 16,
-          }}
-        >
+        <Portal>
           <div
-            className="card"
             style={{
-              width: '100%',
-              maxWidth: 500,
-              padding: 28,
-              animation: 'slideIn 0.2s ease',
+              position: 'fixed',
+              inset: 0,
+              zIndex: 5000,
+              background: 'rgba(0,0,0,0.6)',
+              backdropFilter: 'blur(4px)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: 16,
             }}
+            onClick={() => setIsModalOpen(false)}
           >
+            <div
+              className="card"
+              onClick={e => e.stopPropagation()}
+              style={{
+                width: '100%',
+                maxWidth: 500,
+                padding: 28,
+                animation: 'slideIn 0.2s ease',
+              }}
+            >
             <h3 style={{ margin: '0 0 16px', color: 'var(--text-1)' }}>Catat Penyesuaian Stok</h3>
 
             <form
@@ -1191,7 +1195,8 @@ export default function StockPage() {
             </form>
           </div>
         </div>
-      )}
+      </Portal>
+    )}
     </div>
   );
 }

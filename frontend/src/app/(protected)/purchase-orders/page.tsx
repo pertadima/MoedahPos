@@ -26,6 +26,7 @@ import {
   Eye,
 } from 'lucide-react';
 import DatePicker from '@/components/ui/DatePicker';
+import Portal from '@/components/ui/Portal';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { purchaseOrdersApi, suppliersApi, storesApi } from '@/lib/api/store-apis';
 import { productsApi } from '@/lib/api/products';
@@ -105,10 +106,53 @@ function SearchableSelect({
 
   const selectedOption = options.find(o => o.value === value);
   const filteredOptions = options.filter(o => o.label.toLowerCase().includes(search.toLowerCase()));
+  const [dropdownStyle, setDropdownStyle] = useState<React.CSSProperties>({});
+  const triggerRef = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open || !triggerRef.current) return;
+    const rect = triggerRef.current.getBoundingClientRect();
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const dropHeight = 300;
+    if (spaceBelow >= dropHeight) {
+      setDropdownStyle({
+        position: 'fixed',
+        top: rect.bottom + 4,
+        left: rect.left,
+        width: rect.width,
+        zIndex: 9999,
+      });
+    } else {
+      setDropdownStyle({
+        position: 'fixed',
+        bottom: window.innerHeight - rect.top + 4,
+        left: rect.left,
+        width: rect.width,
+        zIndex: 9999,
+      });
+    }
+  }, [open]);
+
+  useEffect(() => {
+    function handler(e: MouseEvent) {
+      if (
+        triggerRef.current &&
+        !triggerRef.current.contains(e.target as Node) &&
+        dropdownRef.current &&
+        !dropdownRef.current.contains(e.target as Node)
+      ) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
 
   return (
-    <div ref={wrapperRef} style={{ position: 'relative', width: '100%' }}>
+    <div style={{ position: 'relative', width: '100%' }}>
       <div
+        ref={triggerRef}
         className={className}
         style={{
           cursor: 'pointer',
@@ -136,92 +180,92 @@ function SearchableSelect({
       </div>
 
       {open && (
-        <div
-          style={{
-            position: 'absolute',
-            top: '100%',
-            left: 0,
-            right: 0,
-            zIndex: 3000,
-            background: 'var(--bg-card)',
-            border: '1px solid var(--border)',
-            borderRadius: 8,
-            marginTop: 4,
-            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-            maxHeight: 280,
-            display: 'flex',
-            flexDirection: 'column',
-          }}
-        >
-          <div style={{ padding: 8, borderBottom: '1px solid var(--border)' }}>
-            <input
-              autoFocus
-              className="input"
-              placeholder="Cari..."
-              style={{ width: '100%', height: 32, fontSize: '0.82rem' }}
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-            />
-          </div>
-          <div style={{ overflowY: 'auto', flex: 1, padding: 4 }}>
-            {!value ? null : (
-              <div
-                style={{
-                  padding: '8px 12px',
-                  cursor: 'pointer',
-                  fontSize: '0.82rem',
-                  borderRadius: 6,
-                  color: 'var(--text-3)',
-                }}
-                onClick={() => {
-                  onChange('');
-                  setOpen(false);
-                }}
-                onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-hover)')}
-                onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-              >
-                Tanpa Pilihan / Reset
-              </div>
-            )}
-            {filteredOptions.length === 0 ? (
-              <div
-                style={{
-                  padding: '8px 12px',
-                  fontSize: '0.82rem',
-                  color: 'var(--text-3)',
-                  textAlign: 'center',
-                }}
-              >
-                Tidak ditemukan
-              </div>
-            ) : (
-              filteredOptions.map(o => (
+        <Portal>
+          <div
+            ref={dropdownRef}
+            style={{
+              ...dropdownStyle,
+              position: 'fixed',
+              zIndex: 9999,
+              background: 'var(--bg-card)',
+              border: '1px solid var(--border)',
+              borderRadius: 8,
+              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+              maxHeight: 280,
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+          >
+            <div style={{ padding: 8, borderBottom: '1px solid var(--border)' }}>
+              <input
+                autoFocus
+                className="input"
+                placeholder="Cari..."
+                style={{ width: '100%', height: 32, fontSize: '0.82rem' }}
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+              />
+            </div>
+            <div style={{ overflowY: 'auto', flex: 1, padding: 4 }}>
+              {!value ? null : (
                 <div
-                  key={o.value}
                   style={{
                     padding: '8px 12px',
                     cursor: 'pointer',
                     fontSize: '0.82rem',
                     borderRadius: 6,
-                    background: o.value === value ? 'var(--bg-active)' : 'transparent',
+                    color: 'var(--text-3)',
                   }}
                   onClick={() => {
-                    onChange(o.value);
+                    onChange('');
                     setOpen(false);
                   }}
-                  onMouseEnter={e => {
-                    if (o.value !== value) e.currentTarget.style.background = 'var(--bg-hover)';
-                  }}
-                  onMouseLeave={e => {
-                    if (o.value !== value) e.currentTarget.style.background = 'transparent';
+                  onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-hover)')}
+                  onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                >
+                  Tanpa Pilihan / Reset
+                </div>
+              )}
+              {filteredOptions.length === 0 ? (
+                <div
+                  style={{
+                    padding: '8px 12px',
+                    fontSize: '0.82rem',
+                    color: 'var(--text-3)',
+                    textAlign: 'center',
                   }}
                 >
-                  {o.label}
+                  Tidak ditemukan
                 </div>
-              ))
-            )}
+              ) : (
+                filteredOptions.map(o => (
+                  <div
+                    key={o.value}
+                    style={{
+                      padding: '8px 12px',
+                      cursor: 'pointer',
+                      fontSize: '0.82rem',
+                      borderRadius: 6,
+                      background: o.value === value ? 'var(--bg-active)' : 'transparent',
+                    }}
+                    onClick={() => {
+                      onChange(o.value);
+                      setOpen(false);
+                    }}
+                    onMouseEnter={e => {
+                      if (o.value !== value) e.currentTarget.style.background = 'var(--bg-hover)';
+                    }}
+                    onMouseLeave={e => {
+                      if (o.value !== value) e.currentTarget.style.background = 'transparent';
+                    }}
+                  >
+                    {o.label}
+                  </div>
+                ))
+              )}
+            </div>
           </div>
-        </div>
+        </Portal>
       )}
     </div>
   );
@@ -349,83 +393,53 @@ function ProductSearchSelect({
       </div>
 
       {open && (
-        <div
-          ref={dropdownRef}
-          style={{
-            ...dropdownStyle,
-            background: 'var(--bg-card)',
-            border: '1px solid var(--border)',
-            borderRadius: 8,
-            boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
-            maxHeight: 300,
-            display: 'flex',
-            flexDirection: 'column',
-          }}
-        >
-          <div style={{ padding: 8, borderBottom: '1px solid var(--border)' }}>
-            <input
-              autoFocus
-              className="input"
-              placeholder="Cari nama / SKU produk..."
-              style={{ width: '100%', height: 32, fontSize: '0.82rem' }}
-              value={query}
-              onChange={e => setQuery(e.target.value)}
-            />
-          </div>
-          <div style={{ overflowY: 'auto', flex: 1, padding: 4 }}>
+        <Portal>
+          <div
+            ref={dropdownRef}
+            style={{
+              ...dropdownStyle,
+              maxHeight: 300,
+              background: 'var(--bg-elevated)',
+              border: '1px solid var(--border-md)',
+              borderRadius: 12,
+              zIndex: 9999,
+              overflowY: 'auto',
+              boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
+            }}
+          >
             {searching ? (
-              <div
-                style={{
-                  padding: '12px',
-                  textAlign: 'center',
-                  fontSize: '0.82rem',
-                  color: 'var(--text-3)',
-                }}
-              >
-                Mencari...
+              <div style={{ padding: 16, textAlign: 'center', color: 'var(--text-3)' }}>
+                Searching...
               </div>
             ) : results.length === 0 ? (
-              <div
-                style={{
-                  padding: '12px',
-                  textAlign: 'center',
-                  fontSize: '0.82rem',
-                  color: 'var(--text-3)',
-                }}
-              >
-                {debouncedQuery ? 'Tidak ditemukan' : 'Ketik untuk mencari produk'}
+              <div style={{ padding: 16, textAlign: 'center', color: 'var(--text-3)' }}>
+                Produk tidak ditemukan
               </div>
             ) : (
               results.map(p => (
                 <div
                   key={p.id}
-                  style={{
-                    padding: '8px 12px',
-                    cursor: 'pointer',
-                    fontSize: '0.82rem',
-                    borderRadius: 6,
-                    background: p.id === value ? 'var(--bg-active)' : 'transparent',
-                  }}
                   onClick={() => {
                     onSelect(p);
                     setOpen(false);
                   }}
-                  onMouseEnter={e => {
-                    if (p.id !== value) e.currentTarget.style.background = 'var(--bg-hover)';
+                  style={{
+                    padding: '10px 14px',
+                    cursor: 'pointer',
+                    borderBottom: '1px solid var(--border-light)',
+                    background: value === p.id ? 'var(--bg-surface)' : 'transparent',
                   }}
-                  onMouseLeave={e => {
-                    if (p.id !== value) e.currentTarget.style.background = 'transparent';
-                  }}
+                  className="hover:bg-surface-hv"
                 >
-                  <div style={{ fontWeight: 500 }}>{p.name}</div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-3)' }}>
-                    SKU: {p.sku} · {p.unit}
+                  <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>{p.name}</div>
+                  <div style={{ fontSize: '0.72rem', color: 'var(--text-3)' }}>
+                    {p.sku} • Stok: {p.stock}
                   </div>
                 </div>
               ))
             )}
           </div>
-        </div>
+        </Portal>
       )}
     </div>
   );
@@ -810,17 +824,18 @@ function TerminModal({ po, storeId, onSuccess, onCancel }: TerminModalProps) {
     }
   };
   return (
-    <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        background: 'rgba(0,0,0,0.55)',
-        zIndex: 200,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
-    >
+    <Portal>
+      <div
+        style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(0,0,0,0.55)',
+          zIndex: 5000,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
       <div
         style={{
           background: 'var(--bg-card)',
@@ -1018,6 +1033,7 @@ function TerminModal({ po, storeId, onSuccess, onCancel }: TerminModalProps) {
         </div>
       </div>
     </div>
+  </Portal>
   );
 }
 
@@ -1066,17 +1082,18 @@ function PayTerminModal({ termin, storeId, poId, onSuccess, onCancel }: PayTermi
     }
   };
   return (
-    <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        background: 'rgba(0,0,0,0.55)',
-        zIndex: 210,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
-    >
+    <Portal>
+      <div
+        style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(0,0,0,0.55)',
+          zIndex: 5000,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
       <div style={{ background: 'var(--bg-card)', borderRadius: 14, padding: 28, width: 420 }}>
         <div style={{ fontWeight: 700, fontSize: '1rem', marginBottom: 4 }}>
           Catat Pembayaran — Termin {termin.termin_number}
@@ -1201,8 +1218,9 @@ function PayTerminModal({ termin, storeId, poId, onSuccess, onCancel }: PayTermi
             {saving ? '…' : 'Catat Pembayaran'}
           </button>
         </div>
+        </div>
       </div>
-    </div>
+    </Portal>
   );
 }
 
@@ -1239,8 +1257,9 @@ function ConfirmModal({ action, po, onConfirm, onCancel, loading }: ConfirmModal
     },
   }[action];
   return (
-    <div className="modal-overlay" onClick={onCancel}>
-      <div className="modal-box" style={{ maxWidth: 420 }} onClick={e => e.stopPropagation()}>
+    <Portal>
+      <div className="modal-overlay" style={{ zIndex: 5000 }} onClick={onCancel}>
+        <div className="modal-box" style={{ maxWidth: 420 }} onClick={e => e.stopPropagation()}>
         <div style={{ textAlign: 'center', padding: '8px 0 16px' }}>
           <div style={{ marginBottom: 12 }}>{config.icon}</div>
           <h2 style={{ fontWeight: 800, fontSize: '1.05rem', marginBottom: 10 }}>{config.title}</h2>
@@ -1269,6 +1288,7 @@ function ConfirmModal({ action, po, onConfirm, onCancel, loading }: ConfirmModal
         </div>
       </div>
     </div>
+    </Portal>
   );
 }
 
@@ -1306,8 +1326,9 @@ function PayModal({ po, storeId, onSuccess, onCancel }: PayModalProps) {
   };
 
   return (
-    <div className="modal-overlay" onClick={onCancel}>
-      <div className="modal-box" style={{ maxWidth: 400 }} onClick={e => e.stopPropagation()}>
+    <Portal>
+      <div className="modal-overlay" style={{ zIndex: 5000 }} onClick={onCancel}>
+        <div className="modal-box" style={{ maxWidth: 400 }} onClick={e => e.stopPropagation()}>
         <div
           style={{
             display: 'flex',
@@ -1382,7 +1403,6 @@ function PayModal({ po, storeId, onSuccess, onCancel }: PayModalProps) {
             {error}
           </div>
         )}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div className="input-group">
             <label className="input-label">Jumlah Bayar (Rp)</label>
             <input
@@ -1402,7 +1422,6 @@ function PayModal({ po, storeId, onSuccess, onCancel }: PayModalProps) {
               placeholder="Transfer, tunai, dll..."
             />
           </div>
-        </div>
         <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
           <button className="btn btn-secondary" style={{ flex: 1 }} onClick={onCancel}>
             Batal
@@ -1419,6 +1438,7 @@ function PayModal({ po, storeId, onSuccess, onCancel }: PayModalProps) {
         </div>
       </div>
     </div>
+    </Portal>
   );
 }
 
@@ -1430,13 +1450,13 @@ interface InvoiceModalProps {
 }
 function InvoiceModal({ po, store, onClose }: InvoiceModalProps) {
   return (
-    <>
-      <div className="modal-overlay no-print" onClick={onClose} />
+    <Portal>
+      <div className="modal-overlay no-print" style={{ zIndex: 5000 }} onClick={onClose} />
       <div
         style={{
           position: 'fixed',
           inset: 0,
-          zIndex: 202,
+          zIndex: 5001,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -1679,13 +1699,13 @@ function InvoiceModal({ po, store, onClose }: InvoiceModalProps) {
               <div style={{ textAlign: 'center' }}>
                 <div style={{ borderTop: '1px solid #9ca3af', width: 140, marginBottom: 4 }} />
                 <div style={{ fontSize: '0.72rem', color: '#9ca3af' }}>Tanda Tangan Supplier</div>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
-      <style>{`@media print{body>*:not(#portal-root){display:none!important}.no-print{display:none!important}#po-invoice{position:fixed!important;inset:0!important;max-height:none!important;border-radius:0!important;box-shadow:none!important;overflow:visible!important}}`}</style>
-    </>
+    </div>
+  </div>
+  </div>
+  <style>{`@media print{body>*:not(#portal-root){display:none!important}.no-print{display:none!important}#po-invoice{position:fixed!important;inset:0!important;max-height:none!important;border-radius:0!important;box-shadow:none!important;overflow:visible!important}}`}</style>
+  </Portal>
   );
 }
 
@@ -1717,7 +1737,7 @@ function PODetailDrawer({
   const amountDue = po.amount_due ?? po.total_amount - amountPaid;
 
   return (
-    <>
+    <Portal>
       <div
         onClick={onClose}
         style={{
@@ -1725,7 +1745,7 @@ function PODetailDrawer({
           inset: 0,
           background: 'rgba(0,0,0,0.5)',
           backdropFilter: 'blur(2px)',
-          zIndex: 200,
+          zIndex: 5000,
         }}
       />
       <div
@@ -1737,7 +1757,7 @@ function PODetailDrawer({
           width: 'min(720px, 100vw)',
           background: 'var(--bg-card)',
           borderLeft: '1px solid var(--border)',
-          zIndex: 201,
+          zIndex: 5001,
           overflowY: 'auto',
           display: 'flex',
           flexDirection: 'column',
@@ -1959,10 +1979,10 @@ function PODetailDrawer({
                 </button>
               </div>
             )}
-          </div>
-        </div>
       </div>
-    </>
+    </div>
+    </div>
+    </Portal>
   );
 }
 
@@ -2548,38 +2568,45 @@ export default function PurchaseOrdersPage() {
         />
       )}
       {invoicePO && (
-        <InvoiceModal po={invoicePO} store={storeDetail} onClose={() => setInvoicePO(null)} />
+        <Portal>
+          <InvoiceModal po={invoicePO} store={storeDetail} onClose={() => setInvoicePO(null)} />
+        </Portal>
       )}
       {payingPO && (
-        <PayModal
-          po={payingPO}
-          storeId={storeId ?? ''}
-          onSuccess={handlePaySuccess}
-          onCancel={() => setPayingPO(null)}
-        />
+        <Portal>
+          <PayModal
+            po={payingPO}
+            storeId={storeId ?? ''}
+            onSuccess={handlePaySuccess}
+            onCancel={() => setPayingPO(null)}
+          />
+        </Portal>
       )}
       {confirm && (
-        <ConfirmModal
-          action={confirm.action}
-          po={confirm.po}
-          onConfirm={executeAction}
-          onCancel={() => setConfirm(null)}
-          loading={confirmLoading}
-        />
+        <Portal>
+          <ConfirmModal
+            action={confirm.action}
+            po={confirm.po}
+            onConfirm={executeAction}
+            onCancel={() => setConfirm(null)}
+            loading={confirmLoading}
+          />
+        </Portal>
       )}
 
       {/* ── Create / Edit PO Sidebar ─────────────────────────────────────────── */}
       {showModal && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 1000,
-            display: 'flex',
-            justifyContent: 'flex-end',
-          }}
-          onClick={() => setShowModal(false)}
-        >
+        <Portal>
+          <div
+            style={{
+              position: 'fixed',
+              inset: 0,
+              zIndex: 5000,
+              display: 'flex',
+              justifyContent: 'flex-end',
+            }}
+            onClick={() => setShowModal(false)}
+          >
           <style>{`
             @keyframes slideInRight {
               from { transform: translateX(100%); }
@@ -3062,6 +3089,7 @@ export default function PurchaseOrdersPage() {
             </div>
           </div>
         </div>
+      </Portal>
       )}
     </div>
   );

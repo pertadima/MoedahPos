@@ -16,6 +16,7 @@ import {
 import { useAuth } from '@/lib/auth/AuthContext';
 import { usePermission } from '@/hooks/usePermission';
 import { categoriesApi } from '@/lib/api/store-apis';
+import Portal from '@/components/ui/Portal';
 import type { Category } from '@/types';
 import { formatDate, getErrorMessage } from '@/lib/utils';
 
@@ -301,244 +302,248 @@ export default function CategoriesPage() {
 
       {/* ── Create / Edit Modal ─────────────────────────────────────────────── */}
       {modal.open && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 1000,
-            background: 'rgba(0,0,0,0.6)',
-            backdropFilter: 'blur(4px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: 16,
-          }}
-        >
+        <Portal>
           <div
-            className="card"
             style={{
-              width: '100%',
-              maxWidth: 480,
-              padding: 28,
-              animation: 'slideIn 0.2s ease',
+              position: 'fixed',
+              inset: 0,
+              zIndex: 5000,
+              background: 'rgba(0,0,0,0.6)',
+              backdropFilter: 'blur(4px)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: 16,
             }}
           >
-            {/* Modal header */}
             <div
+              className="card"
               style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                marginBottom: 20,
+                width: '100%',
+                maxWidth: 480,
+                padding: 28,
+                animation: 'slideIn 0.2s ease',
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <div
-                  style={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: 10,
-                    background: 'rgba(16,185,129,0.15)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <Tag size={18} style={{ color: 'var(--accent-em)' }} />
-                </div>
-                <div>
-                  <div style={{ fontWeight: 700, fontSize: '1rem' }}>
-                    {modal.mode === 'create' ? 'Tambah Kategori' : 'Edit Kategori'}
-                  </div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-3)' }}>
-                    {selectedStore.store_name}
-                  </div>
-                </div>
-              </div>
-              <button
-                onClick={closeModal}
-                className="btn btn-ghost btn-sm"
-                style={{ padding: '6px' }}
+              {/* Modal header */}
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginBottom: 20,
+                }}
               >
-                <X size={16} />
-              </button>
-            </div>
-
-            <form onSubmit={handleSubmit}>
-              {/* Name */}
-              <div style={{ marginBottom: 16 }}>
-                <label
-                  style={{
-                    display: 'block',
-                    fontSize: '0.8rem',
-                    fontWeight: 600,
-                    marginBottom: 6,
-                    color: 'var(--text-2)',
-                  }}
-                >
-                  Nama Kategori <span style={{ color: '#ef4444' }}>*</span>
-                </label>
-                <input
-                  className="input"
-                  placeholder="cth. Minuman, Makanan..."
-                  value={form.name}
-                  autoFocus
-                  onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                />
-              </div>
-
-              {/* Parent */}
-              <div style={{ marginBottom: 20 }}>
-                <label
-                  style={{
-                    display: 'block',
-                    fontSize: '0.8rem',
-                    fontWeight: 600,
-                    marginBottom: 6,
-                    color: 'var(--text-2)',
-                  }}
-                >
-                  Kategori Induk{' '}
-                  <span style={{ fontSize: '0.72rem', color: 'var(--text-3)', fontWeight: 400 }}>
-                    (opsional)
-                  </span>
-                </label>
-                <select
-                  className="input"
-                  value={form.parent_id}
-                  onChange={e => setForm(f => ({ ...f, parent_id: e.target.value }))}
-                >
-                  <option value="">— Tidak ada (kategori utama) —</option>
-                  {parentOptions.map(p => (
-                    <option key={p.id} value={p.id}>
-                      {p.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {formError && (
-                <div
-                  style={{
-                    background: 'rgba(239,68,68,0.12)',
-                    border: '1px solid rgba(239,68,68,0.3)',
-                    borderRadius: 8,
-                    padding: '10px 14px',
-                    marginBottom: 16,
-                    fontSize: '0.82rem',
-                    color: '#ef4444',
-                  }}
-                >
-                  {formError}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div
+                    style={{
+                      width: 36,
+                      height: 36,
+                      borderRadius: 10,
+                      background: 'rgba(16,185,129,0.15)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <Tag size={18} style={{ color: 'var(--accent-em)' }} />
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: 700, fontSize: '1rem' }}>
+                      {modal.mode === 'create' ? 'Tambah Kategori' : 'Edit Kategori'}
+                    </div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-3)' }}>
+                      {selectedStore.store_name}
+                    </div>
+                  </div>
                 </div>
-              )}
-
-              <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-                <button type="button" className="btn btn-ghost" onClick={closeModal}>
-                  Batal
-                </button>
                 <button
-                  type="submit"
-                  className="btn btn-primary"
-                  disabled={submitting}
-                  style={{ gap: 8 }}
+                  onClick={closeModal}
+                  className="btn btn-ghost btn-sm"
+                  style={{ padding: '6px' }}
                 >
-                  {submitting ? (
-                    <>
-                      <Loader2 size={14} className="loading-spin" /> Menyimpan...
-                    </>
-                  ) : (
-                    <>
-                      <Check size={14} /> {modal.mode === 'create' ? 'Simpan' : 'Perbarui'}
-                    </>
-                  )}
+                  <X size={16} />
                 </button>
               </div>
-            </form>
+
+              <form onSubmit={handleSubmit}>
+                {/* Name */}
+                <div style={{ marginBottom: 16 }}>
+                  <label
+                    style={{
+                      display: 'block',
+                      fontSize: '0.8rem',
+                      fontWeight: 600,
+                      marginBottom: 6,
+                      color: 'var(--text-2)',
+                    }}
+                  >
+                    Nama Kategori <span style={{ color: '#ef4444' }}>*</span>
+                  </label>
+                  <input
+                    className="input"
+                    placeholder="cth. Minuman, Makanan..."
+                    value={form.name}
+                    autoFocus
+                    onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                  />
+                </div>
+
+                {/* Parent */}
+                <div style={{ marginBottom: 20 }}>
+                  <label
+                    style={{
+                      display: 'block',
+                      fontSize: '0.8rem',
+                      fontWeight: 600,
+                      marginBottom: 6,
+                      color: 'var(--text-2)',
+                    }}
+                  >
+                    Kategori Induk{' '}
+                    <span style={{ fontSize: '0.72rem', color: 'var(--text-3)', fontWeight: 400 }}>
+                      (opsional)
+                    </span>
+                  </label>
+                  <select
+                    className="input"
+                    value={form.parent_id}
+                    onChange={e => setForm(f => ({ ...f, parent_id: e.target.value }))}
+                  >
+                    <option value="">— Tidak ada (kategori utama) —</option>
+                    {parentOptions.map(p => (
+                      <option key={p.id} value={p.id}>
+                        {p.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {formError && (
+                  <div
+                    style={{
+                      background: 'rgba(239,68,68,0.12)',
+                      border: '1px solid rgba(239,68,68,0.3)',
+                      borderRadius: 8,
+                      padding: '10px 14px',
+                      marginBottom: 16,
+                      fontSize: '0.82rem',
+                      color: '#ef4444',
+                    }}
+                  >
+                    {formError}
+                  </div>
+                )}
+
+                <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+                  <button type="button" className="btn btn-ghost" onClick={closeModal}>
+                    Batal
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn btn-primary"
+                    disabled={submitting}
+                    style={{ gap: 8 }}
+                  >
+                    {submitting ? (
+                      <>
+                        <Loader2 size={14} className="loading-spin" /> Menyimpan...
+                      </>
+                    ) : (
+                      <>
+                        <Check size={14} /> {modal.mode === 'create' ? 'Simpan' : 'Perbarui'}
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
-        </div>
+        </Portal>
       )}
 
       {/* ── Delete Confirmation Modal ───────────────────────────────────────── */}
       {deleteConfirm.open && deleteConfirm.category && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 1000,
-            background: 'rgba(0,0,0,0.6)',
-            backdropFilter: 'blur(4px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: 16,
-          }}
-        >
+        <Portal>
           <div
-            className="card"
             style={{
-              width: '100%',
-              maxWidth: 420,
-              padding: 28,
-              animation: 'slideIn 0.2s ease',
+              position: 'fixed',
+              inset: 0,
+              zIndex: 5000,
+              background: 'rgba(0,0,0,0.6)',
+              backdropFilter: 'blur(4px)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: 16,
             }}
           >
-            <div style={{ textAlign: 'center', marginBottom: 20 }}>
-              <div
-                style={{
-                  width: 52,
-                  height: 52,
-                  borderRadius: '50%',
-                  background: 'rgba(239,68,68,0.15)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  margin: '0 auto 14px',
-                }}
-              >
-                <AlertTriangle size={24} style={{ color: '#ef4444' }} />
+            <div
+              className="card"
+              style={{
+                width: '100%',
+                maxWidth: 420,
+                padding: 28,
+                animation: 'slideIn 0.2s ease',
+              }}
+            >
+              <div style={{ textAlign: 'center', marginBottom: 20 }}>
+                <div
+                  style={{
+                    width: 52,
+                    height: 52,
+                    borderRadius: '50%',
+                    background: 'rgba(239,68,68,0.15)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    margin: '0 auto 14px',
+                  }}
+                >
+                  <AlertTriangle size={24} style={{ color: '#ef4444' }} />
+                </div>
+                <div style={{ fontWeight: 700, fontSize: '1rem', marginBottom: 8 }}>
+                  Hapus Kategori?
+                </div>
+                <div style={{ fontSize: '0.85rem', color: 'var(--text-2)', lineHeight: 1.6 }}>
+                  Kategori{' '}
+                  <strong style={{ color: 'var(--text-1)' }}>
+                    &ldquo;{deleteConfirm.category.name}&rdquo;
+                  </strong>{' '}
+                  akan dihapus secara <em>soft-delete</em> (data tetap tersimpan di database).
+                  Produk dalam kategori ini tidak akan terhapus.
+                </div>
               </div>
-              <div style={{ fontWeight: 700, fontSize: '1rem', marginBottom: 8 }}>
-                Hapus Kategori?
+              <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
+                <button className="btn btn-ghost" onClick={cancelDelete} style={{ flex: 1 }}>
+                  Batal
+                </button>
+                <button
+                  className="btn"
+                  onClick={handleDelete}
+                  disabled={deleting}
+                  style={{
+                    flex: 1,
+                    gap: 8,
+                    background: 'rgba(239,68,68,0.15)',
+                    color: '#ef4444',
+                    border: '1px solid rgba(239,68,68,0.3)',
+                  }}
+                >
+                  {deleting ? (
+                    <>
+                      <Loader2 size={14} className="loading-spin" /> Menghapus...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 size={14} /> Hapus
+                    </>
+                  )}
+                </button>
               </div>
-              <div style={{ fontSize: '0.85rem', color: 'var(--text-2)', lineHeight: 1.6 }}>
-                Kategori{' '}
-                <strong style={{ color: 'var(--text-1)' }}>
-                  &ldquo;{deleteConfirm.category.name}&rdquo;
-                </strong>{' '}
-                akan dihapus secara <em>soft-delete</em> (data tetap tersimpan di database). Produk
-                dalam kategori ini tidak akan terhapus.
-              </div>
-            </div>
-            <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
-              <button className="btn btn-ghost" onClick={cancelDelete} style={{ flex: 1 }}>
-                Batal
-              </button>
-              <button
-                className="btn"
-                onClick={handleDelete}
-                disabled={deleting}
-                style={{
-                  flex: 1,
-                  gap: 8,
-                  background: 'rgba(239,68,68,0.15)',
-                  color: '#ef4444',
-                  border: '1px solid rgba(239,68,68,0.3)',
-                }}
-              >
-                {deleting ? (
-                  <>
-                    <Loader2 size={14} className="loading-spin" /> Menghapus...
-                  </>
-                ) : (
-                  <>
-                    <Trash2 size={14} /> Hapus
-                  </>
-                )}
-              </button>
             </div>
           </div>
-        </div>
+        </Portal>
       )}
     </div>
   );

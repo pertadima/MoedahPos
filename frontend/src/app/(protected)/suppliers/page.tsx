@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { Users, Truck, Plus, Pencil, Trash2, Loader2, X, Search } from 'lucide-react';
 import { usePermission } from '@/hooks/usePermission';
 import { suppliersApi } from '@/lib/api/store-apis';
+import Portal from '@/components/ui/Portal';
 import type { Supplier } from '@/types';
 import { formatDate } from '@/lib/utils';
 import { ApiError } from '@/lib/api/client';
@@ -210,75 +211,81 @@ export default function SuppliersPage() {
       </div>
 
       {showModal && (
-        <div className="modal-overlay" onClick={() => setShowModal(false)}>
-          <div className="modal-box" style={{ maxWidth: 420 }} onClick={e => e.stopPropagation()}>
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: 18,
-              }}
-            >
-              <h2 style={{ fontWeight: 700 }}>{editing ? 'Edit Supplier' : 'Tambah Supplier'}</h2>
-              <button className="btn btn-ghost btn-sm" onClick={() => setShowModal(false)}>
-                <X size={15} />
-              </button>
-            </div>
-            {error && (
+        <Portal>
+          <div
+            className="modal-overlay"
+            style={{ zIndex: 5000 }}
+            onClick={() => setShowModal(false)}
+          >
+            <div className="modal-box" style={{ maxWidth: 420 }} onClick={e => e.stopPropagation()}>
               <div
                 style={{
-                  background: 'rgba(239,68,68,0.12)',
-                  borderRadius: 8,
-                  padding: '8px 12px',
-                  color: '#f87171',
-                  fontSize: '0.83rem',
-                  marginBottom: 14,
-                  border: '1px solid rgba(239,68,68,0.3)',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: 18,
                 }}
               >
-                {error}
+                <h2 style={{ fontWeight: 700 }}>{editing ? 'Edit Supplier' : 'Tambah Supplier'}</h2>
+                <button className="btn btn-ghost btn-sm" onClick={() => setShowModal(false)}>
+                  <X size={15} />
+                </button>
               </div>
-            )}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {[
-                ['name', 'Nama Supplier'],
-                ['contact_name', 'Nama Kontak'],
-                ['phone', 'Telepon'],
-                ['email', 'Email'],
-                ['address', 'Alamat'],
-              ].map(([k, l]) => (
-                <div key={k} className="input-group">
-                  <label className="input-label">{l}</label>
-                  <input
-                    className="input"
-                    type={k === 'email' ? 'email' : 'text'}
-                    value={form[k as keyof typeof form]}
-                    onChange={f(k as keyof typeof form)}
-                  />
+              {error && (
+                <div
+                  style={{
+                    background: 'rgba(239,68,68,0.12)',
+                    borderRadius: 8,
+                    padding: '8px 12px',
+                    color: '#f87171',
+                    fontSize: '0.83rem',
+                    marginBottom: 14,
+                    border: '1px solid rgba(239,68,68,0.3)',
+                  }}
+                >
+                  {error}
                 </div>
-              ))}
-            </div>
-            <div style={{ display: 'flex', gap: 8, marginTop: 20 }}>
-              <button
-                className="btn btn-secondary"
-                style={{ flex: 1 }}
-                onClick={() => setShowModal(false)}
-              >
-                Batal
-              </button>
-              <button
-                className="btn btn-primary"
-                style={{ flex: 1 }}
-                disabled={saving}
-                onClick={handleSave}
-              >
-                {saving ? <Loader2 size={15} className="loading-spin" /> : null}
-                {saving ? 'Menyimpan...' : 'Simpan'}
-              </button>
+              )}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {[
+                  ['name', 'Nama Supplier'],
+                  ['contact_name', 'Nama Kontak'],
+                  ['phone', 'Telepon'],
+                  ['email', 'Email'],
+                  ['address', 'Alamat'],
+                ].map(([k, l]) => (
+                  <div key={k} className="input-group">
+                    <label className="input-label">{l}</label>
+                    <input
+                      className="input"
+                      type={k === 'email' ? 'email' : 'text'}
+                      value={form[k as keyof typeof form]}
+                      onChange={f(k as keyof typeof form)}
+                    />
+                  </div>
+                ))}
+              </div>
+              <div style={{ display: 'flex', gap: 8, marginTop: 20 }}>
+                <button
+                  className="btn btn-secondary"
+                  style={{ flex: 1 }}
+                  onClick={() => setShowModal(false)}
+                >
+                  Batal
+                </button>
+                <button
+                  className="btn btn-primary"
+                  style={{ flex: 1 }}
+                  disabled={saving}
+                  onClick={handleSave}
+                >
+                  {saving ? <Loader2 size={15} className="loading-spin" /> : null}
+                  {saving ? 'Menyimpan...' : 'Simpan'}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        </Portal>
       )}
     </div>
   );

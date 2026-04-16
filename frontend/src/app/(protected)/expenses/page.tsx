@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Wallet, Plus, Loader2, X, Calendar, Edit2, Trash2 } from 'lucide-react';
 import DatePicker from '@/components/ui/DatePicker';
+import Portal from '@/components/ui/Portal';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { expensesApi, recurringExpensesApi } from '@/lib/api/store-apis';
 import { ApiError } from '@/lib/api/client';
@@ -436,15 +437,17 @@ function ExpensesPage() {
       )}
 
       {showModal && activeTab === 'riwayat' && (
-        <ExpenseModal
-          categories={categories}
-          expense={editTarget}
-          onClose={() => setShowModal(false)}
-          onSuccess={() => {
-            setShowModal(false);
-            loadExpenses();
-          }}
-        />
+        <Portal>
+          <ExpenseModal
+            categories={categories}
+            expense={editTarget}
+            onClose={() => setShowModal(false)}
+            onSuccess={() => {
+              setShowModal(false);
+              loadExpenses();
+            }}
+          />
+        </Portal>
       )}
     </div>
   );

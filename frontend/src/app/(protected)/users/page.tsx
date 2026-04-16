@@ -20,6 +20,7 @@ import {
   XCircle,
 } from 'lucide-react';
 import { usePermission } from '@/hooks/usePermission';
+import Portal from '@/components/ui/Portal';
 import { usersAdminApi, rolesApi, storesApi } from '@/lib/api/store-apis';
 import { ApiError } from '@/lib/api/client';
 import type {
@@ -329,7 +330,8 @@ function UserFormModal({
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <Portal>
+      <div className="modal-overlay" style={{ zIndex: 5000 }} onClick={onClose}>
       <div className="modal-box" style={{ maxWidth: 520 }} onClick={e => e.stopPropagation()}>
         <div
           style={{
@@ -422,8 +424,9 @@ function UserFormModal({
             {loading ? 'Menyimpan...' : mode === 'create' ? 'Buat Pengguna' : 'Simpan'}
           </button>
         </div>
+        </div>
       </div>
-    </div>
+    </Portal>
   );
 }
 
@@ -458,7 +461,8 @@ function ResetPasswordModal({
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <Portal>
+      <div className="modal-overlay" style={{ zIndex: 5000 }} onClick={onClose}>
       <div className="modal-box" style={{ maxWidth: 380 }} onClick={e => e.stopPropagation()}>
         <div style={{ textAlign: 'center', padding: '8px 0 16px' }}>
           <KeyRound size={28} style={{ color: '#6366f1', marginBottom: 12 }} />
@@ -504,6 +508,7 @@ function ResetPasswordModal({
         </div>
       </div>
     </div>
+  </Portal>
   );
 }
 
@@ -530,7 +535,8 @@ function DeactivateConfirm({
     }
   };
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <Portal>
+      <div className="modal-overlay" style={{ zIndex: 5000 }} onClick={onClose}>
       <div className="modal-box" style={{ maxWidth: 400 }} onClick={e => e.stopPropagation()}>
         <div style={{ textAlign: 'center', padding: '8px 0 16px' }}>
           <Archive size={28} style={{ color: '#f59e0b', marginBottom: 12 }} />
@@ -573,6 +579,7 @@ function DeactivateConfirm({
         </div>
       </div>
     </div>
+  </Portal>
   );
 }
 
@@ -595,7 +602,7 @@ function DetailDrawer({
   onResetPw: () => void;
 }) {
   return (
-    <>
+    <Portal>
       <div
         onClick={onClose}
         style={{
@@ -603,7 +610,7 @@ function DetailDrawer({
           inset: 0,
           background: 'rgba(0,0,0,0.5)',
           backdropFilter: 'blur(2px)',
-          zIndex: 200,
+          zIndex: 5000,
         }}
       />
       <div
@@ -615,7 +622,7 @@ function DetailDrawer({
           width: 420,
           background: 'var(--bg-card)',
           borderLeft: '1px solid var(--border)',
-          zIndex: 201,
+          zIndex: 5001,
           overflow: 'hidden',
           display: 'flex',
           flexDirection: 'column',
@@ -816,7 +823,7 @@ function DetailDrawer({
           </div>
         </div>
       </div>
-    </>
+    </Portal>
   );
 }
 

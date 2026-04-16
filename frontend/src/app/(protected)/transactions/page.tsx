@@ -21,6 +21,7 @@ import {
 import DatePicker from '@/components/ui/DatePicker';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { transactionsApi } from '@/lib/api/transactions';
+import Portal from '@/components/ui/Portal';
 import { formatRp } from '@/lib/utils';
 import type { Transaction, PaginatedData } from '@/types';
 import { ApiError } from '@/lib/api/client';
@@ -399,7 +400,7 @@ function DetailDrawer({
       style={{
         position: 'fixed',
         inset: 0,
-        zIndex: 200,
+        zIndex: 5000,
         display: 'flex',
         justifyContent: 'flex-end',
       }}
@@ -1247,33 +1248,41 @@ export default function TransactionsPage() {
 
       {/* ── Detail Drawer ── */}
       {detailLoading && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 200,
-            background: 'rgba(0,0,0,0.4)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <Loader2 size={32} className="loading-spin" style={{ color: '#fff' }} />
-        </div>
+        <Portal>
+          <div
+            style={{
+              position: 'fixed',
+              inset: 0,
+              zIndex: 5000,
+              background: 'rgba(0,0,0,0.4)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Loader2 size={32} className="loading-spin" style={{ color: '#fff' }} />
+          </div>
+        </Portal>
       )}
       {detail && !detailLoading && (
-        <DetailDrawer
-          txn={detail}
-          onClose={() => setDetail(null)}
-          onReprint={t => {
-            setDetail(null);
-            setReprint(t);
-          }}
-        />
+        <Portal>
+          <DetailDrawer
+            txn={detail}
+            onClose={() => setDetail(null)}
+            onReprint={t => {
+              setDetail(null);
+              setReprint(t);
+            }}
+          />
+        </Portal>
       )}
 
       {/* ── Reprint Modal ── */}
-      {reprint && <ReceiptModal txn={reprint} onClose={() => setReprint(null)} />}
+      {reprint && (
+        <Portal>
+          <ReceiptModal txn={reprint} onClose={() => setReprint(null)} />
+        </Portal>
+      )}
     </div>
   );
 }

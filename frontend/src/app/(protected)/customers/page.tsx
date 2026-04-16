@@ -18,6 +18,7 @@ import {
 import { useAuth } from '@/lib/auth/AuthContext';
 import { usePermission } from '@/hooks/usePermission';
 import { customersApi } from '@/lib/api/store-apis';
+import Portal from '@/components/ui/Portal';
 import { formatDate } from '@/lib/utils';
 import type { Customer, PaginatedData } from '@/types';
 import { ApiError } from '@/lib/api/client';
@@ -70,7 +71,8 @@ function FormModal({ storeId, initial, onSuccess, onClose }: FormModalProps) {
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <Portal>
+      <div className="modal-overlay" style={{ zIndex: 5000 }} onClick={onClose}>
       <div className="modal-box" style={{ maxWidth: 460 }} onClick={e => e.stopPropagation()}>
         <div
           style={{
@@ -172,8 +174,9 @@ function FormModal({ storeId, initial, onSuccess, onClose }: FormModalProps) {
             {saving ? 'Menyimpan...' : isEdit ? 'Simpan Perubahan' : 'Tambah Customer'}
           </button>
         </div>
+        </div>
       </div>
-    </div>
+    </Portal>
   );
 }
 
@@ -202,7 +205,8 @@ function DeleteConfirm({
     }
   };
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <Portal>
+      <div className="modal-overlay" style={{ zIndex: 5000 }} onClick={onClose}>
       <div className="modal-box" style={{ maxWidth: 400 }} onClick={e => e.stopPropagation()}>
         <div style={{ textAlign: 'center', padding: '8px 0 16px' }}>
           <Archive size={28} style={{ color: '#f59e0b', marginBottom: 12 }} />
@@ -246,6 +250,7 @@ function DeleteConfirm({
         </div>
       </div>
     </div>
+  </Portal>
   );
 }
 
@@ -267,7 +272,7 @@ function DetailDrawer({
 }) {
   const avatar = customer.name.charAt(0).toUpperCase();
   return (
-    <>
+    <Portal>
       <div
         onClick={onClose}
         style={{
@@ -275,7 +280,7 @@ function DetailDrawer({
           inset: 0,
           background: 'rgba(0,0,0,0.5)',
           backdropFilter: 'blur(2px)',
-          zIndex: 200,
+          zIndex: 5000,
         }}
       />
       <div
@@ -287,7 +292,7 @@ function DetailDrawer({
           width: 400,
           background: 'var(--bg-card)',
           borderLeft: '1px solid var(--border)',
-          zIndex: 201,
+          zIndex: 5001,
           overflowY: 'auto',
           display: 'flex',
           flexDirection: 'column',
@@ -457,7 +462,7 @@ function DetailDrawer({
           </div>
         </div>
       </div>
-    </>
+    </Portal>
   );
 }
 

@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Zap } from 'lucide-react';
+import Portal from './Portal';
 
 interface DatePickerProps {
   value: string; // YYYY-MM-DD
@@ -50,6 +51,7 @@ export default function DatePicker({
 }: DatePickerProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [popoverSide, setPopoverSide] = useState<'left' | 'right'>('left');
+  const [popoverCoords, setPopoverCoords] = useState({ top: 0, left: 0, width: 0 });
 
   const initialDate = useMemo(() => {
     if (!value) return new Date();
@@ -66,11 +68,15 @@ export default function DatePicker({
   const handleOpen = () => {
     const nextState = !isOpen;
     if (nextState && containerRef.current) {
-      // Determine side immediately on click
       const rect = containerRef.current.getBoundingClientRect();
       const screenWidth = window.innerWidth;
       const side = rect.left > screenWidth / 2 ? 'right' : 'left';
       setPopoverSide(side);
+      setPopoverCoords({
+        top: rect.bottom + window.scrollY,
+        left: rect.left + window.scrollX,
+        width: rect.width,
+      });
       setViewDate(initialDate);
     }
     setIsOpen(nextState);
@@ -169,16 +175,24 @@ export default function DatePicker({
       </button>
 
       {isOpen && (
-        <div
-          className={`absolute top-full mt-2 z-[9999] flex shadow-2xl rounded-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150 ${popoverSide === 'right' ? 'right-0' : 'left-0'}`}
-          style={{
-            backdropFilter: 'blur(20px)',
-            background: 'var(--bg-card)',
-            border: '1px solid var(--border-md)',
-            opacity: 1,
-            minWidth: showPresets ? '420px' : '300px',
-          }}
-        >
+        <Portal>
+          <div
+            className={`flex shadow-2xl rounded-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150`}
+            style={{
+              position: 'fixed',
+              top: popoverCoords.top - window.scrollY + 8,
+              left:
+                popoverSide === 'right'
+                  ? popoverCoords.left + popoverCoords.width - (showPresets ? 438 : 318)
+                  : popoverCoords.left,
+              backdropFilter: 'blur(20px)',
+              background: 'var(--bg-card)',
+              border: '1px solid var(--border-md)',
+              opacity: 1,
+              minWidth: showPresets ? '420px' : '300px',
+              zIndex: 9999,
+            }}
+          >
           {/* Quick Presets Sidebar */}
           {showPresets && (
             <div className="w-36 bg-elevated/40 border-r border-[var(--border)] p-4 flex flex-col gap-1.5 shrink-0">
@@ -304,7 +318,8 @@ export default function DatePicker({
             </div>
           </div>
         </div>
-      )}
+      </Portal>
+    )}
     </div>
   );
 }

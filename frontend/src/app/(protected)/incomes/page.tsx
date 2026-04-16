@@ -14,6 +14,7 @@ import {
   Smartphone,
 } from 'lucide-react';
 import DatePicker from '@/components/ui/DatePicker';
+import Portal from '@/components/ui/Portal';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { incomesApi } from '@/lib/api/store-apis';
 import { formatRp, formatDate, parseNumberInput, formatNumberInput } from '@/lib/utils';
@@ -517,15 +518,17 @@ export default function IncomesPage() {
       )}
       {/* Modal */}
       {showModal && (
-        <IncomeModal
-          categories={categories}
-          income={editTarget}
-          onClose={() => setShowModal(false)}
-          onSuccess={() => {
-            setShowModal(false);
-            loadIncomes();
-          }}
-        />
+        <Portal>
+          <IncomeModal
+            categories={categories}
+            income={editTarget}
+            onClose={() => setShowModal(false)}
+            onSuccess={() => {
+              setShowModal(false);
+              loadIncomes();
+            }}
+          />
+        </Portal>
       )}
     </div>
   );
