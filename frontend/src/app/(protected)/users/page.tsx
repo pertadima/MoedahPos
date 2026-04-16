@@ -332,98 +332,98 @@ function UserFormModal({
   return (
     <Portal>
       <div className="modal-overlay" style={{ zIndex: 5000 }} onClick={onClose}>
-      <div className="modal-box" style={{ maxWidth: 520 }} onClick={e => e.stopPropagation()}>
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: 20,
-          }}
-        >
-          <h2 style={{ fontWeight: 800, fontSize: '1.05rem' }}>
-            {mode === 'create' ? 'Tambah Pengguna' : 'Edit Pengguna'}
-          </h2>
-          <button className="btn btn-ghost btn-sm" onClick={onClose}>
-            <X size={16} />
-          </button>
-        </div>
-
-        {error && (
+        <div className="modal-box" style={{ maxWidth: 520 }} onClick={e => e.stopPropagation()}>
           <div
             style={{
-              background: 'rgba(239,68,68,0.1)',
-              border: '1px solid rgba(239,68,68,0.3)',
-              borderRadius: 8,
-              padding: '8px 12px',
-              color: '#f87171',
-              fontSize: '0.83rem',
-              marginBottom: 14,
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: 20,
             }}
           >
-            {error}
+            <h2 style={{ fontWeight: 800, fontSize: '1.05rem' }}>
+              {mode === 'create' ? 'Tambah Pengguna' : 'Edit Pengguna'}
+            </h2>
+            <button className="btn btn-ghost btn-sm" onClick={onClose}>
+              <X size={16} />
+            </button>
           </div>
-        )}
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <div>
-            <label className="label">Nama</label>
-            <input
-              className="input"
-              value={form.name}
-              onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-              placeholder="Nama lengkap"
-            />
-          </div>
-          <div>
-            <label className="label">Email</label>
-            <input
-              className="input"
-              type="email"
-              value={form.email}
-              onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
-              placeholder="email@domain.com"
-            />
-          </div>
-          {mode === 'create' && (
-            <div>
-              <label className="label">Password</label>
-              <PasswordInput
-                value={form.password}
-                onChange={v => setForm(f => ({ ...f, password: v }))}
-              />
+          {error && (
+            <div
+              style={{
+                background: 'rgba(239,68,68,0.1)',
+                border: '1px solid rgba(239,68,68,0.3)',
+                borderRadius: 8,
+                padding: '8px 12px',
+                color: '#f87171',
+                fontSize: '0.83rem',
+                marginBottom: 14,
+              }}
+            >
+              {error}
             </div>
           )}
 
-          <div style={{ borderTop: '1px solid var(--border)', paddingTop: 12 }}>
-            <StoreAssigner
-              value={form.stores}
-              onChange={s => setForm(f => ({ ...f, stores: s }))}
-              roles={roles}
-              stores={stores}
-            />
-          </div>
-        </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div>
+              <label className="label">Nama</label>
+              <input
+                className="input"
+                value={form.name}
+                onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                placeholder="Nama lengkap"
+              />
+            </div>
+            <div>
+              <label className="label">Email</label>
+              <input
+                className="input"
+                type="email"
+                value={form.email}
+                onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
+                placeholder="email@domain.com"
+              />
+            </div>
+            {mode === 'create' && (
+              <div>
+                <label className="label">Password</label>
+                <PasswordInput
+                  value={form.password}
+                  onChange={v => setForm(f => ({ ...f, password: v }))}
+                />
+              </div>
+            )}
 
-        <div style={{ display: 'flex', gap: 8, marginTop: 20 }}>
-          <button
-            className="btn btn-secondary"
-            style={{ flex: 1 }}
-            onClick={onClose}
-            disabled={loading}
-          >
-            Batal
-          </button>
-          <button
-            className="btn btn-primary"
-            style={{ flex: 1 }}
-            onClick={handleSubmit}
-            disabled={loading}
-          >
-            {loading ? <Loader2 size={14} className="loading-spin" /> : null}
-            {loading ? 'Menyimpan...' : mode === 'create' ? 'Buat Pengguna' : 'Simpan'}
-          </button>
-        </div>
+            <div style={{ borderTop: '1px solid var(--border)', paddingTop: 12 }}>
+              <StoreAssigner
+                value={form.stores}
+                onChange={s => setForm(f => ({ ...f, stores: s }))}
+                roles={roles}
+                stores={stores}
+              />
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', gap: 8, marginTop: 20 }}>
+            <button
+              className="btn btn-secondary"
+              style={{ flex: 1 }}
+              onClick={onClose}
+              disabled={loading}
+            >
+              Batal
+            </button>
+            <button
+              className="btn btn-primary"
+              style={{ flex: 1 }}
+              onClick={handleSubmit}
+              disabled={loading}
+            >
+              {loading ? <Loader2 size={14} className="loading-spin" /> : null}
+              {loading ? 'Menyimpan...' : mode === 'create' ? 'Buat Pengguna' : 'Simpan'}
+            </button>
+          </div>
         </div>
       </div>
     </Portal>
@@ -463,52 +463,52 @@ function ResetPasswordModal({
   return (
     <Portal>
       <div className="modal-overlay" style={{ zIndex: 5000 }} onClick={onClose}>
-      <div className="modal-box" style={{ maxWidth: 380 }} onClick={e => e.stopPropagation()}>
-        <div style={{ textAlign: 'center', padding: '8px 0 16px' }}>
-          <KeyRound size={28} style={{ color: '#6366f1', marginBottom: 12 }} />
-          <h2 style={{ fontWeight: 800, marginBottom: 4 }}>Reset Password</h2>
-          <p style={{ fontSize: '0.82rem', color: 'var(--text-2)' }}>{user.name}</p>
-        </div>
-        {error && (
-          <div
-            style={{
-              background: 'rgba(239,68,68,0.1)',
-              borderRadius: 8,
-              padding: '8px 12px',
-              color: '#f87171',
-              fontSize: '0.82rem',
-              marginBottom: 12,
-            }}
-          >
-            {error}
+        <div className="modal-box" style={{ maxWidth: 380 }} onClick={e => e.stopPropagation()}>
+          <div style={{ textAlign: 'center', padding: '8px 0 16px' }}>
+            <KeyRound size={28} style={{ color: '#6366f1', marginBottom: 12 }} />
+            <h2 style={{ fontWeight: 800, marginBottom: 4 }}>Reset Password</h2>
+            <p style={{ fontSize: '0.82rem', color: 'var(--text-2)' }}>{user.name}</p>
           </div>
-        )}
-        <div style={{ marginBottom: 16 }}>
-          <label className="label">Password Baru</label>
-          <PasswordInput value={pw} onChange={setPw} placeholder="Min. 6 karakter" />
-        </div>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button
-            className="btn btn-secondary"
-            style={{ flex: 1 }}
-            onClick={onClose}
-            disabled={loading}
-          >
-            Batal
-          </button>
-          <button
-            className="btn btn-primary"
-            style={{ flex: 1 }}
-            onClick={handleReset}
-            disabled={loading}
-          >
-            {loading ? <Loader2 size={14} className="loading-spin" /> : <KeyRound size={14} />}
-            {loading ? 'Menyimpan...' : 'Simpan'}
-          </button>
+          {error && (
+            <div
+              style={{
+                background: 'rgba(239,68,68,0.1)',
+                borderRadius: 8,
+                padding: '8px 12px',
+                color: '#f87171',
+                fontSize: '0.82rem',
+                marginBottom: 12,
+              }}
+            >
+              {error}
+            </div>
+          )}
+          <div style={{ marginBottom: 16 }}>
+            <label className="label">Password Baru</label>
+            <PasswordInput value={pw} onChange={setPw} placeholder="Min. 6 karakter" />
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button
+              className="btn btn-secondary"
+              style={{ flex: 1 }}
+              onClick={onClose}
+              disabled={loading}
+            >
+              Batal
+            </button>
+            <button
+              className="btn btn-primary"
+              style={{ flex: 1 }}
+              onClick={handleReset}
+              disabled={loading}
+            >
+              {loading ? <Loader2 size={14} className="loading-spin" /> : <KeyRound size={14} />}
+              {loading ? 'Menyimpan...' : 'Simpan'}
+            </button>
+          </div>
         </div>
       </div>
-    </div>
-  </Portal>
+    </Portal>
   );
 }
 
@@ -537,49 +537,49 @@ function DeactivateConfirm({
   return (
     <Portal>
       <div className="modal-overlay" style={{ zIndex: 5000 }} onClick={onClose}>
-      <div className="modal-box" style={{ maxWidth: 400 }} onClick={e => e.stopPropagation()}>
-        <div style={{ textAlign: 'center', padding: '8px 0 16px' }}>
-          <Archive size={28} style={{ color: '#f59e0b', marginBottom: 12 }} />
-          <h2 style={{ fontWeight: 800, marginBottom: 8 }}>Nonaktifkan Pengguna?</h2>
-          <p style={{ color: 'var(--text-2)', fontSize: '0.875rem', lineHeight: 1.6 }}>
-            <strong>{user.name}</strong> akan diarsipkan dan tidak dapat login. Data dan riwayat
-            transaksi tetap tersimpan.
-          </p>
-        </div>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button
-            className="btn btn-secondary"
-            style={{ flex: 1 }}
-            onClick={onClose}
-            disabled={loading}
-          >
-            Batal
-          </button>
-          <button
-            style={{
-              flex: 1,
-              background: '#f59e0b',
-              color: '#fff',
-              border: 'none',
-              borderRadius: 8,
-              padding: '8px 0',
-              fontWeight: 700,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 6,
-            }}
-            onClick={handle}
-            disabled={loading}
-          >
-            {loading ? <Loader2 size={14} className="loading-spin" /> : <Archive size={14} />}
-            {loading ? 'Memproses...' : 'Ya, Nonaktifkan'}
-          </button>
+        <div className="modal-box" style={{ maxWidth: 400 }} onClick={e => e.stopPropagation()}>
+          <div style={{ textAlign: 'center', padding: '8px 0 16px' }}>
+            <Archive size={28} style={{ color: '#f59e0b', marginBottom: 12 }} />
+            <h2 style={{ fontWeight: 800, marginBottom: 8 }}>Nonaktifkan Pengguna?</h2>
+            <p style={{ color: 'var(--text-2)', fontSize: '0.875rem', lineHeight: 1.6 }}>
+              <strong>{user.name}</strong> akan diarsipkan dan tidak dapat login. Data dan riwayat
+              transaksi tetap tersimpan.
+            </p>
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button
+              className="btn btn-secondary"
+              style={{ flex: 1 }}
+              onClick={onClose}
+              disabled={loading}
+            >
+              Batal
+            </button>
+            <button
+              style={{
+                flex: 1,
+                background: '#f59e0b',
+                color: '#fff',
+                border: 'none',
+                borderRadius: 8,
+                padding: '8px 0',
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 6,
+              }}
+              onClick={handle}
+              disabled={loading}
+            >
+              {loading ? <Loader2 size={14} className="loading-spin" /> : <Archive size={14} />}
+              {loading ? 'Memproses...' : 'Ya, Nonaktifkan'}
+            </button>
+          </div>
         </div>
       </div>
-    </div>
-  </Portal>
+    </Portal>
   );
 }
 

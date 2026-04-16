@@ -193,88 +193,88 @@ export default function DatePicker({
               zIndex: 9999,
             }}
           >
-          {/* Quick Presets Sidebar */}
-          {showPresets && (
-            <div className="w-36 bg-elevated/40 border-r border-[var(--border)] p-4 flex flex-col gap-1.5 shrink-0">
-              <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-3 mb-3 px-1">
-                <Zap size={10} className="text-accent-em" />
-                CEPAT
-              </div>
-              {presets.map(p => (
-                <button
-                  key={p.label}
-                  type="button"
-                  onClick={() => {
-                    const [y, m, d] = p.date.split('-').map(Number);
-                    handleDateSelect(d, m - 1, y);
-                  }}
-                  className="w-full text-left px-3 py-2 rounded-lg text-xs font-semibold text-2 hover:bg-surface-hv hover:text-accent-em transition-all"
-                >
-                  {p.label}
-                </button>
-              ))}
-            </div>
-          )}
-
-          <div className="p-6 flex-1">
-            {/* Header */}
-            <div className="flex justify-between items-center mb-6">
-              <div className="text-sm font-black text-1 tracking-tight flex items-baseline gap-1">
-                {MONTH_NAMES[month]}{' '}
-                <span className="text-[var(--text-3)] font-medium text-xs ml-1">{year}</span>
-              </div>
-              <div className="flex gap-1.5">
-                <button
-                  onClick={handlePrevMonth}
-                  className="p-1.5 hover:bg-surface-hv rounded-lg transition-colors border border-transparent hover:border-[var(--border-md)]"
-                  type="button"
-                >
-                  <ChevronLeft size={16} />
-                </button>
-                <button
-                  onClick={handleNextMonth}
-                  className="p-1.5 hover:bg-surface-hv rounded-lg transition-colors border border-transparent hover:border-[var(--border-md)]"
-                  type="button"
-                >
-                  <ChevronRight size={16} />
-                </button>
-              </div>
-            </div>
-
-            {/* Week Days */}
-            <div className="grid grid-cols-7 mb-4">
-              {WEEK_DAYS.map((d, i) => (
-                <div
-                  key={i}
-                  className="text-center text-[10px] font-black text-3 uppercase tracking-tighter opacity-50"
-                >
-                  {d}
+            {/* Quick Presets Sidebar */}
+            {showPresets && (
+              <div className="w-36 bg-elevated/40 border-r border-[var(--border)] p-4 flex flex-col gap-1.5 shrink-0">
+                <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-3 mb-3 px-1">
+                  <Zap size={10} className="text-accent-em" />
+                  CEPAT
                 </div>
-              ))}
-            </div>
-
-            {/* Calendar Grid */}
-            <div className="grid grid-cols-7 gap-1">
-              {Array.from({ length: firstDayOfMonth }).map((_, i) => (
-                <div
-                  key={`prev-${i}`}
-                  className="h-9 flex items-center justify-center text-[11px] text-3 opacity-15 pointer-events-none"
-                >
-                  {prevMonthDays - firstDayOfMonth + i + 1}
-                </div>
-              ))}
-
-              {Array.from({ length: daysInMonth }).map((_, i) => {
-                const d = i + 1;
-                const selected = isSelected(d);
-                const today = isToday(d);
-
-                return (
+                {presets.map(p => (
                   <button
-                    key={d}
+                    key={p.label}
                     type="button"
-                    onClick={() => handleDateSelect(d)}
-                    className={`h-9 w-9 flex items-center justify-center rounded-xl text-[12px] font-bold transition-all duration-200 relative group
+                    onClick={() => {
+                      const [y, m, d] = p.date.split('-').map(Number);
+                      handleDateSelect(d, m - 1, y);
+                    }}
+                    className="w-full text-left px-3 py-2 rounded-lg text-xs font-semibold text-2 hover:bg-surface-hv hover:text-accent-em transition-all"
+                  >
+                    {p.label}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            <div className="p-6 flex-1">
+              {/* Header */}
+              <div className="flex justify-between items-center mb-6">
+                <div className="text-sm font-black text-1 tracking-tight flex items-baseline gap-1">
+                  {MONTH_NAMES[month]}{' '}
+                  <span className="text-[var(--text-3)] font-medium text-xs ml-1">{year}</span>
+                </div>
+                <div className="flex gap-1.5">
+                  <button
+                    onClick={handlePrevMonth}
+                    className="p-1.5 hover:bg-surface-hv rounded-lg transition-colors border border-transparent hover:border-[var(--border-md)]"
+                    type="button"
+                  >
+                    <ChevronLeft size={16} />
+                  </button>
+                  <button
+                    onClick={handleNextMonth}
+                    className="p-1.5 hover:bg-surface-hv rounded-lg transition-colors border border-transparent hover:border-[var(--border-md)]"
+                    type="button"
+                  >
+                    <ChevronRight size={16} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Week Days */}
+              <div className="grid grid-cols-7 mb-4">
+                {WEEK_DAYS.map((d, i) => (
+                  <div
+                    key={i}
+                    className="text-center text-[10px] font-black text-3 uppercase tracking-tighter opacity-50"
+                  >
+                    {d}
+                  </div>
+                ))}
+              </div>
+
+              {/* Calendar Grid */}
+              <div className="grid grid-cols-7 gap-1">
+                {Array.from({ length: firstDayOfMonth }).map((_, i) => (
+                  <div
+                    key={`prev-${i}`}
+                    className="h-9 flex items-center justify-center text-[11px] text-3 opacity-15 pointer-events-none"
+                  >
+                    {prevMonthDays - firstDayOfMonth + i + 1}
+                  </div>
+                ))}
+
+                {Array.from({ length: daysInMonth }).map((_, i) => {
+                  const d = i + 1;
+                  const selected = isSelected(d);
+                  const today = isToday(d);
+
+                  return (
+                    <button
+                      key={d}
+                      type="button"
+                      onClick={() => handleDateSelect(d)}
+                      className={`h-9 w-9 flex items-center justify-center rounded-xl text-[12px] font-bold transition-all duration-200 relative group
                       ${
                         selected
                           ? 'text-white scale-105 z-10 shadow-lg'
@@ -284,42 +284,42 @@ export default function DatePicker({
                       }
                       focus-visible:ring-2 focus-visible:ring-accent-em focus-visible:ring-offset-2 focus-visible:outline-none focus:outline-none
                     `}
-                    style={
-                      selected
-                        ? {
-                            background:
-                              'linear-gradient(135deg, var(--accent-em), var(--accent-em-dk))',
-                          }
-                        : {}
-                    }
-                  >
-                    {d}
-                    {!selected && today && (
-                      <span className="absolute bottom-1 right-1 w-1 h-1 rounded-full bg-accent-em" />
-                    )}
-                  </button>
-                );
-              })}
+                      style={
+                        selected
+                          ? {
+                              background:
+                                'linear-gradient(135deg, var(--accent-em), var(--accent-em-dk))',
+                            }
+                          : {}
+                      }
+                    >
+                      {d}
+                      {!selected && today && (
+                        <span className="absolute bottom-1 right-1 w-1 h-1 rounded-full bg-accent-em" />
+                      )}
+                    </button>
+                  );
+                })}
 
-              {/* Pad with next month days */}
-              {Array.from({
-                length:
-                  firstDayOfMonth + daysInMonth > 35
-                    ? 42 - (firstDayOfMonth + daysInMonth)
-                    : 35 - (firstDayOfMonth + daysInMonth),
-              }).map((_, i) => (
-                <div
-                  key={`next-${i}`}
-                  className="h-9 flex items-center justify-center text-[11px] text-3 opacity-15 pointer-events-none"
-                >
-                  {i + 1}
-                </div>
-              ))}
+                {/* Pad with next month days */}
+                {Array.from({
+                  length:
+                    firstDayOfMonth + daysInMonth > 35
+                      ? 42 - (firstDayOfMonth + daysInMonth)
+                      : 35 - (firstDayOfMonth + daysInMonth),
+                }).map((_, i) => (
+                  <div
+                    key={`next-${i}`}
+                    className="h-9 flex items-center justify-center text-[11px] text-3 opacity-15 pointer-events-none"
+                  >
+                    {i + 1}
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
-      </Portal>
-    )}
+        </Portal>
+      )}
     </div>
   );
 }

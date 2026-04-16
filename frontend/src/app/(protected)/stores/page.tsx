@@ -586,157 +586,110 @@ export default function StoresPage() {
               padding: 16,
             }}
           >
-          <div
-            className="card"
-            style={{ width: '100%', maxWidth: 520, padding: 28, animation: 'slideIn 0.2s ease' }}
-          >
-            {/* Modal header */}
             <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                marginBottom: 22,
-              }}
+              className="card"
+              style={{ width: '100%', maxWidth: 520, padding: 28, animation: 'slideIn 0.2s ease' }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <div
-                  style={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: 10,
-                    background: 'rgba(16,185,129,0.12)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <Store size={18} style={{ color: 'var(--accent-em)' }} />
-                </div>
-                <div>
-                  <div style={{ fontWeight: 700, fontSize: '1rem' }}>
-                    {modal.mode === 'create' ? 'Tambah Toko Baru' : `Edit: ${modal.store?.name}`}
-                  </div>
-                  <div style={{ fontSize: '0.72rem', color: 'var(--text-3)' }}>
-                    {modal.mode === 'create'
-                      ? 'Isi informasi toko baru'
-                      : 'Perbarui informasi toko'}
-                  </div>
-                </div>
-              </div>
-              <button onClick={closeModal} className="btn btn-ghost btn-sm" style={{ padding: 6 }}>
-                <X size={16} />
-              </button>
-            </div>
-
-            <form onSubmit={handleSubmit}>
-              {/* Store Type selector */}
-              <div style={{ marginBottom: 18 }}>
-                <label
-                  style={{
-                    display: 'block',
-                    fontSize: '0.8rem',
-                    fontWeight: 600,
-                    marginBottom: 8,
-                    color: 'var(--text-2)',
-                  }}
-                >
-                  Tipe Toko <span style={{ color: '#ef4444' }}>*</span>
-                </label>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                  {(['retail', 'restaurant'] as const).map(t => {
-                    const cfg = STORE_TYPE_CONFIG[t];
-                    const Icon = cfg.icon;
-                    const active = form.store_type === t;
-                    return (
-                      <button
-                        key={t}
-                        type="button"
-                        onClick={() => setForm(f => ({ ...f, store_type: t }))}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 10,
-                          padding: '12px 14px',
-                          borderRadius: 10,
-                          cursor: 'pointer',
-                          background: active ? cfg.bg : 'var(--bg-elevated)',
-                          border: active ? `1.5px solid ${cfg.color}` : '1.5px solid var(--border)',
-                          color: active ? cfg.color : 'var(--text-2)',
-                          transition: 'all 0.15s ease',
-                        }}
-                      >
-                        <Icon size={18} />
-                        <div style={{ textAlign: 'left' }}>
-                          <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>{cfg.label}</div>
-                          <div style={{ fontSize: '0.68rem', opacity: 0.7 }}>
-                            {t === 'retail' ? 'Minimarket, toko, dll.' : 'Restoran, kafe, dll.'}
-                          </div>
-                        </div>
-                        {active && (
-                          <Check size={14} style={{ marginLeft: 'auto', flexShrink: 0 }} />
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Name */}
-              <div style={{ marginBottom: 14 }}>
-                <label
-                  style={{
-                    display: 'block',
-                    fontSize: '0.8rem',
-                    fontWeight: 600,
-                    marginBottom: 5,
-                    color: 'var(--text-2)',
-                  }}
-                >
-                  Nama Toko <span style={{ color: '#ef4444' }}>*</span>
-                </label>
-                <input
-                  className="input"
-                  placeholder="cth. Warung Kopi Makmur"
-                  autoFocus
-                  value={form.name}
-                  onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                />
-              </div>
-
-              {/* Address */}
-              <div style={{ marginBottom: 14 }}>
-                <label
-                  style={{
-                    display: 'block',
-                    fontSize: '0.8rem',
-                    fontWeight: 600,
-                    marginBottom: 5,
-                    color: 'var(--text-2)',
-                  }}
-                >
-                  Alamat
-                </label>
-                <textarea
-                  className="input"
-                  rows={2}
-                  placeholder="Jl. Contoh No. 1, Jakarta"
-                  value={form.address}
-                  onChange={e => setForm(f => ({ ...f, address: e.target.value }))}
-                  style={{ resize: 'vertical', minHeight: 52 }}
-                />
-              </div>
-
-              {/* Phone & Currency */}
+              {/* Modal header */}
               <div
                 style={{
-                  display: 'grid',
-                  gridTemplateColumns: '1fr 1fr',
-                  gap: 12,
-                  marginBottom: 14,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginBottom: 22,
                 }}
               >
-                <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div
+                    style={{
+                      width: 36,
+                      height: 36,
+                      borderRadius: 10,
+                      background: 'rgba(16,185,129,0.12)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <Store size={18} style={{ color: 'var(--accent-em)' }} />
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: 700, fontSize: '1rem' }}>
+                      {modal.mode === 'create' ? 'Tambah Toko Baru' : `Edit: ${modal.store?.name}`}
+                    </div>
+                    <div style={{ fontSize: '0.72rem', color: 'var(--text-3)' }}>
+                      {modal.mode === 'create'
+                        ? 'Isi informasi toko baru'
+                        : 'Perbarui informasi toko'}
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={closeModal}
+                  className="btn btn-ghost btn-sm"
+                  style={{ padding: 6 }}
+                >
+                  <X size={16} />
+                </button>
+              </div>
+
+              <form onSubmit={handleSubmit}>
+                {/* Store Type selector */}
+                <div style={{ marginBottom: 18 }}>
+                  <label
+                    style={{
+                      display: 'block',
+                      fontSize: '0.8rem',
+                      fontWeight: 600,
+                      marginBottom: 8,
+                      color: 'var(--text-2)',
+                    }}
+                  >
+                    Tipe Toko <span style={{ color: '#ef4444' }}>*</span>
+                  </label>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                    {(['retail', 'restaurant'] as const).map(t => {
+                      const cfg = STORE_TYPE_CONFIG[t];
+                      const Icon = cfg.icon;
+                      const active = form.store_type === t;
+                      return (
+                        <button
+                          key={t}
+                          type="button"
+                          onClick={() => setForm(f => ({ ...f, store_type: t }))}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 10,
+                            padding: '12px 14px',
+                            borderRadius: 10,
+                            cursor: 'pointer',
+                            background: active ? cfg.bg : 'var(--bg-elevated)',
+                            border: active
+                              ? `1.5px solid ${cfg.color}`
+                              : '1.5px solid var(--border)',
+                            color: active ? cfg.color : 'var(--text-2)',
+                            transition: 'all 0.15s ease',
+                          }}
+                        >
+                          <Icon size={18} />
+                          <div style={{ textAlign: 'left' }}>
+                            <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>{cfg.label}</div>
+                            <div style={{ fontSize: '0.68rem', opacity: 0.7 }}>
+                              {t === 'retail' ? 'Minimarket, toko, dll.' : 'Restoran, kafe, dll.'}
+                            </div>
+                          </div>
+                          {active && (
+                            <Check size={14} style={{ marginLeft: 'auto', flexShrink: 0 }} />
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Name */}
+                <div style={{ marginBottom: 14 }}>
                   <label
                     style={{
                       display: 'block',
@@ -746,16 +699,19 @@ export default function StoresPage() {
                       color: 'var(--text-2)',
                     }}
                   >
-                    No. Telepon
+                    Nama Toko <span style={{ color: '#ef4444' }}>*</span>
                   </label>
                   <input
                     className="input"
-                    placeholder="021-12345678"
-                    value={form.phone}
-                    onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
+                    placeholder="cth. Warung Kopi Makmur"
+                    autoFocus
+                    value={form.name}
+                    onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
                   />
                 </div>
-                <div>
+
+                {/* Address */}
+                <div style={{ marginBottom: 14 }}>
                   <label
                     style={{
                       display: 'block',
@@ -765,132 +721,183 @@ export default function StoresPage() {
                       color: 'var(--text-2)',
                     }}
                   >
-                    Mata Uang
+                    Alamat
                   </label>
-                  <select
+                  <textarea
                     className="input"
-                    value={form.currency}
-                    onChange={e => setForm(f => ({ ...f, currency: e.target.value }))}
-                  >
-                    <option value="IDR">IDR — Rupiah</option>
-                    <option value="USD">USD — US Dollar</option>
-                    <option value="SGD">SGD — Singapore Dollar</option>
-                    <option value="MYR">MYR — Ringgit</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* NPWP */}
-              <div style={{ marginBottom: 20 }}>
-                <label
-                  style={{
-                    display: 'block',
-                    fontSize: '0.8rem',
-                    fontWeight: 600,
-                    marginBottom: 5,
-                    color: 'var(--text-2)',
-                  }}
-                >
-                  NPWP{' '}
-                  <span style={{ fontSize: '0.72rem', color: 'var(--text-3)', fontWeight: 400 }}>
-                    (opsional)
-                  </span>
-                </label>
-                <input
-                  className="input"
-                  placeholder="00.000.000.0-000.000"
-                  value={form.tax_number}
-                  onChange={e => setForm(f => ({ ...f, tax_number: e.target.value }))}
-                />
-              </div>
-
-              {/* Default PPN */}
-              <div style={{ marginBottom: 20 }}>
-                <label
-                  style={{
-                    display: 'block',
-                    fontSize: '0.8rem',
-                    fontWeight: 600,
-                    marginBottom: 5,
-                    color: 'var(--text-2)',
-                  }}
-                >
-                  Default PPN Toko (%)
-                </label>
-                <div style={{ position: 'relative' }}>
-                  <input
-                    type="number"
-                    min="0"
-                    max="100"
-                    step="0.01"
-                    className="input"
-                    placeholder="Contoh: 11"
-                    value={form.default_tax_percentage}
-                    onChange={e =>
-                      setForm(f => ({
-                        ...f,
-                        default_tax_percentage: e.target.value === '' ? '' : Number(e.target.value),
-                      }))
-                    }
+                    rows={2}
+                    placeholder="Jl. Contoh No. 1, Jakarta"
+                    value={form.address}
+                    onChange={e => setForm(f => ({ ...f, address: e.target.value }))}
+                    style={{ resize: 'vertical', minHeight: 52 }}
                   />
-                  <span
-                    style={{
-                      position: 'absolute',
-                      right: 14,
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      color: 'var(--text-3)',
-                      fontSize: '0.85rem',
-                    }}
-                  >
-                    %
-                  </span>
                 </div>
-              </div>
 
-              {formError && (
+                {/* Phone & Currency */}
                 <div
                   style={{
-                    background: 'rgba(239,68,68,0.12)',
-                    border: '1px solid rgba(239,68,68,0.3)',
-                    borderRadius: 8,
-                    padding: '10px 14px',
-                    marginBottom: 16,
-                    fontSize: '0.82rem',
-                    color: '#ef4444',
+                    display: 'grid',
+                    gridTemplateColumns: '1fr 1fr',
+                    gap: 12,
+                    marginBottom: 14,
                   }}
                 >
-                  {formError}
+                  <div>
+                    <label
+                      style={{
+                        display: 'block',
+                        fontSize: '0.8rem',
+                        fontWeight: 600,
+                        marginBottom: 5,
+                        color: 'var(--text-2)',
+                      }}
+                    >
+                      No. Telepon
+                    </label>
+                    <input
+                      className="input"
+                      placeholder="021-12345678"
+                      value={form.phone}
+                      onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
+                    />
+                  </div>
+                  <div>
+                    <label
+                      style={{
+                        display: 'block',
+                        fontSize: '0.8rem',
+                        fontWeight: 600,
+                        marginBottom: 5,
+                        color: 'var(--text-2)',
+                      }}
+                    >
+                      Mata Uang
+                    </label>
+                    <select
+                      className="input"
+                      value={form.currency}
+                      onChange={e => setForm(f => ({ ...f, currency: e.target.value }))}
+                    >
+                      <option value="IDR">IDR — Rupiah</option>
+                      <option value="USD">USD — US Dollar</option>
+                      <option value="SGD">SGD — Singapore Dollar</option>
+                      <option value="MYR">MYR — Ringgit</option>
+                    </select>
+                  </div>
                 </div>
-              )}
 
-              <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-                <button type="button" className="btn btn-ghost" onClick={closeModal}>
-                  Batal
-                </button>
-                <button
-                  type="submit"
-                  className="btn btn-primary"
-                  disabled={submitting}
-                  style={{ gap: 8 }}
-                >
-                  {submitting ? (
-                    <>
-                      <Loader2 size={14} className="loading-spin" /> Menyimpan...
-                    </>
-                  ) : (
-                    <>
-                      <Check size={14} />{' '}
-                      {modal.mode === 'create' ? 'Buat Toko' : 'Simpan Perubahan'}
-                    </>
-                  )}
-                </button>
-              </div>
-            </form>
+                {/* NPWP */}
+                <div style={{ marginBottom: 20 }}>
+                  <label
+                    style={{
+                      display: 'block',
+                      fontSize: '0.8rem',
+                      fontWeight: 600,
+                      marginBottom: 5,
+                      color: 'var(--text-2)',
+                    }}
+                  >
+                    NPWP{' '}
+                    <span style={{ fontSize: '0.72rem', color: 'var(--text-3)', fontWeight: 400 }}>
+                      (opsional)
+                    </span>
+                  </label>
+                  <input
+                    className="input"
+                    placeholder="00.000.000.0-000.000"
+                    value={form.tax_number}
+                    onChange={e => setForm(f => ({ ...f, tax_number: e.target.value }))}
+                  />
+                </div>
+
+                {/* Default PPN */}
+                <div style={{ marginBottom: 20 }}>
+                  <label
+                    style={{
+                      display: 'block',
+                      fontSize: '0.8rem',
+                      fontWeight: 600,
+                      marginBottom: 5,
+                      color: 'var(--text-2)',
+                    }}
+                  >
+                    Default PPN Toko (%)
+                  </label>
+                  <div style={{ position: 'relative' }}>
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="0.01"
+                      className="input"
+                      placeholder="Contoh: 11"
+                      value={form.default_tax_percentage}
+                      onChange={e =>
+                        setForm(f => ({
+                          ...f,
+                          default_tax_percentage:
+                            e.target.value === '' ? '' : Number(e.target.value),
+                        }))
+                      }
+                    />
+                    <span
+                      style={{
+                        position: 'absolute',
+                        right: 14,
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        color: 'var(--text-3)',
+                        fontSize: '0.85rem',
+                      }}
+                    >
+                      %
+                    </span>
+                  </div>
+                </div>
+
+                {formError && (
+                  <div
+                    style={{
+                      background: 'rgba(239,68,68,0.12)',
+                      border: '1px solid rgba(239,68,68,0.3)',
+                      borderRadius: 8,
+                      padding: '10px 14px',
+                      marginBottom: 16,
+                      fontSize: '0.82rem',
+                      color: '#ef4444',
+                    }}
+                  >
+                    {formError}
+                  </div>
+                )}
+
+                <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+                  <button type="button" className="btn btn-ghost" onClick={closeModal}>
+                    Batal
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn btn-primary"
+                    disabled={submitting}
+                    style={{ gap: 8 }}
+                  >
+                    {submitting ? (
+                      <>
+                        <Loader2 size={14} className="loading-spin" /> Menyimpan...
+                      </>
+                    ) : (
+                      <>
+                        <Check size={14} />{' '}
+                        {modal.mode === 'create' ? 'Buat Toko' : 'Simpan Perubahan'}
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
-        </div>
-      </Portal>
-    )}
+        </Portal>
+      )}
 
       {/* ── Delete Confirmation ─────────────────────────────────────────────── */}
       {deleteConfirm.open && deleteConfirm.store && (
@@ -908,86 +915,86 @@ export default function StoresPage() {
               padding: 16,
             }}
           >
-          <div
-            className="card"
-            style={{
-              width: '100%',
-              maxWidth: 400,
-              padding: 28,
-              textAlign: 'center',
-              animation: 'slideIn 0.2s ease',
-            }}
-          >
             <div
+              className="card"
               style={{
-                width: 52,
-                height: 52,
-                borderRadius: '50%',
-                background: 'rgba(239,68,68,0.15)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                margin: '0 auto 16px',
+                width: '100%',
+                maxWidth: 400,
+                padding: 28,
+                textAlign: 'center',
+                animation: 'slideIn 0.2s ease',
               }}
             >
-              <AlertTriangle size={24} style={{ color: '#ef4444' }} />
-            </div>
-            <div style={{ fontWeight: 700, fontSize: '1rem', marginBottom: 8 }}>Hapus Toko?</div>
-            <div
-              style={{
-                fontSize: '0.85rem',
-                color: 'var(--text-2)',
-                lineHeight: 1.7,
-                marginBottom: 6,
-              }}
-            >
-              Toko{' '}
-              <strong style={{ color: 'var(--text-1)' }}>
-                &ldquo;{deleteConfirm.store.name}&rdquo;
-              </strong>{' '}
-              akan dihapus secara <em>soft-delete</em>.
-            </div>
-            <div
-              style={{
-                fontSize: '0.78rem',
-                color: 'var(--text-3)',
-                background: 'rgba(245,158,11,0.08)',
-                border: '1px solid rgba(245,158,11,0.2)',
-                borderRadius: 8,
-                padding: '8px 12px',
-                marginBottom: 20,
-                textAlign: 'left',
-              }}
-            >
-              ⚠️ Data produk, transaksi, dan anggota toko ini tidak akan terhapus — hanya toko yang
-              tersembunyi.
-            </div>
-            <div style={{ display: 'flex', gap: 10 }}>
-              <button
-                className="btn btn-ghost"
-                onClick={() => setDeleteConfirm({ open: false })}
-                style={{ flex: 1 }}
-              >
-                Batal
-              </button>
-              <button
-                className="btn"
-                onClick={handleDelete}
+              <div
                 style={{
-                  flex: 1,
-                  gap: 8,
+                  width: 52,
+                  height: 52,
+                  borderRadius: '50%',
                   background: 'rgba(239,68,68,0.15)',
-                  color: '#ef4444',
-                  border: '1px solid rgba(239,68,68,0.3)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  margin: '0 auto 16px',
                 }}
               >
-                <Trash2 size={14} /> Hapus
-              </button>
+                <AlertTriangle size={24} style={{ color: '#ef4444' }} />
+              </div>
+              <div style={{ fontWeight: 700, fontSize: '1rem', marginBottom: 8 }}>Hapus Toko?</div>
+              <div
+                style={{
+                  fontSize: '0.85rem',
+                  color: 'var(--text-2)',
+                  lineHeight: 1.7,
+                  marginBottom: 6,
+                }}
+              >
+                Toko{' '}
+                <strong style={{ color: 'var(--text-1)' }}>
+                  &ldquo;{deleteConfirm.store.name}&rdquo;
+                </strong>{' '}
+                akan dihapus secara <em>soft-delete</em>.
+              </div>
+              <div
+                style={{
+                  fontSize: '0.78rem',
+                  color: 'var(--text-3)',
+                  background: 'rgba(245,158,11,0.08)',
+                  border: '1px solid rgba(245,158,11,0.2)',
+                  borderRadius: 8,
+                  padding: '8px 12px',
+                  marginBottom: 20,
+                  textAlign: 'left',
+                }}
+              >
+                ⚠️ Data produk, transaksi, dan anggota toko ini tidak akan terhapus — hanya toko
+                yang tersembunyi.
+              </div>
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button
+                  className="btn btn-ghost"
+                  onClick={() => setDeleteConfirm({ open: false })}
+                  style={{ flex: 1 }}
+                >
+                  Batal
+                </button>
+                <button
+                  className="btn"
+                  onClick={handleDelete}
+                  style={{
+                    flex: 1,
+                    gap: 8,
+                    background: 'rgba(239,68,68,0.15)',
+                    color: '#ef4444',
+                    border: '1px solid rgba(239,68,68,0.3)',
+                  }}
+                >
+                  <Trash2 size={14} /> Hapus
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      </Portal>
-    )}
+        </Portal>
+      )}
     </div>
   );
 }

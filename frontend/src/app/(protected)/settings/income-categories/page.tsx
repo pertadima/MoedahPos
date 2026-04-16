@@ -64,98 +64,101 @@ function FormModal({ initial, onSuccess, onClose }: FormModalProps) {
   return (
     <Portal>
       <div className="modal-overlay" style={{ zIndex: 5000 }} onClick={onClose}>
-      <div className="modal-box" style={{ maxWidth: 460 }} onClick={e => e.stopPropagation()}>
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: 18,
-          }}
-        >
-          <h2 style={{ fontWeight: 800 }}>
-            {isEdit ? 'Edit Kategori Pemasukan' : 'Tambah Kategori Pemasukan'}
-          </h2>
-          <button className="btn btn-ghost btn-sm" onClick={onClose}>
-            <X size={15} />
-          </button>
-        </div>
-
-        {error && (
+        <div className="modal-box" style={{ maxWidth: 460 }} onClick={e => e.stopPropagation()}>
           <div
             style={{
-              background: 'rgba(239,68,68,0.1)',
-              border: '1px solid rgba(239,68,68,0.3)',
-              borderRadius: 8,
-              padding: '8px 12px',
-              color: '#f87171',
-              fontSize: '0.83rem',
-              marginBottom: 14,
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: 18,
             }}
           >
-            {error}
+            <h2 style={{ fontWeight: 800 }}>
+              {isEdit ? 'Edit Kategori Pemasukan' : 'Tambah Kategori Pemasukan'}
+            </h2>
+            <button className="btn btn-ghost btn-sm" onClick={onClose}>
+              <X size={15} />
+            </button>
           </div>
-        )}
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <div className="input-group">
-            <label className="input-label">
-              Nama Kategori <span style={{ color: '#ef4444' }}>*</span>
-            </label>
-            <input
-              className="input"
-              value={form.name}
-              onChange={set('name')}
-              placeholder="Contoh: Investasi, Penjualan Aset"
-              autoFocus
-            />
-          </div>
-          <div className="input-group">
-            <label className="input-label">Deskripsi</label>
-            <textarea
-              className="input"
-              value={form.description}
-              onChange={set('description')}
-              rows={2}
-              placeholder="Keterangan kategori"
-              style={{ resize: 'vertical' }}
-            />
-          </div>
-          {isEdit && (
+          {error && (
             <div
-              className="input-group"
-              style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}
+              style={{
+                background: 'rgba(239,68,68,0.1)',
+                border: '1px solid rgba(239,68,68,0.3)',
+                borderRadius: 8,
+                padding: '8px 12px',
+                color: '#f87171',
+                fontSize: '0.83rem',
+                marginBottom: 14,
+              }}
             >
-              <input
-                type="checkbox"
-                checked={form.is_active}
-                onChange={set('is_active')}
-                id="is_active"
-              />
-              <label htmlFor="is_active" style={{ cursor: 'pointer', margin: 0, fontWeight: 600 }}>
-                Kategori Aktif
-              </label>
+              {error}
             </div>
           )}
-        </div>
 
-        <div style={{ display: 'flex', gap: 8, marginTop: 18 }}>
-          <button className="btn btn-secondary" style={{ flex: 1 }} onClick={onClose}>
-            Batal
-          </button>
-          <button
-            className="btn btn-primary"
-            style={{ flex: 1 }}
-            onClick={handleSave}
-            disabled={saving}
-          >
-            {saving ? <Loader2 size={14} className="loading-spin" /> : null}
-            {saving ? 'Menyimpan...' : 'Simpan'}
-          </button>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div className="input-group">
+              <label className="input-label">
+                Nama Kategori <span style={{ color: '#ef4444' }}>*</span>
+              </label>
+              <input
+                className="input"
+                value={form.name}
+                onChange={set('name')}
+                placeholder="Contoh: Investasi, Penjualan Aset"
+                autoFocus
+              />
+            </div>
+            <div className="input-group">
+              <label className="input-label">Deskripsi</label>
+              <textarea
+                className="input"
+                value={form.description}
+                onChange={set('description')}
+                rows={2}
+                placeholder="Keterangan kategori"
+                style={{ resize: 'vertical' }}
+              />
+            </div>
+            {isEdit && (
+              <div
+                className="input-group"
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}
+              >
+                <input
+                  type="checkbox"
+                  checked={form.is_active}
+                  onChange={set('is_active')}
+                  id="is_active"
+                />
+                <label
+                  htmlFor="is_active"
+                  style={{ cursor: 'pointer', margin: 0, fontWeight: 600 }}
+                >
+                  Kategori Aktif
+                </label>
+              </div>
+            )}
+          </div>
+
+          <div style={{ display: 'flex', gap: 8, marginTop: 18 }}>
+            <button className="btn btn-secondary" style={{ flex: 1 }} onClick={onClose}>
+              Batal
+            </button>
+            <button
+              className="btn btn-primary"
+              style={{ flex: 1 }}
+              onClick={handleSave}
+              disabled={saving}
+            >
+              {saving ? <Loader2 size={14} className="loading-spin" /> : null}
+              {saving ? 'Menyimpan...' : 'Simpan'}
+            </button>
+          </div>
         </div>
       </div>
-    </div>
-  </Portal>
+    </Portal>
   );
 }
 
@@ -184,49 +187,49 @@ function DeleteConfirm({
   return (
     <Portal>
       <div className="modal-overlay" style={{ zIndex: 5000 }} onClick={onClose}>
-      <div className="modal-box" style={{ maxWidth: 400 }} onClick={e => e.stopPropagation()}>
-        <div style={{ textAlign: 'center', padding: '8px 0 16px' }}>
-          <Archive size={28} style={{ color: '#f59e0b', marginBottom: 12 }} />
-          <h2 style={{ fontWeight: 800, marginBottom: 8 }}>Nonaktifkan Kategori?</h2>
-          <p style={{ color: 'var(--text-2)', fontSize: '0.875rem', lineHeight: 1.6 }}>
-            <strong>{category.name}</strong> akan dinonaktifkan dan tidak bisa dipilih pada laporan
-            baru, tetapi riwayat historis tetap aman.
-          </p>
-        </div>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button
-            className="btn btn-secondary"
-            style={{ flex: 1 }}
-            onClick={onClose}
-            disabled={loading}
-          >
-            Batal
-          </button>
-          <button
-            style={{
-              flex: 1,
-              background: '#f59e0b',
-              color: '#fff',
-              border: 'none',
-              borderRadius: 8,
-              padding: '8px 0',
-              fontWeight: 700,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 6,
-            }}
-            onClick={handleDelete}
-            disabled={loading}
-          >
-            {loading ? <Loader2 size={14} className="loading-spin" /> : <Archive size={14} />}
-            {loading ? 'Memproses...' : 'Ya, Nonaktifkan'}
-          </button>
+        <div className="modal-box" style={{ maxWidth: 400 }} onClick={e => e.stopPropagation()}>
+          <div style={{ textAlign: 'center', padding: '8px 0 16px' }}>
+            <Archive size={28} style={{ color: '#f59e0b', marginBottom: 12 }} />
+            <h2 style={{ fontWeight: 800, marginBottom: 8 }}>Nonaktifkan Kategori?</h2>
+            <p style={{ color: 'var(--text-2)', fontSize: '0.875rem', lineHeight: 1.6 }}>
+              <strong>{category.name}</strong> akan dinonaktifkan dan tidak bisa dipilih pada
+              laporan baru, tetapi riwayat historis tetap aman.
+            </p>
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button
+              className="btn btn-secondary"
+              style={{ flex: 1 }}
+              onClick={onClose}
+              disabled={loading}
+            >
+              Batal
+            </button>
+            <button
+              style={{
+                flex: 1,
+                background: '#f59e0b',
+                color: '#fff',
+                border: 'none',
+                borderRadius: 8,
+                padding: '8px 0',
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 6,
+              }}
+              onClick={handleDelete}
+              disabled={loading}
+            >
+              {loading ? <Loader2 size={14} className="loading-spin" /> : <Archive size={14} />}
+              {loading ? 'Memproses...' : 'Ya, Nonaktifkan'}
+            </button>
+          </div>
         </div>
       </div>
-    </div>
-  </Portal>
+    </Portal>
   );
 }
 
