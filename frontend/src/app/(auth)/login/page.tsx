@@ -61,7 +61,6 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPw, setShowPw] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const { login } = useAuth();
@@ -157,7 +156,14 @@ export default function LoginPage() {
             animation: 'fadeInDown 0.8s cubic-bezier(0.16, 1, 0.3, 1) both',
           }}
         >
-          <div style={{ position: 'relative', width: 130, height: 36 }}>
+          <div
+            style={{
+              position: 'relative',
+              width: 130,
+              height: 36,
+              animation: 'logo-pulse 4s ease-in-out infinite',
+            }}
+          >
             <Image
               src={mounted && isDark ? '/logo-icon-dark.svg' : '/logo-icon-light.svg'}
               alt="Moedah Logo"
@@ -356,52 +362,6 @@ export default function LoginPage() {
               </div>
             </div>
 
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                animation: 'fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.4s both',
-              }}
-            >
-              <label
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 10,
-                  cursor: 'pointer',
-                  fontSize: '0.9rem',
-                  color: 'var(--text-2)',
-                }}
-              >
-                <input
-                  type="checkbox"
-                  checked={rememberMe}
-                  onChange={e => setRememberMe(e.target.checked)}
-                  style={{
-                    width: 18,
-                    height: 18,
-                    accentColor: 'var(--brand)',
-                    cursor: 'pointer',
-                  }}
-                />
-                Tetap masuk
-              </label>
-              <button
-                type="button"
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: 'var(--brand)',
-                  fontSize: '0.9rem',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                }}
-              >
-                Lupa Sandi?
-              </button>
-            </div>
-
             <button
               type="submit"
               disabled={loading}
@@ -412,7 +372,7 @@ export default function LoginPage() {
                 borderRadius: '16px',
                 fontSize: '1rem',
                 fontWeight: 700,
-                marginTop: 8,
+                marginTop: 24, // Increased margin since middle row is gone
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -628,6 +588,11 @@ export default function LoginPage() {
         @keyframes spin {
           from { transform: rotate(0deg); }
           to { transform: rotate(360deg); }
+        }
+        @keyframes logo-pulse {
+          0% { transform: scale(1); opacity: 1; }
+          50% { transform: scale(1.05); opacity: 0.9; }
+          100% { transform: scale(1); opacity: 1; }
         }
         @keyframes fadeInUp {
           from { opacity: 0; transform: translateY(20px); }
