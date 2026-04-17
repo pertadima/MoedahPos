@@ -2,9 +2,9 @@ name: Static Analysis
 
 on:
   push:
-    branches: [main, "feature/**", "fix/**"]
+    branches: [main, "feature/**", "fix/**", "enchancement/**"]
   pull_request:
-    branches: [main]
+    branches: [main, develop]
 
 jobs:
   # ── Backend: golangci-lint ──────────────────────────────────────────────────
