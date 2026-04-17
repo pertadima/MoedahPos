@@ -9,6 +9,7 @@ Every time a task is completed, you MUST run the following commands to verify th
 - Navigate to `/backend`
 - Run `go fmt ./...`
 - Run `golangci-lint run`
+- **Database Schema:** If any changes are made to `backend/migrations`, you MUST update `backend/database.mmd` to reflect the current schema.
 - **Rule:** If linting fails, fix the code and re-run until clean.
 
 ### Frontend (Next.js)
