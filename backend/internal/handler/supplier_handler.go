@@ -17,12 +17,12 @@ import (
 
 // SupplierHandler handles supplier CRUD endpoints.
 type SupplierHandler struct {
-	supplierSvc *service.SupplierService
+	supplierSvc service.SupplierServiceInterface
 	validator   *validator.Validator
 	log         zerolog.Logger
 }
 
-func NewSupplierHandler(supplierSvc *service.SupplierService, v *validator.Validator, log zerolog.Logger) *SupplierHandler {
+func NewSupplierHandler(supplierSvc service.SupplierServiceInterface, v *validator.Validator, log zerolog.Logger) *SupplierHandler {
 	return &SupplierHandler{supplierSvc: supplierSvc, validator: v, log: log}
 }
 

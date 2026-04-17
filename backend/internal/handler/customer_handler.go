@@ -17,12 +17,12 @@ import (
 
 // CustomerHandler handles customer CRUD endpoints.
 type CustomerHandler struct {
-	svc       *service.CustomerService
+	svc       service.CustomerServiceInterface
 	validator *validator.Validator
 	log       zerolog.Logger
 }
 
-func NewCustomerHandler(svc *service.CustomerService, v *validator.Validator, log zerolog.Logger) *CustomerHandler {
+func NewCustomerHandler(svc service.CustomerServiceInterface, v *validator.Validator, log zerolog.Logger) *CustomerHandler {
 	return &CustomerHandler{svc: svc, validator: v, log: log}
 }
 

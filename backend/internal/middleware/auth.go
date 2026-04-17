@@ -13,8 +13,8 @@ import (
 type contextKey string
 
 const (
-	userIDKey contextKey = "user_id"
-	emailKey  contextKey = "email"
+	UserIDKey contextKey = "user_id"
+	EmailKey  contextKey = "email"
 )
 
 // Authenticate is a middleware that validates the Authorization: Bearer <token> header.
@@ -36,8 +36,8 @@ func Authenticate(jwtMgr *jwt.Manager) func(http.Handler) http.Handler {
 				return
 			}
 
-			ctx := context.WithValue(r.Context(), userIDKey, claims.UserID)
-			ctx = context.WithValue(ctx, emailKey, claims.Email)
+			ctx := context.WithValue(r.Context(), UserIDKey, claims.UserID)
+			ctx = context.WithValue(ctx, EmailKey, claims.Email)
 
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
@@ -46,12 +46,12 @@ func Authenticate(jwtMgr *jwt.Manager) func(http.Handler) http.Handler {
 
 // UserIDFromContext extracts the authenticated user's ID from the context.
 func UserIDFromContext(ctx context.Context) string {
-	id, _ := ctx.Value(userIDKey).(string)
+	id, _ := ctx.Value(UserIDKey).(string)
 	return id
 }
 
 // EmailFromContext extracts the authenticated user's email from the context.
 func EmailFromContext(ctx context.Context) string {
-	email, _ := ctx.Value(emailKey).(string)
+	email, _ := ctx.Value(EmailKey).(string)
 	return email
 }

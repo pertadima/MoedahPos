@@ -70,3 +70,64 @@ type ReportServiceInterface interface {
 	CashFlow(ctx context.Context, filter dto.ReportFilter) (*dto.CashFlowResponse, error)
 	CashFlowDetail(ctx context.Context, storeID string, dateStr string) ([]dto.CashFlowDetailEntry, error)
 }
+
+type StockServiceInterface interface {
+	GetStockLevels(ctx context.Context, storeID string, lowStockOnly bool) ([]*dto.StockLevelResponse, error)
+	GetProductStock(ctx context.Context, productID, storeID string) (*dto.StockLevelResponse, error)
+	AdjustStock(ctx context.Context, storeID string, req *dto.AdjustStockRequest, userID string) (*dto.StockLevelResponse, error)
+	SetMinStock(ctx context.Context, storeID string, req *dto.SetMinStockRequest) error
+	GetMovements(ctx context.Context, filter dto.StockMovementFilter) ([]*dto.StockMovementResponse, dto.PaginationMeta, error)
+}
+
+type CustomerServiceInterface interface {
+	List(ctx context.Context, f dto.CustomerListFilter) ([]*dto.CustomerResponse, dto.PaginationMeta, error)
+	Get(ctx context.Context, id string) (*dto.CustomerResponse, error)
+	Create(ctx context.Context, storeID string, req dto.CreateCustomerRequest) (*dto.CustomerResponse, error)
+	Update(ctx context.Context, id string, req dto.UpdateCustomerRequest) (*dto.CustomerResponse, error)
+	Delete(ctx context.Context, id string) error
+	Search(ctx context.Context, f dto.CustomerListFilter) ([]*dto.CustomerResponse, error)
+}
+
+type StockAdjustmentServiceInterface interface {
+	CreateAdjustment(ctx context.Context, storeID, userID string, input domain.CreateAdjustmentInput) error
+	GetAdjustmentHistory(ctx context.Context, storeID string, productID *string) ([]*domain.StockAdjustment, error)
+}
+
+type SupplierServiceInterface interface {
+	ListSuppliers(ctx context.Context, filter dto.SupplierListFilter) ([]*dto.SupplierResponse, dto.PaginationMeta, error)
+	GetSupplier(ctx context.Context, id string) (*dto.SupplierResponse, error)
+	CreateSupplier(ctx context.Context, req *dto.CreateSupplierRequest) (*dto.SupplierResponse, error)
+	UpdateSupplier(ctx context.Context, id string, req *dto.UpdateSupplierRequest) (*dto.SupplierResponse, error)
+	DeleteSupplier(ctx context.Context, id string) error
+}
+
+type ExpenseServiceInterface interface {
+	ListCategories(ctx context.Context, includeDeleted bool) ([]dto.ExpenseCategoryResponse, error)
+	CreateCategory(ctx context.Context, req *dto.CreateExpenseCategoryRequest) (*dto.ExpenseCategoryResponse, error)
+	UpdateCategory(ctx context.Context, id string, req *dto.UpdateExpenseCategoryRequest) (*dto.ExpenseCategoryResponse, error)
+	SoftDeleteCategory(ctx context.Context, id string) error
+
+	CreateExpense(ctx context.Context, storeID, userID string, req *dto.CreateExpenseRequest) (*dto.ExpenseResponse, error)
+	ListExpenses(ctx context.Context, filter dto.ExpenseListFilter) ([]*dto.ExpenseResponse, dto.PaginationMeta, error)
+	UpdateExpense(ctx context.Context, id, storeID string, req *dto.UpdateExpenseRequest) (*dto.ExpenseResponse, error)
+	DeleteExpense(ctx context.Context, id, storeID string) error
+	UpdatePaymentStatus(ctx context.Context, id, storeID string, req *dto.UpdateExpenseStatusRequest) (*dto.ExpenseResponse, error)
+
+	CreateRecurringExpense(ctx context.Context, storeID, userID string, req *dto.CreateRecurringExpenseRequest) (*dto.RecurringExpenseResponse, error)
+	ListRecurringExpenses(ctx context.Context, filter dto.ExpenseListFilter) ([]*dto.RecurringExpenseResponse, dto.PaginationMeta, error)
+	UpdateRecurringExpense(ctx context.Context, id, storeID string, req *dto.UpdateRecurringExpenseRequest) (*dto.RecurringExpenseResponse, error)
+	DeleteRecurringExpense(ctx context.Context, id, storeID string) error
+	ProcessDueRecurringExpenses(ctx context.Context) error
+}
+
+type IncomeServiceInterface interface {
+	ListCategories(ctx context.Context, includeDeleted bool) ([]*dto.IncomeCategoryResponse, error)
+	CreateCategory(ctx context.Context, req *dto.CreateIncomeCategoryRequest) (*dto.IncomeCategoryResponse, error)
+	UpdateCategory(ctx context.Context, id string, req *dto.UpdateIncomeCategoryRequest) (*dto.IncomeCategoryResponse, error)
+	SoftDeleteCategory(ctx context.Context, id string) error
+
+	CreateIncome(ctx context.Context, storeID, userID string, req *dto.CreateIncomeRequest) (*dto.IncomeResponse, error)
+	ListIncomes(ctx context.Context, f dto.IncomeListFilter) ([]*dto.IncomeResponse, dto.PaginationMeta, error)
+	UpdateIncome(ctx context.Context, id, storeID string, req *dto.UpdateIncomeRequest) (*dto.IncomeResponse, error)
+	DeleteIncome(ctx context.Context, id, storeID string) error
+}

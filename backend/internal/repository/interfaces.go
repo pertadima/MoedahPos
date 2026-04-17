@@ -169,6 +169,11 @@ type CustomerRepository interface {
 	SearchByPhone(ctx context.Context, storeID, phone string) ([]*domain.Customer, error)
 }
 
+type StockAdjustmentRepository interface {
+	CreateAdjustment(ctx context.Context, storeID, userID string, input domain.CreateAdjustmentInput) error
+	GetStockAdjustmentHistory(ctx context.Context, storeID string, productID *string) ([]*domain.StockAdjustment, error)
+}
+
 // ─── FIFO Batch Inventory ──────────────────────────────────────────────────────
 
 // BatchRepository manages stock batch records for FIFO inventory tracking.
@@ -219,4 +224,40 @@ type PaymentRecordRepository interface {
 
 	// FindByTermin returns all payment records for a termin, newest first.
 	FindByTermin(ctx context.Context, terminID string) ([]*domain.PaymentRecord, error)
+}
+
+type ExpenseRepository interface {
+	ListCategories(ctx context.Context, includeDeleted bool) ([]*domain.ExpenseCategory, error)
+	CreateCategory(ctx context.Context, c *domain.ExpenseCategory) (*domain.ExpenseCategory, error)
+	GetCategoryByID(ctx context.Context, id string) (*domain.ExpenseCategory, error)
+	UpdateCategory(ctx context.Context, id string, name, desc string, isActive bool) (*domain.ExpenseCategory, error)
+	SoftDeleteCategory(ctx context.Context, id string) error
+
+	CreateExpense(ctx context.Context, e *domain.Expense) (*domain.Expense, error)
+	FindAll(ctx context.Context, f dto.ExpenseListFilter) ([]*domain.Expense, int, error)
+	GetByID(ctx context.Context, id, storeID string) (*domain.Expense, error)
+	Update(ctx context.Context, e *domain.Expense) (*domain.Expense, error)
+	Delete(ctx context.Context, id, storeID string) error
+	UpdatePaymentStatus(ctx context.Context, id, storeID, status string) (*domain.Expense, error)
+
+	CreateRecurringExpense(ctx context.Context, e *domain.RecurringExpense) (*domain.RecurringExpense, error)
+	FindAllRecurring(ctx context.Context, f dto.ExpenseListFilter) ([]*domain.RecurringExpense, int, error)
+	GetRecurringByID(ctx context.Context, id, storeID string) (*domain.RecurringExpense, error)
+	UpdateRecurring(ctx context.Context, e *domain.RecurringExpense) (*domain.RecurringExpense, error)
+	DeleteRecurring(ctx context.Context, id, storeID string) error
+	GetDueRecurringExpenses(ctx context.Context) ([]*domain.RecurringExpense, error)
+	BumpRecurringNextRun(ctx context.Context, id string, nextRun string) error
+}
+
+type IncomeRepository interface {
+	ListCategories(ctx context.Context, includeDeleted bool) ([]*domain.IncomeCategory, error)
+	GetCategoryByID(ctx context.Context, id string) (*domain.IncomeCategory, error)
+	CreateCategory(ctx context.Context, cat *domain.IncomeCategory) (*domain.IncomeCategory, error)
+	UpdateCategory(ctx context.Context, id string, name, desc string, isActive bool) (*domain.IncomeCategory, error)
+	SoftDeleteCategory(ctx context.Context, id string) error
+	Create(ctx context.Context, inc *domain.Income) (*domain.Income, error)
+	FindAll(ctx context.Context, f dto.IncomeListFilter) ([]*domain.Income, int, error)
+	FindByID(ctx context.Context, id string) (*domain.Income, error)
+	Update(ctx context.Context, inc *domain.Income) (*domain.Income, error)
+	Delete(ctx context.Context, id, storeID string) error
 }

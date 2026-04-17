@@ -19,12 +19,12 @@ import (
 
 // IncomeHandler handles income-category and income endpoints.
 type IncomeHandler struct {
-	incomeSvc *service.IncomeService
+	incomeSvc service.IncomeServiceInterface
 	validate  *validator.Validator
 	log       zerolog.Logger
 }
 
-func NewIncomeHandler(incomeSvc *service.IncomeService, validate *validator.Validator, log zerolog.Logger) *IncomeHandler {
+func NewIncomeHandler(incomeSvc service.IncomeServiceInterface, validate *validator.Validator, log zerolog.Logger) *IncomeHandler {
 	return &IncomeHandler{incomeSvc: incomeSvc, validate: validate, log: log}
 }
 
