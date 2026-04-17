@@ -27,7 +27,7 @@ func TestUserAdminHandler(t *testing.T) {
 	h := NewUserAdminHandler(svc, v, log)
 
 	t.Run("List", func(t *testing.T) {
-		req, _ := http.NewRequest(http.MethodGet, "/admin/users?search=test&page=1", nil)
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "/admin/users?search=test&page=1", nil)
 		w := httptest.NewRecorder()
 
 		svc.On("ListUsers", mock.Anything, "test", false, 1, 20).Return([]dto.UserResponse{{ID: "u1"}}, 1, nil).Once()
@@ -39,7 +39,7 @@ func TestUserAdminHandler(t *testing.T) {
 	})
 
 	t.Run("Get", func(t *testing.T) {
-		req, _ := http.NewRequest(http.MethodGet, "/admin/users/u1", nil)
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "/admin/users/u1", nil)
 		w := httptest.NewRecorder()
 
 		// Inject Chi URL Param
@@ -56,7 +56,7 @@ func TestUserAdminHandler(t *testing.T) {
 	})
 
 	t.Run("Get_NotFound", func(t *testing.T) {
-		req, _ := http.NewRequest(http.MethodGet, "/admin/users/u2", nil)
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "/admin/users/u2", nil)
 		w := httptest.NewRecorder()
 
 		rctx := chi.NewRouteContext()
@@ -76,8 +76,8 @@ func TestUserAdminHandler(t *testing.T) {
 			Email:    "new@example.com",
 			Password: "password123",
 		}
-		body, _ := json.Marshal(reqBody)
-		req, _ := http.NewRequest(http.MethodPost, "/admin/users", bytes.NewBuffer(body))
+		body, _ := json.Marshal(reqBody) // nolint:gosec
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodPost, "/admin/users", bytes.NewBuffer(body))
 		w := httptest.NewRecorder()
 
 		svc.On("CreateUser", mock.Anything, mock.Anything).Return(&dto.UserResponse{ID: "u1"}, nil).Once()
@@ -89,8 +89,8 @@ func TestUserAdminHandler(t *testing.T) {
 
 	t.Run("Create_ValidationError", func(t *testing.T) {
 		reqBody := dto.CreateUserRequest{Name: "U"} // missing email, short name
-		body, _ := json.Marshal(reqBody)
-		req, _ := http.NewRequest(http.MethodPost, "/admin/users", bytes.NewBuffer(body))
+		body, _ := json.Marshal(reqBody)            // nolint:gosec
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodPost, "/admin/users", bytes.NewBuffer(body))
 		w := httptest.NewRecorder()
 
 		h.Create(w, req)
@@ -100,8 +100,8 @@ func TestUserAdminHandler(t *testing.T) {
 
 	t.Run("Update", func(t *testing.T) {
 		reqBody := dto.UpdateUserRequest{Name: "Updated", Email: "up@eg.com"}
-		body, _ := json.Marshal(reqBody)
-		req, _ := http.NewRequest(http.MethodPut, "/admin/users/u1", bytes.NewBuffer(body))
+		body, _ := json.Marshal(reqBody) // nolint:gosec
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodPut, "/admin/users/u1", bytes.NewBuffer(body))
 		w := httptest.NewRecorder()
 
 		rctx := chi.NewRouteContext()
@@ -116,7 +116,7 @@ func TestUserAdminHandler(t *testing.T) {
 	})
 
 	t.Run("Deactivate", func(t *testing.T) {
-		req, _ := http.NewRequest(http.MethodPost, "/admin/users/u1/deactivate", nil)
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodPost, "/admin/users/u1/deactivate", nil)
 		w := httptest.NewRecorder()
 
 		rctx := chi.NewRouteContext()
@@ -132,8 +132,8 @@ func TestUserAdminHandler(t *testing.T) {
 
 	t.Run("ResetPassword", func(t *testing.T) {
 		reqBody := dto.ResetPasswordRequest{Password: "newpassword"}
-		body, _ := json.Marshal(reqBody)
-		req, _ := http.NewRequest(http.MethodPost, "/admin/users/u1/reset-password", bytes.NewBuffer(body))
+		body, _ := json.Marshal(reqBody) // nolint:gosec
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodPost, "/admin/users/u1/reset-password", bytes.NewBuffer(body))
 		w := httptest.NewRecorder()
 
 		rctx := chi.NewRouteContext()
@@ -148,7 +148,7 @@ func TestUserAdminHandler(t *testing.T) {
 	})
 
 	t.Run("ListRoles", func(t *testing.T) {
-		req, _ := http.NewRequest(http.MethodGet, "/admin/roles", nil)
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "/admin/roles", nil)
 		w := httptest.NewRecorder()
 
 		svc.On("ListRoles", mock.Anything).Return([]*domain.Role{{ID: "r1"}}, nil).Once()

@@ -22,7 +22,7 @@ func TestBatchStockHandler(t *testing.T) {
 	h := NewBatchStockHandler(svc, log)
 
 	t.Run("ListBatches", func(t *testing.T) {
-		req, _ := http.NewRequest(http.MethodGet, "/stores/s1/stock/batches", nil)
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "/stores/s1/stock/batches", nil)
 		w := httptest.NewRecorder()
 
 		rctx := chi.NewRouteContext()
@@ -40,7 +40,7 @@ func TestBatchStockHandler(t *testing.T) {
 	})
 
 	t.Run("GetSummary", func(t *testing.T) {
-		req, _ := http.NewRequest(http.MethodGet, "/stores/s1/stock/batch-summary", nil)
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "/stores/s1/stock/batch-summary", nil)
 		w := httptest.NewRecorder()
 
 		rctx := chi.NewRouteContext()

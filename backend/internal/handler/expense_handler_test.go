@@ -13,7 +13,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
-
 	"github.com/moedahpos/backend/internal/dto"
 	svcMocks "github.com/moedahpos/backend/internal/service/mocks"
 	"github.com/moedahpos/backend/internal/validator"
@@ -28,7 +27,7 @@ func TestExpenseHandler_ListCategories(t *testing.T) {
 		svc.On("ListCategories", mock.Anything, false).
 			Return([]dto.ExpenseCategoryResponse{{ID: "cat1", Name: "Food"}}, nil).Once()
 
-		req := httptest.NewRequest("GET", "/expense-categories?include_deleted=false", nil).WithContext(context.Background()) // nolint:noctx
+		req := httptest.NewRequestWithContext(context.Background(), "GET", "/expense-categories?include_deleted=false", nil)
 		w := httptest.NewRecorder()
 
 		h.ListCategories(w, req)
@@ -56,7 +55,7 @@ func TestExpenseHandler_CreateExpense(t *testing.T) {
 		svc.On("CreateExpense", mock.Anything, storeID, mock.Anything, mock.AnythingOfType("*dto.CreateExpenseRequest")).
 			Return(&dto.ExpenseResponse{ID: "e1"}, nil).Once()
 
-		req := httptest.NewRequest("POST", "/stores/"+storeID+"/expenses", bytes.NewBuffer(body)).WithContext(context.Background()) // nolint:noctx
+		req := httptest.NewRequestWithContext(context.Background(), "POST", "/stores/"+storeID+"/expenses", bytes.NewBuffer(body))
 		w := httptest.NewRecorder()
 
 		// Set storeId param
@@ -81,7 +80,7 @@ func TestExpenseHandler_DeleteExpense(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		svc.On("DeleteExpense", mock.Anything, id, storeID).Return(nil).Once()
 
-		req := httptest.NewRequest("DELETE", "/stores/"+storeID+"/expenses/"+id, nil).WithContext(context.Background()) // nolint:noctx
+		req := httptest.NewRequestWithContext(context.Background(), "DELETE", "/stores/"+storeID+"/expenses/"+id, nil)
 		w := httptest.NewRecorder()
 
 		rctx := chi.NewRouteContext()
@@ -103,7 +102,7 @@ func TestExpenseHandler_UpdateStatus(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		reqBody := dto.UpdateExpenseStatusRequest{PaymentStatus: "paid"}
 		body, _ := json.Marshal(reqBody)
-		req, _ := http.NewRequest(http.MethodPatch, "/stores/s1/expenses/e1/status", bytes.NewBuffer(body))
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodPatch, "/stores/s1/expenses/e1/status", bytes.NewBuffer(body))
 		w := httptest.NewRecorder()
 
 		rctx := chi.NewRouteContext()
@@ -125,7 +124,7 @@ func TestExpenseHandler_Recurring(t *testing.T) {
 	h := NewExpenseHandler(svc, v, zerolog.Nop())
 
 	t.Run("ListRecurring", func(t *testing.T) {
-		req, _ := http.NewRequest(http.MethodGet, "/stores/s1/recurring-expenses", nil)
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "/stores/s1/recurring-expenses", nil)
 		w := httptest.NewRecorder()
 
 		rctx := chi.NewRouteContext()

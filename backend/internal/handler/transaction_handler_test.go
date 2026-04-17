@@ -32,7 +32,7 @@ func TestTransactionHandler_Checkout(t *testing.T) {
 		}
 		body, _ := json.Marshal(reqBody)
 
-		req, _ := http.NewRequest(http.MethodPost, "/stores/s1/transactions", bytes.NewBuffer(body))
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodPost, "/stores/s1/transactions", bytes.NewBuffer(body))
 		rctx := chi.NewRouteContext()
 		rctx.URLParams.Add("storeId", "s1")
 		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
@@ -51,7 +51,7 @@ func TestTransactionHandler_Checkout(t *testing.T) {
 			PaymentAmount: 10,
 		}
 		body, _ := json.Marshal(reqBody)
-		req, _ := http.NewRequest(http.MethodPost, "/stores/s1/transactions", bytes.NewBuffer(body))
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodPost, "/stores/s1/transactions", bytes.NewBuffer(body))
 
 		svc.On("Checkout", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, service.ErrInsuficientPayment)
 
@@ -67,7 +67,7 @@ func TestTransactionHandler_Get(t *testing.T) {
 	h := NewTransactionHandler(svc, v, zerolog.Nop())
 
 	t.Run("Success", func(t *testing.T) {
-		req, _ := http.NewRequest(http.MethodGet, "/stores/s1/transactions/t1", nil)
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "/stores/s1/transactions/t1", nil)
 		rctx := chi.NewRouteContext()
 		rctx.URLParams.Add("txnId", "t1")
 		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
@@ -87,7 +87,7 @@ func TestTransactionHandler_Void(t *testing.T) {
 	h := NewTransactionHandler(svc, v, zerolog.Nop())
 
 	t.Run("Success", func(t *testing.T) {
-		req, _ := http.NewRequest(http.MethodPost, "/stores/s1/transactions/t1/void", nil)
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodPost, "/stores/s1/transactions/t1/void", nil)
 		rctx := chi.NewRouteContext()
 		rctx.URLParams.Add("txnId", "t1")
 		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))

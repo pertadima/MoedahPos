@@ -54,7 +54,7 @@ func TestPurchaseOrderService_Lifecycle(t *testing.T) {
 		assert.NoError(t, err)
 	})
 
-	t.Run("Receive PO", func(t *testing.T) {
+	t.Run("Receive PO Success", func(t *testing.T) {
 		po := &domain.PurchaseOrder{
 			ID: "po1", StoreID: "s1", Status: "ordered",
 			Items: []domain.POItem{{ProductID: "p1", Quantity: 10, UnitCost: 110}},
@@ -66,6 +66,31 @@ func TestPurchaseOrderService_Lifecycle(t *testing.T) {
 
 		err := svc.ReceivePO(ctx, "po1", "u1")
 		assert.NoError(t, err)
+	})
+
+	t.Run("Update PO - Error Not Found", func(t *testing.T) {
+		poRepo.On("FindByID", ctx, "invalid").Return(nil, nil).Once()
+		_, err := svc.UpdatePO(ctx, "invalid", &dto.UpdatePORequest{}, "s1")
+		assert.ErrorIs(t, err, ErrPONotFound)
+	})
+
+	t.Run("Update PO - Error Not Editable", func(t *testing.T) {
+		poRepo.On("FindByID", ctx, "po-rec").Return(&domain.PurchaseOrder{ID: "po-rec", Status: "received"}, nil).Once()
+		_, err := svc.UpdatePO(ctx, "po-rec", &dto.UpdatePORequest{}, "s1")
+		assert.ErrorIs(t, err, ErrPONotEditable)
+	})
+
+	t.Run("Cancel PO Success", func(t *testing.T) {
+		poRepo.On("FindByID", ctx, "po1").Return(&domain.PurchaseOrder{ID: "po1", Status: "ordered"}, nil).Once()
+		poRepo.On("Cancel", ctx, "po1").Return(nil).Once()
+		err := svc.CancelPO(ctx, "po1")
+		assert.NoError(t, err)
+	})
+
+	t.Run("Cancel PO - Error Cannot Cancel", func(t *testing.T) {
+		poRepo.On("FindByID", ctx, "po1").Return(&domain.PurchaseOrder{ID: "po1", Status: "received"}, nil).Once()
+		err := svc.CancelPO(ctx, "po1")
+		assert.ErrorIs(t, err, ErrPOCannotCancel)
 	})
 }
 
@@ -111,7 +136,7 @@ func TestPurchaseOrderService_Payments(t *testing.T) {
 		resp, err := svc.CreatePayment(ctx, poID, "s1", userID, req)
 		assert.NoError(t, err)
 		assert.Equal(t, 1500.0, resp.Amount)
-		
+
 		terminRepo.AssertExpectations(t)
 		payRecRepo.AssertExpectations(t)
 	})

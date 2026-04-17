@@ -38,7 +38,7 @@ func TestActivityLogService(t *testing.T) {
 			{
 				ID: "l1", UserID: "u1", UserName: "User 1",
 				ActionType: domain.ActionAuthLogin, Module: "PRODUCT",
-				Metadata: json.RawMessage(`{"foo":"bar"}`),
+				Metadata:  json.RawMessage(`{"foo":"bar"}`),
 				CreatedAt: time.Now(),
 			},
 		}

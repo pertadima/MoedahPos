@@ -294,10 +294,10 @@ func TestTransactionService_Checkout_MoreBranches(t *testing.T) {
 
 		pid := "p1"
 		req := &dto.CreateTransactionRequest{
-			Items:              []dto.TxItemInput{{ProductID: pid, Quantity: 1}},
-			CartDiscountType:   "FIXED",
-			CartDiscountValue:  20,
-			PaymentAmount:      100, // (100 - 20) = 80 total
+			Items:             []dto.TxItemInput{{ProductID: pid, Quantity: 1}},
+			CartDiscountType:  "FIXED",
+			CartDiscountValue: 20,
+			PaymentAmount:     100, // (100 - 20) = 80 total
 		}
 
 		pRepo.On("FindByID", ctx, pid).Return(&domain.Product{ID: pid, StoreID: "s1", SellPrice: 100, IsActive: true}, nil)

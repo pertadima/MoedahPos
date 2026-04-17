@@ -93,6 +93,41 @@ func TestPurchaseOrderHandler_Status(t *testing.T) {
 		r.ServeHTTP(w, req)
 		assert.Equal(t, http.StatusOK, w.Code)
 	})
+
+	t.Run("Cancel PO", func(t *testing.T) {
+		poSvc.On("CancelPO", mock.Anything, "po1").Return(nil)
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodDelete, "/stores/s1/purchase-orders/po1", nil)
+		req.Header.Set("Authorization", "Bearer "+token)
+		w := httptest.NewRecorder()
+
+		// For DELETE, we need to register it in the router for ServeHTTP to pick it up
+		r.Delete("/stores/{storeId}/purchase-orders/{poId}", h.Cancel)
+
+		r.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusOK, w.Code)
+	})
+
+	t.Run("Payable Summary", func(t *testing.T) {
+		poSvc.On("PayableSummary", mock.Anything, "s1").Return(&dto.PayableSummary{TotalOutstanding: 5000}, nil)
+		r.Get("/stores/{storeId}/purchase-orders/payables", h.PayableSummary)
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "/stores/s1/purchase-orders/payables", nil)
+		req.Header.Set("Authorization", "Bearer "+token)
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusOK, w.Code)
+	})
+
+	t.Run("Create Payment", func(t *testing.T) {
+		reqBody := dto.POPaymentRequest{Amount: 1000}
+		body, _ := json.Marshal(reqBody)
+		poSvc.On("CreatePayment", mock.Anything, "po1", "s1", "u123", reqBody).Return(&dto.POPaymentResponse{ID: "pay1"}, nil)
+		r.Post("/stores/{storeId}/purchase-orders/{poId}/payments", h.CreatePayment)
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodPost, "/stores/s1/purchase-orders/po1/payments", bytes.NewBuffer(body))
+		req.Header.Set("Authorization", "Bearer "+token)
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusCreated, w.Code)
+	})
 }
 
 func ptrToStringPtr(s string) *string {

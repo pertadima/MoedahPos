@@ -26,7 +26,7 @@ func TestRestaurantHandler(t *testing.T) {
 	h := NewRestaurantHandler(tableSvc, menuSvc, v, log)
 
 	t.Run("ListTables", func(t *testing.T) {
-		req, _ := http.NewRequest(http.MethodGet, "/stores/s1/tables", nil)
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "/stores/s1/tables", nil)
 		w := httptest.NewRecorder()
 
 		rctx := chi.NewRouteContext()
@@ -44,7 +44,7 @@ func TestRestaurantHandler(t *testing.T) {
 	t.Run("CreateTable", func(t *testing.T) {
 		reqBody := dto.CreateTableRequest{TableNumber: "5", Capacity: 6}
 		body, _ := json.Marshal(reqBody)
-		req, _ := http.NewRequest(http.MethodPost, "/stores/s1/tables", bytes.NewBuffer(body))
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodPost, "/stores/s1/tables", bytes.NewBuffer(body))
 		w := httptest.NewRecorder()
 
 		rctx := chi.NewRouteContext()
@@ -59,7 +59,7 @@ func TestRestaurantHandler(t *testing.T) {
 	})
 
 	t.Run("ListMenuItems", func(t *testing.T) {
-		req, _ := http.NewRequest(http.MethodGet, "/stores/s1/menu-items", nil)
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "/stores/s1/menu-items", nil)
 		w := httptest.NewRecorder()
 
 		rctx := chi.NewRouteContext()

@@ -21,7 +21,7 @@ func TestActivityLogHandler(t *testing.T) {
 	h := NewActivityLogHandler(svc, log)
 
 	t.Run("List", func(t *testing.T) {
-		req, _ := http.NewRequest(http.MethodGet, "/stores/s1/activity-logs", nil)
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "/stores/s1/activity-logs", nil)
 		w := httptest.NewRecorder()
 
 		rctx := chi.NewRouteContext()

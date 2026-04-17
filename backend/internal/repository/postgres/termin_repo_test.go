@@ -17,7 +17,7 @@ func TestTerminRepo_CreateSchedule(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to open sqlmock: %s", err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
 	repo := NewTerminRepo(sqlxDB)
@@ -49,7 +49,7 @@ func TestTerminRepo_FindByPO(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to open sqlmock: %s", err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
 	repo := NewTerminRepo(sqlxDB)
@@ -76,7 +76,7 @@ func TestTerminRepo_FindByID(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to open sqlmock: %s", err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
 	repo := NewTerminRepo(sqlxDB)
@@ -103,7 +103,7 @@ func TestTerminRepo_UpdateStatus(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to open sqlmock: %s", err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
 	repo := NewTerminRepo(sqlxDB)
@@ -125,7 +125,7 @@ func TestTerminRepo_DebtSummary(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to open sqlmock: %s", err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
 	repo := NewTerminRepo(sqlxDB)

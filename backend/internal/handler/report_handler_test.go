@@ -21,7 +21,7 @@ func TestReportHandler(t *testing.T) {
 	h := NewReportHandler(svc, log)
 
 	t.Run("SalesSummary", func(t *testing.T) {
-		req, _ := http.NewRequest(http.MethodGet, "/stores/s1/reports/sales", nil)
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "/stores/s1/reports/sales", nil)
 		w := httptest.NewRecorder()
 
 		rctx := chi.NewRouteContext()
@@ -37,7 +37,7 @@ func TestReportHandler(t *testing.T) {
 	})
 
 	t.Run("StockValuation", func(t *testing.T) {
-		req, _ := http.NewRequest(http.MethodGet, "/stores/s1/reports/stock-valuation", nil)
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "/stores/s1/reports/stock-valuation", nil)
 		w := httptest.NewRecorder()
 
 		rctx := chi.NewRouteContext()
@@ -52,7 +52,7 @@ func TestReportHandler(t *testing.T) {
 	})
 
 	t.Run("CashFlow", func(t *testing.T) {
-		req, _ := http.NewRequest(http.MethodGet, "/stores/s1/reports/cash-flow", nil)
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "/stores/s1/reports/cash-flow", nil)
 		w := httptest.NewRecorder()
 
 		rctx := chi.NewRouteContext()

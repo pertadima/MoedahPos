@@ -25,7 +25,7 @@ func TestStoreHandler(t *testing.T) {
 	h := NewStoreHandler(svc, v, log)
 
 	t.Run("List", func(t *testing.T) {
-		req, _ := http.NewRequest(http.MethodGet, "/stores", nil)
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "/stores", nil)
 		w := httptest.NewRecorder()
 
 		svc.On("ListStores", mock.Anything, mock.Anything).Return([]*dto.StoreResponse{{ID: "s1"}}, dto.PaginationMeta{Total: 1}, nil).Once()
@@ -37,7 +37,7 @@ func TestStoreHandler(t *testing.T) {
 	})
 
 	t.Run("Get", func(t *testing.T) {
-		req, _ := http.NewRequest(http.MethodGet, "/stores/s1", nil)
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "/stores/s1", nil)
 		w := httptest.NewRecorder()
 
 		rctx := chi.NewRouteContext()
@@ -54,7 +54,7 @@ func TestStoreHandler(t *testing.T) {
 	t.Run("Create", func(t *testing.T) {
 		reqBody := dto.CreateStoreRequest{Name: "New Store", Currency: "IDR", StoreType: "retail"}
 		body, _ := json.Marshal(reqBody)
-		req, _ := http.NewRequest(http.MethodPost, "/stores", bytes.NewBuffer(body))
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodPost, "/stores", bytes.NewBuffer(body))
 		w := httptest.NewRecorder()
 
 		svc.On("CreateStore", mock.Anything, mock.Anything).Return(&dto.StoreResponse{ID: "s1"}, nil).Once()
@@ -71,7 +71,7 @@ func TestStoreHandler(t *testing.T) {
 			StoreType: "retail",
 		}
 		body, _ := json.Marshal(reqBody)
-		req, _ := http.NewRequest(http.MethodPut, "/stores/s1", bytes.NewBuffer(body))
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodPut, "/stores/s1", bytes.NewBuffer(body))
 		w := httptest.NewRecorder()
 
 		rctx := chi.NewRouteContext()
@@ -86,7 +86,7 @@ func TestStoreHandler(t *testing.T) {
 	})
 
 	t.Run("Delete", func(t *testing.T) {
-		req, _ := http.NewRequest(http.MethodDelete, "/stores/s1", nil)
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodDelete, "/stores/s1", nil)
 		w := httptest.NewRecorder()
 
 		rctx := chi.NewRouteContext()
@@ -101,14 +101,14 @@ func TestStoreHandler(t *testing.T) {
 	})
 
 	t.Run("Members_List", func(t *testing.T) {
-		req, _ := http.NewRequest(http.MethodGet, "/stores/s1/members", nil)
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "/stores/s1/members", nil)
 		w := httptest.NewRecorder()
 
 		rctx := chi.NewRouteContext()
 		rctx.URLParams.Add("storeId", "s1")
 		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 
-		svc.On("ListMembers", mock.Anything, "s1").Return([]dto.MemberResponse{{UserID: "u1"}}, nil).Once()
+		svc.On("ListMembers", mock.Anything, "s1").Return([]*dto.MemberResponse{{UserID: "u1"}}, nil).Once()
 
 		h.ListMembers(w, req)
 
@@ -118,7 +118,7 @@ func TestStoreHandler(t *testing.T) {
 	t.Run("Members_Add", func(t *testing.T) {
 		reqBody := dto.AddMemberRequest{UserID: "00000000-0000-0000-0000-000000000001", RoleID: "00000000-0000-0000-0000-000000000002"}
 		body, _ := json.Marshal(reqBody)
-		req, _ := http.NewRequest(http.MethodPost, "/stores/s1/members", bytes.NewBuffer(body))
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodPost, "/stores/s1/members", bytes.NewBuffer(body))
 		w := httptest.NewRecorder()
 
 		rctx := chi.NewRouteContext()
@@ -135,7 +135,7 @@ func TestStoreHandler(t *testing.T) {
 	t.Run("Members_UpdateRole", func(t *testing.T) {
 		reqBody := dto.UpdateMemberRoleRequest{RoleID: "00000000-0000-0000-0000-000000000002"}
 		body, _ := json.Marshal(reqBody)
-		req, _ := http.NewRequest(http.MethodPut, "/stores/s1/members/u1", bytes.NewBuffer(body))
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodPut, "/stores/s1/members/u1", bytes.NewBuffer(body))
 		w := httptest.NewRecorder()
 
 		rctx := chi.NewRouteContext()
@@ -151,7 +151,7 @@ func TestStoreHandler(t *testing.T) {
 	})
 
 	t.Run("Members_Remove", func(t *testing.T) {
-		req, _ := http.NewRequest(http.MethodDelete, "/stores/s1/members/u1", nil)
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodDelete, "/stores/s1/members/u1", nil)
 		w := httptest.NewRecorder()
 
 		rctx := chi.NewRouteContext()

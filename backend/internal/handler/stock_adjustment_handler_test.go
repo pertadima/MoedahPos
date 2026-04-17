@@ -34,7 +34,7 @@ func TestStockAdjustmentHandler(t *testing.T) {
 			Notes:     "Correction",
 		}
 		body, _ := json.Marshal(reqBody)
-		req, _ := http.NewRequest(http.MethodPost, "/stores/s1/stock/adjust", bytes.NewBuffer(body))
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodPost, "/stores/s1/stock/adjust", bytes.NewBuffer(body))
 		w := httptest.NewRecorder()
 
 		rctx := chi.NewRouteContext()
@@ -51,7 +51,7 @@ func TestStockAdjustmentHandler(t *testing.T) {
 	})
 
 	t.Run("GetHistory", func(t *testing.T) {
-		req, _ := http.NewRequest(http.MethodGet, "/stores/s1/stock/adjustments", nil)
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "/stores/s1/stock/adjustments", nil)
 		w := httptest.NewRecorder()
 
 		rctx := chi.NewRouteContext()

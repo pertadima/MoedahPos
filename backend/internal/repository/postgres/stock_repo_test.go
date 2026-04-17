@@ -20,7 +20,7 @@ import (
 func TestStockRepo_FindLevelsByStore(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	require.NoError(t, err)
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
 	repo := NewStockRepo(sqlxDB)
@@ -62,7 +62,7 @@ func TestStockRepo_FindLevelsByStore(t *testing.T) {
 func TestStockRepo_FindLevelByProduct(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	require.NoError(t, err)
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
 	repo := NewStockRepo(sqlxDB)
@@ -100,7 +100,7 @@ func TestStockRepo_FindLevelByProduct(t *testing.T) {
 func TestStockRepo_SetMinQuantity(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	require.NoError(t, err)
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
 	repo := NewStockRepo(sqlxDB)
@@ -122,7 +122,7 @@ func TestStockRepo_SetMinQuantity(t *testing.T) {
 func TestStockRepo_Adjust(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	require.NoError(t, err)
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
 	repo := NewStockRepo(sqlxDB)
@@ -181,7 +181,7 @@ func TestStockRepo_Adjust(t *testing.T) {
 func TestStockRepo_FindMovements(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	require.NoError(t, err)
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
 	repo := NewStockRepo(sqlxDB)
@@ -217,7 +217,7 @@ func TestStockRepo_FindMovements(t *testing.T) {
 func TestStockRepo_DeductStock(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	require.NoError(t, err)
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
 	repo := NewStockRepo(sqlxDB)

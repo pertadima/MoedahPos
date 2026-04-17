@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -26,7 +27,7 @@ func TestAuthenticate(t *testing.T) {
 			w.WriteHeader(http.StatusOK)
 		}))
 
-		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/", nil)
 		req.Header.Set("Authorization", "Bearer "+token)
 		w := httptest.NewRecorder()
 
@@ -36,8 +37,8 @@ func TestAuthenticate(t *testing.T) {
 	})
 
 	t.Run("Missing Header", func(t *testing.T) {
-		handler := authMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
-		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		handler := authMiddleware(http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) {}))
+		req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/", nil)
 		w := httptest.NewRecorder()
 
 		handler.ServeHTTP(w, req)
@@ -46,8 +47,8 @@ func TestAuthenticate(t *testing.T) {
 	})
 
 	t.Run("Invalid Token", func(t *testing.T) {
-		handler := authMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
-		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		handler := authMiddleware(http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) {}))
+		req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/", nil)
 		req.Header.Set("Authorization", "Bearer invalid-token")
 		w := httptest.NewRecorder()
 

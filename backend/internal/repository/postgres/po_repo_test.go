@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/moedahpos/backend/internal/domain"
+	"github.com/moedahpos/backend/internal/dto"
 )
 
 func TestPORepo_Create(t *testing.T) {
@@ -18,7 +19,7 @@ func TestPORepo_Create(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to open sqlmock: %s", err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
 	repo := NewPORepo(sqlxDB)
@@ -65,7 +66,7 @@ func TestPORepo_FindByID(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to open sqlmock: %s", err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
 	repo := NewPORepo(sqlxDB)
@@ -97,7 +98,7 @@ func TestPORepo_Submit(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to open sqlmock: %s", err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
 	repo := NewPORepo(sqlxDB)
@@ -121,7 +122,7 @@ func TestPORepo_Receive(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to open sqlmock: %s", err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
 	repo := NewPORepo(sqlxDB)
@@ -153,6 +154,48 @@ func TestPORepo_Receive(t *testing.T) {
 
 	err = repo.Receive(ctx, "po1", "u1")
 	assert.NoError(t, err)
+}
+
+func TestPORepo_Cancel(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("failed to open sqlmock: %s", err)
+	}
+	defer func() { _ = db.Close() }()
+
+	sqlxDB := sqlx.NewDb(db, "postgres")
+	repo := NewPORepo(sqlxDB)
+	ctx := context.Background()
+
+	mock.ExpectExec(`UPDATE purchase_orders SET status='cancelled'`).WithArgs("po1").
+		WillReturnResult(sqlmock.NewResult(0, 1))
+
+	err = repo.Cancel(ctx, "po1")
+	assert.NoError(t, err)
+}
+
+func TestPORepo_FindAll(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("failed to open sqlmock: %s", err)
+	}
+	defer func() { _ = db.Close() }()
+
+	sqlxDB := sqlx.NewDb(db, "postgres")
+	repo := NewPORepo(sqlxDB)
+	ctx := context.Background()
+
+	mock.ExpectQuery(`SELECT COUNT\(\*\) FROM purchase_orders`).WithArgs("s1").
+		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
+
+	mock.ExpectQuery(`SELECT po.id`).WithArgs("s1", 10, 0).
+		WillReturnRows(sqlmock.NewRows([]string{"id", "store_id", "supplier_id", "po_number", "status", "total_amount", "ordered_by", "received_by", "ordered_at", "received_at", "notes", "created_at", "updated_at", "supplier_name", "ordered_by_name", "received_by_name", "total_items"}).
+			AddRow("po1", "s1", "supp1", "PO-123", "draft", 1000, "u1", nil, time.Now(), nil, "note", time.Now(), time.Now(), "Supplier 1", "User 1", nil, 1))
+
+	res, total, err := repo.FindAll(ctx, dto.POListFilter{StoreID: "s1", PaginationQuery: dto.PaginationQuery{Page: 1, PerPage: 10}})
+	assert.NoError(t, err)
+	assert.Equal(t, 1, total)
+	assert.Len(t, res, 1)
 }
 
 func ptrToStringPtr(s string) *string {

@@ -17,7 +17,7 @@ import (
 func TestIncomeRepo_CreateCategory(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	require.NoError(t, err)
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
 	repo := NewIncomeRepo(sqlxDB)
@@ -44,7 +44,7 @@ func TestIncomeRepo_CreateCategory(t *testing.T) {
 func TestIncomeRepo_Create(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	require.NoError(t, err)
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
 	repo := NewIncomeRepo(sqlxDB)

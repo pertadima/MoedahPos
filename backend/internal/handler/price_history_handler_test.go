@@ -21,7 +21,7 @@ func TestPriceHistoryHandler(t *testing.T) {
 	h := NewPriceHistoryHandler(svc, log)
 
 	t.Run("ListByStore", func(t *testing.T) {
-		req, _ := http.NewRequest(http.MethodGet, "/stores/s1/price-history", nil)
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "/stores/s1/price-history", nil)
 		w := httptest.NewRecorder()
 
 		rctx := chi.NewRouteContext()
@@ -37,7 +37,7 @@ func TestPriceHistoryHandler(t *testing.T) {
 	})
 
 	t.Run("ListByProduct", func(t *testing.T) {
-		req, _ := http.NewRequest(http.MethodGet, "/stores/s1/products/p1/price-history", nil)
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "/stores/s1/products/p1/price-history", nil)
 		w := httptest.NewRecorder()
 
 		rctx := chi.NewRouteContext()

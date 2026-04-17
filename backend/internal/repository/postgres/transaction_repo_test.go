@@ -18,7 +18,7 @@ func TestTransactionRepo_Create(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to open sqlmock: %s", err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
 	repo := NewTransactionRepo(sqlxDB)
@@ -84,7 +84,7 @@ func TestTransactionRepo_FindByID(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to open sqlmock: %s", err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
 	repo := NewTransactionRepo(sqlxDB)
@@ -118,7 +118,7 @@ func TestTransactionRepo_FindAll(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to open sqlmock: %s", err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
 	repo := NewTransactionRepo(sqlxDB)
@@ -153,7 +153,7 @@ func TestTransactionRepo_Void(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to open sqlmock: %s", err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
 	repo := NewTransactionRepo(sqlxDB)
@@ -186,7 +186,7 @@ func TestTransactionRepo_UpdateKDSItemStatus(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to open sqlmock: %s", err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
 	repo := NewTransactionRepo(sqlxDB)
@@ -213,7 +213,7 @@ func TestTransactionRepo_GetKDSTickets(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to open sqlmock: %s", err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
 	repo := NewTransactionRepo(sqlxDB)

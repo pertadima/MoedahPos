@@ -17,7 +17,7 @@ func TestPaymentRecordRepo_Create(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to open sqlmock: %s", err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
 	repo := NewPaymentRecordRepo(sqlxDB)
@@ -54,7 +54,7 @@ func TestPaymentRecordRepo_FindByTermin(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to open sqlmock: %s", err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
 	repo := NewPaymentRecordRepo(sqlxDB)

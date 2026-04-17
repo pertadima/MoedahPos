@@ -27,7 +27,7 @@ func TestIncomeHandler_ListCategories(t *testing.T) {
 		svc.On("ListCategories", mock.Anything, false).
 			Return([]*dto.IncomeCategoryResponse{{ID: "cat1", Name: "Service"}}, nil).Once()
 
-		req := httptest.NewRequest("GET", "/income-categories?include_deleted=false", nil).WithContext(context.Background()) // nolint:noctx
+		req := httptest.NewRequestWithContext(context.Background(), "GET", "/income-categories?include_deleted=false", nil)
 		w := httptest.NewRecorder()
 
 		h.ListCategories(w, req)
@@ -55,7 +55,7 @@ func TestIncomeHandler_CreateIncome(t *testing.T) {
 		svc.On("CreateIncome", mock.Anything, storeID, mock.Anything, mock.AnythingOfType("*dto.CreateIncomeRequest")).
 			Return(&dto.IncomeResponse{ID: "inc1"}, nil).Once()
 
-		req := httptest.NewRequest("POST", "/stores/"+storeID+"/incomes", bytes.NewBuffer(body)).WithContext(context.Background()) // nolint:noctx
+		req := httptest.NewRequestWithContext(context.Background(), "POST", "/stores/"+storeID+"/incomes", bytes.NewBuffer(body))
 		w := httptest.NewRecorder()
 
 		rctx := chi.NewRouteContext()
@@ -76,7 +76,7 @@ func TestIncomeHandler_List(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		svc.On("ListIncomes", mock.Anything, mock.Anything).Return([]*dto.IncomeResponse{{ID: "inc1"}}, dto.PaginationMeta{Total: 1}, nil).Once()
 
-		req, _ := http.NewRequest(http.MethodGet, "/stores/s1/incomes", nil)
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "/stores/s1/incomes", nil)
 		w := httptest.NewRecorder()
 		h.ListIncomes(w, req)
 
@@ -93,7 +93,7 @@ func TestIncomeHandler_Update(t *testing.T) {
 		catID := "550e8400-e29b-41d4-a716-446655440000"
 		reqBody := dto.UpdateIncomeRequest{CategoryID: catID, Amount: 200, IncomeDate: "2024-01-01", PaymentMethod: "cash"}
 		body, _ := json.Marshal(reqBody)
-		req, _ := http.NewRequest(http.MethodPut, "/stores/s1/incomes/inc1", bytes.NewBuffer(body))
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodPut, "/stores/s1/incomes/inc1", bytes.NewBuffer(body))
 		w := httptest.NewRecorder()
 
 		rctx := chi.NewRouteContext()
@@ -115,7 +115,7 @@ func TestIncomeHandler_Delete(t *testing.T) {
 	h := NewIncomeHandler(svc, v, zerolog.Nop())
 
 	t.Run("success", func(t *testing.T) {
-		req, _ := http.NewRequest(http.MethodDelete, "/stores/s1/incomes/inc1", nil)
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodDelete, "/stores/s1/incomes/inc1", nil)
 		w := httptest.NewRecorder()
 
 		rctx := chi.NewRouteContext()

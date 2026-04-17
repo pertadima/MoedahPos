@@ -51,7 +51,7 @@ func TestReportService(t *testing.T) {
 		filter := dto.ReportFilter{StoreID: "s1"}
 		rows := []dto.CashFlowDayRow{
 			{
-				Date: "2024-01-01",
+				Date:   "2024-01-01",
 				CashIn: 500, CashOut: 200,
 				CashInByMethod: map[string]float64{"cash": 300, "bank": 200},
 			},

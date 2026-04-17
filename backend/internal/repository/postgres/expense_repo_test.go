@@ -18,7 +18,7 @@ import (
 func TestExpenseRepo_CreateCategory(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	require.NoError(t, err)
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
 	repo := NewExpenseRepo(sqlxDB)
@@ -45,7 +45,7 @@ func TestExpenseRepo_CreateCategory(t *testing.T) {
 func TestExpenseRepo_CreateExpense(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	require.NoError(t, err)
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
 	repo := NewExpenseRepo(sqlxDB)
@@ -83,7 +83,7 @@ func TestExpenseRepo_CreateExpense(t *testing.T) {
 func TestExpenseRepo_FindAll(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	require.NoError(t, err)
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
 	repo := NewExpenseRepo(sqlxDB)

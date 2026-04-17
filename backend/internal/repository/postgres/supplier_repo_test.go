@@ -19,7 +19,7 @@ import (
 func TestSupplierRepo_Create(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	require.NoError(t, err)
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
 	repo := NewSupplierRepo(sqlxDB)
@@ -50,7 +50,7 @@ func TestSupplierRepo_Create(t *testing.T) {
 func TestSupplierRepo_FindAll(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	require.NoError(t, err)
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
 	repo := NewSupplierRepo(sqlxDB)
@@ -82,7 +82,7 @@ func TestSupplierRepo_FindAll(t *testing.T) {
 func TestSupplierRepo_FindByID(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	require.NoError(t, err)
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
 	repo := NewSupplierRepo(sqlxDB)
@@ -114,7 +114,7 @@ func TestSupplierRepo_FindByID(t *testing.T) {
 func TestSupplierRepo_Update(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	require.NoError(t, err)
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
 	repo := NewSupplierRepo(sqlxDB)
@@ -145,7 +145,7 @@ func TestSupplierRepo_Update(t *testing.T) {
 func TestSupplierRepo_SoftDelete(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	require.NoError(t, err)
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
 	repo := NewSupplierRepo(sqlxDB)

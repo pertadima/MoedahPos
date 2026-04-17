@@ -440,7 +440,7 @@ func (s *TransactionService) GetTransaction(ctx context.Context, id string) (*dt
 }
 
 // VoidTransaction reverses a completed transaction and restores stock.
-func (s *TransactionService) VoidTransaction(ctx context.Context, id, userID string) error {
+func (s *TransactionService) VoidTransaction(ctx context.Context, id, userID string) error { //nolint:funlen
 	txn, err := s.txnRepo.FindByID(ctx, id)
 	if err != nil {
 		return fmt.Errorf("finding transaction: %w", err)

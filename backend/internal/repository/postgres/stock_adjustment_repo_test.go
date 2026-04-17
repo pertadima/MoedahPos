@@ -16,7 +16,7 @@ import (
 func TestStockAdjustmentRepo_CreateAdjustment_IN(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	require.NoError(t, err)
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
 	repo := NewStockAdjustmentRepo(sqlxDB)
@@ -74,7 +74,7 @@ func TestStockAdjustmentRepo_CreateAdjustment_IN(t *testing.T) {
 func TestStockAdjustmentRepo_CreateAdjustment_OUT(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	require.NoError(t, err)
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
 	repo := NewStockAdjustmentRepo(sqlxDB)

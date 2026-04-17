@@ -34,7 +34,7 @@ func (r *StoreRepo) Create(ctx context.Context, s *domain.Store) (*domain.Store,
 	return row, nil
 }
 
-func (r *StoreRepo) FindAll(ctx context.Context, filter dto.StoreListFilter) ([]*domain.Store, int, error) {
+func (r *StoreRepo) FindAll(ctx context.Context, filter dto.StoreListFilter) ([]*domain.Store, int, error) { //nolint:funlen
 	args := []interface{}{}
 	conds := []string{"s.deleted_at IS NULL"}
 	i := 1
@@ -287,7 +287,7 @@ func (r *ProductRepo) Create(ctx context.Context, p *domain.Product) (*domain.Pr
 	return row, nil
 }
 
-func (r *ProductRepo) FindAll(ctx context.Context, f dto.ProductListFilter) ([]*domain.Product, int, error) {
+func (r *ProductRepo) FindAll(ctx context.Context, f dto.ProductListFilter) ([]*domain.Product, int, error) { //nolint:funlen
 	args := []interface{}{}
 	conds := []string{"p.store_id = $1", "p.deleted_at IS NULL"}
 	args = append(args, f.StoreID)

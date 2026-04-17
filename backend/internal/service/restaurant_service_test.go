@@ -54,7 +54,7 @@ func TestMenuItemService(t *testing.T) {
 		req := &dto.CreateMenuItemRequest{Name: "Mie Goreng", SellPrice: 15000}
 		repo.On("Create", ctx, mock.Anything).Return(&domain.MenuItem{ID: "m2", Name: "Mie Goreng"}, nil).Once()
 		repo.On("FindByID", ctx, "m2").Return(&domain.MenuItem{ID: "m2", Name: "Mie Goreng"}, nil).Once()
-		
+
 		resp, err := svc.Create(ctx, "s1", req)
 		assert.NoError(t, err)
 		assert.Equal(t, "Mie Goreng", resp.Name)
