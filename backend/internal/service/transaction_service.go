@@ -139,8 +139,8 @@ type TransactionService struct {
 	productRepo  repository.ProductRepository
 	stockRepo    repository.StockRepository
 	menuItemRepo repository.MenuItemRepository
-	batchSvc     *BatchStockService // FIFO deduction
-	activitySvc  *ActivityLogService
+	batchSvc     BatchStockServiceInterface // FIFO deduction
+	activitySvc  ActivityLogServiceInterface
 	log          zerolog.Logger
 }
 
@@ -149,8 +149,8 @@ func NewTransactionService(
 	productRepo repository.ProductRepository,
 	stockRepo repository.StockRepository,
 	menuItemRepo repository.MenuItemRepository,
-	batchSvc *BatchStockService,
-	activitySvc *ActivityLogService,
+	batchSvc BatchStockServiceInterface,
+	activitySvc ActivityLogServiceInterface,
 	log zerolog.Logger,
 ) *TransactionService {
 	return &TransactionService{

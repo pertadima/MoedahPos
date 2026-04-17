@@ -14,11 +14,11 @@ import (
 
 // ReportHandler handles analytics and reporting endpoints.
 type ReportHandler struct {
-	reportSvc *service.ReportService
+	reportSvc service.ReportServiceInterface
 	log       zerolog.Logger
 }
 
-func NewReportHandler(reportSvc *service.ReportService, log zerolog.Logger) *ReportHandler {
+func NewReportHandler(reportSvc service.ReportServiceInterface, log zerolog.Logger) *ReportHandler {
 	return &ReportHandler{reportSvc: reportSvc, log: log}
 }
 

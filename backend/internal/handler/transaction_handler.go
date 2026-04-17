@@ -17,12 +17,12 @@ import (
 
 // TransactionHandler handles cashier-facing transaction endpoints.
 type TransactionHandler struct {
-	txnSvc    *service.TransactionService
+	txnSvc    service.TransactionServiceInterface
 	validator *validator.Validator
 	log       zerolog.Logger
 }
 
-func NewTransactionHandler(txnSvc *service.TransactionService, v *validator.Validator, log zerolog.Logger) *TransactionHandler {
+func NewTransactionHandler(txnSvc service.TransactionServiceInterface, v *validator.Validator, log zerolog.Logger) *TransactionHandler {
 	return &TransactionHandler{txnSvc: txnSvc, validator: v, log: log}
 }
 

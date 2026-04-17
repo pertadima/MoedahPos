@@ -16,13 +16,13 @@ import (
 
 // AuthHandler handles HTTP requests for the /auth routes.
 type AuthHandler struct {
-	authSvc   *service.AuthService
+	authSvc   service.AuthServiceInterface
 	validator *validator.Validator
 	log       zerolog.Logger
 }
 
 // NewAuthHandler creates a new AuthHandler.
-func NewAuthHandler(authSvc *service.AuthService, v *validator.Validator, log zerolog.Logger) *AuthHandler {
+func NewAuthHandler(authSvc service.AuthServiceInterface, v *validator.Validator, log zerolog.Logger) *AuthHandler {
 	return &AuthHandler{authSvc: authSvc, validator: v, log: log}
 }
 

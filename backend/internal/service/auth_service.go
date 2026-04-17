@@ -27,7 +27,7 @@ var (
 type AuthService struct {
 	userRepo    repository.UserRepository
 	tokenRepo   repository.RefreshTokenRepository
-	activitySvc *ActivityLogService
+	activitySvc ActivityLogServiceInterface
 	jwtMgr      *jwt.Manager
 	bcryptCost  int
 	log         zerolog.Logger
@@ -37,7 +37,7 @@ type AuthService struct {
 func NewAuthService(
 	userRepo repository.UserRepository,
 	tokenRepo repository.RefreshTokenRepository,
-	activitySvc *ActivityLogService,
+	activitySvc ActivityLogServiceInterface,
 	jwtMgr *jwt.Manager,
 	bcryptCost int,
 	log zerolog.Logger,
