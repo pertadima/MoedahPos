@@ -66,7 +66,6 @@ jobs:
         run: |
           cd backend
           go test -v -coverprofile=coverage.out -covermode=atomic ./...
-          go tool cover -html=coverage.out -o coverage.html
 
       - name: Generate Coverage Report
         uses: vladopajic/go-test-coverage@v2
@@ -75,12 +74,6 @@ jobs:
           local-prefix: github.com/moedahpos/backend
           git-token: ${{ github.token }}
           git-branch: ${{ github.head_ref || github.ref_name }}
-
-      - name: Upload Coverage Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: backend-coverage-report
-          path: backend/coverage.html
 
   # ── Frontend: TypeScript ────────────────────────────────────────────────────
   frontend-type-check:
