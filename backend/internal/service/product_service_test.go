@@ -95,3 +95,51 @@ func TestProductService_UpdateProduct(t *testing.T) {
 		phSvc.AssertExpectations(t)
 	})
 }
+func TestProductService_Categories(t *testing.T) {
+	ctx := context.Background()
+	log := zerolog.Nop()
+
+	t.Run("ListCategories", func(t *testing.T) {
+		cRepo := new(repomocks.CategoryRepository)
+		cats := []*domain.Category{{ID: "c1", Name: "Cat 1"}}
+		cRepo.On("FindAllByStore", ctx, "s1").Return(cats, nil)
+
+		s := NewProductService(nil, cRepo, nil, nil, log)
+		resp, err := s.ListCategories(ctx, "s1")
+		assert.NoError(t, err)
+		assert.Len(t, resp, 1)
+	})
+
+	t.Run("CreateCategory", func(t *testing.T) {
+		cRepo := new(repomocks.CategoryRepository)
+		req := &dto.CreateCategoryRequest{Name: "New Cat"}
+		cRepo.On("Create", ctx, mock.Anything).Return(&domain.Category{ID: "c1", Name: "New Cat"}, nil)
+
+		s := NewProductService(nil, cRepo, nil, nil, log)
+		resp, err := s.CreateCategory(ctx, "s1", req)
+		assert.NoError(t, err)
+		assert.Equal(t, "New Cat", resp.Name)
+	})
+
+	t.Run("UpdateCategory", func(t *testing.T) {
+		cRepo := new(repomocks.CategoryRepository)
+		req := &dto.UpdateCategoryRequest{Name: "Updated Cat"}
+		cRepo.On("FindByID", ctx, "c1").Return(&domain.Category{ID: "c1"}, nil)
+		cRepo.On("Update", ctx, mock.Anything).Return(&domain.Category{ID: "c1", Name: "Updated Cat"}, nil)
+
+		s := NewProductService(nil, cRepo, nil, nil, log)
+		resp, err := s.UpdateCategory(ctx, "c1", req)
+		assert.NoError(t, err)
+		assert.Equal(t, "Updated Cat", resp.Name)
+	})
+
+	t.Run("DeleteCategory", func(t *testing.T) {
+		cRepo := new(repomocks.CategoryRepository)
+		cRepo.On("FindByID", ctx, "c1").Return(&domain.Category{ID: "c1"}, nil)
+		cRepo.On("SoftDelete", ctx, "c1").Return(nil)
+
+		s := NewProductService(nil, cRepo, nil, nil, log)
+		err := s.DeleteCategory(ctx, "c1")
+		assert.NoError(t, err)
+	})
+}

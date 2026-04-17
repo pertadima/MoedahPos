@@ -14,11 +14,11 @@ import (
 
 // PriceHistoryHandler handles HTTP requests for price history.
 type PriceHistoryHandler struct {
-	svc *service.PriceHistoryService
+	svc service.PriceHistoryServiceInterface
 	log zerolog.Logger
 }
 
-func NewPriceHistoryHandler(svc *service.PriceHistoryService, log zerolog.Logger) *PriceHistoryHandler {
+func NewPriceHistoryHandler(svc service.PriceHistoryServiceInterface, log zerolog.Logger) *PriceHistoryHandler {
 	return &PriceHistoryHandler{svc: svc, log: log}
 }
 

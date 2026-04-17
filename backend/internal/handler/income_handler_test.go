@@ -67,3 +67,66 @@ func TestIncomeHandler_CreateIncome(t *testing.T) {
 		assert.Equal(t, http.StatusCreated, w.Code)
 	})
 }
+
+func TestIncomeHandler_List(t *testing.T) {
+	svc := svcMocks.NewIncomeServiceInterface(t)
+	v := validator.New()
+	h := NewIncomeHandler(svc, v, zerolog.Nop())
+
+	t.Run("success", func(t *testing.T) {
+		svc.On("ListIncomes", mock.Anything, mock.Anything).Return([]*dto.IncomeResponse{{ID: "inc1"}}, dto.PaginationMeta{Total: 1}, nil).Once()
+
+		req, _ := http.NewRequest(http.MethodGet, "/stores/s1/incomes", nil)
+		w := httptest.NewRecorder()
+		h.ListIncomes(w, req)
+
+		assert.Equal(t, http.StatusOK, w.Code)
+	})
+}
+
+func TestIncomeHandler_Update(t *testing.T) {
+	svc := svcMocks.NewIncomeServiceInterface(t)
+	v := validator.New()
+	h := NewIncomeHandler(svc, v, zerolog.Nop())
+
+	t.Run("success", func(t *testing.T) {
+		catID := "550e8400-e29b-41d4-a716-446655440000"
+		reqBody := dto.UpdateIncomeRequest{CategoryID: catID, Amount: 200, IncomeDate: "2024-01-01", PaymentMethod: "cash"}
+		body, _ := json.Marshal(reqBody)
+		req, _ := http.NewRequest(http.MethodPut, "/stores/s1/incomes/inc1", bytes.NewBuffer(body))
+		w := httptest.NewRecorder()
+
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("storeId", "s1")
+		rctx.URLParams.Add("id", "inc1")
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+		svc.On("UpdateIncome", mock.Anything, "inc1", "s1", mock.Anything).Return(&dto.IncomeResponse{ID: "inc1"}, nil).Once()
+
+		h.UpdateIncome(w, req)
+
+		assert.Equal(t, http.StatusOK, w.Code)
+	})
+}
+
+func TestIncomeHandler_Delete(t *testing.T) {
+	svc := svcMocks.NewIncomeServiceInterface(t)
+	v := validator.New()
+	h := NewIncomeHandler(svc, v, zerolog.Nop())
+
+	t.Run("success", func(t *testing.T) {
+		req, _ := http.NewRequest(http.MethodDelete, "/stores/s1/incomes/inc1", nil)
+		w := httptest.NewRecorder()
+
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("storeId", "s1")
+		rctx.URLParams.Add("id", "inc1")
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+		svc.On("DeleteIncome", mock.Anything, "inc1", "s1").Return(nil).Once()
+
+		h.DeleteIncome(w, req)
+
+		assert.Equal(t, http.StatusOK, w.Code)
+	})
+}

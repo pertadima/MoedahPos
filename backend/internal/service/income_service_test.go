@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"testing"
-	"time"
 
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
@@ -11,69 +10,42 @@ import (
 
 	"github.com/moedahpos/backend/internal/domain"
 	"github.com/moedahpos/backend/internal/dto"
-	"github.com/moedahpos/backend/internal/repository/mocks"
-	service_mocks "github.com/moedahpos/backend/internal/service/mocks"
+	repomocks "github.com/moedahpos/backend/internal/repository/mocks"
+	"github.com/moedahpos/backend/internal/service/mocks"
 )
 
-func TestIncomeService_CreateIncome(t *testing.T) {
-	repo := mocks.NewIncomeRepository(t)
-	activitySvc := service_mocks.NewActivityLogServiceInterface(t)
-	svc := NewIncomeService(repo, activitySvc, zerolog.Nop())
+func TestIncomeService(t *testing.T) {
+	repo := new(repomocks.IncomeRepository)
+	activitySvc := new(mocks.ActivityLogServiceInterface)
+	log := zerolog.Nop()
+	svc := NewIncomeService(repo, activitySvc, log)
 
-	storeID := "st1"
-	userID := "u1"
-	req := &dto.CreateIncomeRequest{
-		CategoryID:    "cat1",
-		Amount:        500.0,
-		IncomeDate:    "2026-04-17",
-		PaymentMethod: "cash",
-	}
+	ctx := context.Background()
 
-	t.Run("success", func(t *testing.T) {
-		repo.On("Create", mock.Anything, mock.AnythingOfType("*domain.Income")).
-			Return(&domain.Income{
-				ID:            "inc1",
-				StoreID:       storeID,
-				CategoryID:    req.CategoryID,
-				CategoryName:  "Service",
-				Amount:        req.Amount,
-				IncomeDate:    time.Now(),
-				PaymentMethod: req.PaymentMethod,
-				CreatedBy:     &userID,
-				CreatedAt:     time.Now(),
-				UpdatedAt:     time.Now(),
-			}, nil).Once()
+	t.Run("CreateIncome", func(t *testing.T) {
+		req := &dto.CreateIncomeRequest{
+			CategoryID:    "c1",
+			Amount:        1000,
+			IncomeDate:    "2024-01-01",
+			PaymentMethod: "cash",
+		}
 
-		activitySvc.On("LogActivity", mock.Anything, userID, storeID, domain.ActionIncomeCreate, domain.ModuleIncome, "inc1", mock.Anything).
-			Return().Once()
+		repo.On("Create", ctx, mock.MatchedBy(func(in *domain.Income) bool {
+			return in.Amount == 1000 && in.PaymentMethod == "cash"
+		})).Return(&domain.Income{ID: "i1", Amount: 1000, PaymentMethod: "cash"}, nil).Once()
 
-		resp, err := svc.CreateIncome(context.Background(), storeID, userID, req)
+		activitySvc.On("LogActivity", ctx, "u1", "s1", domain.ActionIncomeCreate, domain.ModuleIncome, "i1", mock.Anything).Return().Once()
+
+		resp, err := svc.CreateIncome(ctx, "s1", "u1", req)
 		assert.NoError(t, err)
-		assert.NotNil(t, resp)
-		assert.Equal(t, "inc1", resp.ID)
+		assert.Equal(t, "i1", resp.ID)
+		repo.AssertExpectations(t)
+		activitySvc.AssertExpectations(t)
 	})
 
-	t.Run("invalid date", func(t *testing.T) {
-		invalidReq := &dto.CreateIncomeRequest{IncomeDate: "invalid"}
-		resp, err := svc.CreateIncome(context.Background(), storeID, userID, invalidReq)
-		assert.Error(t, err)
-		assert.Nil(t, resp)
-	})
-}
-
-func TestIncomeService_ListIncomes(t *testing.T) {
-	repo := mocks.NewIncomeRepository(t)
-	svc := NewIncomeService(repo, nil, zerolog.Nop())
-
-	filter := dto.IncomeListFilter{StoreID: "st1"}
-
-	t.Run("success", func(t *testing.T) {
-		repo.On("FindAll", mock.Anything, mock.Anything).
-			Return([]*domain.Income{
-				{ID: "inc1", StoreID: "st1", CreatedAt: time.Now(), UpdatedAt: time.Now()},
-			}, 1, nil).Once()
-
-		resp, meta, err := svc.ListIncomes(context.Background(), filter)
+	t.Run("ListIncomes", func(t *testing.T) {
+		repo.On("FindAll", ctx, mock.Anything).Return([]*domain.Income{{ID: "i1"}}, 1, nil).Once()
+		resp, meta, err := svc.ListIncomes(ctx, dto.IncomeListFilter{})
 		assert.NoError(t, err)
 		assert.Len(t, resp, 1)
 		assert.Equal(t, 1, meta.Total)

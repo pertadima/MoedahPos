@@ -15,40 +15,53 @@ import (
 	"github.com/moedahpos/backend/internal/service/mocks"
 )
 
-func TestReportHandler_SalesSummary(t *testing.T) {
-	t.Run("Success", func(t *testing.T) {
-		rSvc := new(mocks.ReportServiceInterface)
-		h := NewReportHandler(rSvc, zerolog.Nop())
+func TestReportHandler(t *testing.T) {
+	svc := new(mocks.ReportServiceInterface)
+	log := zerolog.Nop()
+	h := NewReportHandler(svc, log)
 
-		r := chi.NewRouter()
-		r.Get("/stores/{storeId}/reports/sales", h.SalesSummary)
-
-		rSvc.On("SalesSummary", mock.Anything, mock.Anything).Return(&dto.SalesSummaryResponse{TotalSales: 1000}, nil)
-
-		req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "/stores/s1/reports/sales", nil)
+	t.Run("SalesSummary", func(t *testing.T) {
+		req, _ := http.NewRequest(http.MethodGet, "/stores/s1/reports/sales", nil)
 		w := httptest.NewRecorder()
 
-		r.ServeHTTP(w, req)
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("storeId", "s1")
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+		svc.On("SalesSummary", mock.Anything, mock.Anything).Return(&dto.SalesSummaryResponse{TotalSales: 1000}, nil).Once()
+
+		h.SalesSummary(w, req)
 
 		assert.Equal(t, http.StatusOK, w.Code)
-		rSvc.AssertExpectations(t)
+		svc.AssertExpectations(t)
 	})
-}
 
-func TestReportHandler_StockValuation(t *testing.T) {
-	t.Run("Success", func(t *testing.T) {
-		rSvc := new(mocks.ReportServiceInterface)
-		h := NewReportHandler(rSvc, zerolog.Nop())
-
-		r := chi.NewRouter()
-		r.Get("/stores/{storeId}/reports/stock-valuation", h.StockValuation)
-
-		rSvc.On("StockValuation", mock.Anything, "s1").Return(&dto.StockValuationResponse{GrandTotal: 500}, nil)
-
-		req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "/stores/s1/reports/stock-valuation", nil)
+	t.Run("StockValuation", func(t *testing.T) {
+		req, _ := http.NewRequest(http.MethodGet, "/stores/s1/reports/stock-valuation", nil)
 		w := httptest.NewRecorder()
 
-		r.ServeHTTP(w, req)
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("storeId", "s1")
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+		svc.On("StockValuation", mock.Anything, "s1").Return(&dto.StockValuationResponse{GrandTotal: 2000}, nil).Once()
+
+		h.StockValuation(w, req)
+
+		assert.Equal(t, http.StatusOK, w.Code)
+	})
+
+	t.Run("CashFlow", func(t *testing.T) {
+		req, _ := http.NewRequest(http.MethodGet, "/stores/s1/reports/cash-flow", nil)
+		w := httptest.NewRecorder()
+
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("storeId", "s1")
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+		svc.On("CashFlow", mock.Anything, mock.Anything).Return(&dto.CashFlowResponse{TotalCashIn: 500}, nil).Once()
+
+		h.CashFlow(w, req)
 
 		assert.Equal(t, http.StatusOK, w.Code)
 	})

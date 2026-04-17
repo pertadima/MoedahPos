@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/mock"
 
 	"github.com/moedahpos/backend/internal/dto"
+	"github.com/moedahpos/backend/internal/service"
 	svcMocks "github.com/moedahpos/backend/internal/service/mocks"
 	"github.com/moedahpos/backend/internal/validator"
 )
@@ -91,6 +92,63 @@ func TestSupplierHandler_Get(t *testing.T) {
 		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 
 		h.Get(w, req)
+
+		assert.Equal(t, http.StatusOK, w.Code)
+	})
+
+	t.Run("not found", func(t *testing.T) {
+		svc.On("GetSupplier", mock.Anything, "s2").
+			Return(nil, service.ErrSupplierNotFound).Once()
+
+		req := httptest.NewRequest("GET", "/suppliers/s2", nil).WithContext(context.Background())
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("supplierId", "s2")
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+		w := httptest.NewRecorder()
+
+		h.Get(w, req)
+
+		assert.Equal(t, http.StatusNotFound, w.Code)
+	})
+}
+
+func TestSupplierHandler_Update(t *testing.T) {
+	svc := svcMocks.NewSupplierServiceInterface(t)
+	v := validator.New()
+	h := NewSupplierHandler(svc, v, zerolog.Nop())
+
+	t.Run("success", func(t *testing.T) {
+		reqBody := dto.UpdateSupplierRequest{Name: "Updated Name"}
+		body, _ := json.Marshal(reqBody)
+		svc.On("UpdateSupplier", mock.Anything, "s1", mock.Anything).Return(&dto.SupplierResponse{ID: "s1", Name: "Updated Name"}, nil).Once()
+
+		req := httptest.NewRequest("PUT", "/suppliers/s1", bytes.NewBuffer(body)).WithContext(context.Background())
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("supplierId", "s1")
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+		w := httptest.NewRecorder()
+
+		h.Update(w, req)
+
+		assert.Equal(t, http.StatusOK, w.Code)
+	})
+}
+
+func TestSupplierHandler_Delete(t *testing.T) {
+	svc := svcMocks.NewSupplierServiceInterface(t)
+	v := validator.New()
+	h := NewSupplierHandler(svc, v, zerolog.Nop())
+
+	t.Run("success", func(t *testing.T) {
+		svc.On("DeleteSupplier", mock.Anything, "s1").Return(nil).Once()
+
+		req := httptest.NewRequest("DELETE", "/suppliers/s1", nil).WithContext(context.Background())
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("supplierId", "s1")
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+		w := httptest.NewRecorder()
+
+		h.Delete(w, req)
 
 		assert.Equal(t, http.StatusOK, w.Code)
 	})

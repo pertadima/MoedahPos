@@ -131,3 +131,48 @@ type IncomeServiceInterface interface {
 	UpdateIncome(ctx context.Context, id, storeID string, req *dto.UpdateIncomeRequest) (*dto.IncomeResponse, error)
 	DeleteIncome(ctx context.Context, id, storeID string) error
 }
+
+type TerminServiceInterface interface {
+	CreateTerminSchedule(ctx context.Context, poID string, req dto.CreateTerminScheduleRequest) ([]dto.TerminResponse, error)
+	GetTerminSchedule(ctx context.Context, poID string) ([]dto.TerminResponse, error)
+	RecordPayment(ctx context.Context, terminID, userID string, req dto.RecordPaymentRequest) (*dto.PaymentRecordResponse, error)
+	CalculatePODebt(ctx context.Context, poID string) (*dto.PODebtSummaryResponse, error)
+	GenerateDocumentData(ctx context.Context, poID, docType string) (*dto.PODocumentData, error)
+}
+
+type PurchaseOrderServiceInterface interface {
+	ListPOs(ctx context.Context, filter dto.POListFilter) ([]*dto.POResponse, dto.PaginationMeta, error)
+	GetPO(ctx context.Context, id string) (*dto.POResponse, error)
+	CreatePO(ctx context.Context, storeID string, req *dto.CreatePORequest, userID string) (*dto.POResponse, error)
+	UpdatePO(ctx context.Context, id string, req *dto.UpdatePORequest, storeID string) (*dto.POResponse, error)
+	SubmitPO(ctx context.Context, id, userID string) error
+	ReceivePO(ctx context.Context, id, userID string) error
+	CancelPO(ctx context.Context, id string) error
+	CreatePayment(ctx context.Context, poID, storeID, userID string, req dto.POPaymentRequest) (*dto.POPaymentResponse, error)
+	ListPayments(ctx context.Context, poID string) ([]*dto.POPaymentResponse, error)
+	PayableSummary(ctx context.Context, storeID string) (*dto.PayableSummary, error)
+}
+
+type UserAdminServiceInterface interface {
+	ListUsers(ctx context.Context, search string, includeInactive bool, page, perPage int) ([]dto.UserResponse, int, error)
+	GetUser(ctx context.Context, id string) (*dto.UserResponse, error)
+	CreateUser(ctx context.Context, req *dto.CreateUserRequest) (*dto.UserResponse, error)
+	UpdateUser(ctx context.Context, id string, req *dto.UpdateUserRequest) (*dto.UserResponse, error)
+	DeactivateUser(ctx context.Context, id string) error
+	ResetPassword(ctx context.Context, id string, req *dto.ResetPasswordRequest) error
+	SetUserStores(ctx context.Context, userID string, req *dto.SetUserStoresRequest) (*dto.UserResponse, error)
+	ListRoles(ctx context.Context) ([]*domain.Role, error)
+}
+
+type StoreServiceInterface interface {
+	GetStore(ctx context.Context, id string) (*dto.StoreResponse, error)
+	CreateStore(ctx context.Context, req *dto.CreateStoreRequest) (*dto.StoreResponse, error)
+	UpdateStore(ctx context.Context, id string, req *dto.UpdateStoreRequest) (*dto.StoreResponse, error)
+	DeleteStore(ctx context.Context, id string) error
+	ListStores(ctx context.Context, f dto.StoreListFilter) ([]*dto.StoreResponse, dto.PaginationMeta, error)
+
+	ListMembers(ctx context.Context, storeID string) ([]*dto.MemberResponse, error)
+	AddMember(ctx context.Context, storeID string, req *dto.AddMemberRequest) error
+	UpdateMemberRole(ctx context.Context, storeID, userID string, req *dto.UpdateMemberRoleRequest) error
+	RemoveMember(ctx context.Context, storeID, userID string) error
+}

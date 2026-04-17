@@ -73,3 +73,61 @@ func TestProductHandler_ListCategories(t *testing.T) {
 		assert.Equal(t, http.StatusOK, w.Code)
 	})
 }
+func TestProductHandler_Categories(t *testing.T) {
+	t.Run("CreateCategory", func(t *testing.T) {
+		pSvc := new(mocks.ProductServiceInterface)
+		h := NewProductHandler(pSvc, validator.New(), zerolog.Nop())
+
+		reqBody := dto.CreateCategoryRequest{Name: "New Cat"}
+		body, _ := json.Marshal(reqBody)
+
+		r := chi.NewRouter()
+		r.Post("/stores/{storeId}/categories", h.CreateCategory)
+
+		pSvc.On("CreateCategory", mock.Anything, "s1", &reqBody).Return(&dto.CategoryResponse{ID: "c1", Name: "New Cat"}, nil)
+
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodPost, "/stores/s1/categories", bytes.NewBuffer(body))
+		w := httptest.NewRecorder()
+
+		r.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusCreated, w.Code)
+	})
+
+	t.Run("UpdateCategory", func(t *testing.T) {
+		pSvc := new(mocks.ProductServiceInterface)
+		h := NewProductHandler(pSvc, validator.New(), zerolog.Nop())
+
+		reqBody := dto.UpdateCategoryRequest{Name: "Updated Cat"}
+		body, _ := json.Marshal(reqBody)
+
+		r := chi.NewRouter()
+		r.Put("/stores/{storeId}/categories/{categoryId}", h.UpdateCategory)
+
+		pSvc.On("UpdateCategory", mock.Anything, "c1", &reqBody).Return(&dto.CategoryResponse{ID: "c1", Name: "Updated Cat"}, nil)
+
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodPut, "/stores/s1/categories/c1", bytes.NewBuffer(body))
+		w := httptest.NewRecorder()
+
+		r.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusOK, w.Code)
+	})
+
+	t.Run("DeleteCategory", func(t *testing.T) {
+		pSvc := new(mocks.ProductServiceInterface)
+		h := NewProductHandler(pSvc, validator.New(), zerolog.Nop())
+
+		r := chi.NewRouter()
+		r.Delete("/stores/{storeId}/categories/{categoryId}", h.DeleteCategory)
+
+		pSvc.On("DeleteCategory", mock.Anything, "c1").Return(nil)
+
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodDelete, "/stores/s1/categories/c1", nil)
+		w := httptest.NewRecorder()
+
+		r.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusOK, w.Code)
+	})
+}

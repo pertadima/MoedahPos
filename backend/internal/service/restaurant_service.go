@@ -20,7 +20,7 @@ var (
 
 // ─── Interfaces ───────────────────────────────────────────────────────────────
 
-type tableRepo interface {
+type TableRepository interface {
 	FindAllByStore(ctx context.Context, storeID string) ([]*domain.RestaurantTable, error)
 	FindByID(ctx context.Context, id string) (*domain.RestaurantTable, error)
 	Create(ctx context.Context, t *domain.RestaurantTable) (*domain.RestaurantTable, error)
@@ -29,7 +29,7 @@ type tableRepo interface {
 	SoftDelete(ctx context.Context, id string) error
 }
 
-type menuItemRepo interface {
+type MenuItemRepository interface {
 	FindAllByStore(ctx context.Context, storeID string) ([]*domain.MenuItem, error)
 	FindByID(ctx context.Context, id string) (*domain.MenuItem, error)
 	Create(ctx context.Context, item *domain.MenuItem) (*domain.MenuItem, error)
@@ -41,11 +41,11 @@ type menuItemRepo interface {
 // ─── Table Service ────────────────────────────────────────────────────────────
 
 type TableService struct {
-	repo tableRepo
+	repo TableRepository
 	log  zerolog.Logger
 }
 
-func NewTableService(repo tableRepo, log zerolog.Logger) *TableService {
+func NewTableService(repo TableRepository, log zerolog.Logger) *TableService {
 	return &TableService{repo: repo, log: log}
 }
 
@@ -115,11 +115,11 @@ func (s *TableService) Delete(ctx context.Context, id string) error {
 // ─── Menu Item Service ────────────────────────────────────────────────────────
 
 type MenuItemService struct {
-	repo menuItemRepo
+	repo MenuItemRepository
 	log  zerolog.Logger
 }
 
-func NewMenuItemService(repo menuItemRepo, log zerolog.Logger) *MenuItemService {
+func NewMenuItemService(repo MenuItemRepository, log zerolog.Logger) *MenuItemService {
 	return &MenuItemService{repo: repo, log: log}
 }
 

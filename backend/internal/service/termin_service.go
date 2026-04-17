@@ -38,7 +38,7 @@ type TerminService struct {
 	paymentRepo repository.PaymentRecordRepository
 	poRepo      repository.PurchaseOrderRepository
 	storeRepo   repository.StoreRepository
-	activitySvc *ActivityLogService
+	activitySvc ActivityLogServiceInterface
 	log         zerolog.Logger
 }
 
@@ -48,7 +48,7 @@ func NewTerminService(
 	paymentRepo repository.PaymentRecordRepository,
 	poRepo repository.PurchaseOrderRepository,
 	storeRepo repository.StoreRepository,
-	activitySvc *ActivityLogService,
+	activitySvc ActivityLogServiceInterface,
 	log zerolog.Logger,
 ) *TerminService {
 	return &TerminService{

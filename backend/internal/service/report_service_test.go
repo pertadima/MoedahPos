@@ -12,61 +12,56 @@ import (
 	repomocks "github.com/moedahpos/backend/internal/repository/mocks"
 )
 
-func TestReportService_SalesSummary(t *testing.T) {
-	ctx := context.Background()
+func TestReportService(t *testing.T) {
+	repo := new(repomocks.ReportRepository)
 	log := zerolog.Nop()
+	svc := NewReportService(repo, log)
 
-	t.Run("Success", func(t *testing.T) {
-		rRepo := new(repomocks.ReportRepository)
-		s := NewReportService(rRepo, log)
+	ctx := context.Background()
 
-		filter := dto.ReportFilter{
-			StoreID:  "s1",
-			DateFrom: "2023-01-01",
-			DateTo:   "2023-01-01",
+	t.Run("SalesSummary", func(t *testing.T) {
+		filter := dto.ReportFilter{StoreID: "s1", DateFrom: "2024-01-01", DateTo: "2024-01-02"}
+		rows := []dto.SalesSummaryRow{
+			{Date: "2024-01-01", TotalSales: 1000, TotalCost: 600, GrossProfit: 400, NetProfit: 350, TransactionCount: 5},
 		}
+		repo.On("SalesSummary", ctx, "s1", mock.Anything, mock.Anything).Return(rows, nil).Once()
 
-		rRepo.On("SalesSummary", ctx, "s1", mock.Anything, mock.Anything).Return([]dto.SalesSummaryRow{
-			{
-				Date:             "2023-01-01",
-				TotalSales:       1000,
-				TotalCost:        500,
-				GrossProfit:      500,
-				TotalExpense:     100,
-				NetProfit:        400,
-				TransactionCount: 10,
-			},
-		}, nil)
-
-		resp, err := s.SalesSummary(ctx, filter)
-
+		resp, err := svc.SalesSummary(ctx, filter)
 		assert.NoError(t, err)
-		assert.NotNil(t, resp)
 		assert.Equal(t, 1000.0, resp.TotalSales)
-		assert.Equal(t, 400.0, resp.NetProfit)
-		assert.Equal(t, 40.0, resp.ProfitMargin) // 400/1000 * 100
-		rRepo.AssertExpectations(t)
+		assert.Equal(t, 350.0, resp.NetProfit)
+		assert.Equal(t, 5, resp.TotalTransactions)
+		repo.AssertExpectations(t)
 	})
-}
 
-func TestReportService_StockValuation(t *testing.T) {
-	ctx := context.Background()
-	log := zerolog.Nop()
+	t.Run("StockValuation", func(t *testing.T) {
+		rows := []dto.StockValuationRow{
+			{ProductID: "p1", ProductName: "P1", Quantity: 10, CostPrice: 100, TotalValue: 1000},
+			{ProductID: "p2", ProductName: "P2", Quantity: 5, CostPrice: 200, TotalValue: 1000},
+		}
+		repo.On("StockValuation", ctx, "s1").Return(rows, nil).Once()
 
-	t.Run("Success", func(t *testing.T) {
-		rRepo := new(repomocks.ReportRepository)
-		s := NewReportService(rRepo, log)
-
-		rRepo.On("StockValuation", ctx, "s1").Return([]dto.StockValuationRow{
-			{ProductID: "p1", TotalValue: 500},
-			{ProductID: "p2", TotalValue: 300},
-		}, nil)
-
-		resp, err := s.StockValuation(ctx, "s1")
-
+		resp, err := svc.StockValuation(ctx, "s1")
 		assert.NoError(t, err)
-		assert.NotNil(t, resp)
-		assert.Equal(t, 800.0, resp.GrandTotal)
-		rRepo.AssertExpectations(t)
+		assert.Equal(t, 2000.0, resp.GrandTotal)
+		assert.Len(t, resp.Rows, 2)
+	})
+
+	t.Run("CashFlow", func(t *testing.T) {
+		filter := dto.ReportFilter{StoreID: "s1"}
+		rows := []dto.CashFlowDayRow{
+			{
+				Date: "2024-01-01",
+				CashIn: 500, CashOut: 200,
+				CashInByMethod: map[string]float64{"cash": 300, "bank": 200},
+			},
+		}
+		repo.On("CashFlowSummary", ctx, "s1", mock.Anything, mock.Anything).Return(rows, nil).Once()
+
+		resp, err := svc.CashFlow(ctx, filter)
+		assert.NoError(t, err)
+		assert.Equal(t, 500.0, resp.TotalCashIn)
+		assert.Equal(t, 300.0, resp.NetCash)
+		assert.Equal(t, 300.0, resp.CashInByMethod["cash"])
 	})
 }

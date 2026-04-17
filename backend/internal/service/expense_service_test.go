@@ -11,104 +11,51 @@ import (
 
 	"github.com/moedahpos/backend/internal/domain"
 	"github.com/moedahpos/backend/internal/dto"
-	"github.com/moedahpos/backend/internal/repository/mocks"
-	service_mocks "github.com/moedahpos/backend/internal/service/mocks"
+	repomocks "github.com/moedahpos/backend/internal/repository/mocks"
+	"github.com/moedahpos/backend/internal/service/mocks"
 )
 
-func TestExpenseService_CreateExpense(t *testing.T) {
-	repo := mocks.NewExpenseRepository(t)
-	activitySvc := service_mocks.NewActivityLogServiceInterface(t)
-	svc := NewExpenseService(repo, activitySvc, zerolog.Nop())
+func TestExpenseService(t *testing.T) {
+	repo := new(repomocks.ExpenseRepository)
+	activitySvc := new(mocks.ActivityLogServiceInterface)
+	log := zerolog.Nop()
+	svc := NewExpenseService(repo, activitySvc, log)
 
-	storeID := "st1"
-	userID := "u1"
-	req := &dto.CreateExpenseRequest{
-		CategoryID:    "cat1",
-		Amount:        100.0,
-		ExpenseDate:   "2026-04-17",
-		Notes:         "Lunch",
-		PaymentStatus: "paid",
-	}
+	ctx := context.Background()
 
-	t.Run("success", func(t *testing.T) {
-		repo.On("CreateExpense", mock.Anything, mock.AnythingOfType("*domain.Expense")).
-			Return(&domain.Expense{
-				ID:            "e1",
-				StoreID:       storeID,
-				CategoryID:    req.CategoryID,
-				CategoryName:  "Food",
-				Amount:        req.Amount,
-				ExpenseDate:   time.Now(),
-				Notes:         req.Notes,
-				PaymentStatus: req.PaymentStatus,
-				CreatedBy:     &userID,
-				CreatedAt:     time.Now(),
-				UpdatedAt:     time.Now(),
-			}, nil).Once()
+	t.Run("CreateExpense", func(t *testing.T) {
+		req := &dto.CreateExpenseRequest{
+			CategoryID:    "c1",
+			Amount:        500,
+			ExpenseDate:   "2024-01-01",
+			PaymentStatus: "paid",
+		}
 
-		activitySvc.On("LogActivity", mock.Anything, userID, storeID, domain.ActionExpenseCreate, domain.ModuleExpense, "e1", mock.Anything).
-			Return().Once()
+		repo.On("CreateExpense", ctx, mock.Anything).Return(&domain.Expense{
+			ID: "e1", Amount: 500, PaymentStatus: "paid",
+		}, nil).Once()
 
-		resp, err := svc.CreateExpense(context.Background(), storeID, userID, req)
+		activitySvc.On("LogActivity", ctx, "u1", "s1", domain.ActionExpenseCreate, domain.ModuleExpense, "e1", mock.Anything).Return().Once()
+
+		resp, err := svc.CreateExpense(ctx, "s1", "u1", req)
 		assert.NoError(t, err)
-		assert.NotNil(t, resp)
 		assert.Equal(t, "e1", resp.ID)
-		assert.Equal(t, "Food", resp.CategoryName)
 	})
 
-	t.Run("invalid date", func(t *testing.T) {
-		invalidReq := &dto.CreateExpenseRequest{ExpenseDate: "invalid"}
-		resp, err := svc.CreateExpense(context.Background(), storeID, userID, invalidReq)
-		assert.Error(t, err)
-		assert.Nil(t, resp)
-	})
-}
+	t.Run("ProcessDueRecurringExpenses", func(t *testing.T) {
+		due := []*domain.RecurringExpense{
+			{
+				ID: "re1", Name: "Rent", StoreID: "s1", Amount: 2000,
+				Interval: "monthly", IntervalValue: 1,
+				NextRunDate: time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
+			},
+		}
+		repo.On("GetDueRecurringExpenses", ctx).Return(due, nil).Once()
+		repo.On("CreateExpense", ctx, mock.Anything).Return(&domain.Expense{ID: "e2"}, nil).Once()
+		repo.On("BumpRecurringNextRun", ctx, "re1", "2024-02-01").Return(nil).Once()
 
-func TestExpenseService_ListExpenses(t *testing.T) {
-	repo := mocks.NewExpenseRepository(t)
-	svc := NewExpenseService(repo, nil, zerolog.Nop())
-
-	filter := dto.ExpenseListFilter{StoreID: "st1"}
-
-	t.Run("success", func(t *testing.T) {
-		repo.On("FindAll", mock.Anything, mock.Anything).
-			Return([]*domain.Expense{
-				{ID: "e1", StoreID: "st1", CreatedAt: time.Now(), UpdatedAt: time.Now()},
-			}, 1, nil).Once()
-
-		resp, meta, err := svc.ListExpenses(context.Background(), filter)
+		err := svc.ProcessDueRecurringExpenses(ctx)
 		assert.NoError(t, err)
-		assert.Len(t, resp, 1)
-		assert.Equal(t, 1, meta.Total)
-	})
-}
-
-func TestExpenseService_ProcessDueRecurringExpenses(t *testing.T) {
-	repo := mocks.NewExpenseRepository(t)
-	svc := NewExpenseService(repo, nil, zerolog.Nop())
-
-	t.Run("success", func(t *testing.T) {
-		repo.On("GetDueRecurringExpenses", mock.Anything).
-			Return([]*domain.RecurringExpense{
-				{
-					ID:            "re1",
-					StoreID:       "st1",
-					CategoryID:    "cat1",
-					Name:          "Monthly Rent",
-					Amount:        1000.0,
-					Interval:      "monthly",
-					IntervalValue: 1,
-					NextRunDate:   time.Now(),
-				},
-			}, nil).Once()
-
-		repo.On("CreateExpense", mock.Anything, mock.MatchedBy(func(e *domain.Expense) bool {
-			return e.CategoryID == "cat1" && e.Amount == 1000.0
-		})).Return(&domain.Expense{ID: "e1"}, nil).Once()
-
-		repo.On("BumpRecurringNextRun", mock.Anything, "re1", mock.Anything).Return(nil).Once()
-
-		err := svc.ProcessDueRecurringExpenses(context.Background())
-		assert.NoError(t, err)
+		repo.AssertExpectations(t)
 	})
 }

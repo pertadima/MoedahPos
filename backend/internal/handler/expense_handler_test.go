@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
+
 	"github.com/moedahpos/backend/internal/dto"
 	svcMocks "github.com/moedahpos/backend/internal/service/mocks"
 	"github.com/moedahpos/backend/internal/validator"
@@ -89,6 +90,51 @@ func TestExpenseHandler_DeleteExpense(t *testing.T) {
 		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 
 		h.DeleteExpense(w, req)
+
+		assert.Equal(t, http.StatusOK, w.Code)
+	})
+}
+
+func TestExpenseHandler_UpdateStatus(t *testing.T) {
+	svc := svcMocks.NewExpenseServiceInterface(t)
+	v := validator.New()
+	h := NewExpenseHandler(svc, v, zerolog.Nop())
+
+	t.Run("success", func(t *testing.T) {
+		reqBody := dto.UpdateExpenseStatusRequest{PaymentStatus: "paid"}
+		body, _ := json.Marshal(reqBody)
+		req, _ := http.NewRequest(http.MethodPatch, "/stores/s1/expenses/e1/status", bytes.NewBuffer(body))
+		w := httptest.NewRecorder()
+
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("storeId", "s1")
+		rctx.URLParams.Add("id", "e1")
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+		svc.On("UpdatePaymentStatus", mock.Anything, "e1", "s1", mock.Anything).Return(&dto.ExpenseResponse{ID: "e1"}, nil).Once()
+
+		h.UpdateExpenseStatus(w, req)
+
+		assert.Equal(t, http.StatusOK, w.Code)
+	})
+}
+
+func TestExpenseHandler_Recurring(t *testing.T) {
+	svc := svcMocks.NewExpenseServiceInterface(t)
+	v := validator.New()
+	h := NewExpenseHandler(svc, v, zerolog.Nop())
+
+	t.Run("ListRecurring", func(t *testing.T) {
+		req, _ := http.NewRequest(http.MethodGet, "/stores/s1/recurring-expenses", nil)
+		w := httptest.NewRecorder()
+
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("storeId", "s1")
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+		svc.On("ListRecurringExpenses", mock.Anything, mock.Anything).Return([]*dto.RecurringExpenseResponse{{ID: "re1"}}, dto.PaginationMeta{Total: 1}, nil).Once()
+
+		h.ListRecurringExpenses(w, req)
 
 		assert.Equal(t, http.StatusOK, w.Code)
 	})

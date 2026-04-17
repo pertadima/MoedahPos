@@ -13,11 +13,11 @@ import (
 )
 
 type ActivityLogHandler struct {
-	activitySvc *service.ActivityLogService
+	activitySvc service.ActivityLogServiceInterface
 	log         zerolog.Logger
 }
 
-func NewActivityLogHandler(activitySvc *service.ActivityLogService, log zerolog.Logger) *ActivityLogHandler {
+func NewActivityLogHandler(activitySvc service.ActivityLogServiceInterface, log zerolog.Logger) *ActivityLogHandler {
 	return &ActivityLogHandler{activitySvc: activitySvc, log: log}
 }
 

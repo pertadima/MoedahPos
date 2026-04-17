@@ -29,8 +29,8 @@ type PurchaseOrderService struct {
 	paymentRepo       repository.POPaymentRepository
 	terminRepo        repository.TerminRepository
 	paymentRecordRepo repository.PaymentRecordRepository
-	priceHistorySvc   *PriceHistoryService
-	activitySvc       *ActivityLogService
+	priceHistorySvc   PriceHistoryServiceInterface
+	activitySvc       ActivityLogServiceInterface
 	log               zerolog.Logger
 }
 
@@ -40,11 +40,20 @@ func NewPurchaseOrderService(
 	paymentRepo repository.POPaymentRepository,
 	terminRepo repository.TerminRepository,
 	paymentRecordRepo repository.PaymentRecordRepository,
-	priceHistorySvc *PriceHistoryService,
-	activitySvc *ActivityLogService,
+	priceHistorySvc PriceHistoryServiceInterface,
+	activitySvc ActivityLogServiceInterface,
 	log zerolog.Logger,
 ) *PurchaseOrderService {
-	return &PurchaseOrderService{poRepo: poRepo, productRepo: productRepo, paymentRepo: paymentRepo, terminRepo: terminRepo, paymentRecordRepo: paymentRecordRepo, priceHistorySvc: priceHistorySvc, activitySvc: activitySvc, log: log}
+	return &PurchaseOrderService{
+		poRepo:            poRepo,
+		productRepo:       productRepo,
+		paymentRepo:       paymentRepo,
+		terminRepo:        terminRepo,
+		paymentRecordRepo: paymentRecordRepo,
+		priceHistorySvc:   priceHistorySvc,
+		activitySvc:       activitySvc,
+		log:               log,
+	}
 }
 
 func (s *PurchaseOrderService) ListPOs(ctx context.Context, filter dto.POListFilter) ([]*dto.POResponse, dto.PaginationMeta, error) {

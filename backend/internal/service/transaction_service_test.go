@@ -222,3 +222,106 @@ func TestTransactionService_Drafts(t *testing.T) {
 		assert.Equal(t, "completed", resp.Status)
 	})
 }
+
+func TestTransactionService_GetTransaction(t *testing.T) {
+	ctx := context.Background()
+	log := zerolog.Nop()
+
+	tRepo := new(repomocks.TransactionRepository)
+	s := NewTransactionService(tRepo, nil, nil, nil, nil, nil, log)
+
+	tid := "t1"
+	tRepo.On("FindByID", ctx, tid).Return(&domain.Transaction{ID: tid, Total: 100}, nil)
+
+	resp, err := s.GetTransaction(ctx, tid)
+	assert.NoError(t, err)
+	assert.Equal(t, tid, resp.ID)
+}
+
+func TestTransactionService_UpdateDraftItems(t *testing.T) {
+	ctx := context.Background()
+	log := zerolog.Nop()
+
+	tRepo := new(repomocks.TransactionRepository)
+	pRepo := new(repomocks.ProductRepository)
+	sRepo := new(repomocks.StockRepository)
+	mRepo := new(repomocks.MenuItemRepository)
+	s := NewTransactionService(tRepo, pRepo, sRepo, mRepo, nil, nil, log)
+
+	tid := "d1"
+	pid := "p1"
+	req := &dto.UpdateDraftRequest{
+		Items: []dto.TxItemInput{{ProductID: pid, Quantity: 2}},
+	}
+
+	pRepo.On("FindByID", ctx, pid).Return(&domain.Product{ID: pid, StoreID: "s1", SellPrice: 100, IsActive: true}, nil)
+	tRepo.On("FindByID", ctx, tid).Return(&domain.Transaction{ID: tid, StoreID: "s1", Status: "draft"}, nil)
+	tRepo.On("UpdateDraftItems", ctx, tid, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		Return(&domain.Transaction{ID: tid, Status: "draft"}, nil)
+
+	resp, err := s.UpdateDraftItems(ctx, "s1", tid, req)
+	assert.NoError(t, err)
+	assert.NotNil(t, resp)
+}
+
+func TestTransactionService_KDS(t *testing.T) {
+	ctx := context.Background()
+	log := zerolog.Nop()
+
+	tRepo := new(repomocks.TransactionRepository)
+	s := NewTransactionService(tRepo, nil, nil, nil, nil, nil, log)
+
+	tRepo.On("GetKDSTickets", ctx, "s1").Return([]*domain.Transaction{{ID: "t1"}}, nil)
+	resp, err := s.GetKDSTickets(ctx, "s1")
+	assert.NoError(t, err)
+	assert.Len(t, resp, 1)
+
+	tRepo.On("UpdateKDSItemStatus", ctx, "item1", "completed").Return(nil)
+	err = s.UpdateKDSItemStatus(ctx, "item1", &dto.UpdateKDSItemStatusRequest{Status: "completed"})
+	assert.NoError(t, err)
+}
+
+func TestTransactionService_Checkout_MoreBranches(t *testing.T) {
+	ctx := context.Background()
+	log := zerolog.Nop()
+
+	t.Run("Cart Discount Success", func(t *testing.T) {
+		tRepo := new(repomocks.TransactionRepository)
+		pRepo := new(repomocks.ProductRepository)
+		sRepo := new(repomocks.StockRepository)
+		bSvc := new(mocks.BatchStockServiceInterface)
+		aSvc := new(mocks.ActivityLogServiceInterface)
+
+		pid := "p1"
+		req := &dto.CreateTransactionRequest{
+			Items:              []dto.TxItemInput{{ProductID: pid, Quantity: 1}},
+			CartDiscountType:   "FIXED",
+			CartDiscountValue:  20,
+			PaymentAmount:      100, // (100 - 20) = 80 total
+		}
+
+		pRepo.On("FindByID", ctx, pid).Return(&domain.Product{ID: pid, StoreID: "s1", SellPrice: 100, IsActive: true}, nil)
+		sRepo.On("FindLevelByProduct", ctx, pid, "s1").Return(&domain.StockLevel{Quantity: 10}, nil)
+		tRepo.On("Create", ctx, mock.Anything).Return(&domain.Transaction{ID: "t1"}, nil)
+		bSvc.On("DeductStockFIFO", ctx, pid, "s1", 1.0).Return(nil)
+		aSvc.On("LogActivity", ctx, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return()
+
+		s := NewTransactionService(tRepo, pRepo, sRepo, nil, bSvc, aSvc, log)
+		resp, err := s.Checkout(ctx, "s1", req, "u1")
+
+		assert.NoError(t, err)
+		assert.NotNil(t, resp)
+	})
+
+	t.Run("Inactive Product", func(t *testing.T) {
+		pRepo := new(repomocks.ProductRepository)
+		pid := "p1"
+		req := &dto.CreateTransactionRequest{Items: []dto.TxItemInput{{ProductID: pid, Quantity: 1}}}
+		pRepo.On("FindByID", ctx, pid).Return(&domain.Product{ID: pid, StoreID: "s1", IsActive: false, Name: "P1"}, nil)
+
+		s := NewTransactionService(nil, pRepo, nil, nil, nil, nil, log)
+		_, err := s.Checkout(ctx, "s1", req, "u1")
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "inactive")
+	})
+}
