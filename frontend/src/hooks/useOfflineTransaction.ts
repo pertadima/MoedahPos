@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { db, LocalTransaction } from '../lib/dexie';
+import { transactionsApi } from '../lib/api/transactions';
 
 export const useOfflineTransaction = (storeId: string, cashierId: string) => {
   const saveTransaction = useCallback(
@@ -28,17 +29,7 @@ export const useOfflineTransaction = (storeId: string, cashierId: string) => {
 
       // 3. Attempt network POST
       try {
-        const response = await fetch(`/api/v1/stores/${storeId}/transactions`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(localTx),
-        });
-
-        if (!response.ok) {
-          throw new Error(`Failed to push transaction: ${response.statusText}`);
-        }
+        await transactionsApi.syncOffline(storeId, localTx);
 
         // 4. On success, mark clean. 
         // Our backend sync endpoint will issue the server_updated_at later.

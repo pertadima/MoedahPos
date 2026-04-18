@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { Cloud, CloudOff, CloudUpload, Loader2 } from 'lucide-react';
 import { db } from '@/lib/dexie';
+import { transactionsApi } from '@/lib/api/transactions';
 
 export default function SyncStatusWidget() {
   const [isOnline, setIsOnline] = useState(true);
@@ -48,22 +49,16 @@ export default function SyncStatusWidget() {
     for (let i = 0; i < total; i++) {
         const tx = dirtyTransactions[i];
         try {
-            const response = await fetch(`/api/v1/stores/${tx.store_id}/transactions`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(tx),
-            });
-
-            if (response.ok) {
-                await db.transactions.update(tx.id, { is_dirty: false });
+            await transactionsApi.syncOffline(tx.store_id, tx);
+            await db.transactions.update(tx.id, { is_dirty: false });
+        } catch (err: any) {
+            console.error('Network or API failure during background sync', err);
+            if (err.name === 'ApiError') {
+                // Backend rejected it (e.g., validation failed). Depending on business logic, we could flag it.
             } else {
-                console.warn('Backend rejected transaction sync', tx.id, response.statusText);
-                // Depending on the logic, maybe we shouldn't break, but rather skip
+                // True network error, assume internet dropped and break loop
+                break;
             }
-        } catch (err) {
-            console.error('Network failure during background sync', err);
-            // Break loop on first network error assuming internet dropped
-            break;
         } finally {
             setSyncProgress(prev => ({ ...prev, current: prev.current + 1 }));
         }
@@ -93,7 +88,7 @@ export default function SyncStatusWidget() {
     return (
       <div className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 rounded-full text-xs font-semibold shadow-sm mr-2 transition-all">
         <Loader2 size={14} className="animate-spin" strokeWidth={2.5} />
-        <span>Syncing {syncProgress.current}/{syncProgress.total}</span>
+        <span>{syncProgress.total} item sync in progress</span>
       </div>
     );
   }
