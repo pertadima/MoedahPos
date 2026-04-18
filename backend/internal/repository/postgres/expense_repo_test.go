@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"database/sql"
 	"testing"
 	"time"
 
@@ -58,6 +59,14 @@ func TestExpenseRepo_Categories(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, res)
 		assert.Equal(t, "c1", res.ID)
+
+		// Not Found
+		mock.ExpectQuery(`(?is)SELECT .* FROM expense_categories WHERE id = \$1`).
+			WithArgs("unknown").
+			WillReturnError(sql.ErrNoRows)
+		res, err = repo.GetCategoryByID(ctx, "unknown")
+		assert.NoError(t, err)
+		assert.Nil(t, res)
 	})
 
 	t.Run("UpdateCategory", func(t *testing.T) {
@@ -69,6 +78,13 @@ func TestExpenseRepo_Categories(t *testing.T) {
 		res, err := repo.UpdateCategory(ctx, "c1", "Updated", "Desc", true)
 		assert.NoError(t, err)
 		assert.NotNil(t, res)
+
+		// Not Found
+		mock.ExpectQuery(`(?is)UPDATE expense_categories`).
+			WillReturnError(sql.ErrNoRows)
+		res, err = repo.UpdateCategory(ctx, "c1", "Updated", "Desc", true)
+		assert.NoError(t, err)
+		assert.Nil(t, res)
 	})
 
 	t.Run("SoftDeleteCategory", func(t *testing.T) {
@@ -78,6 +94,12 @@ func TestExpenseRepo_Categories(t *testing.T) {
 
 		err := repo.SoftDeleteCategory(ctx, "c1")
 		assert.NoError(t, err)
+
+		// Not Found
+		mock.ExpectExec(`(?is)UPDATE expense_categories`).
+			WillReturnResult(sqlmock.NewResult(0, 0))
+		err = repo.SoftDeleteCategory(ctx, "c1")
+		assert.Error(t, err)
 	})
 }
 
@@ -143,6 +165,13 @@ func TestExpenseRepo_Expenses(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, res)
 		assert.Equal(t, "e1", res.ID)
+
+		// Not Found
+		mock.ExpectQuery(`(?is)SELECT .* FROM expenses e .* WHERE e.id = \$1`).
+			WillReturnError(sql.ErrNoRows)
+		res, err = repo.GetByID(ctx, "unknown", "s1")
+		assert.NoError(t, err)
+		assert.Nil(t, res)
 	})
 
 	t.Run("Update", func(t *testing.T) {
@@ -162,6 +191,13 @@ func TestExpenseRepo_Expenses(t *testing.T) {
 		res, err := repo.Update(ctx, &domain.Expense{ID: "e1", StoreID: "s1", CategoryID: "c1", Amount: 1200.0, ExpenseDate: time.Now(), Notes: "updated note"})
 		assert.NoError(t, err)
 		assert.NotNil(t, res)
+
+		// Not Found
+		mock.ExpectQuery(`(?is)UPDATE expenses`).
+			WillReturnError(sql.ErrNoRows)
+		res, err = repo.Update(ctx, &domain.Expense{ID: "unknown", StoreID: "s1"})
+		assert.NoError(t, err)
+		assert.Nil(t, res)
 	})
 
 	t.Run("Delete", func(t *testing.T) {
@@ -176,6 +212,12 @@ func TestExpenseRepo_Expenses(t *testing.T) {
 
 		err = repo.Delete(ctx, "e1", "s1")
 		assert.NoError(t, err)
+
+		// Not Found
+		mock.ExpectExec(`(?is)DELETE FROM expenses`).
+			WillReturnResult(sqlmock.NewResult(0, 0))
+		err = repo.Delete(ctx, "unknown", "s1")
+		assert.Error(t, err)
 	})
 
 	t.Run("UpdatePaymentStatus", func(t *testing.T) {
@@ -196,6 +238,13 @@ func TestExpenseRepo_Expenses(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, res)
 		assert.Equal(t, "paid", res.PaymentStatus)
+
+		// Not Found
+		mock.ExpectQuery(`(?is)UPDATE expenses SET payment_status = \$1`).
+			WillReturnError(sql.ErrNoRows)
+		res, err = repo.UpdatePaymentStatus(ctx, "unknown", "s1", "paid")
+		assert.NoError(t, err)
+		assert.Nil(t, res)
 	})
 }
 
@@ -220,7 +269,7 @@ func TestExpenseRepo_Recurring(t *testing.T) {
 			StoreID: "s1", CategoryID: "c1", Name: "Recur", Amount: 500.0,
 			Interval: "monthly", IntervalValue: 1, StartDate: time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
 			NextRunDate: time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC),
-			Notes: "notes", IsActive: true, CreatedBy: strPtrExp("u1"),
+			Notes:       "notes", IsActive: true, CreatedBy: strPtrExp("u1"),
 		})
 		assert.NoError(t, err)
 		assert.NotNil(t, res)
@@ -259,6 +308,13 @@ func TestExpenseRepo_Recurring(t *testing.T) {
 		res, err := repo.GetRecurringByID(ctx, "re1", "s1")
 		assert.NoError(t, err)
 		assert.NotNil(t, res)
+
+		// Not Found
+		mock.ExpectQuery(`(?is)SELECT .* FROM recurring_expenses re .* WHERE re.id = \$1`).
+			WillReturnError(sql.ErrNoRows)
+		res, err = repo.GetRecurringByID(ctx, "unknown", "s1")
+		assert.NoError(t, err)
+		assert.Nil(t, res)
 	})
 
 	t.Run("UpdateRecurring", func(t *testing.T) {
@@ -276,6 +332,13 @@ func TestExpenseRepo_Recurring(t *testing.T) {
 		res, err := repo.UpdateRecurring(ctx, &domain.RecurringExpense{ID: "re1", StoreID: "s1", CategoryID: "c1", Name: "Updated", StartDate: time.Now()})
 		assert.NoError(t, err)
 		assert.NotNil(t, res)
+
+		// Not Found
+		mock.ExpectQuery(`(?is)UPDATE recurring_expenses`).
+			WillReturnError(sql.ErrNoRows)
+		res, err = repo.UpdateRecurring(ctx, &domain.RecurringExpense{ID: "unknown", StoreID: "s1"})
+		assert.NoError(t, err)
+		assert.Nil(t, res)
 	})
 
 	t.Run("DeleteRecurring", func(t *testing.T) {
@@ -290,6 +353,12 @@ func TestExpenseRepo_Recurring(t *testing.T) {
 
 		err = repo.DeleteRecurring(ctx, "re1", "s1")
 		assert.NoError(t, err)
+
+		// Not Found
+		mock.ExpectExec(`(?is)DELETE FROM recurring_expenses`).
+			WillReturnResult(sqlmock.NewResult(0, 0))
+		err = repo.DeleteRecurring(ctx, "unknown", "s1")
+		assert.Error(t, err)
 	})
 
 	t.Run("GetDueRecurringExpenses", func(t *testing.T) {

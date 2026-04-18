@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"database/sql"
 	"testing"
 	"time"
 
@@ -56,6 +57,12 @@ func TestIncomeRepo_Categories(t *testing.T) {
 		res, err := repo.GetCategoryByID(ctx, "c1")
 		assert.NoError(t, err)
 		assert.NotNil(t, res)
+
+		// Not Found
+		mock.ExpectQuery(`(?is)SELECT .* FROM income_categories WHERE id = \$1`).WithArgs("unknown").WillReturnError(sql.ErrNoRows)
+		res, err = repo.GetCategoryByID(ctx, "unknown")
+		assert.NoError(t, err)
+		assert.Nil(t, res)
 	})
 
 	t.Run("UpdateCategory", func(t *testing.T) {
@@ -66,6 +73,12 @@ func TestIncomeRepo_Categories(t *testing.T) {
 		res, err := repo.UpdateCategory(ctx, "c1", "Updated", "Desc", true)
 		assert.NoError(t, err)
 		assert.NotNil(t, res)
+
+		// Not Found
+		mock.ExpectQuery(`(?is)UPDATE income_categories`).WillReturnError(sql.ErrNoRows)
+		res, err = repo.UpdateCategory(ctx, "unknown", "Updated", "Desc", true)
+		assert.NoError(t, err)
+		assert.Nil(t, res)
 	})
 
 	t.Run("SoftDeleteCategory", func(t *testing.T) {
@@ -75,6 +88,11 @@ func TestIncomeRepo_Categories(t *testing.T) {
 
 		err := repo.SoftDeleteCategory(ctx, "c1")
 		assert.NoError(t, err)
+
+		// Not Found
+		mock.ExpectExec(`(?is)UPDATE income_categories .* deleted_at`).WillReturnResult(sqlmock.NewResult(0, 0))
+		err = repo.SoftDeleteCategory(ctx, "unknown")
+		assert.Error(t, err)
 	})
 }
 
@@ -123,6 +141,48 @@ func TestIncomeRepo_Incomes(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, 1, total)
 		assert.Len(t, res, 1)
+
+		// With Filters
+		filter := dto.IncomeListFilter{
+			StoreID:    "s1",
+			CategoryID: "c1",
+			DateFrom:   "2024-01-01",
+			DateTo:     "2024-01-31",
+		}
+		mock.ExpectQuery(`(?is)SELECT COUNT\(\*\) FROM incomes`).
+			WithArgs("s1", "c1", "2024-01-01", "2024-01-31").
+			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
+		mock.ExpectQuery(`(?is)SELECT .* FROM incomes i .* LIMIT \$5 OFFSET \$6`).
+			WithArgs("s1", "c1", "2024-01-01", "2024-01-31", 20, 0).
+			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow("i1"))
+
+		_, _, err = repo.FindAll(ctx, filter)
+		assert.NoError(t, err)
+	})
+
+	t.Run("FindByID", func(t *testing.T) {
+		db, mock, err := sqlmock.New()
+		require.NoError(t, err)
+		defer db.Close()
+		repo := NewIncomeRepo(sqlx.NewDb(db, "postgres"))
+
+		mock.ExpectQuery(`(?is)SELECT .* FROM incomes i .* WHERE i.id = \$1`).
+			WithArgs("i1").
+			WillReturnRows(sqlmock.NewRows([]string{"id", "amount", "category_name", "created_by_name"}).
+				AddRow("i1", 1000.0, "Cat 1", strPtr("User 1")))
+
+		res, err := repo.FindByID(ctx, "i1")
+		assert.NoError(t, err)
+		assert.NotNil(t, res)
+
+		// Not Found
+		mock.ExpectQuery(`(?is)SELECT .* FROM incomes i .* WHERE i.id = \$1`).
+			WithArgs("unknown").
+			WillReturnError(sql.ErrNoRows)
+
+		res, err = repo.FindByID(ctx, "unknown")
+		assert.NoError(t, err)
+		assert.Nil(t, res)
 	})
 
 	t.Run("Update", func(t *testing.T) {
@@ -141,6 +201,12 @@ func TestIncomeRepo_Incomes(t *testing.T) {
 		res, err := repo.Update(ctx, &domain.Income{ID: "i1", StoreID: "s1", Amount: 1200.0})
 		assert.NoError(t, err)
 		assert.NotNil(t, res)
+
+		// Not Found
+		mock.ExpectQuery(`(?is)UPDATE incomes`).WillReturnError(sql.ErrNoRows)
+		res, err = repo.Update(ctx, &domain.Income{ID: "unknown", StoreID: "s1"})
+		assert.NoError(t, err)
+		assert.Nil(t, res)
 	})
 
 	t.Run("Delete", func(t *testing.T) {
@@ -155,6 +221,11 @@ func TestIncomeRepo_Incomes(t *testing.T) {
 
 		err = repo.Delete(ctx, "i1", "s1")
 		assert.NoError(t, err)
+
+		// Not Found
+		mock.ExpectExec(`(?is)DELETE FROM incomes`).WillReturnResult(sqlmock.NewResult(0, 0))
+		err = repo.Delete(ctx, "unknown", "s1")
+		assert.Error(t, err)
 	})
 
 	t.Run("SumByDateRange", func(t *testing.T) {

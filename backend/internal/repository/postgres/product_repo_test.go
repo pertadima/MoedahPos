@@ -8,8 +8,10 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/moedahpos/backend/internal/domain"
+	"github.com/moedahpos/backend/internal/dto"
 )
 
 func TestProductRepo_Create(t *testing.T) {
@@ -125,4 +127,40 @@ func TestProductRepo_ExistsBySKU(t *testing.T) {
 	exists, err := repo.ExistsBySKU(ctx, "s1", "SKU1", "")
 	assert.NoError(t, err)
 	assert.True(t, exists)
+}
+
+func TestProductRepo_FindAll(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	require.NoError(t, err)
+	defer func() { _ = db.Close() }()
+	repo := NewProductRepo(sqlx.NewDb(db, "postgres"))
+	ctx := context.Background()
+
+	f := dto.ProductListFilter{StoreID: "s1", WithStock: true}
+	f.Defaults()
+
+	mock.ExpectQuery(`SELECT COUNT\(\*\) FROM products p`).WithArgs("s1").WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
+	mock.ExpectQuery(`SELECT .* FROM products p`).WithArgs("s1", 20, 0).WillReturnRows(sqlmock.NewRows([]string{"id", "name"}).AddRow("p1", "P1"))
+
+	res, total, err := repo.FindAll(ctx, f)
+	assert.NoError(t, err)
+	assert.Equal(t, 1, total)
+	assert.Len(t, res, 1)
+}
+
+func TestProductRepo_FindByBarcode(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	require.NoError(t, err)
+	defer func() { _ = db.Close() }()
+	repo := NewProductRepo(sqlx.NewDb(db, "postgres"))
+	ctx := context.Background()
+
+	barcode := "123"
+	mock.ExpectQuery(`SELECT .* FROM products p`).WithArgs("s1", "123").
+		WillReturnRows(sqlmock.NewRows([]string{"id", "barcode"}).AddRow("p1", "123"))
+
+	res, err := repo.FindByBarcode(ctx, "s1", "123")
+	assert.NoError(t, err)
+	assert.NotNil(t, res)
+	assert.Equal(t, barcode, *res.Barcode)
 }

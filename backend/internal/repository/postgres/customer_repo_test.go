@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"database/sql"
 	"regexp"
 	"testing"
 	"time"
@@ -105,6 +106,12 @@ func TestCustomerRepo_Update(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, out)
 		assert.Equal(t, "Jane Doe", out.Name)
+
+		// Not Found
+		mock.ExpectQuery(regexp.QuoteMeta("UPDATE customers SET")).WillReturnError(sql.ErrNoRows)
+		out, err = repo.Update(context.Background(), &domain.Customer{ID: "unknown"})
+		assert.NoError(t, err)
+		assert.Nil(t, out)
 	})
 }
 
@@ -125,6 +132,11 @@ func TestCustomerRepo_SoftDelete(t *testing.T) {
 
 		err := repo.SoftDelete(context.Background(), id)
 		assert.NoError(t, err)
+
+		// Not Found
+		mock.ExpectExec(regexp.QuoteMeta("UPDATE customers SET deleted_at=NOW()")).WillReturnResult(sqlmock.NewResult(0, 0))
+		err = repo.SoftDelete(context.Background(), "unknown")
+		assert.Error(t, err)
 	})
 }
 
@@ -142,6 +154,12 @@ func TestCustomerRepo_FindByID(t *testing.T) {
 		res, err := repo.FindByID(context.Background(), "c1")
 		assert.NoError(t, err)
 		assert.NotNil(t, res)
+
+		// Not Found
+		mock.ExpectQuery(`(?is)SELECT .* FROM customers WHERE id=\$1`).WillReturnError(sql.ErrNoRows)
+		res, err = repo.FindByID(context.Background(), "unknown")
+		assert.NoError(t, err)
+		assert.Nil(t, res)
 	})
 }
 

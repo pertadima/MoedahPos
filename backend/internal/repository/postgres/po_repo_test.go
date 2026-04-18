@@ -9,6 +9,7 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/moedahpos/backend/internal/domain"
 	"github.com/moedahpos/backend/internal/dto"
@@ -115,6 +116,11 @@ func TestPORepo_Submit(t *testing.T) {
 		WillReturnResult(sqlmock.NewResult(0, 0))
 	err = repo.Submit(ctx, "po2", "u1")
 	assert.Error(t, err)
+
+	// Not Found
+	mock.ExpectExec(`UPDATE purchase_orders`).WillReturnResult(sqlmock.NewResult(0, 0))
+	err = repo.Submit(ctx, "unknown", "u1")
+	assert.Error(t, err)
 }
 
 func TestPORepo_Receive(t *testing.T) {
@@ -154,6 +160,15 @@ func TestPORepo_Receive(t *testing.T) {
 
 	err = repo.Receive(ctx, "po1", "u1")
 	assert.NoError(t, err)
+
+	// Not Found (on po update)
+	mock.ExpectQuery(`SELECT product_id, quantity, unit_cost`).WillReturnRows(sqlmock.NewRows([]string{"p", "q", "u"}).AddRow("p1", 1.0, 1.0))
+	mock.ExpectQuery(`SELECT store_id FROM purchase_orders`).WillReturnRows(sqlmock.NewRows([]string{"s"}).AddRow("s1"))
+	mock.ExpectBegin()
+	mock.ExpectExec(`UPDATE purchase_orders`).WillReturnResult(sqlmock.NewResult(0, 0))
+	mock.ExpectRollback()
+	err = repo.Receive(ctx, "unknown", "u1")
+	assert.Error(t, err)
 }
 
 func TestPORepo_Cancel(t *testing.T) {
@@ -172,6 +187,11 @@ func TestPORepo_Cancel(t *testing.T) {
 
 	err = repo.Cancel(ctx, "po1")
 	assert.NoError(t, err)
+
+	// Not Found
+	mock.ExpectExec(`UPDATE purchase_orders SET status='cancelled'`).WillReturnResult(sqlmock.NewResult(0, 0))
+	err = repo.Cancel(ctx, "unknown")
+	assert.Error(t, err)
 }
 
 func TestPORepo_FindAll(t *testing.T) {
@@ -196,6 +216,58 @@ func TestPORepo_FindAll(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, 1, total)
 	assert.Len(t, res, 1)
+}
+
+func TestPORepo_Update(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	require.NoErrorf(t, err, "failed to open sqlmock")
+	defer func() { _ = db.Close() }()
+
+	sqlxDB := sqlx.NewDb(db, "postgres")
+	repo := NewPORepo(sqlxDB)
+	ctx := context.Background()
+
+	po := &domain.PurchaseOrder{
+		ID:          "po1",
+		SupplierID:  ptrToStringPtr("supp1"),
+		TotalAmount: 2000,
+		Notes:       ptrToStringPtr("Updated Note"),
+	}
+	items := []domain.POItem{
+		{ProductID: "p1", Quantity: 20, UnitCost: 100, Subtotal: 2000},
+	}
+
+	mock.ExpectBegin()
+	poCols := []string{"id", "store_id", "supplier_id", "po_number", "status", "total_amount", "ordered_by", "received_by", "ordered_at", "received_at", "notes", "created_at", "updated_at"}
+	mock.ExpectQuery(`UPDATE purchase_orders`).WithArgs(po.SupplierID, po.Notes, po.TotalAmount, po.ID).
+		WillReturnRows(sqlmock.NewRows(poCols).AddRow("po1", "s1", "supp1", "PO-123", "draft", 2000.0, "u1", nil, time.Now(), nil, "Updated Note", time.Now(), time.Now()))
+
+	mock.ExpectExec(`DELETE FROM purchase_order_items`).WithArgs("po1").
+		WillReturnResult(sqlmock.NewResult(1, 1))
+
+	itemCols := []string{"id", "po_id", "product_id", "quantity", "unit_cost", "received_qty", "subtotal"}
+	mock.ExpectQuery(`INSERT INTO purchase_order_items`).WithArgs(
+		"po1", "p1", float64(20), float64(100), float64(2000),
+	).WillReturnRows(sqlmock.NewRows(itemCols).AddRow("item1", "po1", "p1", 20.0, 100.0, 0.0, 2000.0))
+
+	mock.ExpectCommit()
+
+	mock.ExpectQuery(`SELECT u.name AS ordered_by_name`).WithArgs("po1").
+		WillReturnRows(sqlmock.NewRows([]string{"ordered_by_name", "supplier_name", "received_by_name"}).
+			AddRow("User 1", "Supplier 1", nil))
+
+	result, err := repo.Update(ctx, po, items)
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Equal(t, float64(2000), result.TotalAmount)
+
+	// Not Found
+	mock.ExpectBegin()
+	mock.ExpectQuery(`UPDATE purchase_orders`).WillReturnError(sql.ErrNoRows)
+	mock.ExpectRollback()
+	result, err = repo.Update(ctx, &domain.PurchaseOrder{ID: "unknown"}, items)
+	assert.NoError(t, err)
+	assert.Nil(t, result)
 }
 
 func ptrToStringPtr(s string) *string {

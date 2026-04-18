@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"database/sql"
 	"testing"
 	"time"
 
@@ -95,6 +96,12 @@ func TestTerminRepo_FindByID(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, tid, res.ID)
 	assert.Equal(t, 40.0, res.AmountPaid)
+
+	// Not Found
+	mock.ExpectQuery(`SELECT .* FROM purchase_order_termins t.* WHERE t.id = \$1`).WithArgs("unknown").WillReturnError(sql.ErrNoRows)
+	res, err = repo.FindByID(ctx, "unknown")
+	assert.Error(t, err)
+	assert.Nil(t, res)
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
 
@@ -145,5 +152,21 @@ func TestTerminRepo_DebtSummary(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "partial", res.Status)
 	assert.Equal(t, 500.0, res.TotalPaid)
+
+	// Case: Paid
+	mock.ExpectQuery(`SELECT .* FROM purchase_order_termins t.* WHERE t.po_id = \$1`).WithArgs(poID, total).
+		WillReturnRows(sqlmock.NewRows([]string{"po_id", "total_amount", "total_termin", "total_paid", "remaining_debt", "termin_count", "overdue_count"}).
+			AddRow(poID, total, 1000, 1000, 0, 2, 0))
+	res, err = repo.DebtSummary(ctx, poID, total)
+	assert.NoError(t, err)
+	assert.Equal(t, "paid", res.Status)
+
+	// Case: Unpaid
+	mock.ExpectQuery(`SELECT .* FROM purchase_order_termins t.* WHERE t.po_id = \$1`).WithArgs(poID, total).
+		WillReturnRows(sqlmock.NewRows([]string{"po_id", "total_amount", "total_termin", "total_paid", "remaining_debt", "termin_count", "overdue_count"}).
+			AddRow(poID, total, 1000, 0, 1000, 2, 0))
+	res, err = repo.DebtSummary(ctx, poID, total)
+	assert.NoError(t, err)
+	assert.Equal(t, "unpaid", res.Status)
 	assert.NoError(t, mock.ExpectationsWereMet())
 }

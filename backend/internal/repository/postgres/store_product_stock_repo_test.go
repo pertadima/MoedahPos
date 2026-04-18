@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"database/sql"
 	"testing"
 	"time"
 
@@ -48,6 +49,12 @@ func TestStoreRepo(t *testing.T) {
 		res, err := repo.FindMember(ctx, "u1", "st1")
 		assert.NoError(t, err)
 		assert.Equal(t, "admin", res.RoleID)
+
+		// Not Found
+		mock.ExpectQuery(`SELECT .* FROM user_stores`).WithArgs("unknown", "st1").WillReturnError(sql.ErrNoRows)
+		res, err = repo.FindMember(ctx, "unknown", "st1")
+		assert.NoError(t, err)
+		assert.Nil(t, res)
 	})
 
 	t.Run("FindAll", func(t *testing.T) {
@@ -81,6 +88,12 @@ func TestStoreRepo(t *testing.T) {
 		res, err := repo.Update(ctx, s)
 		assert.NoError(t, err)
 		assert.Equal(t, "S1 Updated", res.Name)
+
+		// Not Found
+		mock.ExpectQuery(`UPDATE stores`).WillReturnError(sql.ErrNoRows)
+		res, err = repo.Update(ctx, &domain.Store{ID: "unknown"})
+		assert.NoError(t, err)
+		assert.Nil(t, res)
 	})
 
 	t.Run("MemberManagement", func(t *testing.T) {
@@ -109,6 +122,49 @@ func TestStoreRepo(t *testing.T) {
 		mock.ExpectExec(`UPDATE user_stores SET is_active = false`).WithArgs("u1", "st1").WillReturnResult(sqlmock.NewResult(1, 1))
 		err = repo.DeactivateMember(ctx, "u1", "st1")
 		assert.NoError(t, err)
+
+		// Not Found
+		mock.ExpectExec(`UPDATE user_stores SET is_active = false`).WillReturnResult(sqlmock.NewResult(0, 0))
+		err = repo.DeactivateMember(ctx, "unknown", "st1")
+		assert.Error(t, err)
+	})
+
+	t.Run("FindByID", func(t *testing.T) {
+		db, mock, err := sqlmock.New()
+		require.NoError(t, err)
+		defer func() { _ = db.Close() }()
+		repo := NewStoreRepo(sqlx.NewDb(db, "postgres"))
+
+		rows := sqlmock.NewRows([]string{"id", "name"}).AddRow("st1", "Store 1")
+		mock.ExpectQuery(`SELECT .* FROM stores WHERE id = \$1`).WithArgs("st1").WillReturnRows(rows)
+
+		res, err := repo.FindByID(ctx, "st1")
+		assert.NoError(t, err)
+		assert.NotNil(t, res)
+		assert.Equal(t, "st1", res.ID)
+
+		// Not Found
+		mock.ExpectQuery(`SELECT .* FROM stores WHERE id = \$1`).WithArgs("unknown").WillReturnError(sql.ErrNoRows)
+		res, err = repo.FindByID(ctx, "unknown")
+		assert.NoError(t, err)
+		assert.Nil(t, res)
+	})
+
+	t.Run("SoftDelete", func(t *testing.T) {
+		db, mock, err := sqlmock.New()
+		require.NoError(t, err)
+		defer func() { _ = db.Close() }()
+		repo := NewStoreRepo(sqlx.NewDb(db, "postgres"))
+
+		mock.ExpectExec(`UPDATE stores SET deleted_at = NOW\(\)`).WithArgs("st1").WillReturnResult(sqlmock.NewResult(1, 1))
+
+		err = repo.SoftDelete(ctx, "st1")
+		assert.NoError(t, err)
+
+		// Not Found
+		mock.ExpectExec(`UPDATE stores SET deleted_at = NOW\(\)`).WillReturnResult(sqlmock.NewResult(0, 0))
+		err = repo.SoftDelete(ctx, "unknown")
+		assert.Error(t, err)
 	})
 }
 
@@ -139,10 +195,42 @@ func TestCategoryRepo(t *testing.T) {
 		res, _ = repo.Update(ctx, c)
 		assert.Equal(t, "Cat 1 Updated", res.Name)
 
+		// Not Found
+		mock.ExpectQuery(`UPDATE categories`).WillReturnError(sql.ErrNoRows)
+		res, err = repo.Update(ctx, &domain.Category{ID: "unknown"})
+		assert.NoError(t, err)
+		assert.Nil(t, res)
+
 		// SoftDelete
 		mock.ExpectExec(`UPDATE categories SET deleted_at`).WithArgs("c1").WillReturnResult(sqlmock.NewResult(1, 1))
 		err = repo.SoftDelete(ctx, "c1")
 		assert.NoError(t, err)
+
+		// Not Found
+		mock.ExpectExec(`UPDATE categories SET deleted_at`).WillReturnResult(sqlmock.NewResult(0, 0))
+		err = repo.SoftDelete(ctx, "unknown")
+		assert.Error(t, err)
+	})
+
+	t.Run("FindByID", func(t *testing.T) {
+		db, mock, err := sqlmock.New()
+		require.NoError(t, err)
+		defer func() { _ = db.Close() }()
+		repo := NewCategoryRepo(sqlx.NewDb(db, "postgres"))
+
+		mock.ExpectQuery(`SELECT .* FROM categories WHERE id = \$1`).WithArgs("c1").
+			WillReturnRows(sqlmock.NewRows([]string{"id", "name"}).AddRow("c1", "Cat 1"))
+
+		res, err := repo.FindByID(ctx, "c1")
+		assert.NoError(t, err)
+		assert.NotNil(t, res)
+		assert.Equal(t, "c1", res.ID)
+
+		// Not Found
+		mock.ExpectQuery(`SELECT .* FROM categories WHERE id = \$1`).WillReturnError(sql.ErrNoRows)
+		res, err = repo.FindByID(ctx, "unknown")
+		assert.NoError(t, err)
+		assert.Nil(t, res)
 	})
 }
 
@@ -164,6 +252,12 @@ func TestProductRepo(t *testing.T) {
 		require.NotNil(t, p, "Product should not be nil")
 		assert.Equal(t, "p1", p.ID)
 
+		// Not Found
+		mock.ExpectQuery(`SELECT .* FROM products`).WithArgs("unknown").WillReturnError(sql.ErrNoRows)
+		p, err = repo.FindByID(ctx, "unknown")
+		assert.NoError(t, err)
+		assert.Nil(t, p)
+
 		// Update
 		upP := &domain.Product{ID: "p1", Name: "P1 Updated"}
 		mock.ExpectQuery(`UPDATE products`).WithArgs(upP.CategoryID, upP.Name, upP.Description, upP.Barcode, upP.Unit, upP.CostPrice, upP.SellPrice, upP.UseGlobalTax, upP.TaxPercentage, upP.ImageURL, upP.IsActive, upP.ID).
@@ -171,10 +265,21 @@ func TestProductRepo(t *testing.T) {
 		res, _ := repo.Update(ctx, upP)
 		assert.Equal(t, "P1 Updated", res.Name)
 
+		// Not Found
+		mock.ExpectQuery(`UPDATE products`).WillReturnError(sql.ErrNoRows)
+		res, err = repo.Update(ctx, &domain.Product{ID: "unknown"})
+		assert.NoError(t, err)
+		assert.Nil(t, res)
+
 		// SoftDelete
 		mock.ExpectExec(`UPDATE products SET deleted_at`).WithArgs("p1").WillReturnResult(sqlmock.NewResult(1, 1))
 		err = repo.SoftDelete(ctx, "p1")
 		assert.NoError(t, err)
+
+		// Not Found
+		mock.ExpectExec(`UPDATE products SET deleted_at`).WillReturnResult(sqlmock.NewResult(0, 0))
+		err = repo.SoftDelete(ctx, "unknown")
+		assert.Error(t, err)
 	})
 }
 
@@ -231,5 +336,18 @@ func TestStockRepo(t *testing.T) {
 
 		err = repo.DeductStock(ctx, "p1", "st1", 5.0, "ref1", "c1")
 		assert.NoError(t, err)
+	})
+
+	t.Run("FindLevelByProduct", func(t *testing.T) {
+		db, mock, err := sqlmock.New()
+		require.NoError(t, err)
+		defer func() { _ = db.Close() }()
+		repo := NewStockRepo(sqlx.NewDb(db, "postgres"))
+
+		// Not Found
+		mock.ExpectQuery(`SELECT .* FROM stock_levels sl`).WithArgs("p_unknown", "st1").WillReturnError(sql.ErrNoRows)
+		res, err := repo.FindLevelByProduct(ctx, "p_unknown", "st1")
+		assert.NoError(t, err)
+		assert.Nil(t, res)
 	})
 }

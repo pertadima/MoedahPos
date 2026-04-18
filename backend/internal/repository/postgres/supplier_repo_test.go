@@ -171,5 +171,3 @@ func TestSupplierRepo_SoftDelete(t *testing.T) {
 		assert.Equal(t, "supplier not found", err.Error())
 	})
 }
-
-func boolPtr(b bool) *bool { return &b }

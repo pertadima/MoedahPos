@@ -152,3 +152,33 @@ func TestStockAdjustmentRepo_CreateAdjustment_OUT(t *testing.T) {
 		assert.Contains(t, err.Error(), "insufficient stock")
 	})
 }
+
+func TestStockAdjustmentRepo_History(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	require.NoError(t, err)
+	defer func() { _ = db.Close() }()
+	repo := NewStockAdjustmentRepo(sqlx.NewDb(db, "postgres"))
+	ctx := context.Background()
+
+	t.Run("success_all", func(t *testing.T) {
+		rows := sqlmock.NewRows([]string{"id", "product_id", "product_name"}).
+			AddRow("adj1", "p1", "Product 1")
+		mock.ExpectQuery(`SELECT .* FROM stock_adjustments a`).WithArgs("st1").WillReturnRows(rows)
+
+		res, err := repo.GetStockAdjustmentHistory(ctx, "st1", nil)
+		assert.NoError(t, err)
+		assert.Len(t, res, 1)
+	})
+
+	t.Run("success_with_product", func(t *testing.T) {
+		productID := "p1"
+		rows := sqlmock.NewRows([]string{"id", "product_id"}).AddRow("adj1", "p1")
+		mock.ExpectQuery(`SELECT .* FROM stock_adjustments a .* WHERE a.store_id = \$1 AND a.product_id = \$2`).
+			WithArgs("st1", productID).
+			WillReturnRows(rows)
+
+		res, err := repo.GetStockAdjustmentHistory(ctx, "st1", &productID)
+		assert.NoError(t, err)
+		assert.Len(t, res, 1)
+	})
+}

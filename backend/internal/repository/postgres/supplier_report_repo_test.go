@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"database/sql"
 	"testing"
 	"time"
 
@@ -67,6 +68,12 @@ func TestSupplierRepo(t *testing.T) {
 		res, err := repo.FindByID(ctx, "s1")
 		assert.NoError(t, err)
 		assert.NotNil(t, res)
+
+		// Not Found
+		mock.ExpectQuery(`(?is)SELECT .* FROM suppliers WHERE id = \$1`).WithArgs("unknown").WillReturnError(sql.ErrNoRows)
+		res, err = repo.FindByID(ctx, "unknown")
+		assert.NoError(t, err)
+		assert.Nil(t, res)
 	})
 
 	t.Run("Update", func(t *testing.T) {
@@ -82,6 +89,12 @@ func TestSupplierRepo(t *testing.T) {
 		res, err := repo.Update(ctx, &domain.Supplier{ID: "s1", Name: "Updated", ContactName: "Contact", Phone: "phone", Email: "email", Address: "addr", IsActive: true})
 		assert.NoError(t, err)
 		assert.NotNil(t, res)
+
+		// Not Found
+		mock.ExpectQuery(`(?is)UPDATE suppliers`).WillReturnError(sql.ErrNoRows)
+		res, err = repo.Update(ctx, &domain.Supplier{ID: "unknown"})
+		assert.NoError(t, err)
+		assert.Nil(t, res)
 	})
 
 	t.Run("SoftDelete", func(t *testing.T) {
@@ -96,6 +109,11 @@ func TestSupplierRepo(t *testing.T) {
 
 		err = repo.SoftDelete(ctx, "s1")
 		assert.NoError(t, err)
+
+		// Not Found
+		mock.ExpectExec(`(?is)UPDATE suppliers SET deleted_at`).WillReturnResult(sqlmock.NewResult(0, 0))
+		err = repo.SoftDelete(ctx, "unknown")
+		assert.Error(t, err)
 	})
 }
 
@@ -178,6 +196,14 @@ func TestReportRepo(t *testing.T) {
 		res, err := repo.ProfitSummary(ctx, "st1", from, to, "day")
 		assert.NoError(t, err)
 		assert.Len(t, res, 1)
+
+		// Test for "week"
+		mock.ExpectQuery(`(?is)WITH sales AS`).WillReturnRows(sqlmock.NewRows([]string{"period"}).AddRow("2024-01-01"))
+		_, _ = repo.ProfitSummary(ctx, "st1", from, to, "week")
+
+		// Test for "month"
+		mock.ExpectQuery(`(?is)WITH sales AS`).WillReturnRows(sqlmock.NewRows([]string{"period"}).AddRow("2024-01"))
+		_, _ = repo.ProfitSummary(ctx, "st1", from, to, "month")
 	})
 
 	t.Run("CashFlowSummary", func(t *testing.T) {
@@ -202,5 +228,21 @@ func TestReportRepo(t *testing.T) {
 		assert.NoError(t, err)
 		require.NotEmpty(t, res)
 		assert.Equal(t, 900.0, res[0].NetCash) // 1000 + 100 - 200
+	})
+
+	t.Run("CashFlowDetail", func(t *testing.T) {
+		db, mock, err := sqlmock.New()
+		require.NoError(t, err)
+		defer db.Close()
+		repo := NewReportRepo(sqlx.NewDb(db, "postgres"))
+
+		mock.ExpectQuery(`(?is)SELECT 'SALE' AS type`).
+			WithArgs("st1", from, to).
+			WillReturnRows(sqlmock.NewRows([]string{"type", "label", "amount", "payment_method", "timestamp"}).
+				AddRow("SALE", "Sale #1", 100.0, "cash", "2024-01-01 10:00:00"))
+
+		res, err := repo.CashFlowDetail(ctx, "st1", from, to)
+		assert.NoError(t, err)
+		assert.Len(t, res, 1)
 	})
 }
