@@ -2,7 +2,7 @@ name: Static Analysis
 
 on:
   push:
-    branches: [main, "feature/**", "fix/**", "enchancement/**"]
+    branches: [main, "feature/**", "fix/**", "enhancement/**"]
   pull_request:
     branches: [main, develop]
 
@@ -51,6 +51,8 @@ jobs:
   backend-test:
     name: Backend (Go) — Tests & Coverage
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - uses: actions/checkout@v4
