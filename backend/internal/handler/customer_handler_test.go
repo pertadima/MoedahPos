@@ -20,6 +20,11 @@ import (
 	"github.com/moedahpos/backend/internal/validator"
 )
 
+const (
+	customerTestStoreID = "store-1"
+	testCustomerID      = "550e8400-e29b-41d4-a716-446655440000"
+)
+
 func TestCustomerHandler_List(t *testing.T) {
 	svc := new(mocks.CustomerServiceInterface)
 	v := validator.New()
@@ -30,9 +35,9 @@ func TestCustomerHandler_List(t *testing.T) {
 		customers := []*dto.CustomerResponse{{ID: "c1", Name: "Customer 1"}}
 		svc.On("List", mock.Anything, mock.Anything).Return(customers, dto.PaginationMeta{Total: 1}, nil).Once()
 
-		req, _ := http.NewRequestWithContext(context.Background(), "GET", "/stores/store-1/customers", nil)
+		req, _ := http.NewRequestWithContext(context.Background(), "GET", "/stores/"+customerTestStoreID+"/customers", nil)
 		rctx := chi.NewRouteContext()
-		rctx.URLParams.Add("storeId", "store-1")
+		rctx.URLParams.Add("storeId", customerTestStoreID)
 		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 
 		w := httptest.NewRecorder()
@@ -53,11 +58,11 @@ func TestCustomerHandler_Create(t *testing.T) {
 		reqBody := dto.CreateCustomerRequest{Name: "New Customer"}
 		body, _ := json.Marshal(reqBody)
 
-		svc.On("Create", mock.Anything, "store-1", mock.Anything).Return(&dto.CustomerResponse{ID: "550e8400-e29b-41d4-a716-446655440001", Name: "New Customer"}, nil).Once()
+		svc.On("Create", mock.Anything, customerTestStoreID, mock.Anything).Return(&dto.CustomerResponse{ID: "550e8400-e29b-41d4-a716-446655440001", Name: "New Customer"}, nil).Once()
 
-		req, _ := http.NewRequestWithContext(context.Background(), "POST", "/stores/store-1/customers", bytes.NewBuffer(body))
+		req, _ := http.NewRequestWithContext(context.Background(), "POST", "/stores/"+customerTestStoreID+"/customers", bytes.NewBuffer(body))
 		rctx := chi.NewRouteContext()
-		rctx.URLParams.Add("storeId", "store-1")
+		rctx.URLParams.Add("storeId", customerTestStoreID)
 		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 
 		w := httptest.NewRecorder()
@@ -71,9 +76,9 @@ func TestCustomerHandler_Create(t *testing.T) {
 		reqBody := dto.CreateCustomerRequest{Name: ""} // Invalid
 		body, _ := json.Marshal(reqBody)
 
-		req, _ := http.NewRequestWithContext(context.Background(), "POST", "/stores/store-1/customers", bytes.NewBuffer(body))
+		req, _ := http.NewRequestWithContext(context.Background(), "POST", "/stores/"+customerTestStoreID+"/customers", bytes.NewBuffer(body))
 		rctx := chi.NewRouteContext()
-		rctx.URLParams.Add("storeId", "store-1")
+		rctx.URLParams.Add("storeId", customerTestStoreID)
 		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 
 		w := httptest.NewRecorder()
@@ -89,12 +94,12 @@ func TestCustomerHandler_Get(t *testing.T) {
 	log := zerolog.Nop()
 	h := NewCustomerHandler(svc, v, log)
 
-	customerID := "550e8400-e29b-41d4-a716-446655440000"
+	customerID := testCustomerID
 
 	t.Run("success", func(t *testing.T) {
 		svc.On("Get", mock.Anything, customerID).Return(&dto.CustomerResponse{ID: customerID, Name: "Customer 1"}, nil).Once()
 
-		req, _ := http.NewRequestWithContext(context.Background(), "GET", "/stores/store-1/customers/"+customerID, nil)
+		req, _ := http.NewRequestWithContext(context.Background(), "GET", "/stores/"+customerTestStoreID+"/customers/"+customerID, nil)
 		rctx := chi.NewRouteContext()
 		rctx.URLParams.Add("customerId", customerID)
 		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
@@ -109,7 +114,7 @@ func TestCustomerHandler_Get(t *testing.T) {
 	t.Run("not_found", func(t *testing.T) {
 		svc.On("Get", mock.Anything, customerID).Return(nil, service.ErrCustomerNotFound).Once()
 
-		req, _ := http.NewRequestWithContext(context.Background(), "GET", "/stores/store-1/customers/"+customerID, nil)
+		req, _ := http.NewRequestWithContext(context.Background(), "GET", "/stores/"+customerTestStoreID+"/customers/"+customerID, nil)
 		rctx := chi.NewRouteContext()
 		rctx.URLParams.Add("customerId", customerID)
 		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
@@ -128,12 +133,12 @@ func TestCustomerHandler_Delete(t *testing.T) {
 	log := zerolog.Nop()
 	h := NewCustomerHandler(svc, v, log)
 
-	customerID := "550e8400-e29b-41d4-a716-446655440000"
+	customerID := testCustomerID
 
 	t.Run("success", func(t *testing.T) {
 		svc.On("Delete", mock.Anything, customerID).Return(nil).Once()
 
-		req, _ := http.NewRequestWithContext(context.Background(), "DELETE", "/stores/store-1/customers/"+customerID, nil)
+		req, _ := http.NewRequestWithContext(context.Background(), "DELETE", "/stores/"+customerTestStoreID+"/customers/"+customerID, nil)
 		rctx := chi.NewRouteContext()
 		rctx.URLParams.Add("customerId", customerID)
 		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
@@ -148,7 +153,7 @@ func TestCustomerHandler_Delete(t *testing.T) {
 	t.Run("service_error", func(t *testing.T) {
 		svc.On("Delete", mock.Anything, customerID).Return(errors.New("error")).Once()
 
-		req, _ := http.NewRequestWithContext(context.Background(), "DELETE", "/stores/store-1/customers/"+customerID, nil)
+		req, _ := http.NewRequestWithContext(context.Background(), "DELETE", "/stores/"+customerTestStoreID+"/customers/"+customerID, nil)
 		rctx := chi.NewRouteContext()
 		rctx.URLParams.Add("customerId", customerID)
 		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
@@ -167,7 +172,7 @@ func TestCustomerHandler_Update(t *testing.T) {
 	log := zerolog.Nop()
 	h := NewCustomerHandler(svc, v, log)
 
-	customerID := "550e8400-e29b-41d4-a716-446655440000"
+	customerID := testCustomerID
 
 	t.Run("success", func(t *testing.T) {
 		reqBody := dto.UpdateCustomerRequest{Name: "Updated Name"}
@@ -175,7 +180,7 @@ func TestCustomerHandler_Update(t *testing.T) {
 
 		svc.On("Update", mock.Anything, customerID, mock.Anything).Return(&dto.CustomerResponse{ID: customerID, Name: "Updated Name"}, nil).Once()
 
-		req, _ := http.NewRequestWithContext(context.Background(), "PUT", "/stores/store-1/customers/"+customerID, bytes.NewBuffer(body))
+		req, _ := http.NewRequestWithContext(context.Background(), "PUT", "/stores/"+customerTestStoreID+"/customers/"+customerID, bytes.NewBuffer(body))
 		rctx := chi.NewRouteContext()
 		rctx.URLParams.Add("customerId", customerID)
 		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
@@ -199,7 +204,7 @@ func TestCustomerHandler_Search(t *testing.T) {
 
 		req, _ := http.NewRequestWithContext(context.Background(), "GET", "/stores/store-1/customers/search?q=test", nil)
 		rctx := chi.NewRouteContext()
-		rctx.URLParams.Add("storeId", "store-1")
+		rctx.URLParams.Add("storeId", customerTestStoreID)
 		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 
 		w := httptest.NewRecorder()

@@ -19,7 +19,7 @@ func TestActivityLogRepo(t *testing.T) {
 	t.Run("Create", func(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		require.NoError(t, err)
-		defer db.Close()
+		defer func() { _ = db.Close() }()
 		repo := NewActivityLogRepo(sqlx.NewDb(db, "postgres"))
 
 		mock.ExpectExec(`(?is)INSERT INTO activity_logs`).
@@ -35,7 +35,7 @@ func TestActivityLogRepo(t *testing.T) {
 	t.Run("FindAll", func(t *testing.T) {
 		db, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherRegexp))
 		require.NoError(t, err)
-		defer db.Close()
+		defer func() { _ = db.Close() }()
 		repo := NewActivityLogRepo(sqlx.NewDb(db, "postgres"))
 
 		// Case 1: Minimal store_id

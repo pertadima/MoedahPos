@@ -13,7 +13,7 @@ import (
 	"github.com/moedahpos/backend/internal/domain"
 )
 
-func TestPOPaymentRepo(t *testing.T) {
+func TestPOPaymentRepo_Basic(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("failed to open sqlmock: %s", err)
@@ -84,6 +84,17 @@ func TestPOPaymentRepo(t *testing.T) {
 		_, status, _ = repo.AggregateByPO(context.Background(), "po1", 200000.0)
 		assert.Equal(t, "paid", status)
 	})
+}
+
+func TestPOPaymentRepo_Extended(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("failed to open sqlmock: %s", err)
+	}
+	defer func() { _ = db.Close() }()
+
+	sqlxDB := sqlx.NewDb(db, "postgres")
+	repo := NewPOPaymentRepo(sqlxDB)
 
 	t.Run("PayableSummary", func(t *testing.T) {
 		mock.ExpectQuery(`(?is)WITH combined_payments AS.*SELECT.*FROM purchase_orders`).

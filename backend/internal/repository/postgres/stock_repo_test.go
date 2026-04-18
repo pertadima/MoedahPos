@@ -25,7 +25,7 @@ func TestStockRepo_FindLevelsByStore(t *testing.T) {
 	sqlxDB := sqlx.NewDb(db, "postgres")
 	repo := NewStockRepo(sqlxDB)
 
-	storeID := "store-1"
+	storeID := customerTestStoreID
 	now := time.Now()
 
 	t.Run("success_all", func(t *testing.T) {
@@ -68,7 +68,7 @@ func TestStockRepo_FindLevelByProduct(t *testing.T) {
 	repo := NewStockRepo(sqlxDB)
 
 	productID := "p1"
-	storeID := "store-1"
+	storeID := customerTestStoreID
 	now := time.Now()
 
 	t.Run("success", func(t *testing.T) {
@@ -106,7 +106,7 @@ func TestStockRepo_SetMinQuantity(t *testing.T) {
 	repo := NewStockRepo(sqlxDB)
 
 	productID := "p1"
-	storeID := "store-1"
+	storeID := customerTestStoreID
 	minQty := 5.0
 
 	t.Run("success", func(t *testing.T) {
@@ -129,7 +129,7 @@ func TestStockRepo_Adjust(t *testing.T) {
 
 	input := domain.AdjustInput{
 		ProductID: "p1",
-		StoreID:   "store-1",
+		StoreID:   customerTestStoreID,
 		Delta:     10.0,
 		RefType:   "adjustment",
 		RefID:     nil,

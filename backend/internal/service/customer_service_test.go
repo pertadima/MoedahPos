@@ -14,12 +14,14 @@ import (
 	repomocks "github.com/moedahpos/backend/internal/repository/mocks"
 )
 
+const customerTestStoreID = "store-1"
+
 func TestCustomerService_List(t *testing.T) {
 	repo := new(repomocks.CustomerRepository)
 	log := zerolog.Nop()
 	svc := NewCustomerService(repo, log)
 
-	storeID := "store-1"
+	storeID := customerTestStoreID
 	filter := dto.CustomerListFilter{StoreID: storeID}
 
 	t.Run("success", func(t *testing.T) {
@@ -39,7 +41,7 @@ func TestCustomerService_Create(t *testing.T) {
 	log := zerolog.Nop()
 	svc := NewCustomerService(repo, log)
 
-	storeID := "store-1"
+	storeID := customerTestStoreID
 	req := dto.CreateCustomerRequest{Name: "New Customer"}
 
 	t.Run("success", func(t *testing.T) {

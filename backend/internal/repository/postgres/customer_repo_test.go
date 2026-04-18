@@ -16,6 +16,8 @@ import (
 	"github.com/moedahpos/backend/internal/dto"
 )
 
+const customerTestStoreID = "store-1"
+
 func TestCustomerRepo_FindAll(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	require.NoError(t, err)
@@ -24,7 +26,7 @@ func TestCustomerRepo_FindAll(t *testing.T) {
 	sqlxDB := sqlx.NewDb(db, "postgres")
 	repo := NewCustomerRepo(sqlxDB)
 
-	storeID := "store-1"
+	storeID := customerTestStoreID
 	filter := dto.CustomerListFilter{
 		StoreID: storeID,
 		PaginationQuery: dto.PaginationQuery{
@@ -62,7 +64,7 @@ func TestCustomerRepo_Create(t *testing.T) {
 	repo := NewCustomerRepo(sqlxDB)
 
 	c := &domain.Customer{
-		StoreID: "store-1",
+		StoreID: customerTestStoreID,
 		Name:    "John Doe",
 	}
 
@@ -96,7 +98,7 @@ func TestCustomerRepo_Update(t *testing.T) {
 
 	t.Run("success", func(t *testing.T) {
 		rows := sqlmock.NewRows([]string{"id", "store_id", "name", "phone", "email", "address", "notes", "created_at", "updated_at"}).
-			AddRow("c1", "store-1", "Jane Doe", nil, nil, nil, nil, time.Now(), time.Now())
+			AddRow("c1", customerTestStoreID, "Jane Doe", nil, nil, nil, nil, time.Now(), time.Now())
 
 		mock.ExpectQuery(regexp.QuoteMeta("UPDATE customers SET name=$1,phone=$2,email=$3,address=$4,notes=$5,updated_at=NOW() WHERE id=$6 AND deleted_at IS NULL RETURNING id,store_id,name,phone,email,address,notes,created_at,updated_at")).
 			WithArgs(c.Name, nil, nil, nil, nil, c.ID).
@@ -143,7 +145,7 @@ func TestCustomerRepo_SoftDelete(t *testing.T) {
 func TestCustomerRepo_FindByID(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	require.NoError(t, err)
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 	repo := NewCustomerRepo(sqlx.NewDb(db, "postgres"))
 
 	t.Run("success", func(t *testing.T) {
@@ -166,7 +168,7 @@ func TestCustomerRepo_FindByID(t *testing.T) {
 func TestCustomerRepo_SearchByPhone(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	require.NoError(t, err)
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 	repo := NewCustomerRepo(sqlx.NewDb(db, "postgres"))
 
 	t.Run("success", func(t *testing.T) {

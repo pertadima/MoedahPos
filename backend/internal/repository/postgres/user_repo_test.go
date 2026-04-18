@@ -17,7 +17,7 @@ import (
 func TestUserRepo_Remaining(t *testing.T) {
 	t.Run("Create", func(t *testing.T) {
 		db, mock, _ := sqlmock.New()
-		defer db.Close()
+		defer func() { _ = db.Close() }()
 		repo := NewUserRepo(sqlx.NewDb(db, "postgres"))
 
 		rows := sqlmock.NewRows([]string{"id", "email", "password_hash", "name", "is_active", "created_at", "updated_at", "deleted_at"}).
@@ -32,7 +32,7 @@ func TestUserRepo_Remaining(t *testing.T) {
 
 	t.Run("FindByID", func(t *testing.T) {
 		db, mock, _ := sqlmock.New()
-		defer db.Close()
+		defer func() { _ = db.Close() }()
 		repo := NewUserRepo(sqlx.NewDb(db, "postgres"))
 
 		rows := sqlmock.NewRows([]string{"id", "email", "password_hash", "name", "is_active", "created_at", "updated_at", "deleted_at"}).
@@ -52,7 +52,7 @@ func TestUserRepo_Remaining(t *testing.T) {
 
 	t.Run("FindByEmail", func(t *testing.T) {
 		db, mock, _ := sqlmock.New()
-		defer db.Close()
+		defer func() { _ = db.Close() }()
 		repo := NewUserRepo(sqlx.NewDb(db, "postgres"))
 
 		rows := sqlmock.NewRows([]string{"id", "email", "password_hash", "name", "is_active", "created_at", "updated_at", "deleted_at"}).
@@ -72,7 +72,7 @@ func TestUserRepo_Remaining(t *testing.T) {
 
 	t.Run("ExistsByEmail", func(t *testing.T) {
 		db, mock, _ := sqlmock.New()
-		defer db.Close()
+		defer func() { _ = db.Close() }()
 		repo := NewUserRepo(sqlx.NewDb(db, "postgres"))
 
 		mock.ExpectQuery(`(?is)SELECT EXISTS\(SELECT 1 FROM users WHERE email = \$1.*NULL\)`).
@@ -86,7 +86,7 @@ func TestUserRepo_Remaining(t *testing.T) {
 
 	t.Run("FindStoresByUserID", func(t *testing.T) {
 		db, mock, _ := sqlmock.New()
-		defer db.Close()
+		defer func() { _ = db.Close() }()
 		repo := NewUserRepo(sqlx.NewDb(db, "postgres"))
 
 		rows := sqlmock.NewRows([]string{"id", "user_id", "store_id", "role_id", "is_active", "created_at", "store_name", "store_type", "role_name"}).
@@ -97,10 +97,12 @@ func TestUserRepo_Remaining(t *testing.T) {
 		require.NoError(t, err)
 		assert.Len(t, res, 1)
 	})
+}
 
+func TestUserRepo_Remaining_Write(t *testing.T) {
 	t.Run("Update", func(t *testing.T) {
 		db, mock, _ := sqlmock.New()
-		defer db.Close()
+		defer func() { _ = db.Close() }()
 		repo := NewUserRepo(sqlx.NewDb(db, "postgres"))
 
 		rows := sqlmock.NewRows([]string{"id", "email", "password_hash", "name", "is_active", "created_at", "updated_at", "deleted_at"}).
@@ -121,7 +123,7 @@ func TestUserRepo_Remaining(t *testing.T) {
 
 	t.Run("SoftDelete", func(t *testing.T) {
 		db, mock, _ := sqlmock.New()
-		defer db.Close()
+		defer func() { _ = db.Close() }()
 		repo := NewUserRepo(sqlx.NewDb(db, "postgres"))
 
 		mock.ExpectExec(`(?is)UPDATE users SET deleted_at=NOW\(\), is_active=false.*WHERE id=\$1`).WithArgs("u1").WillReturnResult(sqlmock.NewResult(1, 1))
@@ -136,7 +138,7 @@ func TestUserRepo_Remaining(t *testing.T) {
 
 	t.Run("ResetPassword", func(t *testing.T) {
 		db, mock, _ := sqlmock.New()
-		defer db.Close()
+		defer func() { _ = db.Close() }()
 		repo := NewUserRepo(sqlx.NewDb(db, "postgres"))
 
 		mock.ExpectExec(`(?is)UPDATE users SET password_hash=\$2.*WHERE id=\$1`).WithArgs("u1", "new_hash").WillReturnResult(sqlmock.NewResult(1, 1))
@@ -151,7 +153,7 @@ func TestUserRepo_Remaining(t *testing.T) {
 
 	t.Run("Deactivate", func(t *testing.T) {
 		db, mock, _ := sqlmock.New()
-		defer db.Close()
+		defer func() { _ = db.Close() }()
 		repo := NewUserRepo(sqlx.NewDb(db, "postgres"))
 
 		mock.ExpectExec(`(?is)UPDATE users SET is_active=false.*WHERE id=\$1`).WithArgs("u1").WillReturnResult(sqlmock.NewResult(1, 1))
@@ -166,7 +168,7 @@ func TestUserRepo_Remaining(t *testing.T) {
 
 	t.Run("ListAll", func(t *testing.T) {
 		db, mock, _ := sqlmock.New()
-		defer db.Close()
+		defer func() { _ = db.Close() }()
 		repo := NewUserRepo(sqlx.NewDb(db, "postgres"))
 
 		rows := sqlmock.NewRows([]string{"id", "name", "email", "password_hash", "is_active", "created_at", "updated_at", "deleted_at"}).
@@ -185,7 +187,7 @@ func TestUserRepo_Remaining(t *testing.T) {
 func TestRefreshTokenRepo_Remaining(t *testing.T) {
 	t.Run("Create", func(t *testing.T) {
 		db, mock, _ := sqlmock.New()
-		defer db.Close()
+		defer func() { _ = db.Close() }()
 		repo := NewRefreshTokenRepo(sqlx.NewDb(db, "postgres"))
 
 		mock.ExpectExec(`(?is)INSERT INTO refresh_tokens`).WithArgs("u1", "h1", sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(1, 1))
@@ -196,7 +198,7 @@ func TestRefreshTokenRepo_Remaining(t *testing.T) {
 
 	t.Run("FindByHash", func(t *testing.T) {
 		db, mock, _ := sqlmock.New()
-		defer db.Close()
+		defer func() { _ = db.Close() }()
 		repo := NewRefreshTokenRepo(sqlx.NewDb(db, "postgres"))
 
 		rows := sqlmock.NewRows([]string{"id", "user_id", "token_hash", "expires_at", "revoked", "created_at"}).
@@ -216,7 +218,7 @@ func TestRefreshTokenRepo_Remaining(t *testing.T) {
 
 	t.Run("RevokeByID", func(t *testing.T) {
 		db, mock, _ := sqlmock.New()
-		defer db.Close()
+		defer func() { _ = db.Close() }()
 		repo := NewRefreshTokenRepo(sqlx.NewDb(db, "postgres"))
 
 		mock.ExpectExec(`(?is)UPDATE refresh_tokens SET revoked = true WHERE id = \$1`).WithArgs("t1").WillReturnResult(sqlmock.NewResult(1, 1))
@@ -226,7 +228,7 @@ func TestRefreshTokenRepo_Remaining(t *testing.T) {
 
 	t.Run("RevokeAllByUserID", func(t *testing.T) {
 		db, mock, _ := sqlmock.New()
-		defer db.Close()
+		defer func() { _ = db.Close() }()
 		repo := NewRefreshTokenRepo(sqlx.NewDb(db, "postgres"))
 
 		mock.ExpectExec(`(?is)UPDATE refresh_tokens SET revoked = true WHERE user_id = \$1`).WithArgs("u1").WillReturnResult(sqlmock.NewResult(1, 1))
@@ -236,7 +238,7 @@ func TestRefreshTokenRepo_Remaining(t *testing.T) {
 
 	t.Run("DeleteExpired", func(t *testing.T) {
 		db, mock, _ := sqlmock.New()
-		defer db.Close()
+		defer func() { _ = db.Close() }()
 		repo := NewRefreshTokenRepo(sqlx.NewDb(db, "postgres"))
 
 		before := time.Now()
@@ -249,7 +251,7 @@ func TestRefreshTokenRepo_Remaining(t *testing.T) {
 func TestUserRepo_SetStores(t *testing.T) {
 	t.Run("SetStores", func(t *testing.T) {
 		db, mock, _ := sqlmock.New()
-		defer db.Close()
+		defer func() { _ = db.Close() }()
 		repo := NewUserRepo(sqlx.NewDb(db, "postgres"))
 
 		mock.ExpectBegin()

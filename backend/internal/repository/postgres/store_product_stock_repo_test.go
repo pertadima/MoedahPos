@@ -15,7 +15,7 @@ import (
 	"github.com/moedahpos/backend/internal/dto"
 )
 
-func TestStoreRepo(t *testing.T) {
+func TestStoreRepo_Basic(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("Create", func(t *testing.T) {
@@ -95,6 +95,10 @@ func TestStoreRepo(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Nil(t, res)
 	})
+}
+
+func TestStoreRepo_Members(t *testing.T) {
+	ctx := context.Background()
 
 	t.Run("MemberManagement", func(t *testing.T) {
 		db, mock, err := sqlmock.New()

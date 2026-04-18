@@ -14,10 +14,12 @@ import (
 	"github.com/moedahpos/backend/internal/domain"
 )
 
-func TestTableRepo(t *testing.T) {
+func TestTableRepo_Basic(t *testing.T) {
+	stringPtr := func(s string) *string { return &s }
+
 	t.Run("FindAllByStore", func(t *testing.T) {
 		db, mock, _ := sqlmock.New()
-		defer db.Close()
+		defer func() { _ = db.Close() }()
 		repo := NewTableRepo(sqlx.NewDb(db, "postgres"))
 
 		rows := sqlmock.NewRows([]string{"id", "store_id", "table_number", "capacity", "status", "notes", "is_active", "created_at", "updated_at", "deleted_at"}).
@@ -30,7 +32,7 @@ func TestTableRepo(t *testing.T) {
 
 	t.Run("FindByID", func(t *testing.T) {
 		db, mock, _ := sqlmock.New()
-		defer db.Close()
+		defer func() { _ = db.Close() }()
 		repo := NewTableRepo(sqlx.NewDb(db, "postgres"))
 
 		rows := sqlmock.NewRows([]string{"id", "store_id", "table_number", "capacity", "status", "notes", "is_active", "created_at", "updated_at", "deleted_at"}).
@@ -49,7 +51,7 @@ func TestTableRepo(t *testing.T) {
 
 	t.Run("Create", func(t *testing.T) {
 		db, mock, _ := sqlmock.New()
-		defer db.Close()
+		defer func() { _ = db.Close() }()
 		repo := NewTableRepo(sqlx.NewDb(db, "postgres"))
 
 		rows := sqlmock.NewRows([]string{"id", "store_id", "table_number", "capacity", "status", "notes", "is_active", "created_at", "updated_at", "deleted_at"}).
@@ -68,10 +70,14 @@ func TestTableRepo(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, res)
 	})
+}
+
+func TestTableRepo_Manage(t *testing.T) {
+	stringPtr := func(s string) *string { return &s }
 
 	t.Run("Update", func(t *testing.T) {
 		db, mock, _ := sqlmock.New()
-		defer db.Close()
+		defer func() { _ = db.Close() }()
 		repo := NewTableRepo(sqlx.NewDb(db, "postgres"))
 
 		rows := sqlmock.NewRows([]string{"id", "store_id", "table_number", "capacity", "status", "notes", "is_active", "created_at", "updated_at", "deleted_at"}).
@@ -100,7 +106,7 @@ func TestTableRepo(t *testing.T) {
 
 	t.Run("UpdateStatus", func(t *testing.T) {
 		db, mock, _ := sqlmock.New()
-		defer db.Close()
+		defer func() { _ = db.Close() }()
 		repo := NewTableRepo(sqlx.NewDb(db, "postgres"))
 
 		mock.ExpectExec(`(?is)UPDATE restaurant_tables SET status=\$1`).WithArgs("occupied", "t1").WillReturnResult(sqlmock.NewResult(1, 1))
@@ -115,7 +121,7 @@ func TestTableRepo(t *testing.T) {
 
 	t.Run("SoftDelete", func(t *testing.T) {
 		db, mock, _ := sqlmock.New()
-		defer db.Close()
+		defer func() { _ = db.Close() }()
 		repo := NewTableRepo(sqlx.NewDb(db, "postgres"))
 
 		mock.ExpectExec(`(?is)UPDATE restaurant_tables SET deleted_at=NOW()`).WithArgs("t1").WillReturnResult(sqlmock.NewResult(1, 1))
@@ -129,10 +135,10 @@ func TestTableRepo(t *testing.T) {
 	})
 }
 
-func TestMenuItemRepo(t *testing.T) {
+func TestMenuItemRepo_Basic(t *testing.T) {
 	t.Run("FindAllByStore", func(t *testing.T) {
 		db, mock, _ := sqlmock.New()
-		defer db.Close()
+		defer func() { _ = db.Close() }()
 		repo := NewMenuItemRepo(sqlx.NewDb(db, "postgres"))
 
 		rows := sqlmock.NewRows([]string{"id", "store_id", "category_id", "name", "description", "sell_price", "use_global_tax", "tax_percentage", "image_url", "is_active", "packaging_cost", "overhead_cost", "labor_cost", "created_at", "updated_at", "deleted_at", "category_name", "store_default_tax"}).
@@ -150,7 +156,7 @@ func TestMenuItemRepo(t *testing.T) {
 
 	t.Run("FindByID", func(t *testing.T) {
 		db, mock, _ := sqlmock.New()
-		defer db.Close()
+		defer func() { _ = db.Close() }()
 		repo := NewMenuItemRepo(sqlx.NewDb(db, "postgres"))
 
 		cols := []string{"id", "store_id", "category_id", "name", "description", "sell_price", "use_global_tax", "tax_percentage", "image_url", "is_active", "packaging_cost", "overhead_cost", "labor_cost", "created_at", "updated_at", "deleted_at", "category_name", "store_default_tax"}
@@ -175,10 +181,14 @@ func TestMenuItemRepo(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Nil(t, res)
 	})
+}
+
+func TestMenuItemRepo_Manage(t *testing.T) {
+	stringPtr := func(s string) *string { return &s }
 
 	t.Run("Create", func(t *testing.T) {
 		db, mock, _ := sqlmock.New()
-		defer db.Close()
+		defer func() { _ = db.Close() }()
 		repo := NewMenuItemRepo(sqlx.NewDb(db, "postgres"))
 
 		rows := sqlmock.NewRows([]string{"id", "store_id", "category_id", "name", "description", "sell_price", "use_global_tax", "tax_percentage", "packaging_cost", "overhead_cost", "labor_cost", "image_url", "is_active", "created_at", "updated_at", "deleted_at"}).
@@ -203,7 +213,7 @@ func TestMenuItemRepo(t *testing.T) {
 
 	t.Run("Update", func(t *testing.T) {
 		db, mock, _ := sqlmock.New()
-		defer db.Close()
+		defer func() { _ = db.Close() }()
 		repo := NewMenuItemRepo(sqlx.NewDb(db, "postgres"))
 
 		rows := sqlmock.NewRows([]string{"id", "store_id", "category_id", "name", "description", "sell_price", "use_global_tax", "tax_percentage", "packaging_cost", "overhead_cost", "labor_cost", "image_url", "is_active", "created_at", "updated_at", "deleted_at"}).
@@ -227,10 +237,12 @@ func TestMenuItemRepo(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, res)
 	})
+}
 
+func TestMenuItemRepo_Manage_Ingredients(t *testing.T) {
 	t.Run("ReplaceIngredients", func(t *testing.T) {
 		db, mock, _ := sqlmock.New()
-		defer db.Close()
+		defer func() { _ = db.Close() }()
 		repo := NewMenuItemRepo(sqlx.NewDb(db, "postgres"))
 
 		mock.ExpectBegin()
@@ -244,7 +256,7 @@ func TestMenuItemRepo(t *testing.T) {
 
 	t.Run("SoftDelete", func(t *testing.T) {
 		db, mock, _ := sqlmock.New()
-		defer db.Close()
+		defer func() { _ = db.Close() }()
 		repo := NewMenuItemRepo(sqlx.NewDb(db, "postgres"))
 
 		mock.ExpectExec(`(?is)UPDATE menu_items SET deleted_at=NOW()`).WithArgs("m1").WillReturnResult(sqlmock.NewResult(1, 1))

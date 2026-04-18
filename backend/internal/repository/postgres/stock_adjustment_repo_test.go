@@ -13,6 +13,11 @@ import (
 	"github.com/moedahpos/backend/internal/domain"
 )
 
+const (
+	stockTestStoreID = "store-1"
+	testUserID       = "user-1"
+)
+
 func TestStockAdjustmentRepo_CreateAdjustment_IN(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	require.NoError(t, err)
@@ -21,8 +26,8 @@ func TestStockAdjustmentRepo_CreateAdjustment_IN(t *testing.T) {
 	sqlxDB := sqlx.NewDb(db, "postgres")
 	repo := NewStockAdjustmentRepo(sqlxDB)
 
-	storeID := "store-1"
-	userID := "user-1"
+	storeID := stockTestStoreID
+	userID := testUserID
 	input := domain.CreateAdjustmentInput{
 		ProductID: "p1",
 		Type:      "IN",
@@ -79,8 +84,8 @@ func TestStockAdjustmentRepo_CreateAdjustment_OUT(t *testing.T) {
 	sqlxDB := sqlx.NewDb(db, "postgres")
 	repo := NewStockAdjustmentRepo(sqlxDB)
 
-	storeID := "store-1"
-	userID := "user-1"
+	storeID := stockTestStoreID
+	userID := testUserID
 	input := domain.CreateAdjustmentInput{
 		ProductID: "p1",
 		Type:      "OUT",

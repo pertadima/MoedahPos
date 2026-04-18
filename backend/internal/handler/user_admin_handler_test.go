@@ -20,7 +20,7 @@ import (
 	"github.com/moedahpos/backend/internal/validator"
 )
 
-func TestUserAdminHandler(t *testing.T) {
+func TestUserAdminHandler_Read(t *testing.T) {
 	svc := new(mocks.UserAdminServiceInterface)
 	v := validator.New()
 	log := zerolog.Nop()
@@ -69,6 +69,13 @@ func TestUserAdminHandler(t *testing.T) {
 
 		assert.Equal(t, http.StatusNotFound, w.Code)
 	})
+}
+
+func TestUserAdminHandler_Write(t *testing.T) {
+	svc := new(mocks.UserAdminServiceInterface)
+	v := validator.New()
+	log := zerolog.Nop()
+	h := NewUserAdminHandler(svc, v, log)
 
 	t.Run("Create", func(t *testing.T) {
 		reqBody := dto.CreateUserRequest{
@@ -114,6 +121,13 @@ func TestUserAdminHandler(t *testing.T) {
 
 		assert.Equal(t, http.StatusOK, w.Code)
 	})
+}
+
+func TestUserAdminHandler_Misc(t *testing.T) {
+	svc := new(mocks.UserAdminServiceInterface)
+	v := validator.New()
+	log := zerolog.Nop()
+	h := NewUserAdminHandler(svc, v, log)
 
 	t.Run("Deactivate", func(t *testing.T) {
 		req, _ := http.NewRequestWithContext(context.Background(), http.MethodPost, "/admin/users/u1/deactivate", nil)

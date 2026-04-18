@@ -20,7 +20,7 @@ func TestStockService_GetStockLevels(t *testing.T) {
 	logger := zerolog.Nop()
 	svc := NewStockService(stockRepo, productRepo, logger)
 
-	storeID := "store-1"
+	storeID := customerTestStoreID
 
 	t.Run("success", func(t *testing.T) {
 		levels := []*domain.StockLevel{
@@ -52,7 +52,7 @@ func TestStockService_GetProductStock(t *testing.T) {
 	svc := NewStockService(stockRepo, productRepo, logger)
 
 	productID := "p1"
-	storeID := "store-1"
+	storeID := customerTestStoreID
 
 	t.Run("success", func(t *testing.T) {
 		level := &domain.StockLevel{ProductID: productID, ProductName: "P1", Quantity: 10}
@@ -80,7 +80,7 @@ func TestStockService_AdjustStock(t *testing.T) {
 	logger := zerolog.Nop()
 	svc := NewStockService(stockRepo, productRepo, logger)
 
-	storeID := "store-1"
+	storeID := customerTestStoreID
 	userID := "user-1"
 	req := &dto.AdjustStockRequest{
 		ProductID: "p1",
@@ -130,7 +130,7 @@ func TestStockService_SetMinStock(t *testing.T) {
 	logger := zerolog.Nop()
 	svc := NewStockService(stockRepo, productRepo, logger)
 
-	storeID := "store-1"
+	storeID := customerTestStoreID
 	req := &dto.SetMinStockRequest{
 		ProductID:   "p1",
 		MinQuantity: 5,
@@ -163,7 +163,7 @@ func TestStockService_GetMovements(t *testing.T) {
 	logger := zerolog.Nop()
 	svc := NewStockService(stockRepo, productRepo, logger)
 
-	filter := dto.StockMovementFilter{StoreID: "store-1"}
+	filter := dto.StockMovementFilter{StoreID: customerTestStoreID}
 
 	t.Run("success", func(t *testing.T) {
 		movements := []*domain.StockMovement{

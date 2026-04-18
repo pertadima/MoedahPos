@@ -13,6 +13,8 @@ import (
 	"github.com/moedahpos/backend/internal/domain"
 )
 
+const testPOID = "po1"
+
 func TestTerminRepo_CreateSchedule(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	if err != nil {
@@ -24,7 +26,7 @@ func TestTerminRepo_CreateSchedule(t *testing.T) {
 	repo := NewTerminRepo(sqlxDB)
 
 	ctx := context.Background()
-	poID := "po1"
+	poID := testPOID
 	termins := []domain.POTermin{
 		{TerminNumber: 1, Amount: 100, DueDate: time.Now(), Notes: "Note 1"},
 	}
@@ -56,7 +58,7 @@ func TestTerminRepo_FindByPO(t *testing.T) {
 	repo := NewTerminRepo(sqlxDB)
 
 	ctx := context.Background()
-	poID := "po1"
+	poID := testPOID
 
 	rows := sqlmock.NewRows([]string{"id", "po_id", "termin_number", "amount", "due_date", "status", "notes", "created_at", "updated_at", "amount_paid", "amount_due"}).
 		AddRow("t1", poID, 1, 100, time.Now(), "unpaid", "", time.Now(), time.Now(), 0, 100)
@@ -86,7 +88,7 @@ func TestTerminRepo_FindByID(t *testing.T) {
 	tid := "t1"
 
 	rows := sqlmock.NewRows([]string{"id", "po_id", "termin_number", "amount", "due_date", "status", "notes", "created_at", "updated_at", "amount_paid", "amount_due"}).
-		AddRow(tid, "po1", 1, 100, time.Now(), "partial", "", time.Now(), time.Now(), 40, 60)
+		AddRow(tid, testPOID, 1, 100, time.Now(), "partial", "", time.Now(), time.Now(), 40, 60)
 
 	mock.ExpectQuery(`SELECT .* FROM purchase_order_termins t.* WHERE t.id = \$1`).
 		WithArgs(tid).
@@ -138,7 +140,7 @@ func TestTerminRepo_DebtSummary(t *testing.T) {
 	repo := NewTerminRepo(sqlxDB)
 
 	ctx := context.Background()
-	poID := "po1"
+	poID := testPOID
 	total := 1000.0
 
 	rows := sqlmock.NewRows([]string{"po_id", "total_amount", "total_termin", "total_paid", "remaining_debt", "termin_count", "overdue_count"}).

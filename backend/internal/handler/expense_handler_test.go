@@ -18,6 +18,8 @@ import (
 	"github.com/moedahpos/backend/internal/validator"
 )
 
+const expenseTestStoreID = "st1"
+
 func TestExpenseHandler_ListCategories(t *testing.T) {
 	svc := svcMocks.NewExpenseServiceInterface(t)
 	v := validator.New()
@@ -41,7 +43,7 @@ func TestExpenseHandler_CreateExpense(t *testing.T) {
 	v := validator.New()
 	h := NewExpenseHandler(svc, v, zerolog.Nop())
 
-	storeID := "st1"
+	storeID := expenseTestStoreID
 	reqBody := dto.CreateExpenseRequest{
 		CategoryID:    "550e8400-e29b-41d4-a716-446655440000",
 		Amount:        100.0,
@@ -74,7 +76,7 @@ func TestExpenseHandler_DeleteExpense(t *testing.T) {
 	v := validator.New()
 	h := NewExpenseHandler(svc, v, zerolog.Nop())
 
-	storeID := "st1"
+	storeID := expenseTestStoreID
 	id := "e1"
 
 	t.Run("success", func(t *testing.T) {

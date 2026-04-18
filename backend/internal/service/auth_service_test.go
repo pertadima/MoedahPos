@@ -61,6 +61,51 @@ func TestAuthService_Register(t *testing.T) {
 			},
 			wantErr: ErrEmailTaken,
 		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			uRepo := new(repomocks.UserRepository)
+			tRepo := new(repomocks.RefreshTokenRepository)
+			aSvc := new(mocks.ActivityLogServiceInterface)
+
+			if tt.setup != nil {
+				tt.setup(uRepo)
+			}
+
+			s := NewAuthService(uRepo, tRepo, aSvc, nil, bcryptCost, log)
+			resp, err := s.Register(ctx, tt.req)
+
+			if tt.wantErr != nil {
+				assert.Error(t, err)
+				assert.Contains(t, err.Error(), tt.wantErr.Error())
+				assert.Nil(t, resp)
+			} else {
+				assert.NoError(t, err)
+				assert.NotNil(t, resp)
+				assert.Equal(t, tt.req.Name, resp.Name)
+			}
+
+			uRepo.AssertExpectations(t)
+		})
+	}
+}
+
+func TestAuthService_Register_Errors(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	log := zerolog.Nop()
+	bcryptCost := 10
+
+	tests := []struct {
+		name    string
+		req     *dto.RegisterRequest
+		setup   func(u *repomocks.UserRepository)
+		wantErr error
+	}{
 		{
 			name: "Repository Error on Exists",
 			req: &dto.RegisterRequest{
@@ -170,6 +215,46 @@ func TestAuthService_Login(t *testing.T) {
 			},
 			wantErr: ErrUserInactive,
 		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			uRepo := new(repomocks.UserRepository)
+			tRepo := new(repomocks.RefreshTokenRepository)
+			aSvc := new(mocks.ActivityLogServiceInterface)
+
+			if tt.setup != nil {
+				tt.setup(uRepo, tRepo, aSvc)
+			}
+
+			s := NewAuthService(uRepo, tRepo, aSvc, jwtMgr, bcryptCost, log)
+			resp, err := s.Login(ctx, tt.req)
+
+			if tt.wantErr != nil {
+				assert.Error(t, err)
+				assert.Contains(t, err.Error(), tt.wantErr.Error())
+				assert.Nil(t, resp)
+			} else {
+				assert.NoError(t, err)
+				assert.NotNil(t, resp)
+				assert.NotEmpty(t, resp.AccessToken)
+			}
+		})
+	}
+}
+
+func TestAuthService_Login_Errors(t *testing.T) {
+	ctx := context.Background()
+	log := zerolog.Nop()
+	jwtMgr := jwt.New("secret", time.Hour, time.Hour*24)
+	bcryptCost := 10
+
+	tests := []struct {
+		name    string
+		req     *dto.LoginRequest
+		setup   func(u *repomocks.UserRepository, t *repomocks.RefreshTokenRepository, a *mocks.ActivityLogServiceInterface)
+		wantErr error
+	}{
 		{
 			name: "Invalid Password",
 			req:  &dto.LoginRequest{Email: "u@example.com", Password: "wrong"},

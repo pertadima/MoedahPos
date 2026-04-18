@@ -22,7 +22,7 @@ func strPtr(s string) *string {
 func TestIncomeRepo_Categories(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	require.NoError(t, err)
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
 	repo := NewIncomeRepo(sqlxDB)
@@ -102,7 +102,7 @@ func TestIncomeRepo_Incomes(t *testing.T) {
 	t.Run("Create", func(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		require.NoError(t, err)
-		defer db.Close()
+		defer func() { _ = db.Close() }()
 		repo := NewIncomeRepo(sqlx.NewDb(db, "postgres"))
 
 		mock.ExpectQuery(`(?is)INSERT INTO incomes`).
@@ -125,7 +125,7 @@ func TestIncomeRepo_Incomes(t *testing.T) {
 	t.Run("FindAll", func(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		require.NoError(t, err)
-		defer db.Close()
+		defer func() { _ = db.Close() }()
 		repo := NewIncomeRepo(sqlx.NewDb(db, "postgres"))
 
 		mock.ExpectQuery(`(?is)SELECT COUNT\(\*\) FROM incomes`).
@@ -159,11 +159,15 @@ func TestIncomeRepo_Incomes(t *testing.T) {
 		_, _, err = repo.FindAll(ctx, filter)
 		assert.NoError(t, err)
 	})
+}
+
+func TestIncomeRepo_Incomes_Misc(t *testing.T) {
+	ctx := context.Background()
 
 	t.Run("FindByID", func(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		require.NoError(t, err)
-		defer db.Close()
+		defer func() { _ = db.Close() }()
 		repo := NewIncomeRepo(sqlx.NewDb(db, "postgres"))
 
 		mock.ExpectQuery(`(?is)SELECT .* FROM incomes i .* WHERE i.id = \$1`).
@@ -188,7 +192,7 @@ func TestIncomeRepo_Incomes(t *testing.T) {
 	t.Run("Update", func(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		require.NoError(t, err)
-		defer db.Close()
+		defer func() { _ = db.Close() }()
 		repo := NewIncomeRepo(sqlx.NewDb(db, "postgres"))
 
 		mock.ExpectQuery(`(?is)UPDATE incomes`).
@@ -208,11 +212,15 @@ func TestIncomeRepo_Incomes(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Nil(t, res)
 	})
+}
+
+func TestIncomeRepo_Incomes_Misc2(t *testing.T) {
+	ctx := context.Background()
 
 	t.Run("Delete", func(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		require.NoError(t, err)
-		defer db.Close()
+		defer func() { _ = db.Close() }()
 		repo := NewIncomeRepo(sqlx.NewDb(db, "postgres"))
 
 		mock.ExpectExec(`(?is)DELETE FROM incomes`).
@@ -231,7 +239,7 @@ func TestIncomeRepo_Incomes(t *testing.T) {
 	t.Run("SumByDateRange", func(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		require.NoError(t, err)
-		defer db.Close()
+		defer func() { _ = db.Close() }()
 		repo := NewIncomeRepo(sqlx.NewDb(db, "postgres"))
 
 		mock.ExpectQuery(`(?is)SELECT COALESCE\(SUM\(amount\), 0\) FROM incomes`).

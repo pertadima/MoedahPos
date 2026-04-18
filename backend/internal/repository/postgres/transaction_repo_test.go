@@ -351,7 +351,7 @@ func TestTransactionRepo_UpdateDraftItems(t *testing.T) {
 	mock.ExpectQuery(`(?is)SELECT .* FROM transactions`).WillReturnRows(sqlmock.NewRows(cols).AddRow("t1", "s1", "u1", nil, "Cust", "", 100.0, 0.0, 10.0, 110.0, "cash", 110.0, 0.0, "draft", "", time.Now(), time.Now(), "U1"))
 	mock.ExpectQuery(`SELECT .* FROM transaction_items`).WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow("ti1"))
 
-	res, err = repo.UpdateDraftItems(ctx, tid, newItems, 100, 0, 0, 100, "Cust", "")
+	_, err = repo.UpdateDraftItems(ctx, tid, newItems, 100, 0, 0, 100, "Cust", "")
 	assert.NoError(t, err)
 }
 
@@ -404,6 +404,6 @@ func TestTransactionRepo_PayDraft(t *testing.T) {
 		WillReturnResult(sqlmock.NewResult(0, 0))
 	mock.ExpectRollback()
 
-	res, err = repo.PayDraft(ctx, domain.PayDraftInput{TransactionID: "unknown"}, "s1", "u1")
+	_, err = repo.PayDraft(ctx, domain.PayDraftInput{TransactionID: "unknown"}, "s1", "u1")
 	assert.Error(t, err)
 }

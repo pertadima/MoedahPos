@@ -18,7 +18,7 @@ import (
 	"github.com/moedahpos/backend/internal/validator"
 )
 
-func TestStoreHandler(t *testing.T) {
+func TestStoreHandler_CRUD(t *testing.T) {
 	svc := new(mocks.StoreServiceInterface)
 	v := validator.New()
 	log := zerolog.Nop()
@@ -99,6 +99,13 @@ func TestStoreHandler(t *testing.T) {
 
 		assert.Equal(t, http.StatusOK, w.Code)
 	})
+}
+
+func TestStoreHandler_Members(t *testing.T) {
+	svc := new(mocks.StoreServiceInterface)
+	v := validator.New()
+	log := zerolog.Nop()
+	h := NewStoreHandler(svc, v, log)
 
 	t.Run("Members_List", func(t *testing.T) {
 		req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "/stores/s1/members", nil)

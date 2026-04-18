@@ -15,6 +15,11 @@ import (
 	"github.com/moedahpos/backend/internal/service/mocks"
 )
 
+const (
+	txnTestStoreID = "s1"
+	testUUID       = "00000000-0000-0000-0000-000000000001"
+)
+
 func TestTransactionService_Checkout(t *testing.T) {
 	ctx := context.Background()
 	log := zerolog.Nop()
@@ -27,7 +32,7 @@ func TestTransactionService_Checkout(t *testing.T) {
 		bSvc := new(mocks.BatchStockServiceInterface)
 		aSvc := new(mocks.ActivityLogServiceInterface)
 
-		pid := "00000000-0000-0000-0000-000000000001"
+		pid := testUUID
 		req := &dto.CreateTransactionRequest{
 			Items: []dto.TxItemInput{
 				{ProductID: pid, Quantity: 2},
@@ -38,23 +43,23 @@ func TestTransactionService_Checkout(t *testing.T) {
 
 		pRepo.On("FindByID", ctx, pid).Return(&domain.Product{
 			ID:        pid,
-			StoreID:   "s1",
+			StoreID:   txnTestStoreID,
 			Name:      "Product 1",
 			SellPrice: 100,
 			IsActive:  true,
 		}, nil)
-		sRepo.On("FindLevelByProduct", ctx, pid, "s1").Return(&domain.StockLevel{Quantity: 10}, nil)
+		sRepo.On("FindLevelByProduct", ctx, pid, txnTestStoreID).Return(&domain.StockLevel{Quantity: 10}, nil)
 
 		tRepo.On("Create", ctx, mock.Anything).Return(&domain.Transaction{
 			ID:    "t1",
 			Total: 200,
 		}, nil)
 
-		bSvc.On("DeductStockFIFO", ctx, pid, "s1", 2.0).Return(nil)
-		aSvc.On("LogActivity", ctx, "u1", "s1", domain.ActionTransactionCreate, domain.ModuleTransaction, "t1", mock.Anything).Return()
+		bSvc.On("DeductStockFIFO", ctx, pid, txnTestStoreID, 2.0).Return(nil)
+		aSvc.On("LogActivity", ctx, "u1", txnTestStoreID, domain.ActionTransactionCreate, domain.ModuleTransaction, "t1", mock.Anything).Return()
 
 		s := NewTransactionService(tRepo, pRepo, sRepo, mRepo, bSvc, aSvc, log)
-		resp, err := s.Checkout(ctx, "s1", req, "u1")
+		resp, err := s.Checkout(ctx, txnTestStoreID, req, "u1")
 
 		assert.NoError(t, err)
 		assert.NotNil(t, resp)
@@ -74,7 +79,7 @@ func TestTransactionService_Checkout(t *testing.T) {
 		bSvc := new(mocks.BatchStockServiceInterface)
 		aSvc := new(mocks.ActivityLogServiceInterface)
 
-		pid := "00000000-0000-0000-0000-000000000001"
+		pid := testUUID
 		req := &dto.CreateTransactionRequest{
 			Items: []dto.TxItemInput{
 				{ProductID: pid, Quantity: 1},
@@ -84,18 +89,23 @@ func TestTransactionService_Checkout(t *testing.T) {
 
 		pRepo.On("FindByID", ctx, pid).Return(&domain.Product{
 			ID:        pid,
-			StoreID:   "s1",
+			StoreID:   txnTestStoreID,
 			SellPrice: 100,
 			IsActive:  true,
 		}, nil)
-		sRepo.On("FindLevelByProduct", ctx, pid, "s1").Return(&domain.StockLevel{Quantity: 10}, nil)
+		sRepo.On("FindLevelByProduct", ctx, pid, txnTestStoreID).Return(&domain.StockLevel{Quantity: 10}, nil)
 
 		s := NewTransactionService(tRepo, pRepo, sRepo, mRepo, bSvc, aSvc, log)
-		resp, err := s.Checkout(ctx, "s1", req, "u1")
+		resp, err := s.Checkout(ctx, txnTestStoreID, req, "u1")
 
 		assert.ErrorIs(t, err, ErrInsuficientPayment)
 		assert.Nil(t, resp)
 	})
+}
+
+func TestTransactionService_Checkout_Restaurant(t *testing.T) {
+	ctx := context.Background()
+	log := zerolog.Nop()
 
 	t.Run("Restaurant Success", func(t *testing.T) {
 		tRepo := new(repomocks.TransactionRepository)
@@ -105,7 +115,7 @@ func TestTransactionService_Checkout(t *testing.T) {
 		bSvc := new(mocks.BatchStockServiceInterface)
 		aSvc := new(mocks.ActivityLogServiceInterface)
 
-		mid := "00000000-0000-0000-0000-000000000001"
+		mid := testUUID
 		iid := "00000000-0000-0000-0000-000000000002"
 		req := &dto.CreateTransactionRequest{
 			Items: []dto.TxItemInput{
@@ -117,7 +127,7 @@ func TestTransactionService_Checkout(t *testing.T) {
 
 		mRepo.On("FindByID", ctx, mid).Return(&domain.MenuItem{
 			ID:        mid,
-			StoreID:   "s1",
+			StoreID:   txnTestStoreID,
 			Name:      "Menu 1",
 			SellPrice: 150,
 			Ingredients: []domain.MenuItemIngredient{
@@ -125,7 +135,7 @@ func TestTransactionService_Checkout(t *testing.T) {
 			},
 		}, nil)
 
-		sRepo.On("FindLevelByProduct", ctx, iid, "s1").Return(&domain.StockLevel{ProductID: iid, Quantity: 10}, nil)
+		sRepo.On("FindLevelByProduct", ctx, iid, txnTestStoreID).Return(&domain.StockLevel{ProductID: iid, Quantity: 10}, nil)
 		pRepo.On("FindByID", ctx, iid).Return(&domain.Product{ID: iid, CostPrice: 50}, nil)
 
 		tRepo.On("Create", ctx, mock.Anything).Return(&domain.Transaction{
@@ -133,12 +143,12 @@ func TestTransactionService_Checkout(t *testing.T) {
 			Total: 150,
 		}, nil)
 
-		sRepo.On("DeductStock", ctx, iid, "s1", 2.0, "t2", "u1").Return(nil)
-		bSvc.On("DeductStockFIFO", ctx, iid, "s1", 2.0).Return(nil)
-		aSvc.On("LogActivity", ctx, "u1", "s1", mock.Anything, mock.Anything, "t2", mock.Anything).Return()
+		sRepo.On("DeductStock", ctx, iid, txnTestStoreID, 2.0, "t2", "u1").Return(nil)
+		bSvc.On("DeductStockFIFO", ctx, iid, txnTestStoreID, 2.0).Return(nil)
+		aSvc.On("LogActivity", ctx, "u1", txnTestStoreID, mock.Anything, mock.Anything, "t2", mock.Anything).Return()
 
 		s := NewTransactionService(tRepo, pRepo, sRepo, mRepo, bSvc, aSvc, log)
-		resp, err := s.Checkout(ctx, "s1", req, "u1")
+		resp, err := s.Checkout(ctx, txnTestStoreID, req, "u1")
 
 		assert.NoError(t, err)
 		assert.NotNil(t, resp)
@@ -154,9 +164,9 @@ func TestTransactionService_VoidTransaction(t *testing.T) {
 		tRepo := new(repomocks.TransactionRepository)
 		aSvc := new(mocks.ActivityLogServiceInterface)
 
-		tRepo.On("FindByID", ctx, "t1").Return(&domain.Transaction{ID: "t1", StoreID: "s1", Status: "completed"}, nil)
+		tRepo.On("FindByID", ctx, "t1").Return(&domain.Transaction{ID: "t1", StoreID: txnTestStoreID, Status: "completed"}, nil)
 		tRepo.On("Void", ctx, "t1", "u1").Return(nil)
-		aSvc.On("LogActivity", ctx, "u1", "s1", domain.ActionTransactionCancel, domain.ModuleTransaction, "t1", mock.Anything).Return()
+		aSvc.On("LogActivity", ctx, "u1", txnTestStoreID, domain.ActionTransactionCancel, domain.ModuleTransaction, "t1", mock.Anything).Return()
 
 		s := NewTransactionService(tRepo, nil, nil, nil, nil, aSvc, log)
 		err := s.VoidTransaction(ctx, "t1", "u1")
@@ -188,19 +198,19 @@ func TestTransactionService_Drafts(t *testing.T) {
 		bSvc := new(mocks.BatchStockServiceInterface)
 		aSvc := new(mocks.ActivityLogServiceInterface)
 
-		pid := "00000000-0000-0000-0000-000000000001"
+		pid := testUUID
 		req := &dto.CreateDraftRequest{
 			TableID: "00000000-0000-0000-0000-000000000002",
 			Items:   []dto.TxItemInput{{ProductID: pid, Quantity: 1}},
 		}
 
-		pRepo.On("FindByID", ctx, pid).Return(&domain.Product{ID: pid, StoreID: "s1", SellPrice: 100, IsActive: true}, nil)
+		pRepo.On("FindByID", ctx, pid).Return(&domain.Product{ID: pid, StoreID: txnTestStoreID, SellPrice: 100, IsActive: true}, nil)
 		tRepo.On("Create", ctx, mock.MatchedBy(func(in domain.CreateTransactionInput) bool {
 			return in.Status == "draft"
 		})).Return(&domain.Transaction{ID: "d1", Status: "draft"}, nil)
 
 		s := NewTransactionService(tRepo, pRepo, sRepo, mRepo, bSvc, aSvc, log)
-		resp, err := s.CreateDraft(ctx, "s1", "u1", req)
+		resp, err := s.CreateDraft(ctx, txnTestStoreID, "u1", req)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, resp)
@@ -220,14 +230,14 @@ func TestTransactionService_Drafts(t *testing.T) {
 		}
 
 		mRepo.On("FindByID", ctx, mid).Return(&domain.MenuItem{
-			ID: mid, StoreID: "s1", Name: "M1", SellPrice: 150,
+			ID: mid, StoreID: txnTestStoreID, Name: "M1", SellPrice: 150,
 			Ingredients: []domain.MenuItemIngredient{{ProductID: iid, Quantity: 2}},
 		}, nil)
 		pRepo.On("FindByID", ctx, iid).Return(&domain.Product{ID: iid, CostPrice: 50}, nil)
 		tRepo.On("Create", ctx, mock.Anything).Return(&domain.Transaction{ID: "d2", Status: "draft"}, nil)
 
 		s := NewTransactionService(tRepo, pRepo, nil, mRepo, nil, nil, log)
-		resp, err := s.CreateDraft(ctx, "s1", "u1", req)
+		resp, err := s.CreateDraft(ctx, txnTestStoreID, "u1", req)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, resp)
@@ -238,12 +248,12 @@ func TestTransactionService_Drafts(t *testing.T) {
 		aSvc := new(mocks.ActivityLogServiceInterface)
 		s := NewTransactionService(tRepo, nil, nil, nil, nil, aSvc, log)
 
-		tid := "00000000-0000-0000-0000-000000000001"
-		tRepo.On("FindByID", ctx, tid).Return(&domain.Transaction{ID: tid, StoreID: "s1", Status: "draft", Total: 100}, nil)
-		tRepo.On("PayDraft", ctx, mock.Anything, "s1", "u1").Return(&domain.Transaction{ID: tid, Status: "completed"}, nil)
-		aSvc.On("LogActivity", ctx, "u1", "s1", domain.ActionTransactionCreate, domain.ModuleTransaction, tid, mock.Anything).Return()
+		tid := testUUID
+		tRepo.On("FindByID", ctx, tid).Return(&domain.Transaction{ID: tid, StoreID: txnTestStoreID, Status: "draft", Total: 100}, nil)
+		tRepo.On("PayDraft", ctx, mock.Anything, txnTestStoreID, "u1").Return(&domain.Transaction{ID: tid, Status: "completed"}, nil)
+		aSvc.On("LogActivity", ctx, "u1", txnTestStoreID, domain.ActionTransactionCreate, domain.ModuleTransaction, tid, mock.Anything).Return()
 
-		resp, err := s.PayDraft(ctx, "s1", tid, "u1", &dto.PayDraftRequest{PaymentAmount: 100, PaymentMethod: "cash"})
+		resp, err := s.PayDraft(ctx, txnTestStoreID, tid, "u1", &dto.PayDraftRequest{PaymentAmount: 100, PaymentMethod: "cash"})
 
 		assert.NoError(t, err)
 		assert.Equal(t, "completed", resp.Status)
@@ -281,12 +291,12 @@ func TestTransactionService_UpdateDraftItems(t *testing.T) {
 		Items: []dto.TxItemInput{{ProductID: pid, Quantity: 2}},
 	}
 
-	pRepo.On("FindByID", ctx, pid).Return(&domain.Product{ID: pid, StoreID: "s1", SellPrice: 100, IsActive: true}, nil)
-	tRepo.On("FindByID", ctx, tid).Return(&domain.Transaction{ID: tid, StoreID: "s1", Status: "draft"}, nil)
+	pRepo.On("FindByID", ctx, pid).Return(&domain.Product{ID: pid, StoreID: txnTestStoreID, SellPrice: 100, IsActive: true}, nil)
+	tRepo.On("FindByID", ctx, tid).Return(&domain.Transaction{ID: tid, StoreID: txnTestStoreID, Status: "draft"}, nil)
 	tRepo.On("UpdateDraftItems", ctx, tid, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Return(&domain.Transaction{ID: tid, Status: "draft"}, nil)
 
-	resp, err := s.UpdateDraftItems(ctx, "s1", tid, req)
+	resp, err := s.UpdateDraftItems(ctx, txnTestStoreID, tid, req)
 	assert.NoError(t, err)
 	assert.NotNil(t, resp)
 }
@@ -298,8 +308,8 @@ func TestTransactionService_KDS(t *testing.T) {
 	tRepo := new(repomocks.TransactionRepository)
 	s := NewTransactionService(tRepo, nil, nil, nil, nil, nil, log)
 
-	tRepo.On("GetKDSTickets", ctx, "s1").Return([]*domain.Transaction{{ID: "t1"}}, nil)
-	resp, err := s.GetKDSTickets(ctx, "s1")
+	tRepo.On("GetKDSTickets", ctx, txnTestStoreID).Return([]*domain.Transaction{{ID: "t1"}}, nil)
+	resp, err := s.GetKDSTickets(ctx, txnTestStoreID)
 	assert.NoError(t, err)
 	assert.Len(t, resp, 1)
 
@@ -327,14 +337,14 @@ func TestTransactionService_Checkout_MoreBranches(t *testing.T) {
 			PaymentAmount:     100, // (100 - 20) = 80 total
 		}
 
-		pRepo.On("FindByID", ctx, pid).Return(&domain.Product{ID: pid, StoreID: "s1", SellPrice: 100, IsActive: true}, nil)
-		sRepo.On("FindLevelByProduct", ctx, pid, "s1").Return(&domain.StockLevel{Quantity: 10}, nil)
+		pRepo.On("FindByID", ctx, pid).Return(&domain.Product{ID: pid, StoreID: txnTestStoreID, SellPrice: 100, IsActive: true}, nil)
+		sRepo.On("FindLevelByProduct", ctx, pid, txnTestStoreID).Return(&domain.StockLevel{Quantity: 10}, nil)
 		tRepo.On("Create", ctx, mock.Anything).Return(&domain.Transaction{ID: "t1"}, nil)
-		bSvc.On("DeductStockFIFO", ctx, pid, "s1", 1.0).Return(nil)
+		bSvc.On("DeductStockFIFO", ctx, pid, txnTestStoreID, 1.0).Return(nil)
 		aSvc.On("LogActivity", ctx, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return()
 
 		s := NewTransactionService(tRepo, pRepo, sRepo, nil, bSvc, aSvc, log)
-		resp, err := s.Checkout(ctx, "s1", req, "u1")
+		resp, err := s.Checkout(ctx, txnTestStoreID, req, "u1")
 
 		assert.NoError(t, err)
 		assert.NotNil(t, resp)
@@ -344,10 +354,10 @@ func TestTransactionService_Checkout_MoreBranches(t *testing.T) {
 		pRepo := new(repomocks.ProductRepository)
 		pid := "p1"
 		req := &dto.CreateTransactionRequest{Items: []dto.TxItemInput{{ProductID: pid, Quantity: 1}}}
-		pRepo.On("FindByID", ctx, pid).Return(&domain.Product{ID: pid, StoreID: "s1", IsActive: false, Name: "P1"}, nil)
+		pRepo.On("FindByID", ctx, pid).Return(&domain.Product{ID: pid, StoreID: txnTestStoreID, IsActive: false, Name: "P1"}, nil)
 
 		s := NewTransactionService(nil, pRepo, nil, nil, nil, nil, log)
-		_, err := s.Checkout(ctx, "s1", req, "u1")
+		_, err := s.Checkout(ctx, txnTestStoreID, req, "u1")
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "inactive")
 	})
@@ -357,13 +367,18 @@ func TestTransactionService_Checkout_MoreBranches(t *testing.T) {
 		sRepo := new(repomocks.StockRepository)
 		pid := "p1"
 		req := &dto.CreateTransactionRequest{Items: []dto.TxItemInput{{ProductID: pid, Quantity: 10}}}
-		pRepo.On("FindByID", ctx, pid).Return(&domain.Product{ID: pid, StoreID: "s1", IsActive: true, Name: "P1"}, nil)
-		sRepo.On("FindLevelByProduct", ctx, pid, "s1").Return(&domain.StockLevel{Quantity: 5}, nil)
+		pRepo.On("FindByID", ctx, pid).Return(&domain.Product{ID: pid, StoreID: txnTestStoreID, IsActive: true, Name: "P1"}, nil)
+		sRepo.On("FindLevelByProduct", ctx, pid, txnTestStoreID).Return(&domain.StockLevel{Quantity: 5}, nil)
 
 		s := NewTransactionService(nil, pRepo, sRepo, nil, nil, nil, log)
-		_, err := s.Checkout(ctx, "s1", req, "u1")
+		_, err := s.Checkout(ctx, txnTestStoreID, req, "u1")
 		assert.ErrorIs(t, err, ErrInsufficientStock)
 	})
+}
+
+func TestTransactionService_Checkout_MoreBranches2(t *testing.T) {
+	ctx := context.Background()
+	log := zerolog.Nop()
 
 	t.Run("MenuItem Ingredient Insufficient Stock", func(t *testing.T) {
 		mRepo := new(repomocks.MenuItemRepository)
@@ -372,13 +387,13 @@ func TestTransactionService_Checkout_MoreBranches(t *testing.T) {
 		iid := "i1"
 		req := &dto.CreateTransactionRequest{Items: []dto.TxItemInput{{MenuItemID: mid, Quantity: 1}}}
 		mRepo.On("FindByID", ctx, mid).Return(&domain.MenuItem{
-			ID: mid, StoreID: "s1", Name: "M1",
+			ID: mid, StoreID: txnTestStoreID, Name: "M1",
 			Ingredients: []domain.MenuItemIngredient{{ProductID: iid, Quantity: 2, ProductName: "I1"}},
 		}, nil)
-		sRepo.On("FindLevelByProduct", ctx, iid, "s1").Return(&domain.StockLevel{Quantity: 1}, nil)
+		sRepo.On("FindLevelByProduct", ctx, iid, txnTestStoreID).Return(&domain.StockLevel{Quantity: 1}, nil)
 
 		s := NewTransactionService(nil, nil, sRepo, mRepo, nil, nil, log)
-		_, err := s.Checkout(ctx, "s1", req, "u1")
+		_, err := s.Checkout(ctx, txnTestStoreID, req, "u1")
 		assert.ErrorIs(t, err, ErrInsufficientStock)
 	})
 
@@ -397,14 +412,14 @@ func TestTransactionService_Checkout_MoreBranches(t *testing.T) {
 			PaymentAmount:     0,
 		}
 
-		pRepo.On("FindByID", ctx, pid).Return(&domain.Product{ID: pid, StoreID: "s1", SellPrice: 100, IsActive: true}, nil)
-		sRepo.On("FindLevelByProduct", ctx, pid, "s1").Return(&domain.StockLevel{Quantity: 10}, nil)
+		pRepo.On("FindByID", ctx, pid).Return(&domain.Product{ID: pid, StoreID: txnTestStoreID, SellPrice: 100, IsActive: true}, nil)
+		sRepo.On("FindLevelByProduct", ctx, pid, txnTestStoreID).Return(&domain.StockLevel{Quantity: 10}, nil)
 		tRepo.On("Create", ctx, mock.Anything).Return(&domain.Transaction{ID: "t1"}, nil)
-		bSvc.On("DeductStockFIFO", ctx, pid, "s1", 1.0).Return(nil)
+		bSvc.On("DeductStockFIFO", ctx, pid, txnTestStoreID, 1.0).Return(nil)
 		aSvc.On("LogActivity", ctx, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return()
 
 		s := NewTransactionService(tRepo, pRepo, sRepo, nil, bSvc, aSvc, log)
-		resp, err := s.Checkout(ctx, "s1", req, "u1")
+		resp, err := s.Checkout(ctx, txnTestStoreID, req, "u1")
 
 		assert.NoError(t, err)
 		assert.NotNil(t, resp)
@@ -442,10 +457,10 @@ func TestTransactionService_Drafts_Errors(t *testing.T) {
 	t.Run("Pay Draft Insufficient Payment", func(t *testing.T) {
 		tRepo := new(repomocks.TransactionRepository)
 		tid := "d1"
-		tRepo.On("FindByID", ctx, tid).Return(&domain.Transaction{ID: tid, StoreID: "s1", Status: "draft", Total: 100}, nil)
+		tRepo.On("FindByID", ctx, tid).Return(&domain.Transaction{ID: tid, StoreID: txnTestStoreID, Status: "draft", Total: 100}, nil)
 
 		s := NewTransactionService(tRepo, nil, nil, nil, nil, nil, log)
-		_, err := s.PayDraft(ctx, "s1", tid, "u1", &dto.PayDraftRequest{PaymentAmount: 50})
+		_, err := s.PayDraft(ctx, txnTestStoreID, tid, "u1", &dto.PayDraftRequest{PaymentAmount: 50})
 		assert.ErrorIs(t, err, ErrInsuficientPayment)
 	})
 
@@ -454,7 +469,7 @@ func TestTransactionService_Drafts_Errors(t *testing.T) {
 		tRepo.On("FindByID", ctx, "missing").Return(nil, nil)
 
 		s := NewTransactionService(tRepo, nil, nil, nil, nil, nil, log)
-		_, err := s.PayDraft(ctx, "s1", "missing", "u1", &dto.PayDraftRequest{})
+		_, err := s.PayDraft(ctx, txnTestStoreID, "missing", "u1", &dto.PayDraftRequest{})
 		assert.ErrorIs(t, err, ErrDraftNotFound)
 	})
 
@@ -463,7 +478,7 @@ func TestTransactionService_Drafts_Errors(t *testing.T) {
 		tRepo.On("FindByID", ctx, "missing").Return(nil, nil)
 
 		s := NewTransactionService(tRepo, nil, nil, nil, nil, nil, log)
-		_, err := s.UpdateDraftItems(ctx, "s1", "missing", &dto.UpdateDraftRequest{})
+		_, err := s.UpdateDraftItems(ctx, txnTestStoreID, "missing", &dto.UpdateDraftRequest{})
 		assert.ErrorIs(t, err, ErrDraftNotFound)
 	})
 }
@@ -499,20 +514,20 @@ func TestTransactionService_GetDraftByTable(t *testing.T) {
 
 	t.Run("Found", func(t *testing.T) {
 		tRepo := new(repomocks.TransactionRepository)
-		tRepo.On("GetDraftByTable", ctx, "s1", "table1").Return(&domain.Transaction{ID: "d1"}, nil)
+		tRepo.On("GetDraftByTable", ctx, txnTestStoreID, "table1").Return(&domain.Transaction{ID: "d1"}, nil)
 
 		s := NewTransactionService(tRepo, nil, nil, nil, nil, nil, log)
-		resp, err := s.GetDraftByTable(ctx, "s1", "table1")
+		resp, err := s.GetDraftByTable(ctx, txnTestStoreID, "table1")
 		assert.NoError(t, err)
 		assert.NotNil(t, resp)
 	})
 
 	t.Run("Not Found", func(t *testing.T) {
 		tRepo := new(repomocks.TransactionRepository)
-		tRepo.On("GetDraftByTable", ctx, "s1", "table2").Return(nil, nil)
+		tRepo.On("GetDraftByTable", ctx, txnTestStoreID, "table2").Return(nil, nil)
 
 		s := NewTransactionService(tRepo, nil, nil, nil, nil, nil, log)
-		resp, err := s.GetDraftByTable(ctx, "s1", "table2")
+		resp, err := s.GetDraftByTable(ctx, txnTestStoreID, "table2")
 		assert.NoError(t, err)
 		assert.Nil(t, resp)
 	})

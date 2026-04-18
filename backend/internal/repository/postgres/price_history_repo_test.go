@@ -13,7 +13,7 @@ import (
 	"github.com/moedahpos/backend/internal/dto"
 )
 
-func TestPriceHistoryRepo(t *testing.T) {
+func TestPriceHistoryRepo_Record(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("failed to open sqlmock: %s", err)
@@ -42,6 +42,17 @@ func TestPriceHistoryRepo(t *testing.T) {
 		err := repo.Record(context.Background(), h)
 		assert.NoError(t, err)
 	})
+}
+
+func TestPriceHistoryRepo_Query(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("failed to open sqlmock: %s", err)
+	}
+	defer func() { _ = db.Close() }()
+
+	sqlxDB := sqlx.NewDb(db, "postgres")
+	repo := NewPriceHistoryRepo(sqlxDB)
 
 	t.Run("FindByProduct", func(t *testing.T) {
 		mock.ExpectQuery(`(?is)SELECT COUNT\(\*\) FROM price_history WHERE product_id = \$1`).
