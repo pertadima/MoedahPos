@@ -2,7 +2,6 @@ package postgres
 
 import (
 	"context"
-	"regexp"
 	"testing"
 	"time"
 
@@ -12,70 +11,164 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/moedahpos/backend/internal/domain"
+	"github.com/moedahpos/backend/internal/dto"
 )
 
-func TestIncomeRepo_CreateCategory(t *testing.T) {
+func strPtr(s string) *string {
+	return &s
+}
+
+func TestIncomeRepo_Categories(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	require.NoError(t, err)
-	defer func() { _ = db.Close() }()
+	defer db.Close()
 
 	sqlxDB := sqlx.NewDb(db, "postgres")
 	repo := NewIncomeRepo(sqlxDB)
+	ctx := context.Background()
 
-	c := &domain.IncomeCategory{
-		Name:        "Service Fee",
-		Description: stringPtr("Fees from services"),
-	}
-
-	t.Run("success", func(t *testing.T) {
+	t.Run("ListCategories", func(t *testing.T) {
 		rows := sqlmock.NewRows([]string{"id", "name", "description", "is_active", "created_at", "updated_at"}).
-			AddRow("cat1", c.Name, *c.Description, true, time.Now(), time.Now())
+			AddRow("c1", "Cat 1", "Desc 1", true, time.Now(), time.Now())
+		mock.ExpectQuery(`(?is)SELECT .* FROM income_categories`).WillReturnRows(rows)
 
-		mock.ExpectQuery(regexp.QuoteMeta("INSERT INTO income_categories (name, description) VALUES ($1, $2) RETURNING id, name, description, is_active, created_at, updated_at")).
-			WithArgs(c.Name, c.Description).
-			WillReturnRows(rows)
-
-		result, err := repo.CreateCategory(context.Background(), c)
+		res, err := repo.ListCategories(ctx, false)
 		assert.NoError(t, err)
-		assert.Equal(t, "cat1", result.ID)
+		assert.Len(t, res, 1)
+	})
+
+	t.Run("CreateCategory", func(t *testing.T) {
+		mock.ExpectQuery(`(?is)INSERT INTO income_categories`).
+			WithArgs("New Cat", "New Desc").
+			WillReturnRows(sqlmock.NewRows([]string{"id", "name", "description", "is_active", "created_at", "updated_at"}).
+				AddRow("c2", "New Cat", strPtr("New Desc"), true, time.Now(), time.Now()))
+
+		res, err := repo.CreateCategory(ctx, &domain.IncomeCategory{Name: "New Cat", Description: strPtr("New Desc")})
+		assert.NoError(t, err)
+		assert.Equal(t, "c2", res.ID)
+	})
+
+	t.Run("GetCategoryByID", func(t *testing.T) {
+		mock.ExpectQuery(`(?is)SELECT .* FROM income_categories WHERE id = \$1`).
+			WithArgs("c1").
+			WillReturnRows(sqlmock.NewRows([]string{"id", "name"}).AddRow("c1", "Cat 1"))
+
+		res, err := repo.GetCategoryByID(ctx, "c1")
+		assert.NoError(t, err)
+		assert.NotNil(t, res)
+	})
+
+	t.Run("UpdateCategory", func(t *testing.T) {
+		mock.ExpectQuery(`(?is)UPDATE income_categories`).
+			WithArgs("Updated", "Desc", true, "c1").
+			WillReturnRows(sqlmock.NewRows([]string{"id", "name"}).AddRow("c1", "Updated"))
+
+		res, err := repo.UpdateCategory(ctx, "c1", "Updated", "Desc", true)
+		assert.NoError(t, err)
+		assert.NotNil(t, res)
+	})
+
+	t.Run("SoftDeleteCategory", func(t *testing.T) {
+		mock.ExpectExec(`(?is)UPDATE income_categories .* deleted_at`).
+			WithArgs("c1").
+			WillReturnResult(sqlmock.NewResult(1, 1))
+
+		err := repo.SoftDeleteCategory(ctx, "c1")
+		assert.NoError(t, err)
 	})
 }
 
-func TestIncomeRepo_Create(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	require.NoError(t, err)
-	defer func() { _ = db.Close() }()
+func TestIncomeRepo_Incomes(t *testing.T) {
+	ctx := context.Background()
 
-	sqlxDB := sqlx.NewDb(db, "postgres")
-	repo := NewIncomeRepo(sqlxDB)
+	t.Run("Create", func(t *testing.T) {
+		db, mock, err := sqlmock.New()
+		require.NoError(t, err)
+		defer db.Close()
+		repo := NewIncomeRepo(sqlx.NewDb(db, "postgres"))
 
-	userID := "u1"
-	inc := &domain.Income{
-		StoreID:       "st1",
-		CategoryID:    "cat1",
-		Amount:        500.0,
-		IncomeDate:    time.Now(),
-		PaymentMethod: "cash",
-		CreatedBy:     &userID,
-	}
+		mock.ExpectQuery(`(?is)INSERT INTO incomes`).
+			WithArgs("s1", "c1", 1000.0, sqlmock.AnyArg(), "cash", "ref1", "note1", "u1").
+			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow("i1"))
 
-	t.Run("success", func(t *testing.T) {
-		mock.ExpectQuery(regexp.QuoteMeta("INSERT INTO incomes (store_id, category_id, amount, income_date, payment_method, reference, notes, created_by) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id")).
-			WithArgs(inc.StoreID, inc.CategoryID, inc.Amount, inc.IncomeDate, inc.PaymentMethod, inc.Reference, inc.Notes, inc.CreatedBy).
-			WillReturnRows(sqlmock.NewRows([]string{"id", "store_id", "category_id", "amount", "income_date", "payment_method", "reference", "notes", "created_by", "created_at", "updated_at"}).
-				AddRow("inc1", inc.StoreID, inc.CategoryID, inc.Amount, inc.IncomeDate, inc.PaymentMethod, inc.Reference, inc.Notes, inc.CreatedBy, time.Now(), time.Now()))
+		mock.ExpectQuery(`(?is)SELECT .* FROM incomes i .* WHERE i.id = \$1`).
+			WithArgs("i1").
+			WillReturnRows(sqlmock.NewRows([]string{"id", "amount"}).AddRow("i1", 1000.0))
 
-		// Repo's Create calls FindByID
-		mock.ExpectQuery(regexp.QuoteMeta("SELECT i.id, i.store_id, i.category_id, i.amount, i.income_date, i.payment_method, i.reference, i.notes, i.created_by, i.created_at, i.updated_at, c.name AS category_name, u.name AS created_by_name FROM incomes i JOIN income_categories c ON c.id = i.category_id LEFT JOIN users u ON u.id = i.created_by WHERE i.id = $1")).
-			WithArgs("inc1").
-			WillReturnRows(sqlmock.NewRows([]string{"id", "store_id", "category_id", "amount", "income_date", "payment_method", "reference", "notes", "created_by", "created_at", "updated_at", "category_name", "created_by_name"}).
-				AddRow("inc1", "st1", "cat1", 500.0, time.Now(), "cash", nil, nil, "u1", time.Now(), time.Now(), "Service", "User 1"))
-
-		result, err := repo.Create(context.Background(), inc)
+		res, err := repo.Create(ctx, &domain.Income{
+			StoreID: "s1", CategoryID: "c1", Amount: 1000.0,
+			IncomeDate: time.Now(), PaymentMethod: "cash",
+			Reference: strPtr("ref1"), Notes: strPtr("note1"), CreatedBy: strPtr("u1"),
+		})
 		assert.NoError(t, err)
-		assert.Equal(t, "inc1", result.ID)
-		assert.Equal(t, "Service", result.CategoryName)
+		assert.NotNil(t, res)
+	})
+
+	t.Run("FindAll", func(t *testing.T) {
+		db, mock, err := sqlmock.New()
+		require.NoError(t, err)
+		defer db.Close()
+		repo := NewIncomeRepo(sqlx.NewDb(db, "postgres"))
+
+		mock.ExpectQuery(`(?is)SELECT COUNT\(\*\) FROM incomes`).
+			WithArgs("s1").
+			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
+
+		mock.ExpectQuery(`(?is)SELECT .* FROM incomes i .* LIMIT \$2 OFFSET \$3`).
+			WithArgs("s1", 20, 0).
+			WillReturnRows(sqlmock.NewRows([]string{"id", "amount", "category_name", "created_by_name"}).
+				AddRow("i1", 1000.0, "Cat 1", strPtr("User 1")))
+
+		res, total, err := repo.FindAll(ctx, dto.IncomeListFilter{StoreID: "s1"})
+		assert.NoError(t, err)
+		assert.Equal(t, 1, total)
+		assert.Len(t, res, 1)
+	})
+
+	t.Run("Update", func(t *testing.T) {
+		db, mock, err := sqlmock.New()
+		require.NoError(t, err)
+		defer db.Close()
+		repo := NewIncomeRepo(sqlx.NewDb(db, "postgres"))
+
+		mock.ExpectQuery(`(?is)UPDATE incomes`).
+			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow("i1"))
+
+		mock.ExpectQuery(`(?is)SELECT .* FROM incomes i .* WHERE i.id = \$1`).
+			WithArgs("i1").
+			WillReturnRows(sqlmock.NewRows([]string{"id", "amount"}).AddRow("i1", 1200.0))
+
+		res, err := repo.Update(ctx, &domain.Income{ID: "i1", StoreID: "s1", Amount: 1200.0})
+		assert.NoError(t, err)
+		assert.NotNil(t, res)
+	})
+
+	t.Run("Delete", func(t *testing.T) {
+		db, mock, err := sqlmock.New()
+		require.NoError(t, err)
+		defer db.Close()
+		repo := NewIncomeRepo(sqlx.NewDb(db, "postgres"))
+
+		mock.ExpectExec(`(?is)DELETE FROM incomes`).
+			WithArgs("i1", "s1").
+			WillReturnResult(sqlmock.NewResult(1, 1))
+
+		err = repo.Delete(ctx, "i1", "s1")
+		assert.NoError(t, err)
+	})
+
+	t.Run("SumByDateRange", func(t *testing.T) {
+		db, mock, err := sqlmock.New()
+		require.NoError(t, err)
+		defer db.Close()
+		repo := NewIncomeRepo(sqlx.NewDb(db, "postgres"))
+
+		mock.ExpectQuery(`(?is)SELECT COALESCE\(SUM\(amount\), 0\) FROM incomes`).
+			WithArgs("s1", "2024-01-01", "2024-01-02").
+			WillReturnRows(sqlmock.NewRows([]string{"sum"}).AddRow(5000.0))
+
+		total, sumErr := repo.SumByDateRange(ctx, "s1", time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC), time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC))
+		assert.NoError(t, sumErr)
+		assert.Equal(t, 5000.0, total)
 	})
 }
-
-func stringPtr(s string) *string { return &s }

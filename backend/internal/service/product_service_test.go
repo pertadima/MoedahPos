@@ -143,3 +143,47 @@ func TestProductService_Categories(t *testing.T) {
 		assert.NoError(t, err)
 	})
 }
+
+func TestProductService_Queries(t *testing.T) {
+	ctx := context.Background()
+	log := zerolog.Nop()
+
+	t.Run("ListProducts", func(t *testing.T) {
+		pRepo := new(repomocks.ProductRepository)
+		filter := dto.ProductListFilter{StoreID: "s1"}
+		filter.Defaults()
+		filter.WithStock = true
+		pRepo.On("FindAll", ctx, filter).Return([]*domain.Product{{ID: "p1", Name: "P1"}}, 1, nil).Once()
+
+		s := NewProductService(pRepo, nil, nil, nil, log)
+		resp, meta, err := s.ListProducts(ctx, filter)
+		assert.NoError(t, err)
+		assert.Len(t, resp, 1)
+		assert.Equal(t, 1, meta.Total)
+	})
+
+	t.Run("GetProduct", func(t *testing.T) {
+		pRepo := new(repomocks.ProductRepository)
+		pRepo.On("FindByID", ctx, "p1").Return(&domain.Product{ID: "p1", Name: "P1"}, nil).Once()
+
+		s := NewProductService(pRepo, nil, nil, nil, log)
+		resp, err := s.GetProduct(ctx, "p1")
+		assert.NoError(t, err)
+		assert.Equal(t, "P1", resp.Name)
+	})
+
+	t.Run("GetProductByBarcode", func(t *testing.T) {
+		pRepo := new(repomocks.ProductRepository)
+		pRepo.On("FindByBarcode", ctx, "s1", "123").Return(&domain.Product{ID: "p1", Barcode: ptrString("123")}, nil).Once()
+
+		s := NewProductService(pRepo, nil, nil, nil, log)
+		resp, err := s.GetProductByBarcode(ctx, "s1", "123")
+		assert.NoError(t, err)
+		assert.NotNil(t, resp.Barcode)
+		assert.Equal(t, "123", *resp.Barcode)
+	})
+}
+
+func ptrString(s string) *string {
+	return &s
+}

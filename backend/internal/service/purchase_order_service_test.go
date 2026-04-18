@@ -140,6 +140,70 @@ func TestPurchaseOrderService_Payments(t *testing.T) {
 		terminRepo.AssertExpectations(t)
 		payRecRepo.AssertExpectations(t)
 	})
+
+	t.Run("List Payments", func(t *testing.T) {
+		payRepo.On("FindByPO", ctx, "po1").Return([]*domain.POPayment{{ID: "pay1", Amount: 1000}}, nil).Once()
+		res, err := svc.ListPayments(ctx, "po1")
+		assert.NoError(t, err)
+		assert.Len(t, res, 1)
+	})
+
+	t.Run("Payable Summary", func(t *testing.T) {
+		payRepo.On("PayableSummary", ctx, "s1").Return(&dto.PayableSummary{TotalOutstanding: 5000}, nil).Once()
+		res, err := svc.PayableSummary(ctx, "s1")
+		assert.NoError(t, err)
+		assert.Equal(t, 5000.0, res.TotalOutstanding)
+	})
+}
+
+func TestPurchaseOrderService_Queries(t *testing.T) {
+	poRepo := new(repomocks.PurchaseOrderRepository)
+	payRepo := new(repomocks.POPaymentRepository)
+	svc := NewPurchaseOrderService(poRepo, nil, payRepo, nil, nil, nil, nil, zerolog.Nop())
+	ctx := context.Background()
+
+	t.Run("Get PO Detail", func(t *testing.T) {
+		poID := "po1"
+		poRepo.On("FindByID", ctx, poID).Return(&domain.PurchaseOrder{ID: poID}, nil).Once()
+		payRepo.On("AggregateByPO", ctx, poID, 0.0).Return(0.0, "unpaid", nil).Once()
+
+		resp, err := svc.GetPO(ctx, poID)
+		assert.NoError(t, err)
+		assert.NotNil(t, resp)
+	})
+
+	t.Run("List POs", func(t *testing.T) {
+		filter := dto.POListFilter{StoreID: "s1"}
+		filter.Defaults()
+		poRepo.On("FindAll", ctx, filter).Return([]*domain.PurchaseOrder{{ID: "po1"}}, 1, nil).Once()
+		payRepo.On("PopulatePOPayments", ctx, mock.Anything).Return().Once()
+
+		txns, meta, err := svc.ListPOs(ctx, filter)
+		assert.NoError(t, err)
+		assert.Len(t, txns, 1)
+		assert.Equal(t, 1, meta.Total)
+	})
+}
+
+func TestPurchaseOrderService_UpdatePO(t *testing.T) {
+	poRepo := new(repomocks.PurchaseOrderRepository)
+	prodRepo := new(repomocks.ProductRepository)
+	svc := NewPurchaseOrderService(poRepo, prodRepo, nil, nil, nil, nil, nil, zerolog.Nop())
+	ctx := context.Background()
+
+	t.Run("Update Success", func(t *testing.T) {
+		poID := "po1"
+		req := &dto.UpdatePORequest{
+			Items: []dto.POItemInput{{ProductID: "p1", Quantity: 5, UnitCost: 90}},
+		}
+		poRepo.On("FindByID", ctx, poID).Return(&domain.PurchaseOrder{ID: poID, StoreID: "s1", Status: "draft"}, nil).Once()
+		prodRepo.On("FindByID", ctx, "p1").Return(&domain.Product{ID: "p1", StoreID: "s1"}, nil).Once()
+		poRepo.On("Update", ctx, mock.Anything, mock.Anything).Return(&domain.PurchaseOrder{ID: poID}, nil).Once()
+
+		resp, err := svc.UpdatePO(ctx, poID, req, "s1")
+		assert.NoError(t, err)
+		assert.NotNil(t, resp)
+	})
 }
 
 func ptrToStringPtr(s string) *string {

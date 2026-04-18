@@ -485,13 +485,17 @@ func (s *TransactionService) processMenuItem(ctx context.Context, _ string, item
 		}
 	}
 
+	skuID := item.MenuItemID
+	if len(skuID) > 8 {
+		skuID = skuID[:8]
+	}
+
 	mid := item.MenuItemID
 	discountAmt := (menuItem.SellPrice - finalPrice) * item.Quantity
-
 	return domain.CreateTransactionItemInput{
 		MenuItemID:    &mid,
 		ProductName:   menuItem.Name,
-		SKU:           "MENU-" + item.MenuItemID[:8],
+		SKU:           "MENU-" + skuID,
 		Quantity:      item.Quantity,
 		OriginalPrice: menuItem.SellPrice,
 		UnitPrice:     finalPrice,

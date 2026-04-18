@@ -37,4 +37,26 @@ func TestBatchStockService(t *testing.T) {
 		err := svc.DeductStockFIFO(ctx, "p1", "s1", 5.0)
 		assert.NoError(t, err)
 	})
+
+	t.Run("GetStockSummary", func(t *testing.T) {
+		repo.On("GetStockSummary", ctx, "s1").Return([]*domain.BatchStockSummary{{ProductID: "p1"}}, nil).Once()
+		res, err := svc.GetStockSummary(ctx, "s1")
+		assert.NoError(t, err)
+		assert.Len(t, res, 1)
+	})
+
+	t.Run("GetBatchesByProduct", func(t *testing.T) {
+		repo.On("GetBatchesByProduct", ctx, "p1", "s1").Return([]*domain.StockBatch{{ID: "b1"}}, nil).Once()
+		res, err := svc.GetBatchesByProduct(ctx, "p1", "s1")
+		assert.NoError(t, err)
+		assert.Len(t, res, 1)
+	})
+
+	t.Run("GetBatchesByStore", func(t *testing.T) {
+		f := dto.BatchListFilter{StoreID: "s1"}
+		repo.On("GetBatchesByStore", ctx, f).Return([]*domain.StockBatch{{ID: "b1"}}, nil).Once()
+		res, err := svc.GetBatchesByStore(ctx, f)
+		assert.NoError(t, err)
+		assert.Len(t, res, 1)
+	})
 }

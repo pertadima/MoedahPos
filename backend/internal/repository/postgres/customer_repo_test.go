@@ -127,3 +127,37 @@ func TestCustomerRepo_SoftDelete(t *testing.T) {
 		assert.NoError(t, err)
 	})
 }
+
+func TestCustomerRepo_FindByID(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	require.NoError(t, err)
+	defer db.Close()
+	repo := NewCustomerRepo(sqlx.NewDb(db, "postgres"))
+
+	t.Run("success", func(t *testing.T) {
+		mock.ExpectQuery(`(?is)SELECT .* FROM customers WHERE id=\$1`).
+			WithArgs("c1").
+			WillReturnRows(sqlmock.NewRows([]string{"id", "name"}).AddRow("c1", "John"))
+
+		res, err := repo.FindByID(context.Background(), "c1")
+		assert.NoError(t, err)
+		assert.NotNil(t, res)
+	})
+}
+
+func TestCustomerRepo_SearchByPhone(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	require.NoError(t, err)
+	defer db.Close()
+	repo := NewCustomerRepo(sqlx.NewDb(db, "postgres"))
+
+	t.Run("success", func(t *testing.T) {
+		mock.ExpectQuery(`(?is)SELECT .* FROM customers WHERE store_id=\$1 AND phone ILIKE \$2`).
+			WithArgs("s1", "123%").
+			WillReturnRows(sqlmock.NewRows([]string{"id", "phone"}).AddRow("c1", "123"))
+
+		res, err := repo.SearchByPhone(context.Background(), "s1", "123")
+		assert.NoError(t, err)
+		assert.NotNil(t, res)
+	})
+}

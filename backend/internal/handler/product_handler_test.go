@@ -131,3 +131,71 @@ func TestProductHandler_Categories(t *testing.T) {
 		assert.Equal(t, http.StatusOK, w.Code)
 	})
 }
+
+func TestProductHandler_Products(t *testing.T) {
+	pSvc := new(mocks.ProductServiceInterface)
+	h := NewProductHandler(pSvc, validator.New(), zerolog.Nop())
+
+	t.Run("List", func(t *testing.T) {
+		r := chi.NewRouter()
+		r.Get("/stores/{storeId}/products", h.List)
+
+		pSvc.On("ListProducts", mock.Anything, mock.Anything).Return([]*dto.ProductResponse{}, dto.PaginationMeta{}, nil).Once()
+
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "/stores/s1/products?page=1", nil)
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusOK, w.Code)
+	})
+
+	t.Run("Get", func(t *testing.T) {
+		r := chi.NewRouter()
+		r.Get("/stores/{storeId}/products/{productId}", h.Get)
+
+		pSvc.On("GetProduct", mock.Anything, "p1").Return(&dto.ProductResponse{ID: "p1"}, nil).Once()
+
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "/stores/s1/products/p1", nil)
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusOK, w.Code)
+	})
+
+	t.Run("GetByBarcode", func(t *testing.T) {
+		r := chi.NewRouter()
+		r.Get("/stores/{storeId}/products/barcode/{barcode}", h.GetByBarcode)
+
+		barcode := "123456"
+		pSvc.On("GetProductByBarcode", mock.Anything, "s1", "123456").Return(&dto.ProductResponse{ID: "p1", Barcode: &barcode}, nil).Once()
+
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "/stores/s1/products/barcode/123456", nil)
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusOK, w.Code)
+	})
+
+	t.Run("Update", func(t *testing.T) {
+		reqBody := dto.UpdateProductRequest{Name: "New Name", Unit: "pcs"}
+		body, _ := json.Marshal(reqBody)
+		r := chi.NewRouter()
+		r.Put("/stores/{storeId}/products/{productId}", h.Update)
+
+		pSvc.On("UpdateProduct", mock.Anything, "p1", mock.Anything, mock.Anything).Return(&dto.ProductResponse{ID: "p1"}, nil).Once()
+
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodPut, "/stores/s1/products/p1", bytes.NewBuffer(body))
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusOK, w.Code)
+	})
+
+	t.Run("Delete", func(t *testing.T) {
+		r := chi.NewRouter()
+		r.Delete("/stores/{storeId}/products/{productId}", h.Delete)
+
+		pSvc.On("DeleteProduct", mock.Anything, "p1").Return(nil).Once()
+
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodDelete, "/stores/s1/products/p1", nil)
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusOK, w.Code)
+	})
+}

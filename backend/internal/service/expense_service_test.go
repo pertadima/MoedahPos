@@ -42,6 +42,40 @@ func TestExpenseService(t *testing.T) {
 		assert.Equal(t, "e1", resp.ID)
 	})
 
+	t.Run("Create Recurring Success", func(t *testing.T) {
+		req := &dto.CreateRecurringExpenseRequest{
+			Name: "Rent", Amount: 1000, StartDate: "2024-01-01",
+		}
+		repo.On("CreateRecurringExpense", ctx, mock.Anything).Return(&domain.RecurringExpense{
+			ID: "re1", StartDate: time.Now(),
+		}, nil).Once()
+		resp, err := svc.CreateRecurringExpense(ctx, "s1", "u1", req)
+		assert.NoError(t, err)
+		assert.NotNil(t, resp)
+	})
+
+	t.Run("List Recurring Success", func(t *testing.T) {
+		filter := dto.ExpenseListFilter{StoreID: "s1"}
+		repo.On("FindAllRecurring", ctx, mock.Anything).Return([]*domain.RecurringExpense{{
+			ID: "re1", StartDate: time.Now(),
+		}}, 1, nil).Once()
+		resp, _, err := svc.ListRecurringExpenses(ctx, filter)
+		assert.NoError(t, err)
+		assert.Len(t, resp, 1)
+	})
+
+	t.Run("Category CRUD", func(t *testing.T) {
+		repo.On("ListCategories", ctx, false).Return([]*domain.ExpenseCategory{{ID: "c1"}}, nil).Once()
+		res, err := svc.ListCategories(ctx, false)
+		assert.NoError(t, err)
+		assert.Len(t, res, 1)
+
+		repo.On("CreateCategory", ctx, mock.Anything).Return(&domain.ExpenseCategory{ID: "c2"}, nil).Once()
+		res2, err := svc.CreateCategory(ctx, &dto.CreateExpenseCategoryRequest{Name: "Travel"})
+		assert.NoError(t, err)
+		assert.NotNil(t, res2)
+	})
+
 	t.Run("ProcessDueRecurringExpenses", func(t *testing.T) {
 		due := []*domain.RecurringExpense{
 			{
