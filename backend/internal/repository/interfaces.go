@@ -58,6 +58,7 @@ type CategoryRepository interface {
 	FindByID(ctx context.Context, id string) (*domain.Category, error)
 	Update(ctx context.Context, cat *domain.Category) (*domain.Category, error)
 	SoftDelete(ctx context.Context, id string) error
+	GetModifiedSince(ctx context.Context, storeID string, since time.Time) ([]*domain.Category, error)
 }
 
 type ProductRepository interface {
@@ -68,6 +69,7 @@ type ProductRepository interface {
 	ExistsBySKU(ctx context.Context, storeID, sku string, excludeID string) (bool, error)
 	Update(ctx context.Context, p *domain.Product) (*domain.Product, error)
 	SoftDelete(ctx context.Context, id string) error
+	GetModifiedSince(ctx context.Context, storeID string, since time.Time) ([]*domain.Product, error)
 }
 
 type StockRepository interface {
@@ -78,6 +80,7 @@ type StockRepository interface {
 	FindMovements(ctx context.Context, filter dto.StockMovementFilter) ([]*domain.StockMovement, int, error)
 	// DeductStock subtracts qty from stock_levels and records a stock_movement.
 	DeductStock(ctx context.Context, productID, storeID string, qty float64, refID, cashierID string) error
+	GetModifiedSince(ctx context.Context, storeID string, since time.Time) ([]*domain.StockLevel, error)
 }
 
 // MenuItemRepository handles menu item retrieval for restaurant checkouts.
@@ -109,6 +112,7 @@ type TransactionRepository interface {
 	GetKDSTickets(ctx context.Context, storeID string) ([]*domain.Transaction, error)
 	// UpdateKDSItemStatus updates the completion status of a specific KDS ticket item.
 	UpdateKDSItemStatus(ctx context.Context, itemID, status string) error
+	GetModifiedSince(ctx context.Context, storeID string, since time.Time) ([]*domain.Transaction, error)
 }
 
 // PurchaseOrderRepository handles PO lifecycle and stock updates on receive.

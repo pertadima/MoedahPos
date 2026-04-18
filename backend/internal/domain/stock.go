@@ -10,6 +10,8 @@ type StockLevel struct {
 	Quantity    float64   `db:"quantity"`
 	MinQuantity float64   `db:"min_quantity"`
 	UpdatedAt   time.Time `db:"updated_at"`
+	ServerUpdatedAt time.Time `db:"server_updated_at"`
+	SyncVersion     int       `db:"sync_version"`
 
 	// Populated via JOIN
 	ProductName string  `db:"product_name"`

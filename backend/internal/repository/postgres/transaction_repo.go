@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 
@@ -589,4 +590,59 @@ func (r *TransactionRepo) UpdateKDSItemStatus(ctx context.Context, itemID, statu
 	}
 	_, err := r.db.ExecContext(ctx, `UPDATE transaction_items SET status = $1, completed_at = NULL WHERE id = $2`, status, itemID)
 	return err
+}
+
+func (r *TransactionRepo) GetModifiedSince(ctx context.Context, storeID string, since time.Time) ([]*domain.Transaction, error) {
+	const q = `
+		SELECT id, store_id, cashier_id, table_id,
+		       COALESCE(customer_name,'')  AS customer_name,
+		       COALESCE(customer_phone,'') AS customer_phone,
+		       subtotal, discount_amt, tax_amt, total,
+		       payment_method, payment_amount, change_amount, status,
+		       COALESCE(notes,'') AS notes,
+		       cart_discount_type, cart_discount_value,
+		       created_at, updated_at, server_updated_at, sync_version
+		FROM transactions
+		WHERE store_id = $1 AND server_updated_at > $2
+		ORDER BY server_updated_at ASC`
+	var txns []*domain.Transaction
+	if err := r.db.SelectContext(ctx, &txns, q, storeID, since); err != nil {
+		return nil, fmt.Errorf("TransactionRepo.GetModifiedSince headers: %w", err)
+	}
+
+	if len(txns) == 0 {
+		return txns, nil
+	}
+
+	var txnIDs []string
+	for _, t := range txns {
+		txnIDs = append(txnIDs, t.ID)
+	}
+
+	qItems, args, err := sqlx.In(`
+		SELECT id, transaction_id, product_id, menu_item_id, product_name, sku,
+		       quantity, original_price, unit_price, cost_price, discount_pct, discount_type, discount_value,
+		       cart_discount_allocated, tax_rate, subtotal, status, completed_at
+		FROM transaction_items WHERE transaction_id IN (?)
+		ORDER BY id ASC`, txnIDs)
+	if err != nil {
+		return nil, fmt.Errorf("TransactionRepo.GetModifiedSince in query: %w", err)
+	}
+	qItems = r.db.Rebind(qItems)
+
+	var allItems []domain.TransactionItem
+	if err := r.db.SelectContext(ctx, &allItems, qItems, args...); err != nil {
+		return nil, fmt.Errorf("TransactionRepo.GetModifiedSince items: %w", err)
+	}
+
+	itemMap := make(map[string][]domain.TransactionItem)
+	for _, it := range allItems {
+		itemMap[it.TransactionID] = append(itemMap[it.TransactionID], it)
+	}
+
+	for _, t := range txns {
+		t.Items = itemMap[t.ID]
+	}
+
+	return txns, nil
 }

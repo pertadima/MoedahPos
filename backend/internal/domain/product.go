@@ -21,6 +21,8 @@ type Product struct {
 	CreatedAt     time.Time  `db:"created_at"`
 	UpdatedAt     time.Time  `db:"updated_at"`
 	DeletedAt     *time.Time `db:"deleted_at"`
+	ServerUpdatedAt time.Time  `db:"server_updated_at"`
+	SyncVersion     int        `db:"sync_version"`
 
 	// Populated via JOIN
 	CategoryName    *string  `db:"category_name"`
@@ -47,6 +49,8 @@ type Category struct {
 	CreatedAt time.Time  `db:"created_at"`
 	UpdatedAt time.Time  `db:"updated_at"`
 	DeletedAt *time.Time `db:"deleted_at"`
+	ServerUpdatedAt time.Time  `db:"server_updated_at"`
+	SyncVersion     int        `db:"sync_version"`
 
 	// Populated via JOIN
 	ParentName *string `db:"parent_name"`

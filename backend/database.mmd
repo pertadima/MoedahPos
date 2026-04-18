@@ -63,6 +63,8 @@ erDiagram
         TIMESTAMPTZ created_at
         TIMESTAMPTZ updated_at
         TIMESTAMPTZ deleted_at
+        TIMESTAMPTZ server_updated_at
+        INT sync_version
     }
     products {
         UUID id PK
@@ -82,6 +84,8 @@ erDiagram
         TIMESTAMPTZ created_at
         TIMESTAMPTZ updated_at
         TIMESTAMPTZ deleted_at
+        TIMESTAMPTZ server_updated_at
+        INT sync_version
     }
     stock_levels {
         UUID id PK
@@ -90,6 +94,8 @@ erDiagram
         NUMERIC quantity
         NUMERIC min_quantity
         TIMESTAMPTZ updated_at
+        TIMESTAMPTZ server_updated_at
+        INT sync_version
     }
     stock_movements {
         UUID id PK
@@ -160,6 +166,8 @@ erDiagram
         UUID customer_id FK
         VARCHAR cart_discount_type
         NUMERIC cart_discount_value
+        TIMESTAMPTZ server_updated_at
+        INT sync_version
     }
     transaction_items {
         UUID id PK

@@ -52,6 +52,7 @@ type Dependencies struct {
 	StockAdjustmentHandler *handler.StockAdjustmentHandler
 	IncomeHandler          *handler.IncomeHandler
 	ActivityLogHandler     *handler.ActivityLogHandler
+	SyncHandler            *handler.SyncHandler
 
 	// Shared
 	RoleStore *rbac.RoleStore
@@ -207,6 +208,11 @@ func New(deps *Dependencies) http.Handler { //nolint:funlen // route wiring is i
 							r.Get("/batches", withPerm(deps, "stock.read", deps.BatchStockHandler.ListBatches))
 							r.Get("/batch-summary", withPerm(deps, "stock.read", deps.BatchStockHandler.GetSummary))
 							r.Get("/{productId}", withPerm(deps, "stock.read", deps.StockHandler.GetProductStock))
+						})
+
+						// Sync
+						r.Route("/sync", func(r chi.Router) {
+							r.Get("/pull", withPerm(deps, "products.read", deps.SyncHandler.Pull))
 						})
 
 						// ── Phase 3 ───────────────────────────────────────────

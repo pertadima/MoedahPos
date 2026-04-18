@@ -263,6 +263,19 @@ func (r *CategoryRepo) SoftDelete(ctx context.Context, id string) error {
 	return nil
 }
 
+func (r *CategoryRepo) GetModifiedSince(ctx context.Context, storeID string, since time.Time) ([]*domain.Category, error) {
+	const q = `
+		SELECT id, store_id, name, parent_id, created_at, updated_at, deleted_at, server_updated_at, sync_version
+		FROM categories
+		WHERE store_id = $1 AND server_updated_at > $2
+		ORDER BY server_updated_at ASC`
+	var cats []*domain.Category
+	if err := r.db.SelectContext(ctx, &cats, q, storeID, since); err != nil {
+		return nil, fmt.Errorf("CategoryRepo.GetModifiedSince: %w", err)
+	}
+	return cats, nil
+}
+
 // ─── Product Repo ─────────────────────────────────────────────────────────────
 
 type ProductRepo struct{ db *sqlx.DB }
@@ -436,6 +449,21 @@ func (r *ProductRepo) SoftDelete(ctx context.Context, id string) error {
 	return nil
 }
 
+func (r *ProductRepo) GetModifiedSince(ctx context.Context, storeID string, since time.Time) ([]*domain.Product, error) {
+	const q = `
+		SELECT id, store_id, category_id, sku, name, description, barcode, unit,
+		       cost_price, sell_price, use_global_tax, tax_percentage, image_url, is_active,
+		       created_at, updated_at, deleted_at, server_updated_at, sync_version
+		FROM products
+		WHERE store_id = $1 AND server_updated_at > $2
+		ORDER BY server_updated_at ASC`
+	var products []*domain.Product
+	if err := r.db.SelectContext(ctx, &products, q, storeID, since); err != nil {
+		return nil, fmt.Errorf("ProductRepo.GetModifiedSince: %w", err)
+	}
+	return products, nil
+}
+
 // ─── Stock Repo ───────────────────────────────────────────────────────────────
 
 type StockRepo struct{ db *sqlx.DB }
@@ -601,6 +629,19 @@ func (r *StockRepo) DeductStock(ctx context.Context, productID, storeID string, 
 	}
 
 	return tx.Commit()
+}
+
+func (r *StockRepo) GetModifiedSince(ctx context.Context, storeID string, since time.Time) ([]*domain.StockLevel, error) {
+	const q = `
+		SELECT id, product_id, store_id, quantity, min_quantity, updated_at, server_updated_at, sync_version
+		FROM stock_levels
+		WHERE store_id = $1 AND server_updated_at > $2
+		ORDER BY server_updated_at ASC`
+	var levels []*domain.StockLevel
+	if err := r.db.SelectContext(ctx, &levels, q, storeID, since); err != nil {
+		return nil, fmt.Errorf("StockRepo.GetModifiedSince: %w", err)
+	}
+	return levels, nil
 }
 
 // Ensure unused import does not cause issues
