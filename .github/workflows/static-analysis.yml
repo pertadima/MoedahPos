@@ -76,6 +76,8 @@ jobs:
           local-prefix: github.com/moedahpos/backend
           git-token: ${{ github.token }}
           git-branch: ${{ github.head_ref || github.ref_name }}
+          threshold-total: 44.3
+
 
   # ── Frontend: TypeScript ────────────────────────────────────────────────────
   frontend-type-check:
