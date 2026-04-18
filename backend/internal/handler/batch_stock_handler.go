@@ -14,12 +14,12 @@ import (
 
 // BatchStockHandler exposes HTTP endpoints for FIFO batch inventory data.
 type BatchStockHandler struct {
-	batchSvc *service.BatchStockService
+	batchSvc service.BatchStockServiceInterface
 	log      zerolog.Logger
 }
 
 // NewBatchStockHandler creates a BatchStockHandler with the injected service.
-func NewBatchStockHandler(batchSvc *service.BatchStockService, log zerolog.Logger) *BatchStockHandler {
+func NewBatchStockHandler(batchSvc service.BatchStockServiceInterface, log zerolog.Logger) *BatchStockHandler {
 	return &BatchStockHandler{batchSvc: batchSvc, log: log}
 }
 

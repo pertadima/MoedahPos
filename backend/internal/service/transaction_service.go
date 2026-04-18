@@ -139,8 +139,8 @@ type TransactionService struct {
 	productRepo  repository.ProductRepository
 	stockRepo    repository.StockRepository
 	menuItemRepo repository.MenuItemRepository
-	batchSvc     *BatchStockService // FIFO deduction
-	activitySvc  *ActivityLogService
+	batchSvc     BatchStockServiceInterface // FIFO deduction
+	activitySvc  ActivityLogServiceInterface
 	log          zerolog.Logger
 }
 
@@ -149,8 +149,8 @@ func NewTransactionService(
 	productRepo repository.ProductRepository,
 	stockRepo repository.StockRepository,
 	menuItemRepo repository.MenuItemRepository,
-	batchSvc *BatchStockService,
-	activitySvc *ActivityLogService,
+	batchSvc BatchStockServiceInterface,
+	activitySvc ActivityLogServiceInterface,
 	log zerolog.Logger,
 ) *TransactionService {
 	return &TransactionService{
@@ -440,7 +440,7 @@ func (s *TransactionService) GetTransaction(ctx context.Context, id string) (*dt
 }
 
 // VoidTransaction reverses a completed transaction and restores stock.
-func (s *TransactionService) VoidTransaction(ctx context.Context, id, userID string) error {
+func (s *TransactionService) VoidTransaction(ctx context.Context, id, userID string) error { //nolint:funlen
 	txn, err := s.txnRepo.FindByID(ctx, id)
 	if err != nil {
 		return fmt.Errorf("finding transaction: %w", err)
@@ -485,13 +485,17 @@ func (s *TransactionService) processMenuItem(ctx context.Context, _ string, item
 		}
 	}
 
+	skuID := item.MenuItemID
+	if len(skuID) > 8 {
+		skuID = skuID[:8]
+	}
+
 	mid := item.MenuItemID
 	discountAmt := (menuItem.SellPrice - finalPrice) * item.Quantity
-
 	return domain.CreateTransactionItemInput{
 		MenuItemID:    &mid,
 		ProductName:   menuItem.Name,
-		SKU:           "MENU-" + item.MenuItemID[:8],
+		SKU:           "MENU-" + skuID,
 		Quantity:      item.Quantity,
 		OriginalPrice: menuItem.SellPrice,
 		UnitPrice:     finalPrice,

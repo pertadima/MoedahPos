@@ -26,7 +26,7 @@ type ProductService struct {
 	productRepo     repository.ProductRepository
 	categoryRepo    repository.CategoryRepository
 	stockRepo       repository.StockRepository
-	priceHistorySvc *PriceHistoryService
+	priceHistorySvc PriceHistoryServiceInterface
 	log             zerolog.Logger
 }
 
@@ -34,7 +34,7 @@ func NewProductService(
 	productRepo repository.ProductRepository,
 	categoryRepo repository.CategoryRepository,
 	stockRepo repository.StockRepository,
-	priceHistorySvc *PriceHistoryService,
+	priceHistorySvc PriceHistoryServiceInterface,
 	log zerolog.Logger,
 ) *ProductService {
 	return &ProductService{productRepo: productRepo, categoryRepo: categoryRepo, stockRepo: stockRepo, priceHistorySvc: priceHistorySvc, log: log}

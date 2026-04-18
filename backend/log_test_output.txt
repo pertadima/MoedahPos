@@ -1,0 +1,19 @@
+=== RUN   TestActivityLogRepo
+=== RUN   TestActivityLogRepo/Create
+    activity_log_repo_test.go:32: 
+        	Error Trace:	/Users/pertadima/Downloads/moedah-pos/backend/internal/repository/postgres/activity_log_repo_test.go:32
+        	Error:      	Received unexpected error:
+        	            	inserting activity log: ExecQuery '
+        	            			INSERT INTO activity_logs (
+        	            				id, user_id, store_id, action_type, module, reference_id, metadata, created_at
+        	            			) VALUES (
+        	            				uuid_generate_v4(), $1, $2, $3, $4, $5, $6, NOW()
+        	            			)', arguments do not match: argument 5 expected [<nil> - <nil>] does not match actual [[]uint8 - []]
+        	Test:       	TestActivityLogRepo/Create
+=== RUN   TestActivityLogRepo/FindAll
+--- FAIL: TestActivityLogRepo (0.00s)
+    --- FAIL: TestActivityLogRepo/Create (0.00s)
+    --- PASS: TestActivityLogRepo/FindAll (0.00s)
+FAIL
+FAIL	command-line-arguments	0.747s
+FAIL

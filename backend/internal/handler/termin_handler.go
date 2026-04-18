@@ -16,13 +16,13 @@ import (
 
 // TerminHandler exposes HTTP endpoints for PO installment (termin) management.
 type TerminHandler struct {
-	terminSvc *service.TerminService
+	terminSvc service.TerminServiceInterface
 	validator *validator.Validator
 	log       zerolog.Logger
 }
 
 // NewTerminHandler creates a TerminHandler.
-func NewTerminHandler(terminSvc *service.TerminService, v *validator.Validator, log zerolog.Logger) *TerminHandler {
+func NewTerminHandler(terminSvc service.TerminServiceInterface, v *validator.Validator, log zerolog.Logger) *TerminHandler {
 	return &TerminHandler{terminSvc: terminSvc, validator: v, log: log}
 }
 

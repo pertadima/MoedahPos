@@ -17,13 +17,13 @@ import (
 
 // UserAdminHandler handles HTTP requests for system-wide user management.
 type UserAdminHandler struct {
-	svc       *service.UserAdminService
+	svc       service.UserAdminServiceInterface
 	validator *validator.Validator
 	log       zerolog.Logger
 }
 
 // NewUserAdminHandler constructs a UserAdminHandler.
-func NewUserAdminHandler(svc *service.UserAdminService, v *validator.Validator, log zerolog.Logger) *UserAdminHandler {
+func NewUserAdminHandler(svc service.UserAdminServiceInterface, v *validator.Validator, log zerolog.Logger) *UserAdminHandler {
 	return &UserAdminHandler{svc: svc, validator: v, log: log}
 }
 

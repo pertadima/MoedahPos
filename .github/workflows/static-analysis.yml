@@ -2,9 +2,9 @@ name: Static Analysis
 
 on:
   push:
-    branches: [main, "feature/**", "fix/**"]
+    branches: [main, "feature/**", "fix/**", "enhancement/**"]
   pull_request:
-    branches: [main]
+    branches: [main, develop]
 
 jobs:
   # ── Backend: golangci-lint ──────────────────────────────────────────────────
@@ -46,6 +46,38 @@ jobs:
 
       - name: Build
         run: cd backend && go build ./...
+
+  # ── Backend: Tests & Coverage ───────────────────────────────────────────────
+  backend-test:
+    name: Backend (Go) — Tests & Coverage
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: backend/go.mod
+          cache: true
+          cache-dependency-path: backend/go.sum
+
+      - name: Run tests with coverage
+        run: |
+          cd backend
+          go test -v -coverprofile=coverage.out -covermode=atomic ./...
+
+      - name: Generate Coverage Report
+        uses: vladopajic/go-test-coverage@v2
+        with:
+          profile: backend/coverage.out
+          local-prefix: github.com/moedahpos/backend
+          git-token: ${{ github.token }}
+          git-branch: ${{ github.head_ref || github.ref_name }}
+          threshold-total: 44
+
 
   # ── Frontend: TypeScript ────────────────────────────────────────────────────
   frontend-type-check:

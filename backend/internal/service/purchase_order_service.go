@@ -29,8 +29,8 @@ type PurchaseOrderService struct {
 	paymentRepo       repository.POPaymentRepository
 	terminRepo        repository.TerminRepository
 	paymentRecordRepo repository.PaymentRecordRepository
-	priceHistorySvc   *PriceHistoryService
-	activitySvc       *ActivityLogService
+	priceHistorySvc   PriceHistoryServiceInterface
+	activitySvc       ActivityLogServiceInterface
 	log               zerolog.Logger
 }
 
@@ -40,11 +40,20 @@ func NewPurchaseOrderService(
 	paymentRepo repository.POPaymentRepository,
 	terminRepo repository.TerminRepository,
 	paymentRecordRepo repository.PaymentRecordRepository,
-	priceHistorySvc *PriceHistoryService,
-	activitySvc *ActivityLogService,
+	priceHistorySvc PriceHistoryServiceInterface,
+	activitySvc ActivityLogServiceInterface,
 	log zerolog.Logger,
 ) *PurchaseOrderService {
-	return &PurchaseOrderService{poRepo: poRepo, productRepo: productRepo, paymentRepo: paymentRepo, terminRepo: terminRepo, paymentRecordRepo: paymentRecordRepo, priceHistorySvc: priceHistorySvc, activitySvc: activitySvc, log: log}
+	return &PurchaseOrderService{
+		poRepo:            poRepo,
+		productRepo:       productRepo,
+		paymentRepo:       paymentRepo,
+		terminRepo:        terminRepo,
+		paymentRecordRepo: paymentRecordRepo,
+		priceHistorySvc:   priceHistorySvc,
+		activitySvc:       activitySvc,
+		log:               log,
+	}
 }
 
 func (s *PurchaseOrderService) ListPOs(ctx context.Context, filter dto.POListFilter) ([]*dto.POResponse, dto.PaginationMeta, error) {
@@ -79,7 +88,7 @@ func (s *PurchaseOrderService) GetPO(ctx context.Context, id string) (*dto.PORes
 	return toPOResponse(po), nil
 }
 
-func (s *PurchaseOrderService) CreatePO(ctx context.Context, storeID string, req *dto.CreatePORequest, userID string) (*dto.POResponse, error) {
+func (s *PurchaseOrderService) CreatePO(ctx context.Context, storeID string, req *dto.CreatePORequest, userID string) (*dto.POResponse, error) { //nolint:funlen
 	items, totalAmt, err := s.buildItems(ctx, req.Items, storeID)
 	if err != nil {
 		return nil, err
@@ -115,7 +124,7 @@ func (s *PurchaseOrderService) CreatePO(ctx context.Context, storeID string, req
 	return toPOResponse(po), nil
 }
 
-func (s *PurchaseOrderService) UpdatePO(ctx context.Context, id string, req *dto.UpdatePORequest, storeID string) (*dto.POResponse, error) {
+func (s *PurchaseOrderService) UpdatePO(ctx context.Context, id string, req *dto.UpdatePORequest, storeID string) (*dto.POResponse, error) { //nolint:funlen
 	existing, err := s.poRepo.FindByID(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("finding PO: %w", err)
@@ -123,7 +132,7 @@ func (s *PurchaseOrderService) UpdatePO(ctx context.Context, id string, req *dto
 	if existing == nil {
 		return nil, ErrPONotFound
 	}
-	if existing.Status != "draft" {
+	if existing.Status != statusDraft {
 		return nil, ErrPONotEditable
 	}
 
@@ -155,7 +164,7 @@ func (s *PurchaseOrderService) SubmitPO(ctx context.Context, id, userID string) 
 	if po == nil {
 		return ErrPONotFound
 	}
-	if po.Status != "draft" {
+	if po.Status != statusDraft {
 		return ErrPOCannotSubmit
 	}
 	if err := s.poRepo.Submit(ctx, id, userID); err != nil {

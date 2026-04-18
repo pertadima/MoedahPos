@@ -5,15 +5,15 @@ import (
 	"fmt"
 
 	"github.com/moedahpos/backend/internal/domain"
-	"github.com/moedahpos/backend/internal/repository/postgres"
+	"github.com/moedahpos/backend/internal/repository"
 )
 
 type StockAdjustmentService struct {
-	repo        *postgres.StockAdjustmentRepo
-	activitySvc *ActivityLogService
+	repo        repository.StockAdjustmentRepository
+	activitySvc ActivityLogServiceInterface
 }
 
-func NewStockAdjustmentService(repo *postgres.StockAdjustmentRepo, activitySvc *ActivityLogService) *StockAdjustmentService {
+func NewStockAdjustmentService(repo repository.StockAdjustmentRepository, activitySvc ActivityLogServiceInterface) *StockAdjustmentService {
 	return &StockAdjustmentService{repo: repo, activitySvc: activitySvc}
 }
 

@@ -16,7 +16,7 @@ import (
 
 // ─── Interfaces ───────────────────────────────────────────────────────────────
 
-type tableService interface {
+type TableServiceInterface interface {
 	List(ctx context.Context, storeID string) ([]*dto.TableResponse, error)
 	Create(ctx context.Context, storeID string, req *dto.CreateTableRequest) (*dto.TableResponse, error)
 	Update(ctx context.Context, id string, req *dto.UpdateTableRequest) (*dto.TableResponse, error)
@@ -24,7 +24,7 @@ type tableService interface {
 	Delete(ctx context.Context, id string) error
 }
 
-type menuItemService interface {
+type MenuItemServiceInterface interface {
 	List(ctx context.Context, storeID string) ([]*dto.MenuItemResponse, error)
 	Create(ctx context.Context, storeID string, req *dto.CreateMenuItemRequest) (*dto.MenuItemResponse, error)
 	Update(ctx context.Context, id string, req *dto.UpdateMenuItemRequest) (*dto.MenuItemResponse, error)
@@ -34,15 +34,15 @@ type menuItemService interface {
 // ─── Handler ──────────────────────────────────────────────────────────────────
 
 type RestaurantHandler struct {
-	tableSvc tableService
-	menuSvc  menuItemService
+	tableSvc TableServiceInterface
+	menuSvc  MenuItemServiceInterface
 	validate *validator.Validator
 	log      zerolog.Logger
 }
 
 func NewRestaurantHandler(
-	tableSvc tableService,
-	menuSvc menuItemService,
+	tableSvc TableServiceInterface,
+	menuSvc MenuItemServiceInterface,
 	v *validator.Validator,
 	log zerolog.Logger,
 ) *RestaurantHandler {
