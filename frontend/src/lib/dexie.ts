@@ -67,6 +67,7 @@ export interface LocalTransaction {
   items: LocalTransactionItem[];
   is_dirty: boolean;
   created_at: string;
+  sync_error?: string;
 }
 
 const db = new Dexie('MoedahPOSDatabase') as Dexie & {

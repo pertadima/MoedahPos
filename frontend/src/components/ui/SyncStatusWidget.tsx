@@ -2,14 +2,18 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { Cloud, CloudOff, CloudUpload, Loader2 } from 'lucide-react';
+import { Cloud, CloudOff, CloudUpload, Loader2, AlertTriangle, ArrowRight, X, Trash2, RotateCcw } from 'lucide-react';
 import { db } from '@/lib/dexie';
 import { transactionsApi } from '@/lib/api/transactions';
+import Portal from '@/components/ui/Portal';
+import { formatRp } from '@/lib/utils';
 
 export default function SyncStatusWidget() {
   const [isOnline, setIsOnline] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncProgress, setSyncProgress] = useState({ current: 0, total: 0 });
+  const [showModal, setShowModal] = useState(false);
+  
   const isSyncingRef = useRef(false);
 
   // Monitor the number of offline transactions dynamically
@@ -41,20 +45,38 @@ export default function SyncStatusWidget() {
       return;
     }
 
+    // Only process pending transactions that haven't explicitly failed
+    const toSync = dirtyTransactions.filter(t => t.status !== 'failed');
+    if (toSync.length === 0) return;
+
     isSyncingRef.current = true;
     setIsSyncing(true);
-    const total = dirtyTransactions.length;
+    const total = toSync.length;
     setSyncProgress({ current: 0, total });
 
     for (let i = 0; i < total; i++) {
-        const tx = dirtyTransactions[i];
+        const tx = toSync[i];
         try {
             await transactionsApi.syncOffline(tx.store_id, tx);
             await db.transactions.update(tx.id, { is_dirty: false });
+
+            // Artificial delay to allow visual feedback of the sync progress
+            await new Promise(resolve => setTimeout(resolve, 800));
         } catch (err: any) {
             console.error('Network or API failure during background sync', err);
             if (err.name === 'ApiError') {
-                // Backend rejected it (e.g., validation failed). Depending on business logic, we could flag it.
+                let errorMsg = err.message;
+                if (errorMsg.toLowerCase().includes('insufficient stock')) {
+                   const match = errorMsg.match(/items?:\s*(.+?)\s*\(have\s*([\d.]+),\s*need\s*([\d.]+)\)/i);
+                   if (match) {
+                       errorMsg = `Stok tidak mencukupi: ${match[1]} (tersedia ${match[2]}, butuh ${match[3]})`;
+                   } else {
+                       errorMsg = 'Stok tidak mencukupi untuk item pesanan.';
+                   }
+                }
+                
+                // Backend rejected it permanently. Set error and status to failed, keeping it dirty so user can see it.
+                await db.transactions.update(tx.id, { sync_error: errorMsg, status: 'failed' });
             } else {
                 // True network error, assume internet dropped and break loop
                 break;
@@ -71,11 +93,23 @@ export default function SyncStatusWidget() {
   useEffect(() => {
     // Auto-trigger sync when transitioning online and dirty transactions exist
     if (isOnline && dirtyTransactions && dirtyTransactions.length > 0 && !isSyncingRef.current) {
-      processSync();
+      const hasPending = dirtyTransactions.some(t => t.status !== 'failed');
+      if (hasPending) {
+         processSync();
+      }
     }
-  }, [isOnline, dirtyTransactions?.length, processSync]);
+  }, [isOnline, dirtyTransactions, processSync]);
 
-  if (!isOnline) {
+  const handleDiscard = async (id: string) => {
+    await db.transactions.update(id, { is_dirty: false, status: 'cancelled_offline' });
+  };
+  
+  const handleRetrySingle = async (id: string) => {
+    await db.transactions.update(id, { status: 'pending', sync_error: '' });
+    if (isOnline) processSync();
+  };
+
+  if (!isOnline && (!dirtyTransactions || dirtyTransactions.length === 0)) {
     return (
       <div className="flex items-center gap-1.5 px-3 py-1.5 bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 rounded-full text-xs font-semibold shadow-sm mr-2 transition-all">
         <CloudOff size={14} strokeWidth={2.5} />
@@ -84,33 +118,199 @@ export default function SyncStatusWidget() {
     );
   }
 
-  if (isSyncing) {
-    return (
-      <div className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 rounded-full text-xs font-semibold shadow-sm mr-2 transition-all">
-        <Loader2 size={14} className="animate-spin" strokeWidth={2.5} />
-        <span>{syncProgress.total} item sync in progress</span>
-      </div>
-    );
-  }
-
-  if (dirtyTransactions && dirtyTransactions.length > 0) {
-    return (
-      <button 
-        onClick={processSync}
-        className="flex items-center gap-1.5 px-3 py-1.5 bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400 rounded-full text-xs font-semibold shadow-sm hover:bg-yellow-200 dark:hover:bg-yellow-900/50 transition-all mr-2 cursor-pointer"
-        title="Click to force sync now"
-      >
-        <CloudUpload size={14} className="animate-bounce" strokeWidth={2.5} />
-        <span>{dirtyTransactions.length} Pending</span>
-      </button>
-    );
-  }
-
-  // All Synced fully Online
+  // Combined render
   return (
-    <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 rounded-full text-xs font-semibold shadow-sm mr-2 opacity-80 hover:opacity-100 transition-all">
-      <Cloud size={14} strokeWidth={2.5} />
-      <span className="hidden sm:inline">Online</span>
-    </div>
+    <>
+      <button 
+        onClick={() => {
+          if (dirtyTransactions && dirtyTransactions.length > 0) {
+            setShowModal(true);
+          } else if (isOnline && (!dirtyTransactions || dirtyTransactions.length === 0)) {
+            // normal online, no action
+          }
+        }}
+        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold shadow-sm mr-2 transition-all cursor-${dirtyTransactions && dirtyTransactions.length > 0 ? 'pointer hover:opacity-80' : 'default'} ${
+          isSyncing 
+            ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+          : dirtyTransactions && dirtyTransactions.some(t => t.status === 'failed')
+            ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+          : dirtyTransactions && dirtyTransactions.length > 0
+            ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+          : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+        }`}
+      >
+        {isSyncing ? (
+           <Loader2 size={14} className="animate-spin" strokeWidth={2.5} />
+        ) : dirtyTransactions && dirtyTransactions.some(t => t.status === 'failed') ? (
+           <AlertTriangle size={14} strokeWidth={2.5} />
+        ) : dirtyTransactions && dirtyTransactions.length > 0 ? (
+           <CloudUpload size={14} className="animate-bounce" strokeWidth={2.5} />
+        ) : (
+           <Cloud size={14} strokeWidth={2.5} />
+        )}
+
+        <span>
+          {isSyncing 
+            ? `${syncProgress.total} item sync in progress`
+          : dirtyTransactions && dirtyTransactions.some(t => t.status === 'failed')
+            ? `${dirtyTransactions.filter(t => t.status === 'failed').length} Gagal Sync`
+          : dirtyTransactions && dirtyTransactions.length > 0
+            ? `${dirtyTransactions.length} Pending`
+          : <span className="hidden sm:inline">Online</span>}
+        </span>
+      </button>
+
+      {/* Sync Queue Modal Portal */}
+      {showModal && (
+        <Portal>
+          <div
+            style={{
+              position: 'fixed',
+              inset: 0,
+              zIndex: 9999,
+              background: 'rgba(0,0,0,0.6)',
+              backdropFilter: 'blur(4px)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: 16,
+            }}
+            onClick={() => setShowModal(false)}
+          >
+            <div
+              className="card"
+              style={{
+                width: '100%',
+                maxWidth: 480,
+                maxHeight: '85vh',
+                display: 'flex',
+                flexDirection: 'column',
+                animation: 'slideIn 0.2s ease',
+              }}
+              onClick={e => e.stopPropagation()}
+            >
+              <div
+                style={{
+                  padding: '20px 24px',
+                  borderBottom: '1px solid var(--border-md)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                }}
+              >
+                <div>
+                  <h2 style={{ fontWeight: 700, fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <CloudUpload size={20} className="text-blue-500" />
+                    Antrean Sinkronisasi
+                  </h2>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--text-3)', marginTop: 4 }}>
+                    {dirtyTransactions?.length || 0} transaksi tertunda
+                  </p>
+                </div>
+                <button className="btn btn-ghost btn-sm" onClick={() => setShowModal(false)}>
+                  <X size={18} />
+                </button>
+              </div>
+
+              <div style={{ padding: '0', overflowY: 'auto', flex: 1 }}>
+                {dirtyTransactions?.length === 0 ? (
+                  <div style={{ padding: 40, textAlign: 'center', color: 'var(--text-3)' }}>
+                    Tidak ada antrean sinkronisasi.
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    {dirtyTransactions?.map(tx => {
+                      const isFailed = tx.status === 'failed';
+                      return (
+                        <div key={tx.id} style={{ padding: '16px 24px', borderBottom: '1px solid var(--border-sm)', background: isFailed ? 'rgba(239,68,68,0.03)' : 'transparent' }}>
+                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+                              <div>
+                                <div style={{ fontWeight: 600, fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: 6 }}>
+                                  INV-{tx.id.slice(0, 8).toUpperCase()}
+                                  <span style={{ 
+                                    fontSize: '0.65rem', 
+                                    padding: '2px 8px', 
+                                    borderRadius: 12, 
+                                    background: isFailed ? 'rgba(239,68,68,0.1)' : 'rgba(245,158,11,0.1)',
+                                    color: isFailed ? '#ef4444' : '#d97706',
+                                    fontWeight: 700
+                                  }}>
+                                    {isFailed ? 'Gagal' : 'Menunggu'}
+                                  </span>
+                                </div>
+                                <div style={{ fontSize: '0.75rem', color: 'var(--text-3)', marginTop: 4 }}>
+                                  {new Date(tx.created_at).toLocaleString('id-ID')}
+                                </div>
+                              </div>
+                              <div style={{ fontWeight: 700, color: 'var(--text-1)' }}>
+                                {formatRp(tx.total)}
+                              </div>
+                           </div>
+
+                           <div style={{ padding: '8px 12px', background: 'var(--bg-base)', borderRadius: 6, marginBottom: 12 }}>
+                             <div style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--text-2)', marginBottom: 4 }}>
+                               {tx.items.length} ITEM
+                             </div>
+                             {tx.items.map((item, idx) => (
+                               <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-2)', marginBottom: 2 }}>
+                                 <span>{item.quantity}x {item.product_name}</span>
+                                 <span>{formatRp(item.subtotal)}</span>
+                               </div>
+                             ))}
+                           </div>
+
+                           {isFailed && tx.sync_error && (
+                             <div style={{ padding: '8px 12px', background: 'rgba(239,68,68,0.1)', borderLeft: '3px solid #ef4444', borderRadius: '0 6px 6px 0', fontSize: '0.8rem', color: '#b91c1c', marginBottom: 12 }}>
+                               {tx.sync_error}
+                             </div>
+                           )}
+
+                           <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                              <button 
+                                onClick={() => handleDiscard(tx.id)}
+                                className="btn btn-ghost btn-sm" 
+                                style={{ color: '#ef4444', padding: '6px 12px', fontSize: '0.75rem', height: 'auto', minHeight: 0 }}
+                              >
+                                <Trash2 size={12} style={{ marginRight: 4 }}/> Hapus
+                              </button>
+                              {isFailed && (
+                                <button 
+                                  onClick={() => handleRetrySingle(tx.id)}
+                                  className="btn btn-primary btn-sm" 
+                                  style={{ padding: '6px 12px', fontSize: '0.75rem', height: 'auto', minHeight: 0 }}
+                                >
+                                  <RotateCcw size={12} style={{ marginRight: 4 }}/> Coba Lagi
+                                </button>
+                              )}
+                           </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {dirtyTransactions && dirtyTransactions.length > 0 && (
+                <div style={{ padding: '16px 24px', borderTop: '1px solid var(--border-md)', background: 'var(--bg-elevated)', display: 'flex', justifyContent: 'flex-end' }}>
+                   <button 
+                     className="btn btn-primary" 
+                     onClick={() => {
+                        dirtyTransactions.forEach(t => {
+                          if (t.status === 'failed') handleRetrySingle(t.id);
+                        });
+                        processSync();
+                     }}
+                     disabled={isSyncing}
+                   >
+                     {isSyncing ? <Loader2 size={16} className="animate-spin" /> : <ArrowRight size={16} />}
+                     Sinkronkan Semua
+                   </button>
+                </div>
+               )}
+            </div>
+          </div>
+        </Portal>
+      )}
+    </>
   );
 }
