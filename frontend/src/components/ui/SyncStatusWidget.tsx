@@ -109,56 +109,54 @@ export default function SyncStatusWidget() {
     if (isOnline) processSync();
   };
 
-  if (!isOnline && (!dirtyTransactions || dirtyTransactions.length === 0)) {
-    return (
-      <div className="flex items-center gap-1.5 px-3 py-1.5 bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 rounded-full text-xs font-semibold shadow-sm mr-2 transition-all">
-        <CloudOff size={14} strokeWidth={2.5} />
-        <span>Offline Mode</span>
-      </div>
-    );
-  }
-
   // Combined render
   return (
-    <>
-      <button 
-        onClick={() => {
-          if (dirtyTransactions && dirtyTransactions.length > 0) {
-            setShowModal(true);
-          } else if (isOnline && (!dirtyTransactions || dirtyTransactions.length === 0)) {
-            // normal online, no action
-          }
-        }}
-        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold shadow-sm mr-2 transition-all cursor-${dirtyTransactions && dirtyTransactions.length > 0 ? 'pointer hover:opacity-80' : 'default'} ${
-          isSyncing 
-            ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-          : dirtyTransactions && dirtyTransactions.some(t => t.status === 'failed')
-            ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-          : dirtyTransactions && dirtyTransactions.length > 0
-            ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
-          : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+    <div className="flex items-center">
+      {/* Network Status Badge */}
+      <div 
+        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold shadow-sm mr-2 transition-all ${
+           isOnline 
+             ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 opacity-80 hover:opacity-100'
+             : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
         }`}
       >
-        {isSyncing ? (
-           <Loader2 size={14} className="animate-spin" strokeWidth={2.5} />
-        ) : dirtyTransactions && dirtyTransactions.some(t => t.status === 'failed') ? (
-           <AlertTriangle size={14} strokeWidth={2.5} />
-        ) : dirtyTransactions && dirtyTransactions.length > 0 ? (
-           <CloudUpload size={14} className="animate-bounce" strokeWidth={2.5} />
-        ) : (
-           <Cloud size={14} strokeWidth={2.5} />
-        )}
+        {isOnline ? <Cloud size={14} strokeWidth={2.5} /> : <CloudOff size={14} strokeWidth={2.5} />}
+        <span className="hidden sm:inline">{isOnline ? 'Online' : 'Offline Mode'}</span>
+      </div>
 
-        <span>
-          {isSyncing 
-            ? `${syncProgress.total} item sync in progress`
-          : dirtyTransactions && dirtyTransactions.some(t => t.status === 'failed')
-            ? `${dirtyTransactions.filter(t => t.status === 'failed').length} Gagal Sync`
-          : dirtyTransactions && dirtyTransactions.length > 0
-            ? `${dirtyTransactions.length} Pending`
-          : <span className="hidden sm:inline">Online</span>}
-        </span>
-      </button>
+      {/* Sync Queue Badge (Only if there's data to sync/failed) */}
+      {(dirtyTransactions && dirtyTransactions.length > 0) && (
+        <button 
+          onClick={() => setShowModal(true)}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold shadow-sm mr-2 transition-all cursor-pointer hover:opacity-80 ${
+            isSyncing 
+              ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+            : dirtyTransactions.some(t => t.status === 'failed')
+              ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+            : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+          }`}
+        >
+          {isSyncing ? (
+             <Loader2 size={14} className="animate-spin" strokeWidth={2.5} />
+          ) : dirtyTransactions.some(t => t.status === 'failed') ? (
+             <AlertTriangle size={14} strokeWidth={2.5} />
+          ) : (
+             <CloudUpload size={14} className="animate-bounce" strokeWidth={2.5} />
+          )}
+
+          <span>
+            {(() => {
+              if (isSyncing) return `${syncProgress.total} item sync in progress`;
+              const failed = dirtyTransactions.filter(t => t.status === 'failed').length;
+              const pending = dirtyTransactions.length - failed;
+              const text = [];
+              if (failed > 0) text.push(`${failed} item gagal sync`);
+              if (pending > 0) text.push(`${pending} item menunggu`);
+              return text.join(', ');
+            })()}
+          </span>
+        </button>
+      )}
 
       {/* Sync Queue Modal Portal */}
       {showModal && (
@@ -167,25 +165,41 @@ export default function SyncStatusWidget() {
             style={{
               position: 'fixed',
               inset: 0,
-              zIndex: 9999,
-              background: 'rgba(0,0,0,0.6)',
-              backdropFilter: 'blur(4px)',
+              zIndex: 5000,
               display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: 16,
+              justifyContent: 'flex-end',
             }}
             onClick={() => setShowModal(false)}
           >
+            <style>{`
+            @keyframes slideInRight {
+              from { transform: translateX(100%); }
+              to { transform: translateX(0); }
+            }
+          `}</style>
+            {/* Backdrop */}
+            <div
+              style={{
+                position: 'absolute',
+                inset: 0,
+                background: 'rgba(0,0,0,0.4)',
+                backdropFilter: 'blur(3px)',
+              }}
+            />
+            {/* Sidebar drawer content */}
             <div
               className="card"
               style={{
+                position: 'relative',
                 width: '100%',
                 maxWidth: 480,
-                maxHeight: '85vh',
+                height: '100%',
+                borderRadius: 0,
+                padding: 0,
                 display: 'flex',
                 flexDirection: 'column',
-                animation: 'slideIn 0.2s ease',
+                boxShadow: '-8px 0 32px rgba(0,0,0,0.15)',
+                animation: 'slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
               }}
               onClick={e => e.stopPropagation()}
             >
@@ -311,6 +325,6 @@ export default function SyncStatusWidget() {
           </div>
         </Portal>
       )}
-    </>
+    </div>
   );
 }
