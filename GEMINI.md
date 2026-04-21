@@ -24,3 +24,7 @@ Every time a task is completed, you MUST run the following commands to verify th
 
 - Go: Strict error handling is required (no ignored errors).
 - TypeScript: No `any` types; use strict interfaces.
+
+## Documentation Maintenance
+
+- **Architecture & Interfaces:** If any changes are made to the system's architecture, API surfaces, network routing, or domain logic across the stack, you MUST continuously update both `backend/README.md` and `frontend/README.md` to reflect the accurate, up-to-date system architecture and endpoints.
