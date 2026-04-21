@@ -5,6 +5,7 @@ import { LogOut, Sun, Moon, Menu } from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { useTheme } from '@/lib/theme/ThemeContext';
 import { useSidebar } from '@/lib/context/SidebarContext';
+import SyncStatusWidget from '@/components/ui/SyncStatusWidget';
 
 export default function Header() {
   const { user, selectedStore, logout } = useAuth();
@@ -33,7 +34,10 @@ export default function Header() {
         </div>
       </div>
 
-      <div className="header-right">
+      <div className="header-right flex items-center">
+        {/* Offline Sync Widget */}
+        <SyncStatusWidget />
+
         {/* Theme Toggle */}
         <button
           onClick={toggleTheme}

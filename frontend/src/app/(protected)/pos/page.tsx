@@ -21,6 +21,7 @@ import {
   ChevronDown,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthContext';
+import { useOfflineTransaction } from '@/hooks/useOfflineTransaction';
 import { productsApi } from '@/lib/api/products';
 import { menuItemsApi, customersApi, tablesApi } from '@/lib/api/store-apis';
 import { transactionsApi } from '@/lib/api/transactions';
@@ -644,8 +645,9 @@ function ReceiptModal({ txn, onClose }: { txn: Transaction; onClose: () => void 
 
 // ── Main POS Page ─────────────────────────────────────────────────────────────
 export default function POSPage() {
-  const { selectedStore } = useAuth();
+  const { user, selectedStore } = useAuth();
   const isRestaurant = selectedStore?.store_type === 'restaurant';
+  const { saveTransaction } = useOfflineTransaction(selectedStore?.store_id || '', user?.id || '');
 
   // ── Restaurant table selection state ────────────────────────────────────────
   const [tables, setTables] = useState<RestaurantTable[]>([]);
@@ -954,14 +956,6 @@ export default function POSPage() {
       setPayLoading(true);
       setError('');
       try {
-        const items = (cart as PosCartItem[]).map(i => ({
-          product_id: i.menuItemId ? '' : i.product.id,
-          menu_item_id: i.menuItemId ?? '',
-          quantity: i.quantity,
-          discount_pct: i.discountType === 'PERCENTAGE' ? i.discountValue : 0,
-          discount_type: i.discountType,
-          discount_value: i.discountValue,
-        }));
         let res;
         if (isRestaurant && activeDraft) {
           // Pay via the draft endpoint
@@ -975,18 +969,57 @@ export default function POSPage() {
           if (selectedTable) {
             await tablesApi.updateStatus(storeId, selectedTable.id, 'available').catch(() => {});
           }
+          setReceipt(res.data as Transaction);
         } else {
-          res = await transactionsApi.checkout(storeId, {
-            payment_method: method,
-            payment_amount: amount,
+          // OFFLINE-FIRST RETAIL CHECKOUT
+          const txItems = (cart as PosCartItem[]).map(i => ({
+            product_id: i.menuItemId ? null : i.product.id,
+            menu_item_id: i.menuItemId ?? null,
+            product_name: i.product.name,
+            sku: i.product.sku,
+            quantity: i.quantity,
+            original_price: i.originalPrice,
+            unit_price: i.unitPrice,
+            cost_price: i.product.cost_price,
+            discount_pct: i.discountType === 'PERCENTAGE' ? i.discountValue : 0,
+            discount_type: i.discountType,
+            discount_value: i.discountValue,
+            cart_discount_allocated: 0,
+            tax_rate: i.product.tax_rate ?? 0,
+            subtotal: i.subtotal,
+            status: 'completed',
+          }));
+
+          const payloadData = {
+            table_id: null,
             customer_name: selectedCustomer?.name ?? '',
             customer_phone: selectedCustomer?.phone ?? '',
-            items,
+            subtotal: subtotalAfterItems,
+            discount_amt: cartDiscountAmt,
+            tax_amt: taxAmt,
+            total: total,
+            payment_method: method,
+            payment_amount: amount,
+            change_amount: amount - total,
+            status: 'completed',
+            notes: '',
             cart_discount_type: cartDiscountType,
             cart_discount_value: cartDiscountValue,
-          });
+            items: txItems as any,
+          };
+
+          const result = await saveTransaction(payloadData);
+
+          setReceipt({
+            id: result.transactionId,
+            store_id: storeId,
+            cashier_id: user?.id || '',
+            cashier_name: user?.name,
+            ...payloadData,
+            created_at: new Date().toISOString(),
+          } as unknown as Transaction);
         }
-        setReceipt(res.data as Transaction);
+
         setSelectedCustomer(null);
         setCustSearch('');
         setShowPayment(false);

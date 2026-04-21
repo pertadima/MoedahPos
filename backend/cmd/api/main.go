@@ -109,6 +109,7 @@ func main() {
 	expenseSvc := service.NewExpenseService(expenseRepo, activityLogSvc, log)
 	stockAdjustmentSvc := service.NewStockAdjustmentService(stockAdjustmentRepo, activityLogSvc)
 	incomeSvc := service.NewIncomeService(incomeRepo, activityLogSvc, log)
+	syncSvc := service.NewSyncService(categoryRepo, productRepo, stockRepo, transactionRepo, log)
 
 	// ── Handlers ──────────────────────────────────────────────────────────────
 	authHandler := handler.NewAuthHandler(authSvc, validate, log)
@@ -129,6 +130,7 @@ func main() {
 	stockAdjustmentHandler := handler.NewStockAdjustmentHandler(stockAdjustmentSvc, validate, &log)
 	incomeHandler := handler.NewIncomeHandler(incomeSvc, validate, log)
 	activityLogHandler := handler.NewActivityLogHandler(activityLogSvc, log)
+	syncHandler := handler.NewSyncHandler(syncSvc, log)
 
 	// ── Router ────────────────────────────────────────────────────────────────
 	r := router.New(&router.Dependencies{
@@ -151,6 +153,7 @@ func main() {
 		StockAdjustmentHandler: stockAdjustmentHandler,
 		IncomeHandler:          incomeHandler,
 		ActivityLogHandler:     activityLogHandler,
+		SyncHandler:            syncHandler,
 		RoleStore:              roleStore,
 		DB:                     sqlxDB,
 		Log:                    log,

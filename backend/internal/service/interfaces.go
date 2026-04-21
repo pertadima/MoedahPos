@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"time"
 
 	"github.com/moedahpos/backend/internal/domain"
 	"github.com/moedahpos/backend/internal/dto"
@@ -175,4 +176,8 @@ type StoreServiceInterface interface {
 	AddMember(ctx context.Context, storeID string, req *dto.AddMemberRequest) error
 	UpdateMemberRole(ctx context.Context, storeID, userID string, req *dto.UpdateMemberRoleRequest) error
 	RemoveMember(ctx context.Context, storeID, userID string) error
+}
+
+type SyncServiceInterface interface {
+	Pull(ctx context.Context, storeID string, since time.Time) (*dto.SyncPullOutput, error)
 }

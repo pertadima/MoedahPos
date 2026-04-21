@@ -23,6 +23,8 @@ type Transaction struct {
 	CartDiscountValue float64   `db:"cart_discount_value"` // the cart-level discount amount
 	CreatedAt         time.Time `db:"created_at"`
 	UpdatedAt         time.Time `db:"updated_at"`
+	ServerUpdatedAt   time.Time `db:"server_updated_at"`
+	SyncVersion       int       `db:"sync_version"`
 
 	// Populated via JOIN
 	CashierName string            `db:"cashier_name"`

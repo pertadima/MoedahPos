@@ -4,6 +4,7 @@ package mocks
 
 import (
 	context "context"
+	time "time"
 
 	domain "github.com/moedahpos/backend/internal/domain"
 	dto "github.com/moedahpos/backend/internal/dto"
@@ -212,6 +213,36 @@ func (_m *ProductRepository) Update(ctx context.Context, p *domain.Product) (*do
 
 	if rf, ok := ret.Get(1).(func(context.Context, *domain.Product) error); ok {
 		r1 = rf(ctx, p)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetModifiedSince provides a mock function with given fields: ctx, storeID, since
+func (_m *ProductRepository) GetModifiedSince(ctx context.Context, storeID string, since time.Time) ([]*domain.Product, error) {
+	ret := _m.Called(ctx, storeID, since)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetModifiedSince")
+	}
+
+	var r0 []*domain.Product
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, time.Time) ([]*domain.Product, error)); ok {
+		return rf(ctx, storeID, since)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, time.Time) []*domain.Product); ok {
+		r0 = rf(ctx, storeID, since)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*domain.Product)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, time.Time) error); ok {
+		r1 = rf(ctx, storeID, since)
 	} else {
 		r1 = ret.Error(1)
 	}
