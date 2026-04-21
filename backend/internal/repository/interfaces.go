@@ -265,3 +265,35 @@ type IncomeRepository interface {
 	Update(ctx context.Context, inc *domain.Income) (*domain.Income, error)
 	Delete(ctx context.Context, id, storeID string) error
 }
+
+// ─── Loyalty System ───────────────────────────────────────────────────────────
+
+// MembershipTierRepository manages loyalty tier configuration records.
+type MembershipTierRepository interface {
+	// FindAll returns all configured membership tiers.
+	FindAll(ctx context.Context) ([]*domain.MembershipTier, error)
+	// FindByID returns a single tier by its UUID.
+	FindByID(ctx context.Context, id string) (*domain.MembershipTier, error)
+}
+
+// LoyaltyRepository manages the immutable loyalty ledger for customers.
+type LoyaltyRepository interface {
+	// GetBalance returns the sum of all point deltas for a customer (current balance).
+	GetBalance(ctx context.Context, customerID string) (float64, error)
+	// EarnPoints appends a positive EARN entry to the ledger.
+	EarnPoints(ctx context.Context, customerID string, transactionID *string, points float64) (*domain.LoyaltyLedger, error)
+	// SpendPoints appends a negative SPEND entry to the ledger.
+	SpendPoints(ctx context.Context, customerID string, transactionID *string, points float64) (*domain.LoyaltyLedger, error)
+	// GetHistory returns all ledger entries for a customer, newest first.
+	GetHistory(ctx context.Context, customerID string) ([]*domain.LoyaltyLedger, error)
+	// AssignTier updates the customer's loyalty_tier_id.
+	AssignTier(ctx context.Context, customerID, tierID string) error
+	// GetCustomerTier returns the tier for a customer (nil if unassigned).
+	GetCustomerTier(ctx context.Context, customerID string) (*domain.MembershipTier, error)
+}
+
+// CustomerSyncRepository adds delta-sync support to the customer repository.
+// Implemented by the same postgres struct that implements CustomerRepository.
+type CustomerSyncRepository interface {
+	GetModifiedSince(ctx context.Context, storeID string, since time.Time) ([]*domain.Customer, error)
+}

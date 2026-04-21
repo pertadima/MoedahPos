@@ -88,6 +88,8 @@ func main() {
 	stockAdjustmentRepo := postgres.NewStockAdjustmentRepo(sqlxDB)
 	incomeRepo := postgres.NewIncomeRepo(sqlxDB)
 	activityLogRepo := postgres.NewActivityLogRepo(sqlxDB)
+	loyaltyRepo := postgres.NewLoyaltyRepo(sqlxDB)
+	tierRepo := postgres.NewMembershipTierRepo(sqlxDB)
 
 	// ── Services ──────────────────────────────────────────────────────────────
 	batchSvc := service.NewBatchStockService(batchRepo, log) // FIFO batch inventory
@@ -109,7 +111,8 @@ func main() {
 	expenseSvc := service.NewExpenseService(expenseRepo, activityLogSvc, log)
 	stockAdjustmentSvc := service.NewStockAdjustmentService(stockAdjustmentRepo, activityLogSvc)
 	incomeSvc := service.NewIncomeService(incomeRepo, activityLogSvc, log)
-	syncSvc := service.NewSyncService(categoryRepo, productRepo, stockRepo, transactionRepo, log)
+	syncSvc := service.NewSyncService(categoryRepo, productRepo, stockRepo, transactionRepo, customerRepo, log)
+	loyaltySvc := service.NewLoyaltyService(loyaltyRepo, tierRepo, customerRepo, log)
 
 	// ── Handlers ──────────────────────────────────────────────────────────────
 	authHandler := handler.NewAuthHandler(authSvc, validate, log)
@@ -131,6 +134,7 @@ func main() {
 	incomeHandler := handler.NewIncomeHandler(incomeSvc, validate, log)
 	activityLogHandler := handler.NewActivityLogHandler(activityLogSvc, log)
 	syncHandler := handler.NewSyncHandler(syncSvc, log)
+	loyaltyHandler := handler.NewLoyaltyHandler(loyaltySvc, validate, log)
 
 	// ── Router ────────────────────────────────────────────────────────────────
 	r := router.New(&router.Dependencies{
@@ -154,6 +158,7 @@ func main() {
 		IncomeHandler:          incomeHandler,
 		ActivityLogHandler:     activityLogHandler,
 		SyncHandler:            syncHandler,
+		LoyaltyHandler:         loyaltyHandler,
 		RoleStore:              roleStore,
 		DB:                     sqlxDB,
 		Log:                    log,

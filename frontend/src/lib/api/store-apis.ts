@@ -7,6 +7,9 @@ import type {
   StockLevel,
   StockMovement,
   PaginatedData,
+  MembershipTier,
+  LoyaltyBalance,
+  LoyaltyLedgerEntry,
 } from '@/types';
 
 export const storesApi = {
@@ -343,4 +346,67 @@ export const incomesApi = {
   update: (storeId: string, id: string, body: object) =>
     api.put<any>(`/stores/${storeId}/incomes/${id}`, body),
   delete: (storeId: string, id: string) => api.delete<any>(`/stores/${storeId}/incomes/${id}`),
+};
+
+export const loyaltyApi = {
+  /** List all membership tiers for a store. */
+  listTiers: async (storeId: string): Promise<MembershipTier[]> => {
+    const res = await api.get<MembershipTier[]>(`/stores/${storeId}/loyalty/tiers`);
+    return res.data;
+  },
+
+  /** Get a customer's current point balance and tier. */
+  getBalance: async (storeId: string, customerId: string): Promise<LoyaltyBalance> => {
+    const res = await api.get<LoyaltyBalance>(
+      `/stores/${storeId}/customers/${customerId}/loyalty`
+    );
+    return res.data;
+  },
+
+  /** Credit points after a completed transaction. */
+  earnPoints: async (
+    storeId: string,
+    customerId: string,
+    body: { transaction_id: string; total: number }
+  ): Promise<LoyaltyLedgerEntry> => {
+    const res = await api.post<LoyaltyLedgerEntry>(
+      `/stores/${storeId}/customers/${customerId}/loyalty/earn`,
+      body
+    );
+    return res.data;
+  },
+
+  /** Redeem points during checkout. */
+  redeemPoints: async (
+    storeId: string,
+    customerId: string,
+    body: { points: number }
+  ): Promise<LoyaltyLedgerEntry> => {
+    const res = await api.post<LoyaltyLedgerEntry>(
+      `/stores/${storeId}/customers/${customerId}/loyalty/redeem`,
+      body
+    );
+    return res.data;
+  },
+
+  /** Get the full point ledger history for a customer. */
+  getHistory: async (storeId: string, customerId: string): Promise<LoyaltyLedgerEntry[]> => {
+    const res = await api.get<LoyaltyLedgerEntry[]>(
+      `/stores/${storeId}/customers/${customerId}/loyalty/history`
+    );
+    return res.data;
+  },
+
+  /** Assign a tier to a customer. */
+  assignTier: async (
+    storeId: string,
+    customerId: string,
+    body: { tier_id: string }
+  ): Promise<{ status: string }> => {
+    const res = await api.put<{ status: string }>(
+      `/stores/${storeId}/customers/${customerId}/loyalty/tier`,
+      body
+    );
+    return res.data;
+  },
 };

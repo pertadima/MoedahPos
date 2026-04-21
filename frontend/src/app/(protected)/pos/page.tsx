@@ -19,9 +19,11 @@ import {
   Users,
   Tag,
   ChevronDown,
+  Star,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { useOfflineTransaction } from '@/hooks/useOfflineTransaction';
+import { useLoyalty } from '@/hooks/useLoyalty';
 import { productsApi } from '@/lib/api/products';
 import { menuItemsApi, customersApi, tablesApi } from '@/lib/api/store-apis';
 import { transactionsApi } from '@/lib/api/transactions';
@@ -694,7 +696,20 @@ export default function POSPage() {
   const [custOpen, setCustOpen] = useState(false);
   const custRef = useRef<HTMLDivElement>(null);
 
+  // Loyalty
+  const loyalty = useLoyalty();
+
   const storeId = selectedStore?.store_id;
+
+  // Fetch loyalty balance whenever a customer is selected
+  useEffect(() => {
+    if (storeId && selectedCustomer) {
+      loyalty.fetchBalance(storeId, selectedCustomer.id);
+    } else {
+      loyalty.reset();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [storeId, selectedCustomer?.id]);
 
   // Customer search
   const searchCustomers = useCallback(
@@ -1018,10 +1033,17 @@ export default function POSPage() {
             ...payloadData,
             created_at: new Date().toISOString(),
           } as unknown as Transaction);
+          // Earn loyalty points for the customer (fire-and-forget)
+          if (selectedCustomer) {
+            loyalty
+              .earnPoints(storeId, selectedCustomer.id, result.transactionId, total)
+              .catch(() => {});
+          }
         }
 
         setSelectedCustomer(null);
         setCustSearch('');
+        loyalty.reset();
         setShowPayment(false);
         setCartDiscountValue(0);
         setCartDiscountType('PERCENTAGE');
@@ -1607,6 +1629,32 @@ export default function POSPage() {
                 {selectedCustomer.phone && (
                   <div style={{ fontSize: '0.72rem', color: 'var(--text-3)' }}>
                     {selectedCustomer.phone}
+                  </div>
+                )}
+                {/* Loyalty balance badge */}
+                {loyalty.balance && (
+                  <div
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 3,
+                      marginTop: 2,
+                      background: 'rgba(251,191,36,0.15)',
+                      border: '1px solid rgba(251,191,36,0.4)',
+                      borderRadius: 4,
+                      padding: '1px 6px',
+                      fontSize: '0.7rem',
+                      fontWeight: 700,
+                      color: '#f59e0b',
+                    }}
+                  >
+                    <Star size={10} style={{ fill: '#f59e0b', color: '#f59e0b' }} />
+                    {loyalty.balance.balance.toLocaleString('id-ID')} pts
+                    {loyalty.balance.tier && (
+                      <span style={{ fontWeight: 400, color: 'var(--text-3)', marginLeft: 3 }}>
+                        · {loyalty.balance.tier.name}
+                      </span>
+                    )}
                   </div>
                 )}
               </div>
@@ -2420,6 +2468,38 @@ export default function POSPage() {
           {holdError && (
             <div style={{ fontSize: '0.8rem', color: '#f87171', padding: '4px 0' }}>
               {holdError}
+            </div>
+          )}
+
+          {/* Loyalty points preview */}
+          {selectedCustomer && cart.length > 0 && (
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '6px 10px',
+                background: 'rgba(251,191,36,0.08)',
+                border: '1px solid rgba(251,191,36,0.25)',
+                borderRadius: 7,
+                marginBottom: 4,
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 5,
+                  fontSize: '0.78rem',
+                  color: '#f59e0b',
+                }}
+              >
+                <Star size={12} style={{ fill: '#f59e0b', color: '#f59e0b' }} />
+                Poin yang akan didapat
+              </div>
+              <span style={{ fontWeight: 700, fontSize: '0.82rem', color: '#f59e0b' }}>
+                +{loyalty.previewEarnings(total).toLocaleString('id-ID')} pts
+              </span>
             </div>
           )}
 

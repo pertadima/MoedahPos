@@ -70,17 +70,50 @@ export interface LocalTransaction {
   sync_error?: string;
 }
 
+/** Mirrors the customers table for offline lookup (sync delta populated). */
+export interface LocalCustomer {
+  id: string;
+  store_id: string;
+  name: string;
+  phone: string | null;
+  email: string | null;
+  loyalty_tier_id: string | null;
+  server_updated_at: string;
+  sync_version: number;
+}
+
+/** Lightweight menu item cache for offline restaurant orders. */
+export interface LocalMenuItem {
+  id: string;
+  store_id: string;
+  name: string;
+  sell_price: number;
+  category_id: string | null;
+  is_available: boolean;
+}
+
 const db = new Dexie('MoedahPOSDatabase') as Dexie & {
   categories: EntityTable<LocalCategory, 'id'>;
   products: EntityTable<LocalProduct, 'id'>;
   transactions: EntityTable<LocalTransaction, 'id'>;
+  customers: EntityTable<LocalCustomer, 'id'>;
+  menu_items: EntityTable<LocalMenuItem, 'id'>;
 };
 
-// Database schema configuration
+// v1 — original schema
 db.version(1).stores({
   categories: 'id, store_id, name, parent_id, server_updated_at',
   products: 'id, store_id, category_id, sku, barcode, name, server_updated_at',
   transactions: 'id, store_id, cashier_id, status, is_dirty, created_at',
+});
+
+// v2 — added customers & menu_items tables for loyalty + offline restaurant mode
+db.version(2).stores({
+  categories: 'id, store_id, name, parent_id, server_updated_at',
+  products: 'id, store_id, category_id, sku, barcode, name, server_updated_at',
+  transactions: 'id, store_id, cashier_id, status, is_dirty, created_at',
+  customers: 'id, store_id, phone, name, server_updated_at',
+  menu_items: 'id, store_id, name, category_id',
 });
 
 export { db };

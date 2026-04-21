@@ -1,3 +1,5 @@
+-- +goose Up
+-- +goose StatementBegin
 -- Offline Sync Fields Migration
 
 -- 1. Add fields to products
@@ -42,3 +44,26 @@ CREATE TRIGGER stock_levels_sync_trigger BEFORE UPDATE ON stock_levels FOR EACH 
 -- Transactions
 DROP TRIGGER IF EXISTS transactions_sync_trigger ON transactions;
 CREATE TRIGGER transactions_sync_trigger BEFORE UPDATE ON transactions FOR EACH ROW EXECUTE FUNCTION update_sync_fields();
+-- +goose StatementEnd
+
+-- +goose Down
+-- +goose StatementBegin
+DROP TRIGGER IF EXISTS transactions_sync_trigger ON transactions;
+DROP TRIGGER IF EXISTS stock_levels_sync_trigger ON stock_levels;
+DROP TRIGGER IF EXISTS categories_sync_trigger ON categories;
+DROP TRIGGER IF EXISTS products_sync_trigger ON products;
+
+DROP FUNCTION IF EXISTS update_sync_fields();
+
+ALTER TABLE transactions DROP COLUMN IF EXISTS server_updated_at;
+ALTER TABLE transactions DROP COLUMN IF EXISTS sync_version;
+
+ALTER TABLE stock_levels DROP COLUMN IF EXISTS server_updated_at;
+ALTER TABLE stock_levels DROP COLUMN IF EXISTS sync_version;
+
+ALTER TABLE categories DROP COLUMN IF EXISTS server_updated_at;
+ALTER TABLE categories DROP COLUMN IF EXISTS sync_version;
+
+ALTER TABLE products DROP COLUMN IF EXISTS server_updated_at;
+ALTER TABLE products DROP COLUMN IF EXISTS sync_version;
+-- +goose StatementEnd
