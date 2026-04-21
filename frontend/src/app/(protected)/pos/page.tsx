@@ -1009,7 +1009,7 @@ export default function POSPage() {
           };
 
           const result = await saveTransaction(payloadData);
-          
+
           setReceipt({
             id: result.transactionId,
             store_id: storeId,
@@ -1019,7 +1019,7 @@ export default function POSPage() {
             created_at: new Date().toISOString(),
           } as unknown as Transaction);
         }
-        
+
         setSelectedCustomer(null);
         setCustSearch('');
         setShowPayment(false);

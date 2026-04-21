@@ -6,9 +6,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/rs/zerolog"
+
 	"github.com/moedahpos/backend/internal/domain"
 	"github.com/moedahpos/backend/internal/dto"
-	"github.com/rs/zerolog"
 )
 
 // Dummy Repositories
@@ -123,6 +124,7 @@ func (m *mockTxnRepo) GetModifiedSince(_ context.Context, _ string, _ time.Time)
 	return m.txns, m.err
 }
 
+//nolint:gocognit,cyclop,funlen
 func TestSyncService_Pull(t *testing.T) {
 	nopLog := zerolog.Nop()
 

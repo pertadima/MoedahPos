@@ -31,7 +31,7 @@ export const useOfflineTransaction = (storeId: string, cashierId: string) => {
       try {
         await transactionsApi.syncOffline(storeId, localTx);
 
-        // 4. On success, mark clean. 
+        // 4. On success, mark clean.
         // Our backend sync endpoint will issue the server_updated_at later.
         await db.transactions.update(txId, { is_dirty: false });
 
