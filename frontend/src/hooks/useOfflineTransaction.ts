@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { db, LocalTransaction } from '../lib/dexie';
+import { db, type LocalTransaction } from '../lib/dexie';
 import { transactionsApi } from '../lib/api/transactions';
 
 export const useOfflineTransaction = (storeId: string, cashierId: string) => {

@@ -17,12 +17,20 @@ type mockCategoryRepo struct {
 	err  error
 }
 
-func (m *mockCategoryRepo) Create(ctx context.Context, cat *domain.Category) (*domain.Category, error) { return nil, nil }
-func (m *mockCategoryRepo) FindAllByStore(ctx context.Context, storeID string) ([]*domain.Category, error) { return nil, nil }
-func (m *mockCategoryRepo) FindByID(ctx context.Context, id string) (*domain.Category, error) { return nil, nil }
-func (m *mockCategoryRepo) Update(ctx context.Context, cat *domain.Category) (*domain.Category, error) { return nil, nil }
-func (m *mockCategoryRepo) SoftDelete(ctx context.Context, id string) error { return nil }
-func (m *mockCategoryRepo) GetModifiedSince(ctx context.Context, storeID string, since time.Time) ([]*domain.Category, error) {
+func (m *mockCategoryRepo) Create(_ context.Context, _ *domain.Category) (*domain.Category, error) {
+	return nil, nil
+}
+func (m *mockCategoryRepo) FindAllByStore(_ context.Context, _ string) ([]*domain.Category, error) {
+	return nil, nil
+}
+func (m *mockCategoryRepo) FindByID(_ context.Context, _ string) (*domain.Category, error) {
+	return nil, nil
+}
+func (m *mockCategoryRepo) Update(_ context.Context, _ *domain.Category) (*domain.Category, error) {
+	return nil, nil
+}
+func (m *mockCategoryRepo) SoftDelete(_ context.Context, _ string) error { return nil }
+func (m *mockCategoryRepo) GetModifiedSince(_ context.Context, _ string, _ time.Time) ([]*domain.Category, error) {
 	return m.cats, m.err
 }
 
@@ -31,14 +39,26 @@ type mockProductRepo struct {
 	err   error
 }
 
-func (m *mockProductRepo) Create(ctx context.Context, p *domain.Product) (*domain.Product, error) { return nil, nil }
-func (m *mockProductRepo) FindAll(ctx context.Context, filter dto.ProductListFilter) ([]*domain.Product, int, error) { return nil, 0, nil }
-func (m *mockProductRepo) FindByID(ctx context.Context, id string) (*domain.Product, error) { return nil, nil }
-func (m *mockProductRepo) FindByBarcode(ctx context.Context, storeID, barcode string) (*domain.Product, error) { return nil, nil }
-func (m *mockProductRepo) ExistsBySKU(ctx context.Context, storeID, sku string, excludeID string) (bool, error) { return false, nil }
-func (m *mockProductRepo) Update(ctx context.Context, p *domain.Product) (*domain.Product, error) { return nil, nil }
-func (m *mockProductRepo) SoftDelete(ctx context.Context, id string) error { return nil }
-func (m *mockProductRepo) GetModifiedSince(ctx context.Context, storeID string, since time.Time) ([]*domain.Product, error) {
+func (m *mockProductRepo) Create(_ context.Context, _ *domain.Product) (*domain.Product, error) {
+	return nil, nil
+}
+func (m *mockProductRepo) FindAll(_ context.Context, _ dto.ProductListFilter) ([]*domain.Product, int, error) {
+	return nil, 0, nil
+}
+func (m *mockProductRepo) FindByID(_ context.Context, _ string) (*domain.Product, error) {
+	return nil, nil
+}
+func (m *mockProductRepo) FindByBarcode(_ context.Context, _ string, _ string) (*domain.Product, error) {
+	return nil, nil
+}
+func (m *mockProductRepo) ExistsBySKU(_ context.Context, _ string, _ string, _ string) (bool, error) {
+	return false, nil
+}
+func (m *mockProductRepo) Update(_ context.Context, _ *domain.Product) (*domain.Product, error) {
+	return nil, nil
+}
+func (m *mockProductRepo) SoftDelete(_ context.Context, _ string) error { return nil }
+func (m *mockProductRepo) GetModifiedSince(_ context.Context, _ string, _ time.Time) ([]*domain.Product, error) {
 	return m.prods, m.err
 }
 
@@ -47,13 +67,25 @@ type mockStockRepo struct {
 	err    error
 }
 
-func (m *mockStockRepo) FindLevelsByStore(ctx context.Context, storeID string, lowStockOnly bool) ([]*domain.StockLevel, error) { return nil, nil }
-func (m *mockStockRepo) FindLevelByProduct(ctx context.Context, productID, storeID string) (*domain.StockLevel, error) { return nil, nil }
-func (m *mockStockRepo) SetMinQuantity(ctx context.Context, productID, storeID string, min float64) error { return nil }
-func (m *mockStockRepo) Adjust(ctx context.Context, input domain.AdjustInput) (*domain.StockLevel, error) { return nil, nil }
-func (m *mockStockRepo) FindMovements(ctx context.Context, filter dto.StockMovementFilter) ([]*domain.StockMovement, int, error) { return nil, 0, nil }
-func (m *mockStockRepo) DeductStock(ctx context.Context, productID, storeID string, qty float64, refID, cashierID string) error { return nil }
-func (m *mockStockRepo) GetModifiedSince(ctx context.Context, storeID string, since time.Time) ([]*domain.StockLevel, error) {
+func (m *mockStockRepo) FindLevelsByStore(_ context.Context, _ string, _ bool) ([]*domain.StockLevel, error) {
+	return nil, nil
+}
+func (m *mockStockRepo) FindLevelByProduct(_ context.Context, _ string, _ string) (*domain.StockLevel, error) {
+	return nil, nil
+}
+func (m *mockStockRepo) SetMinQuantity(_ context.Context, _ string, _ string, _ float64) error {
+	return nil
+}
+func (m *mockStockRepo) Adjust(_ context.Context, _ domain.AdjustInput) (*domain.StockLevel, error) {
+	return nil, nil
+}
+func (m *mockStockRepo) FindMovements(_ context.Context, _ dto.StockMovementFilter) ([]*domain.StockMovement, int, error) {
+	return nil, 0, nil
+}
+func (m *mockStockRepo) DeductStock(_ context.Context, _ string, _ string, _ float64, _ string, _ string) error {
+	return nil
+}
+func (m *mockStockRepo) GetModifiedSince(_ context.Context, _ string, _ time.Time) ([]*domain.StockLevel, error) {
 	return m.levels, m.err
 }
 
@@ -62,19 +94,34 @@ type mockTxnRepo struct {
 	err  error
 }
 
-func (m *mockTxnRepo) Create(ctx context.Context, input domain.CreateTransactionInput) (*domain.Transaction, error) { return nil, nil }
-func (m *mockTxnRepo) FindAll(ctx context.Context, filter dto.TransactionListFilter) ([]*domain.Transaction, int, error) { return nil, 0, nil }
-func (m *mockTxnRepo) FindByID(ctx context.Context, id string) (*domain.Transaction, error) { return nil, nil }
-func (m *mockTxnRepo) Void(ctx context.Context, txnID, userID string) error { return nil }
-func (m *mockTxnRepo) GetDraftByTable(ctx context.Context, storeID, tableID string) (*domain.Transaction, error) { return nil, nil }
-func (m *mockTxnRepo) UpdateDraftItems(ctx context.Context, txnID string, items []domain.CreateTransactionItemInput, subtotal, discountAmt, taxAmt, total float64, customerName, notes string) (*domain.Transaction, error) { return nil, nil }
-func (m *mockTxnRepo) PayDraft(ctx context.Context, input domain.PayDraftInput, storeID, cashierID string) (*domain.Transaction, error) { return nil, nil }
-func (m *mockTxnRepo) GetKDSTickets(ctx context.Context, storeID string) ([]*domain.Transaction, error) { return nil, nil }
-func (m *mockTxnRepo) UpdateKDSItemStatus(ctx context.Context, itemID, status string) error { return nil }
-func (m *mockTxnRepo) GetModifiedSince(ctx context.Context, storeID string, since time.Time) ([]*domain.Transaction, error) {
+func (m *mockTxnRepo) Create(_ context.Context, _ domain.CreateTransactionInput) (*domain.Transaction, error) {
+	return nil, nil
+}
+func (m *mockTxnRepo) FindAll(_ context.Context, _ dto.TransactionListFilter) ([]*domain.Transaction, int, error) {
+	return nil, 0, nil
+}
+func (m *mockTxnRepo) FindByID(_ context.Context, _ string) (*domain.Transaction, error) {
+	return nil, nil
+}
+func (m *mockTxnRepo) Void(_ context.Context, _ string, _ string) error { return nil }
+func (m *mockTxnRepo) GetDraftByTable(_ context.Context, _ string, _ string) (*domain.Transaction, error) {
+	return nil, nil
+}
+func (m *mockTxnRepo) UpdateDraftItems(_ context.Context, _ string, _ []domain.CreateTransactionItemInput, _ float64, _ float64, _ float64, _ float64, _ string, _ string) (*domain.Transaction, error) {
+	return nil, nil
+}
+func (m *mockTxnRepo) PayDraft(_ context.Context, _ domain.PayDraftInput, _ string, _ string) (*domain.Transaction, error) {
+	return nil, nil
+}
+func (m *mockTxnRepo) GetKDSTickets(_ context.Context, _ string) ([]*domain.Transaction, error) {
+	return nil, nil
+}
+func (m *mockTxnRepo) UpdateKDSItemStatus(_ context.Context, _ string, _ string) error {
+	return nil
+}
+func (m *mockTxnRepo) GetModifiedSince(_ context.Context, _ string, _ time.Time) ([]*domain.Transaction, error) {
 	return m.txns, m.err
 }
-
 
 func TestSyncService_Pull(t *testing.T) {
 	nopLog := zerolog.Nop()
@@ -86,7 +133,7 @@ func TestSyncService_Pull(t *testing.T) {
 		txnRepo := &mockTxnRepo{txns: []*domain.Transaction{{ID: "tx1"}}}
 
 		svc := NewSyncService(catRepo, prodRepo, stockRepo, txnRepo, nopLog)
-		
+
 		res, err := svc.Pull(context.Background(), "s1", time.Now())
 		if err != nil {
 			t.Fatalf("expected no error, got %v", err)
@@ -113,7 +160,7 @@ func TestSyncService_Pull(t *testing.T) {
 		txnRepo := &mockTxnRepo{txns: nil}
 
 		svc := NewSyncService(catRepo, prodRepo, stockRepo, txnRepo, nopLog)
-		
+
 		res, err := svc.Pull(context.Background(), "s1", time.Now())
 		if err != nil {
 			t.Fatalf("expected no error, got %v", err)

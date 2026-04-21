@@ -956,14 +956,6 @@ export default function POSPage() {
       setPayLoading(true);
       setError('');
       try {
-        const items = (cart as PosCartItem[]).map(i => ({
-          product_id: i.menuItemId ? '' : i.product.id,
-          menu_item_id: i.menuItemId ?? '',
-          quantity: i.quantity,
-          discount_pct: i.discountType === 'PERCENTAGE' ? i.discountValue : 0,
-          discount_type: i.discountType,
-          discount_value: i.discountValue,
-        }));
         let res;
         if (isRestaurant && activeDraft) {
           // Pay via the draft endpoint

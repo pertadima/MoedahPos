@@ -4,12 +4,12 @@ import "time"
 
 // StockLevel tracks current quantity for a product at a specific store.
 type StockLevel struct {
-	ID          string    `db:"id"`
-	ProductID   string    `db:"product_id"`
-	StoreID     string    `db:"store_id"`
-	Quantity    float64   `db:"quantity"`
-	MinQuantity float64   `db:"min_quantity"`
-	UpdatedAt   time.Time `db:"updated_at"`
+	ID              string    `db:"id"`
+	ProductID       string    `db:"product_id"`
+	StoreID         string    `db:"store_id"`
+	Quantity        float64   `db:"quantity"`
+	MinQuantity     float64   `db:"min_quantity"`
+	UpdatedAt       time.Time `db:"updated_at"`
 	ServerUpdatedAt time.Time `db:"server_updated_at"`
 	SyncVersion     int       `db:"sync_version"`
 

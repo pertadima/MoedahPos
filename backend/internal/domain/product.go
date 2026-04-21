@@ -4,23 +4,23 @@ import "time"
 
 // Product is a sellable item belonging to a store.
 type Product struct {
-	ID            string     `db:"id"`
-	StoreID       string     `db:"store_id"`
-	CategoryID    *string    `db:"category_id"`
-	SKU           string     `db:"sku"`
-	Name          string     `db:"name"`
-	Description   *string    `db:"description"`
-	Barcode       *string    `db:"barcode"`
-	Unit          string     `db:"unit"`
-	CostPrice     float64    `db:"cost_price"`
-	SellPrice     float64    `db:"sell_price"`
-	UseGlobalTax  bool       `db:"use_global_tax"`
-	TaxPercentage *float64   `db:"tax_percentage"`
-	ImageURL      *string    `db:"image_url"`
-	IsActive      bool       `db:"is_active"`
-	CreatedAt     time.Time  `db:"created_at"`
-	UpdatedAt     time.Time  `db:"updated_at"`
-	DeletedAt     *time.Time `db:"deleted_at"`
+	ID              string     `db:"id"`
+	StoreID         string     `db:"store_id"`
+	CategoryID      *string    `db:"category_id"`
+	SKU             string     `db:"sku"`
+	Name            string     `db:"name"`
+	Description     *string    `db:"description"`
+	Barcode         *string    `db:"barcode"`
+	Unit            string     `db:"unit"`
+	CostPrice       float64    `db:"cost_price"`
+	SellPrice       float64    `db:"sell_price"`
+	UseGlobalTax    bool       `db:"use_global_tax"`
+	TaxPercentage   *float64   `db:"tax_percentage"`
+	ImageURL        *string    `db:"image_url"`
+	IsActive        bool       `db:"is_active"`
+	CreatedAt       time.Time  `db:"created_at"`
+	UpdatedAt       time.Time  `db:"updated_at"`
+	DeletedAt       *time.Time `db:"deleted_at"`
 	ServerUpdatedAt time.Time  `db:"server_updated_at"`
 	SyncVersion     int        `db:"sync_version"`
 
@@ -42,13 +42,13 @@ func (p *Product) EffectiveTaxRate() float64 {
 
 // Category groups products within a store (supports nested parent/child).
 type Category struct {
-	ID        string     `db:"id"`
-	StoreID   string     `db:"store_id"`
-	Name      string     `db:"name"`
-	ParentID  *string    `db:"parent_id"`
-	CreatedAt time.Time  `db:"created_at"`
-	UpdatedAt time.Time  `db:"updated_at"`
-	DeletedAt *time.Time `db:"deleted_at"`
+	ID              string     `db:"id"`
+	StoreID         string     `db:"store_id"`
+	Name            string     `db:"name"`
+	ParentID        *string    `db:"parent_id"`
+	CreatedAt       time.Time  `db:"created_at"`
+	UpdatedAt       time.Time  `db:"updated_at"`
+	DeletedAt       *time.Time `db:"deleted_at"`
 	ServerUpdatedAt time.Time  `db:"server_updated_at"`
 	SyncVersion     int        `db:"sync_version"`
 
