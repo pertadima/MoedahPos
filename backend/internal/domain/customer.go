@@ -17,4 +17,9 @@ type Customer struct {
 	DeletedAt       *time.Time `db:"deleted_at"`
 	ServerUpdatedAt time.Time  `db:"server_updated_at"`
 	SyncVersion     int        `db:"sync_version"`
+
+	// Joined loyalty fields (read-only)
+	LoyaltyTierName *string  `db:"loyalty_tier_name"`
+	LoyaltyTierMult *float64 `db:"loyalty_tier_mult"`
+	LoyaltyBalance  float64  `db:"loyalty_balance"`
 }

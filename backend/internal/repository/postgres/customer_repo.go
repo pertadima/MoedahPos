@@ -21,6 +21,13 @@ const customerColsBase = `id, store_id, name, phone, email, address, notes, crea
 // Only used in sync-specific queries where we know the migration has run.
 const customerColsFull = customerColsBase + `, loyalty_tier_id, server_updated_at, sync_version`
 
+const customerColsWithLoyalty = `
+	c.id, c.store_id, c.name, c.phone, c.email, c.address, c.notes, c.created_at, c.updated_at, c.deleted_at, c.loyalty_tier_id,
+	t.name AS loyalty_tier_name,
+	t.multiplier AS loyalty_tier_mult,
+	COALESCE((SELECT SUM(points_delta) FROM loyalty_ledger WHERE customer_id = c.id), 0) AS loyalty_balance
+`
+
 // CustomerRepo is the PostgreSQL implementation for customers.
 type CustomerRepo struct{ db *sqlx.DB }
 
@@ -57,7 +64,14 @@ func (r *CustomerRepo) FindAll(ctx context.Context, f dto.CustomerListFilter) ([
 	}
 
 	args = append(args, f.PerPage, f.Offset())
-	q := fmt.Sprintf(`SELECT `+customerColsBase+` FROM customers %s ORDER BY name ASC LIMIT $%d OFFSET $%d`, where, i, i+1)
+	q := fmt.Sprintf(`
+		SELECT `+customerColsWithLoyalty+` 
+		FROM customers c 
+		LEFT JOIN membership_tiers t ON c.loyalty_tier_id = t.id 
+		%s 
+		ORDER BY c.name ASC 
+		LIMIT $%d OFFSET $%d
+	`, strings.ReplaceAll(where, "store_id", "c.store_id"), i, i+1)
 	var rows []*domain.Customer
 	if err := r.db.SelectContext(ctx, &rows, q, args...); err != nil {
 		return nil, 0, fmt.Errorf("CustomerRepo.FindAll: %w", err)
@@ -66,7 +80,12 @@ func (r *CustomerRepo) FindAll(ctx context.Context, f dto.CustomerListFilter) ([
 }
 
 func (r *CustomerRepo) FindByID(ctx context.Context, id string) (*domain.Customer, error) {
-	q := `SELECT ` + customerColsBase + ` FROM customers WHERE id=$1 AND deleted_at IS NULL`
+	q := `
+		SELECT ` + customerColsWithLoyalty + ` 
+		FROM customers c 
+		LEFT JOIN membership_tiers t ON c.loyalty_tier_id = t.id 
+		WHERE c.id=$1 AND c.deleted_at IS NULL
+	`
 	c := &domain.Customer{}
 	if err := r.db.QueryRowxContext(ctx, q, id).StructScan(c); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -126,4 +145,3 @@ func (r *CustomerRepo) GetModifiedSince(ctx context.Context, storeID string, sin
 	}
 	return rows, nil
 }
-

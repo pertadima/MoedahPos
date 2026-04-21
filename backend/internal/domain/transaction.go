@@ -57,6 +57,7 @@ type TransactionItem struct {
 // CreateTransactionInput carries service-calculated values to the repository.
 // The service resolves products and calculates all amounts before calling the repo.
 type CreateTransactionInput struct {
+	ID                string
 	StoreID           string
 	CashierID         string
 	TableID           *string // nil = retail

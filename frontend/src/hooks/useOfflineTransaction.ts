@@ -29,13 +29,14 @@ export const useOfflineTransaction = (storeId: string, cashierId: string) => {
 
       // 3. Attempt network POST
       try {
-        await transactionsApi.syncOffline(storeId, localTx);
+        const res = await transactionsApi.syncOffline(storeId, localTx);
 
         // 4. On success, mark clean.
         // Our backend sync endpoint will issue the server_updated_at later.
         await db.transactions.update(txId, { is_dirty: false });
 
-        return { success: true, transactionId: txId };
+        // Use the SERVER generated ID so subsequent loyalty hooks won't fail FK constraints.
+        return { success: true, transactionId: res.data.id };
       } catch (err) {
         // Leave is_dirty: true in our local Dexie table to be retried
         console.warn('Network error during checkout, transaction saved for offline sync.', err);

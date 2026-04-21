@@ -20,15 +20,18 @@ type UpdateCustomerRequest struct {
 
 // CustomerResponse is the API response shape for a customer.
 type CustomerResponse struct {
-	ID        string  `json:"id"`
-	StoreID   string  `json:"store_id"`
-	Name      string  `json:"name"`
-	Phone     *string `json:"phone,omitempty"`
-	Email     *string `json:"email,omitempty"`
-	Address   *string `json:"address,omitempty"`
-	Notes     *string `json:"notes,omitempty"`
-	CreatedAt string  `json:"created_at"`
-	UpdatedAt string  `json:"updated_at"`
+	ID             string                  `json:"id"`
+	StoreID        string                  `json:"store_id"`
+	Name           string                  `json:"name"`
+	Phone          *string                 `json:"phone,omitempty"`
+	Email          *string                 `json:"email,omitempty"`
+	Address        *string                 `json:"address,omitempty"`
+	Notes          *string                 `json:"notes,omitempty"`
+	CreatedAt      string                  `json:"created_at"`
+	UpdatedAt      string                  `json:"updated_at"`
+	LoyaltyTierID  *string                 `json:"loyalty_tier_id,omitempty"`
+	LoyaltyTier    *MembershipTierResponse `json:"loyalty_tier,omitempty"`
+	LoyaltyBalance float64                 `json:"loyalty_balance"`
 }
 
 // CustomerListFilter holds query params for listing customers.

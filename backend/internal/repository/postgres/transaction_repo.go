@@ -10,6 +10,7 @@ import (
 
 	"github.com/jmoiron/sqlx"
 
+	"github.com/google/uuid"
 	"github.com/moedahpos/backend/internal/domain"
 	"github.com/moedahpos/backend/internal/dto"
 )
@@ -40,11 +41,11 @@ func (r *TransactionRepo) Create(ctx context.Context, input domain.CreateTransac
 	// 1. INSERT transaction header (table_id may be nil for retail)
 	const txnQ = `
 		INSERT INTO transactions
-		  (store_id, cashier_id, table_id, customer_name, customer_phone,
+		  (id, store_id, cashier_id, table_id, customer_name, customer_phone,
 		   subtotal, discount_amt, tax_amt, total,
 		   payment_method, payment_amount, change_amount, status, notes,
 		   cart_discount_type, cart_discount_value)
-		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)
+		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)
 		RETURNING id, store_id, cashier_id, table_id,
 		          COALESCE(customer_name,'')  AS customer_name,
 		          COALESCE(customer_phone,'') AS customer_phone,
@@ -54,9 +55,14 @@ func (r *TransactionRepo) Create(ctx context.Context, input domain.CreateTransac
 		          cart_discount_type, cart_discount_value,
 		          created_at, updated_at`
 
-	txn := &domain.Transaction{}
+	id := input.ID
+	if id == "" {
+		id = uuid.New().String()
+	}
+
+	txn := &domain.Transaction{ID: id}
 	err = tx.QueryRowxContext(ctx, txnQ,
-		input.StoreID, input.CashierID, input.TableID,
+		id, input.StoreID, input.CashierID, input.TableID,
 		input.CustomerName, input.CustomerPhone,
 		input.Subtotal, input.DiscountAmt, input.TaxAmt, input.Total,
 		input.PaymentMethod, input.PaymentAmount, input.ChangeAmount, status, input.Notes,

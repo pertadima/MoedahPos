@@ -8,6 +8,7 @@ import (
 
 	"github.com/rs/zerolog"
 
+	"github.com/google/uuid"
 	"github.com/moedahpos/backend/internal/domain"
 	"github.com/moedahpos/backend/internal/dto"
 	"github.com/moedahpos/backend/internal/repository"
@@ -166,6 +167,19 @@ func NewTransactionService(
 
 // Checkout processes a sale: validates stock, calculates totals, persists atomically.
 func (s *TransactionService) Checkout(ctx context.Context, storeID string, req *dto.CreateTransactionRequest, cashierID string) (*dto.TransactionResponse, error) { //nolint:gocognit,cyclop,funlen // retail+restaurant dual path
+	if req.ID != "" {
+		existing, err := s.txnRepo.FindByID(ctx, req.ID)
+		if err == nil && existing != nil {
+			s.log.Info().Str("txn_id", req.ID).Msg("Idempotent Checkout: returning existing transaction")
+			return toTransactionResponse(existing), nil
+		}
+	}
+
+	txnID := req.ID
+	if txnID == "" {
+		txnID = uuid.New().String()
+	}
+
 	var (
 		inputItems  []domain.CreateTransactionItemInput
 		subtotal    float64
@@ -318,6 +332,7 @@ func (s *TransactionService) Checkout(ctx context.Context, storeID string, req *
 	}
 
 	txn, err := s.txnRepo.Create(ctx, domain.CreateTransactionInput{
+		ID:                txnID,
 		StoreID:           storeID,
 		CashierID:         cashierID,
 		Status:            "completed",

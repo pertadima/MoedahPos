@@ -4,6 +4,7 @@ package dto
 
 // CreateTransactionRequest is the input for POST /stores/:storeId/transactions.
 type CreateTransactionRequest struct {
+	ID                string        `json:"id"                   validate:"omitempty,uuid"`
 	CustomerName      string        `json:"customer_name"        validate:"max=100"`
 	CustomerPhone     string        `json:"customer_phone"       validate:"max=20"`
 	PaymentMethod     string        `json:"payment_method"       validate:"required,oneof=cash card qris transfer"`
