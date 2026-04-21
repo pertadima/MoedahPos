@@ -56,7 +56,14 @@ export default function SyncStatusWidget() {
     }
 
     // Only process pending transactions that haven't explicitly failed
-    const toSync = dirtyTransactions.filter(t => t.status !== 'failed');
+    // AND allow a 10s grace period for the foreground hook to finish its own sync, preventing double API calls.
+    const nowMs = new Date().getTime();
+    const toSync = dirtyTransactions.filter(t => {
+      if (t.status === 'failed') return false;
+      if (!t.created_at) return true;
+      const ageMs = nowMs - new Date(t.created_at).getTime();
+      return ageMs > 10000; // 10 seconds grace period
+    });
     if (toSync.length === 0) return;
 
     isSyncingRef.current = true;

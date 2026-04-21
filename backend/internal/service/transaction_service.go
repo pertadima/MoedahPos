@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/rs/zerolog"
@@ -352,6 +353,13 @@ func (s *TransactionService) Checkout(ctx context.Context, storeID string, req *
 	})
 
 	if err != nil {
+		if strings.Contains(err.Error(), "unique constraint") || strings.Contains(err.Error(), "duplicate key") {
+			existing, dbErr := s.txnRepo.FindByID(ctx, txnID)
+			if dbErr == nil && existing != nil {
+				s.log.Info().Str("txn_id", txnID).Msg("Idempotent Checkout: returning existing transaction after duplicate key collision")
+				return toTransactionResponse(existing), nil
+			}
+		}
 		return nil, fmt.Errorf("creating transaction: %w", err)
 	}
 
