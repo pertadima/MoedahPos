@@ -49,17 +49,17 @@ func (r *CustomerRepo) Create(ctx context.Context, c *domain.Customer) (*domain.
 
 func (r *CustomerRepo) FindAll(ctx context.Context, f dto.CustomerListFilter) ([]*domain.Customer, int, error) {
 	args := []interface{}{f.StoreID}
-	conds := []string{"store_id = $1", "deleted_at IS NULL"}
+	conds := []string{"c.store_id = $1", "c.deleted_at IS NULL"}
 	i := 2
 	if f.Search != "" {
-		conds = append(conds, fmt.Sprintf("(name ILIKE $%d OR phone ILIKE $%d)", i, i))
+		conds = append(conds, fmt.Sprintf("(c.name ILIKE $%d OR c.phone ILIKE $%d)", i, i))
 		args = append(args, "%"+f.Search+"%")
 		i++
 	}
 	where := "WHERE " + strings.Join(conds, " AND ")
 
 	var total int
-	if err := r.db.QueryRowxContext(ctx, fmt.Sprintf("SELECT COUNT(*) FROM customers %s", where), args...).Scan(&total); err != nil {
+	if err := r.db.QueryRowxContext(ctx, fmt.Sprintf("SELECT COUNT(*) FROM customers c %s", where), args...).Scan(&total); err != nil {
 		return nil, 0, fmt.Errorf("CustomerRepo.FindAll count: %w", err)
 	}
 
@@ -71,7 +71,7 @@ func (r *CustomerRepo) FindAll(ctx context.Context, f dto.CustomerListFilter) ([
 		%s 
 		ORDER BY c.name ASC 
 		LIMIT $%d OFFSET $%d
-	`, strings.ReplaceAll(where, "store_id", "c.store_id"), i, i+1)
+	`, where, i, i+1)
 	var rows []*domain.Customer
 	if err := r.db.SelectContext(ctx, &rows, q, args...); err != nil {
 		return nil, 0, fmt.Errorf("CustomerRepo.FindAll: %w", err)
