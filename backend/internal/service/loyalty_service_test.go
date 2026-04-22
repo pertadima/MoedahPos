@@ -207,7 +207,7 @@ func TestCalculatePoints(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			got := CalculatePoints(tc.total, tc.multiplier)
+			got := CalculatePoints(tc.total, tc.multiplier, 1000)
 			if got != tc.want {
 				t.Errorf("CalculatePoints(%.2f, %.2f) = %.2f; want %.2f", tc.total, tc.multiplier, got, tc.want)
 			}
@@ -225,7 +225,7 @@ func TestLoyaltyService_ListTiers(t *testing.T) {
 			{ID: "t1", Name: "Bronze", Multiplier: 1.0},
 			{ID: "t2", Name: "Gold", Multiplier: 2.0},
 		}}
-		svc := NewLoyaltyService(&mockLoyaltyRepo{}, tierRepo, &mockCustomerRepoLoyalty{}, nop)
+		svc := NewLoyaltyService(&mockLoyaltyRepo{}, tierRepo, &mockCustomerRepoLoyalty{}, nil, nop)
 		resp, err := svc.ListTiers(context.Background())
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
@@ -240,7 +240,7 @@ func TestLoyaltyService_ListTiers(t *testing.T) {
 
 	t.Run("repo error is propagated", func(t *testing.T) {
 		tierRepo := &mockTierRepo{findErr: errors.New("db down")}
-		svc := NewLoyaltyService(&mockLoyaltyRepo{}, tierRepo, &mockCustomerRepoLoyalty{}, nop)
+		svc := NewLoyaltyService(&mockLoyaltyRepo{}, tierRepo, &mockCustomerRepoLoyalty{}, nil, nop)
 		_, err := svc.ListTiers(context.Background())
 		if err == nil {
 			t.Fatal("expected error, got nil")
@@ -258,7 +258,7 @@ func TestLoyaltyService_GetBalance(t *testing.T) {
 			balance: 250,
 			tier:    &domain.MembershipTier{ID: "t1", Name: "Gold", Multiplier: 2.0},
 		}
-		svc := NewLoyaltyService(lr, &mockTierRepo{}, &mockCustomerRepoLoyalty{}, nop)
+		svc := NewLoyaltyService(lr, &mockTierRepo{}, &mockCustomerRepoLoyalty{}, nil, nop)
 		resp, err := svc.GetBalance(context.Background(), "cust-1")
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
@@ -273,7 +273,7 @@ func TestLoyaltyService_GetBalance(t *testing.T) {
 
 	t.Run("returns balance with no tier assigned", func(t *testing.T) {
 		lr := &mockLoyaltyRepo{balance: 100, tier: nil}
-		svc := NewLoyaltyService(lr, &mockTierRepo{}, &mockCustomerRepoLoyalty{}, nop)
+		svc := NewLoyaltyService(lr, &mockTierRepo{}, &mockCustomerRepoLoyalty{}, nil, nop)
 		resp, err := svc.GetBalance(context.Background(), "cust-2")
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
@@ -285,7 +285,7 @@ func TestLoyaltyService_GetBalance(t *testing.T) {
 
 	t.Run("balance repo error propagated", func(t *testing.T) {
 		lr := &mockLoyaltyRepo{balanceErr: errors.New("db failure")}
-		svc := NewLoyaltyService(lr, &mockTierRepo{}, &mockCustomerRepoLoyalty{}, nop)
+		svc := NewLoyaltyService(lr, &mockTierRepo{}, &mockCustomerRepoLoyalty{}, nil, nop)
 		_, err := svc.GetBalance(context.Background(), "cust-3")
 		if err == nil {
 			t.Fatal("expected error")
@@ -294,7 +294,7 @@ func TestLoyaltyService_GetBalance(t *testing.T) {
 
 	t.Run("tier fetch error propagated", func(t *testing.T) {
 		lr := &mockLoyaltyRepo{balance: 50, tierErr: errors.New("tier db error")}
-		svc := NewLoyaltyService(lr, &mockTierRepo{}, &mockCustomerRepoLoyalty{}, nop)
+		svc := NewLoyaltyService(lr, &mockTierRepo{}, &mockCustomerRepoLoyalty{}, nil, nop)
 		_, err := svc.GetBalance(context.Background(), "cust-4")
 		if err == nil {
 			t.Fatal("expected error")
@@ -311,8 +311,8 @@ func TestLoyaltyService_EarnPoints(t *testing.T) {
 
 	t.Run("earns points at Bronze tier (1x)", func(t *testing.T) {
 		lr := &mockLoyaltyRepo{tier: &domain.MembershipTier{Multiplier: 1.0}}
-		svc := NewLoyaltyService(lr, &mockTierRepo{}, &mockCustomerRepoLoyalty{}, nop)
-		resp, err := svc.EarnPoints(context.Background(), "c1", &txID, 50000)
+		svc := NewLoyaltyService(lr, &mockTierRepo{}, &mockCustomerRepoLoyalty{}, nil, nop)
+		resp, err := svc.EarnPoints(context.Background(), "", "c1", &txID, 50000)
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -326,8 +326,8 @@ func TestLoyaltyService_EarnPoints(t *testing.T) {
 
 	t.Run("earns points at Gold tier (2x)", func(t *testing.T) {
 		lr := &mockLoyaltyRepo{tier: &domain.MembershipTier{Multiplier: 2.0}}
-		svc := NewLoyaltyService(lr, &mockTierRepo{}, &mockCustomerRepoLoyalty{}, nop)
-		resp, err := svc.EarnPoints(context.Background(), "c1", &txID, 50000)
+		svc := NewLoyaltyService(lr, &mockTierRepo{}, &mockCustomerRepoLoyalty{}, nil, nop)
+		resp, err := svc.EarnPoints(context.Background(), "", "c1", &txID, 50000)
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -338,8 +338,8 @@ func TestLoyaltyService_EarnPoints(t *testing.T) {
 
 	t.Run("no tier assigned defaults to 1x multiplier", func(t *testing.T) {
 		lr := &mockLoyaltyRepo{tier: nil}
-		svc := NewLoyaltyService(lr, &mockTierRepo{}, &mockCustomerRepoLoyalty{}, nop)
-		resp, err := svc.EarnPoints(context.Background(), "c1", nil, 10000)
+		svc := NewLoyaltyService(lr, &mockTierRepo{}, &mockCustomerRepoLoyalty{}, nil, nop)
+		resp, err := svc.EarnPoints(context.Background(), "", "c1", nil, 10000)
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -356,8 +356,8 @@ func TestLoyaltyService_EarnPoints(t *testing.T) {
 			},
 			onEarnCalled: func() { earnCalled = true },
 		}
-		svc := NewLoyaltyService(lr, &mockTierRepo{}, &mockCustomerRepoLoyalty{}, nop)
-		resp, err := svc.EarnPoints(context.Background(), "c1", nil, 0)
+		svc := NewLoyaltyService(lr, &mockTierRepo{}, &mockCustomerRepoLoyalty{}, nil, nop)
+		resp, err := svc.EarnPoints(context.Background(), "", "c1", nil, 0)
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -371,8 +371,8 @@ func TestLoyaltyService_EarnPoints(t *testing.T) {
 
 	t.Run("total below minimum unit earns zero points", func(t *testing.T) {
 		lr := &mockLoyaltyRepo{tier: &domain.MembershipTier{Multiplier: 1.0}}
-		svc := NewLoyaltyService(lr, &mockTierRepo{}, &mockCustomerRepoLoyalty{}, nop)
-		resp, err := svc.EarnPoints(context.Background(), "c1", nil, 999)
+		svc := NewLoyaltyService(lr, &mockTierRepo{}, &mockCustomerRepoLoyalty{}, nil, nop)
+		resp, err := svc.EarnPoints(context.Background(), "", "c1", nil, 999)
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -386,8 +386,8 @@ func TestLoyaltyService_EarnPoints(t *testing.T) {
 			tier:    &domain.MembershipTier{Multiplier: 1.0},
 			earnErr: errors.New("db rollback"),
 		}
-		svc := NewLoyaltyService(lr, &mockTierRepo{}, &mockCustomerRepoLoyalty{}, nop)
-		_, err := svc.EarnPoints(context.Background(), "c1", &txID, 50000)
+		svc := NewLoyaltyService(lr, &mockTierRepo{}, &mockCustomerRepoLoyalty{}, nil, nop)
+		_, err := svc.EarnPoints(context.Background(), "", "c1", &txID, 50000)
 		if err == nil {
 			t.Fatal("expected DB error to propagate")
 		}
@@ -395,8 +395,8 @@ func TestLoyaltyService_EarnPoints(t *testing.T) {
 
 	t.Run("tier fetch DB error halts earn", func(t *testing.T) {
 		lr := &mockLoyaltyRepo{tierErr: errors.New("tier query failed")}
-		svc := NewLoyaltyService(lr, &mockTierRepo{}, &mockCustomerRepoLoyalty{}, nop)
-		_, err := svc.EarnPoints(context.Background(), "c1", nil, 50000)
+		svc := NewLoyaltyService(lr, &mockTierRepo{}, &mockCustomerRepoLoyalty{}, nil, nop)
+		_, err := svc.EarnPoints(context.Background(), "", "c1", nil, 50000)
 		if err == nil {
 			t.Fatal("expected tier fetch error")
 		}
@@ -412,7 +412,7 @@ func TestLoyaltyService_RedeemPoints(t *testing.T) {
 
 	t.Run("successful redemption within balance", func(t *testing.T) {
 		lr := &mockLoyaltyRepo{balance: 500}
-		svc := NewLoyaltyService(lr, &mockTierRepo{}, &mockCustomerRepoLoyalty{}, nop)
+		svc := NewLoyaltyService(lr, &mockTierRepo{}, &mockCustomerRepoLoyalty{}, nil, nop)
 		resp, err := svc.RedeemPoints(context.Background(), "c1", &txID, 200)
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
@@ -427,7 +427,7 @@ func TestLoyaltyService_RedeemPoints(t *testing.T) {
 
 	t.Run("exact balance redemption allowed", func(t *testing.T) {
 		lr := &mockLoyaltyRepo{balance: 100}
-		svc := NewLoyaltyService(lr, &mockTierRepo{}, &mockCustomerRepoLoyalty{}, nop)
+		svc := NewLoyaltyService(lr, &mockTierRepo{}, &mockCustomerRepoLoyalty{}, nil, nop)
 		_, err := svc.RedeemPoints(context.Background(), "c1", nil, 100)
 		if err != nil {
 			t.Fatalf("exact balance redemption should succeed: %v", err)
@@ -436,7 +436,7 @@ func TestLoyaltyService_RedeemPoints(t *testing.T) {
 
 	t.Run("redemption exceeding balance returns ErrInsufficientPoints", func(t *testing.T) {
 		lr := &mockLoyaltyRepo{balance: 50}
-		svc := NewLoyaltyService(lr, &mockTierRepo{}, &mockCustomerRepoLoyalty{}, nop)
+		svc := NewLoyaltyService(lr, &mockTierRepo{}, &mockCustomerRepoLoyalty{}, nil, nop)
 		_, err := svc.RedeemPoints(context.Background(), "c1", nil, 100)
 		if err == nil {
 			t.Fatal("expected ErrInsufficientPoints")
@@ -448,7 +448,7 @@ func TestLoyaltyService_RedeemPoints(t *testing.T) {
 
 	t.Run("zero redemption returns ErrInvalidRedemption", func(t *testing.T) {
 		lr := &mockLoyaltyRepo{balance: 500}
-		svc := NewLoyaltyService(lr, &mockTierRepo{}, &mockCustomerRepoLoyalty{}, nop)
+		svc := NewLoyaltyService(lr, &mockTierRepo{}, &mockCustomerRepoLoyalty{}, nil, nop)
 		_, err := svc.RedeemPoints(context.Background(), "c1", nil, 0)
 		if !errors.Is(err, ErrInvalidRedemption) {
 			t.Errorf("expected ErrInvalidRedemption, got: %v", err)
@@ -457,7 +457,7 @@ func TestLoyaltyService_RedeemPoints(t *testing.T) {
 
 	t.Run("negative redemption returns ErrInvalidRedemption", func(t *testing.T) {
 		lr := &mockLoyaltyRepo{balance: 500}
-		svc := NewLoyaltyService(lr, &mockTierRepo{}, &mockCustomerRepoLoyalty{}, nop)
+		svc := NewLoyaltyService(lr, &mockTierRepo{}, &mockCustomerRepoLoyalty{}, nil, nop)
 		_, err := svc.RedeemPoints(context.Background(), "c1", nil, -50)
 		if !errors.Is(err, ErrInvalidRedemption) {
 			t.Errorf("expected ErrInvalidRedemption, got: %v", err)
@@ -466,7 +466,7 @@ func TestLoyaltyService_RedeemPoints(t *testing.T) {
 
 	t.Run("zero balance with any positive redemption fails", func(t *testing.T) {
 		lr := &mockLoyaltyRepo{balance: 0}
-		svc := NewLoyaltyService(lr, &mockTierRepo{}, &mockCustomerRepoLoyalty{}, nop)
+		svc := NewLoyaltyService(lr, &mockTierRepo{}, &mockCustomerRepoLoyalty{}, nil, nop)
 		_, err := svc.RedeemPoints(context.Background(), "c1", nil, 1)
 		if !errors.Is(err, ErrInsufficientPoints) {
 			t.Errorf("expected ErrInsufficientPoints, got: %v", err)
@@ -475,7 +475,7 @@ func TestLoyaltyService_RedeemPoints(t *testing.T) {
 
 	t.Run("balance fetch DB error propagated", func(t *testing.T) {
 		lr := &mockLoyaltyRepo{balanceErr: errors.New("db timeout")}
-		svc := NewLoyaltyService(lr, &mockTierRepo{}, &mockCustomerRepoLoyalty{}, nop)
+		svc := NewLoyaltyService(lr, &mockTierRepo{}, &mockCustomerRepoLoyalty{}, nil, nop)
 		_, err := svc.RedeemPoints(context.Background(), "c1", nil, 100)
 		if err == nil {
 			t.Fatal("expected error from balance fetch")
@@ -487,7 +487,7 @@ func TestLoyaltyService_RedeemPoints(t *testing.T) {
 			balance:  500,
 			spendErr: errors.New("transaction rolled back"),
 		}
-		svc := NewLoyaltyService(lr, &mockTierRepo{}, &mockCustomerRepoLoyalty{}, nop)
+		svc := NewLoyaltyService(lr, &mockTierRepo{}, &mockCustomerRepoLoyalty{}, nil, nop)
 		_, err := svc.RedeemPoints(context.Background(), "c1", nil, 100)
 		if err == nil {
 			t.Fatal("expected DB rollback error to propagate")
@@ -508,7 +508,7 @@ func TestLoyaltyService_GetHistory(t *testing.T) {
 				{ID: "e1", CustomerID: "c1", PointsDelta: 100, Type: "EARN", CreatedAt: now.Add(-time.Hour)},
 			},
 		}
-		svc := NewLoyaltyService(lr, &mockTierRepo{}, &mockCustomerRepoLoyalty{}, nop)
+		svc := NewLoyaltyService(lr, &mockTierRepo{}, &mockCustomerRepoLoyalty{}, nil, nop)
 		resp, err := svc.GetHistory(context.Background(), "c1")
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
@@ -523,7 +523,7 @@ func TestLoyaltyService_GetHistory(t *testing.T) {
 
 	t.Run("history repo error propagated", func(t *testing.T) {
 		lr := &mockLoyaltyRepo{historyErr: errors.New("db error")}
-		svc := NewLoyaltyService(lr, &mockTierRepo{}, &mockCustomerRepoLoyalty{}, nop)
+		svc := NewLoyaltyService(lr, &mockTierRepo{}, &mockCustomerRepoLoyalty{}, nil, nop)
 		_, err := svc.GetHistory(context.Background(), "c1")
 		if err == nil {
 			t.Fatal("expected error")
@@ -539,7 +539,7 @@ func TestLoyaltyService_AssignTier(t *testing.T) {
 	t.Run("assigns tier successfully", func(t *testing.T) {
 		tierRepo := &mockTierRepo{findByID: &domain.MembershipTier{ID: "t1", Name: "Gold", Multiplier: 2.0}}
 		lr := &mockLoyaltyRepo{}
-		svc := NewLoyaltyService(lr, tierRepo, &mockCustomerRepoLoyalty{}, nop)
+		svc := NewLoyaltyService(lr, tierRepo, &mockCustomerRepoLoyalty{}, nil, nop)
 		err := svc.AssignTier(context.Background(), "c1", "t1")
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
@@ -548,7 +548,7 @@ func TestLoyaltyService_AssignTier(t *testing.T) {
 
 	t.Run("unknown tier returns ErrTierNotFound", func(t *testing.T) {
 		tierRepo := &mockTierRepo{findByID: nil}
-		svc := NewLoyaltyService(&mockLoyaltyRepo{}, tierRepo, &mockCustomerRepoLoyalty{}, nop)
+		svc := NewLoyaltyService(&mockLoyaltyRepo{}, tierRepo, &mockCustomerRepoLoyalty{}, nil, nop)
 		err := svc.AssignTier(context.Background(), "c1", "nonexistent")
 		if !errors.Is(err, ErrTierNotFound) {
 			t.Errorf("expected ErrTierNotFound, got: %v", err)
@@ -557,7 +557,7 @@ func TestLoyaltyService_AssignTier(t *testing.T) {
 
 	t.Run("tier repo DB error propagated", func(t *testing.T) {
 		tierRepo := &mockTierRepo{byIDErr: errors.New("db error")}
-		svc := NewLoyaltyService(&mockLoyaltyRepo{}, tierRepo, &mockCustomerRepoLoyalty{}, nop)
+		svc := NewLoyaltyService(&mockLoyaltyRepo{}, tierRepo, &mockCustomerRepoLoyalty{}, nil, nop)
 		err := svc.AssignTier(context.Background(), "c1", "t1")
 		if err == nil {
 			t.Fatal("expected error")
@@ -567,7 +567,7 @@ func TestLoyaltyService_AssignTier(t *testing.T) {
 	t.Run("loyalty repo assign error propagated", func(t *testing.T) {
 		tierRepo := &mockTierRepo{findByID: &domain.MembershipTier{ID: "t1", Name: "Bronze", Multiplier: 1.0}}
 		lr := &mockLoyaltyRepo{assignErr: errors.New("customer not found")}
-		svc := NewLoyaltyService(lr, tierRepo, &mockCustomerRepoLoyalty{}, nop)
+		svc := NewLoyaltyService(lr, tierRepo, &mockCustomerRepoLoyalty{}, nil, nop)
 		err := svc.AssignTier(context.Background(), "c999", "t1")
 		if err == nil {
 			t.Fatal("expected error")

@@ -58,6 +58,7 @@ func (h *LoyaltyHandler) GetBalance(w http.ResponseWriter, r *http.Request) {
 // EarnPoints godoc
 // POST /api/v1/stores/{storeId}/customers/{customerId}/loyalty/earn
 func (h *LoyaltyHandler) EarnPoints(w http.ResponseWriter, r *http.Request) {
+	storeID := chi.URLParam(r, "storeId")
 	customerID := chi.URLParam(r, "customerId")
 	if customerID == "" {
 		response.Error(w, http.StatusBadRequest, "Missing customer ID")
@@ -75,7 +76,7 @@ func (h *LoyaltyHandler) EarnPoints(w http.ResponseWriter, r *http.Request) {
 	}
 
 	txnID := req.TransactionID
-	entry, err := h.svc.EarnPoints(r.Context(), customerID, &txnID, req.Total)
+	entry, err := h.svc.EarnPoints(r.Context(), storeID, customerID, &txnID, req.Total)
 	if err != nil {
 		h.log.Error().Err(err).Str("customer_id", customerID).Msg("LoyaltyHandler.EarnPoints failed")
 		response.Error(w, http.StatusInternalServerError, "Failed to earn points")

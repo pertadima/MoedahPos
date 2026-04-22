@@ -185,7 +185,7 @@ type SyncServiceInterface interface {
 type LoyaltyServiceInterface interface {
 	ListTiers(ctx context.Context) ([]*dto.MembershipTierResponse, error)
 	GetBalance(ctx context.Context, customerID string) (*dto.LoyaltyBalanceResponse, error)
-	EarnPoints(ctx context.Context, customerID string, transactionID *string, total float64) (*dto.LoyaltyLedgerResponse, error)
+	EarnPoints(ctx context.Context, storeID, customerID string, transactionID *string, total float64) (*dto.LoyaltyLedgerResponse, error)
 	RedeemPoints(ctx context.Context, customerID string, transactionID *string, points float64) (*dto.LoyaltyLedgerResponse, error)
 	GetHistory(ctx context.Context, customerID string) ([]*dto.LoyaltyLedgerResponse, error)
 	AssignTier(ctx context.Context, customerID, tierID string) error

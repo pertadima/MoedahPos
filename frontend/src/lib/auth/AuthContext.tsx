@@ -14,6 +14,7 @@ interface AuthState {
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   selectStore: (storeId: string) => void;
+  refreshSession: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthState | null>(null);
@@ -98,6 +99,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [stores]
   );
 
+  const refreshSession = useCallback(async () => {
+    try {
+      const res = await authApi.me();
+      const u = res.data;
+      setUser(u);
+      
+      // Update selected store if it still exists
+      const savedStoreId = localStorage.getItem('selected_store_id');
+      const storeList = u.stores ?? [];
+      const preferred = savedStoreId ? storeList.find(s => s.store_id === savedStoreId) : null;
+      const autoSelected = preferred ?? storeList[0] ?? null;
+      if (autoSelected) {
+        setSelectedStore(autoSelected);
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
+
   return (
     <AuthContext.Provider
       value={{
@@ -109,6 +129,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         login,
         logout,
         selectStore,
+        refreshSession,
       }}
     >
       {children}

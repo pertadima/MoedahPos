@@ -33,17 +33,21 @@ interface UseLoyaltyReturn extends LoyaltyState {
     points: number
   ) => Promise<LoyaltyLedgerEntry | null>;
   /** How many points the current cart total will earn (preview, not yet credited). */
-  previewEarnings: (total: number, multiplier?: number) => number;
+  previewEarnings: (total: number, multiplier?: number, pointsPerRupiah?: number) => number;
   /** Reset loyalty state (e.g. when a new customer is selected). */
   reset: () => void;
 }
 
-const POINTS_PER_UNIT = 1000;
+const DEFAULT_POINTS_PER_UNIT = 1000;
 
 /** Calculate points earned for a given total and multiplier (mirrors backend formula). */
-function calculatePoints(total: number, multiplier = 1): number {
-  if (total <= 0 || multiplier <= 0) return 0;
-  return Math.floor(total / POINTS_PER_UNIT) * multiplier;
+function calculatePoints(
+  total: number,
+  multiplier = 1,
+  pointsPerRupiah = DEFAULT_POINTS_PER_UNIT
+): number {
+  if (total <= 0 || multiplier <= 0 || pointsPerRupiah <= 0) return 0;
+  return Math.floor(total / pointsPerRupiah) * multiplier;
 }
 
 const initialState: LoyaltyState = {
@@ -128,10 +132,10 @@ export function useLoyalty(): UseLoyaltyReturn {
   );
 
   const previewEarnings = useCallback(
-    (total: number, multiplier?: number): number => {
+    (total: number, multiplier?: number, pointsPerRupiah?: number): number => {
       const tier = state.balance?.tier;
       const effectiveMultiplier = multiplier ?? tier?.multiplier ?? 1;
-      return calculatePoints(total, effectiveMultiplier);
+      return calculatePoints(total, effectiveMultiplier, pointsPerRupiah);
     },
     [state.balance]
   );

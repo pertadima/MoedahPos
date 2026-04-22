@@ -2498,7 +2498,11 @@ export default function POSPage() {
                 Poin yang akan didapat
               </div>
               <span style={{ fontWeight: 700, fontSize: '0.82rem', color: '#f59e0b' }}>
-                +{loyalty.previewEarnings(total).toLocaleString('id-ID')} pts
+                +
+                {loyalty
+                  .previewEarnings(total, undefined, selectedStore?.loyalty_points_per_rupiah)
+                  .toLocaleString('id-ID')}{' '}
+                pts
               </span>
             </div>
           )}

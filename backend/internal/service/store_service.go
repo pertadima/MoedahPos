@@ -66,7 +66,8 @@ func (s *StoreService) CreateStore(ctx context.Context, req *dto.CreateStoreRequ
 	store, err := s.storeRepo.Create(ctx, &domain.Store{
 		Name: req.Name, Address: req.Address, Phone: req.Phone,
 		TaxNumber: req.TaxNumber, Currency: req.Currency,
-		StoreType: req.StoreType, DefaultTaxPercentage: req.DefaultTaxPercentage, IsActive: true,
+		StoreType: req.StoreType, DefaultTaxPercentage: req.DefaultTaxPercentage,
+		LoyaltyPointsPerRupiah: req.LoyaltyPointsPerRupiah, IsActive: true,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("creating store: %w", err)
@@ -88,6 +89,9 @@ func (s *StoreService) UpdateStore(ctx context.Context, id string, req *dto.Upda
 	store.Phone = req.Phone
 	store.TaxNumber = req.TaxNumber
 	store.DefaultTaxPercentage = req.DefaultTaxPercentage
+	if req.LoyaltyPointsPerRupiah > 0 {
+		store.LoyaltyPointsPerRupiah = req.LoyaltyPointsPerRupiah
+	}
 	if req.Currency != "" {
 		store.Currency = req.Currency
 	}
@@ -184,17 +188,18 @@ func toStoreResponse(s *domain.Store) *dto.StoreResponse {
 		storeType = "retail"
 	}
 	r := &dto.StoreResponse{
-		ID:                   s.ID,
-		Name:                 s.Name,
-		Address:              s.Address,
-		Phone:                s.Phone,
-		TaxNumber:            s.TaxNumber,
-		Currency:             s.Currency,
-		StoreType:            storeType,
-		DefaultTaxPercentage: s.DefaultTaxPercentage,
-		IsActive:             s.IsActive,
-		CreatedAt:            s.CreatedAt.Format(time.RFC3339),
-		UpdatedAt:            s.UpdatedAt.Format(time.RFC3339),
+		ID:                     s.ID,
+		Name:                   s.Name,
+		Address:                s.Address,
+		Phone:                  s.Phone,
+		TaxNumber:              s.TaxNumber,
+		Currency:               s.Currency,
+		StoreType:              storeType,
+		DefaultTaxPercentage:   s.DefaultTaxPercentage,
+		LoyaltyPointsPerRupiah: s.LoyaltyPointsPerRupiah,
+		IsActive:               s.IsActive,
+		CreatedAt:              s.CreatedAt.Format(time.RFC3339),
+		UpdatedAt:              s.UpdatedAt.Format(time.RFC3339),
 	}
 	if s.DeletedAt != nil {
 		t := s.DeletedAt.Format(time.RFC3339)

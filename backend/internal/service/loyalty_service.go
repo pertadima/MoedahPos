@@ -31,6 +31,7 @@ const pointsPerUnit = 1000.0
 type LoyaltyService struct {
 	loyaltyRepo repository.LoyaltyRepository
 	tierRepo    repository.MembershipTierRepository
+	storeRepo   repository.StoreRepository
 	log         zerolog.Logger
 }
 
@@ -39,25 +40,29 @@ func NewLoyaltyService(
 	loyaltyRepo repository.LoyaltyRepository,
 	tierRepo repository.MembershipTierRepository,
 	_ repository.CustomerRepository, // reserved for future use
+	storeRepo repository.StoreRepository,
 	log zerolog.Logger,
 ) *LoyaltyService {
 	return &LoyaltyService{
 		loyaltyRepo: loyaltyRepo,
 		tierRepo:    tierRepo,
+		storeRepo:   storeRepo,
 		log:         log,
 	}
 }
 
+// defaultPointsPerRupiah is the fallback rate: 1 point per 1000 IDR.
+const defaultPointsPerRupiah = 1000.0
+
 // ─── Pure Calculation ─────────────────────────────────────────────────────────
 
-// CalculatePoints computes points to award for a given transaction total and multiplier.
-// Formula: floor(total / pointsPerUnit) × multiplier.
-// A future-dated total has no special casing — the formula is always applied as-is.
-func CalculatePoints(total, multiplier float64) float64 {
-	if total <= 0 || multiplier <= 0 {
+// CalculatePoints computes points to award for a given transaction total, multiplier and store rate.
+// Formula: floor(total / pointsPerRupiah) × multiplier.
+func CalculatePoints(total, multiplier, pointsPerRupiah float64) float64 {
+	if total <= 0 || multiplier <= 0 || pointsPerRupiah <= 0 {
 		return 0
 	}
-	base := math.Floor(total / pointsPerUnit)
+	base := math.Floor(total / pointsPerRupiah)
 	return base * multiplier
 }
 
@@ -99,8 +104,17 @@ func (s *LoyaltyService) GetBalance(ctx context.Context, customerID string) (*dt
 }
 
 // EarnPoints calculates and credits loyalty points after a completed transaction.
-// transactionID is optional (nil for manual adjustments).
-func (s *LoyaltyService) EarnPoints(ctx context.Context, customerID string, transactionID *string, total float64) (*dto.LoyaltyLedgerResponse, error) {
+// transactionID is optional (nil for manual adjustments). storeID is used to fetch the store's rate.
+func (s *LoyaltyService) EarnPoints(ctx context.Context, storeID, customerID string, transactionID *string, total float64) (*dto.LoyaltyLedgerResponse, error) {
+	// Resolve the store's loyalty rate (points earned per rupiah)
+	pointsPerRupiah := defaultPointsPerRupiah
+	if storeID != "" && s.storeRepo != nil {
+		store, err := s.storeRepo.FindByID(ctx, storeID)
+		if err == nil && store != nil && store.LoyaltyPointsPerRupiah > 0 {
+			pointsPerRupiah = store.LoyaltyPointsPerRupiah
+		}
+	}
+
 	// Resolve the customer's tier multiplier
 	tier, err := s.loyaltyRepo.GetCustomerTier(ctx, customerID)
 	if err != nil {
@@ -111,12 +125,13 @@ func (s *LoyaltyService) EarnPoints(ctx context.Context, customerID string, tran
 		multiplier = tier.Multiplier
 	}
 
-	points := CalculatePoints(total, multiplier)
+	points := CalculatePoints(total, multiplier, pointsPerRupiah)
 	if points <= 0 {
 		s.log.Debug().
 			Str("customer_id", customerID).
 			Float64("total", total).
 			Float64("multiplier", multiplier).
+			Float64("points_per_rupiah", pointsPerRupiah).
 			Msg("LoyaltyService.EarnPoints: zero points, skipping ledger entry")
 		// Return a zero-delta response without persisting
 		return &dto.LoyaltyLedgerResponse{
@@ -138,6 +153,7 @@ func (s *LoyaltyService) EarnPoints(ctx context.Context, customerID string, tran
 		Str("customer_id", customerID).
 		Float64("points", points).
 		Float64("multiplier", multiplier).
+		Float64("points_per_rupiah", pointsPerRupiah).
 		Msg("loyalty points earned")
 
 	return toLedgerResponse(entry), nil

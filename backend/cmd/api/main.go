@@ -112,7 +112,7 @@ func main() {
 	stockAdjustmentSvc := service.NewStockAdjustmentService(stockAdjustmentRepo, activityLogSvc)
 	incomeSvc := service.NewIncomeService(incomeRepo, activityLogSvc, log)
 	syncSvc := service.NewSyncService(categoryRepo, productRepo, stockRepo, transactionRepo, customerRepo, log)
-	loyaltySvc := service.NewLoyaltyService(loyaltyRepo, tierRepo, customerRepo, log)
+	loyaltySvc := service.NewLoyaltyService(loyaltyRepo, tierRepo, customerRepo, storeRepo, log)
 
 	// ── Handlers ──────────────────────────────────────────────────────────────
 	authHandler := handler.NewAuthHandler(authSvc, validate, log)

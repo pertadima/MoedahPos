@@ -34,9 +34,10 @@ type UserStore struct {
 	CreatedAt time.Time `db:"created_at"`
 
 	// Joined fields (not stored in users_stores, populated by queries)
-	StoreName string `db:"store_name"`
-	StoreType string `db:"store_type"`
-	RoleName  string `db:"role_name"`
+	StoreName              string  `db:"store_name"`
+	StoreType              string  `db:"store_type"`
+	RoleName               string  `db:"role_name"`
+	LoyaltyPointsPerRupiah float64 `db:"loyalty_points_per_rupiah"`
 }
 
 // StoreMember is the enriched projection for listing members of a store.

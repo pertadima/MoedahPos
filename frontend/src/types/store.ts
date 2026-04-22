@@ -7,6 +7,7 @@ export interface Store {
   currency: string;
   store_type: 'retail' | 'restaurant';
   default_tax_percentage: number;
+  loyalty_points_per_rupiah: number;
   is_active: boolean;
   created_at: string;
   updated_at: string;

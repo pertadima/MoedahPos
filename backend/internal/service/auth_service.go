@@ -214,10 +214,11 @@ func (s *AuthService) Me(ctx context.Context, userID string) (*dto.MeResponse, e
 	storeInfos := make([]dto.StoreRoleInfo, 0, len(stores))
 	for _, us := range stores {
 		storeInfos = append(storeInfos, dto.StoreRoleInfo{
-			StoreID:   us.StoreID,
-			StoreName: us.StoreName,
-			StoreType: us.StoreType,
-			Role:      us.RoleName,
+			StoreID:                us.StoreID,
+			StoreName:              us.StoreName,
+			StoreType:              us.StoreType,
+			Role:                   us.RoleName,
+			LoyaltyPointsPerRupiah: us.LoyaltyPointsPerRupiah,
 		})
 	}
 

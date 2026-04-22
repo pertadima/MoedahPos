@@ -29,6 +29,7 @@ export const storesApi = {
     currency?: string;
     store_type: string;
     default_tax_percentage?: number;
+    loyalty_points_per_rupiah?: number;
   }) => api.post<Store>('/stores', payload),
   update: (
     id: string,
@@ -40,6 +41,7 @@ export const storesApi = {
       currency?: string;
       store_type: string;
       default_tax_percentage?: number;
+      loyalty_points_per_rupiah?: number;
       is_active?: boolean;
     }
   ) => api.put<Store>(`/stores/${id}`, payload),
@@ -357,9 +359,7 @@ export const loyaltyApi = {
 
   /** Get a customer's current point balance and tier. */
   getBalance: async (storeId: string, customerId: string): Promise<LoyaltyBalance> => {
-    const res = await api.get<LoyaltyBalance>(
-      `/stores/${storeId}/customers/${customerId}/loyalty`
-    );
+    const res = await api.get<LoyaltyBalance>(`/stores/${storeId}/customers/${customerId}/loyalty`);
     return res.data;
   },
 
