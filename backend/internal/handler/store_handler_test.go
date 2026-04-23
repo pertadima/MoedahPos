@@ -52,7 +52,13 @@ func TestStoreHandler_CRUD(t *testing.T) {
 	})
 
 	t.Run("Create", func(t *testing.T) {
-		reqBody := dto.CreateStoreRequest{Name: "New Store", Currency: "IDR", StoreType: "retail"}
+		reqBody := dto.CreateStoreRequest{
+			Name:                   "New Store",
+			Currency:               "IDR",
+			StoreType:              "retail",
+			LoyaltyPointsPerRupiah: 1,
+			LoyaltyRupiahPerPoint:  1,
+		}
 		body, _ := json.Marshal(reqBody)
 		req, _ := http.NewRequestWithContext(context.Background(), http.MethodPost, "/stores", bytes.NewBuffer(body))
 		w := httptest.NewRecorder()

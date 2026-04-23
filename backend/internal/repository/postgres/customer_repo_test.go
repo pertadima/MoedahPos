@@ -36,16 +36,14 @@ func TestCustomerRepo_FindAll(t *testing.T) {
 	}
 
 	t.Run("success", func(t *testing.T) {
-		mock.ExpectQuery(regexp.QuoteMeta("SELECT COUNT(*) FROM customers WHERE store_id = $1 AND deleted_at IS NULL")).
+		mock.ExpectQuery(regexp.QuoteMeta("SELECT COUNT(*) FROM customers c WHERE c.store_id = $1 AND c.deleted_at IS NULL")).
 			WithArgs(storeID).
 			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
 
-		rows := sqlmock.NewRows([]string{"id", "store_id", "name", "phone", "email", "address", "notes", "created_at", "updated_at"}).
-			AddRow("c1", storeID, "John Doe", "12345", "john@example.com", "Address", "Notes", time.Now(), time.Now())
-
-		mock.ExpectQuery(regexp.QuoteMeta("SELECT id,store_id,name,phone,email,address,notes,created_at,updated_at FROM customers WHERE store_id = $1 AND deleted_at IS NULL ORDER BY name ASC LIMIT $2 OFFSET $3")).
+		mock.ExpectQuery(`(?is)SELECT .* FROM customers c LEFT JOIN membership_tiers t .* WHERE c.store_id = \$1 AND c.deleted_at IS NULL ORDER BY c.name ASC LIMIT \$2 OFFSET \$3`).
 			WithArgs(storeID, 10, 0).
-			WillReturnRows(rows)
+			WillReturnRows(sqlmock.NewRows([]string{"id", "store_id", "name", "phone", "email", "address", "notes", "created_at", "updated_at", "loyalty_tier_id", "loyalty_tier_name", "loyalty_tier_mult", "loyalty_balance"}).
+				AddRow("c1", storeID, "John Doe", "12345", "john@example.com", "Address", "Notes", time.Now(), time.Now(), nil, nil, nil, 0))
 
 		customers, total, err := repo.FindAll(context.Background(), filter)
 		assert.NoError(t, err)
@@ -69,12 +67,10 @@ func TestCustomerRepo_Create(t *testing.T) {
 	}
 
 	t.Run("success", func(t *testing.T) {
-		rows := sqlmock.NewRows([]string{"id", "store_id", "name", "phone", "email", "address", "notes", "created_at", "updated_at"}).
-			AddRow("c1", c.StoreID, c.Name, nil, nil, nil, nil, time.Now(), time.Now())
-
-		mock.ExpectQuery(regexp.QuoteMeta("INSERT INTO customers (store_id, name, phone, email, address, notes) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id, store_id, name, phone, email, address, notes, created_at, updated_at")).
+		mock.ExpectQuery(`(?is)INSERT INTO customers .* VALUES \(\$1,\$2,\$3,\$4,\$5,\$6\) RETURNING .*`).
 			WithArgs(c.StoreID, c.Name, nil, nil, nil, nil).
-			WillReturnRows(rows)
+			WillReturnRows(sqlmock.NewRows([]string{"id", "store_id", "name", "phone", "email", "address", "notes", "created_at", "updated_at", "deleted_at"}).
+				AddRow("c1", c.StoreID, c.Name, nil, nil, nil, nil, time.Now(), time.Now(), nil))
 
 		out, err := repo.Create(context.Background(), c)
 		assert.NoError(t, err)
@@ -97,12 +93,10 @@ func TestCustomerRepo_Update(t *testing.T) {
 	}
 
 	t.Run("success", func(t *testing.T) {
-		rows := sqlmock.NewRows([]string{"id", "store_id", "name", "phone", "email", "address", "notes", "created_at", "updated_at"}).
-			AddRow("c1", customerTestStoreID, "Jane Doe", nil, nil, nil, nil, time.Now(), time.Now())
-
-		mock.ExpectQuery(regexp.QuoteMeta("UPDATE customers SET name=$1,phone=$2,email=$3,address=$4,notes=$5,updated_at=NOW() WHERE id=$6 AND deleted_at IS NULL RETURNING id,store_id,name,phone,email,address,notes,created_at,updated_at")).
+		mock.ExpectQuery(regexp.QuoteMeta("UPDATE customers SET name=$1,phone=$2,email=$3,address=$4,notes=$5,updated_at=NOW() WHERE id=$6 AND deleted_at IS NULL RETURNING "+customerColsBase)).
 			WithArgs(c.Name, nil, nil, nil, nil, c.ID).
-			WillReturnRows(rows)
+			WillReturnRows(sqlmock.NewRows([]string{"id", "store_id", "name", "phone", "email", "address", "notes", "created_at", "updated_at", "deleted_at"}).
+				AddRow("c1", customerTestStoreID, "Jane Doe", nil, nil, nil, nil, time.Now(), time.Now(), nil))
 
 		out, err := repo.Update(context.Background(), c)
 		assert.NoError(t, err)
@@ -149,16 +143,17 @@ func TestCustomerRepo_FindByID(t *testing.T) {
 	repo := NewCustomerRepo(sqlx.NewDb(db, "postgres"))
 
 	t.Run("success", func(t *testing.T) {
-		mock.ExpectQuery(`(?is)SELECT .* FROM customers WHERE id=\$1`).
+		mock.ExpectQuery(`(?is)SELECT .* FROM customers c LEFT JOIN membership_tiers t .* WHERE c.id=\$1 AND c.deleted_at IS NULL`).
 			WithArgs("c1").
-			WillReturnRows(sqlmock.NewRows([]string{"id", "name"}).AddRow("c1", "John"))
+			WillReturnRows(sqlmock.NewRows([]string{"id", "store_id", "name", "phone", "email", "address", "notes", "created_at", "updated_at", "loyalty_tier_id", "loyalty_tier_name", "loyalty_tier_mult", "loyalty_balance"}).
+				AddRow("c1", customerTestStoreID, "John", nil, nil, nil, nil, time.Now(), time.Now(), nil, nil, nil, 0))
 
 		res, err := repo.FindByID(context.Background(), "c1")
 		assert.NoError(t, err)
 		assert.NotNil(t, res)
 
 		// Not Found
-		mock.ExpectQuery(`(?is)SELECT .* FROM customers WHERE id=\$1`).WillReturnError(sql.ErrNoRows)
+		mock.ExpectQuery(`(?is)SELECT .* FROM customers c .* WHERE c.id=\$1`).WillReturnError(sql.ErrNoRows)
 		res, err = repo.FindByID(context.Background(), "unknown")
 		assert.NoError(t, err)
 		assert.Nil(t, res)
@@ -174,7 +169,8 @@ func TestCustomerRepo_SearchByPhone(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		mock.ExpectQuery(`(?is)SELECT .* FROM customers WHERE store_id=\$1 AND phone ILIKE \$2`).
 			WithArgs("s1", "123%").
-			WillReturnRows(sqlmock.NewRows([]string{"id", "phone"}).AddRow("c1", "123"))
+			WillReturnRows(sqlmock.NewRows([]string{"id", "store_id", "name", "phone", "email", "address", "notes", "created_at", "updated_at", "deleted_at"}).
+				AddRow("c1", "s1", "John", "123", nil, nil, nil, time.Now(), time.Now(), nil))
 
 		res, err := repo.SearchByPhone(context.Background(), "s1", "123")
 		assert.NoError(t, err)

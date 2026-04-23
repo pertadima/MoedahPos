@@ -24,11 +24,11 @@ func TestStoreRepo_Basic(t *testing.T) {
 		defer func() { _ = db.Close() }()
 		repo := NewStoreRepo(sqlx.NewDb(db, "postgres"))
 
-		s := &domain.Store{Name: "Store 1", StoreType: "retail"}
-		rows := sqlmock.NewRows([]string{"id", "name", "address", "phone", "tax_number", "currency", "store_type", "default_tax_percentage", "is_active", "created_at", "updated_at", "deleted_at"}).
-			AddRow("st1", "Store 1", "", "", "", "IDR", "retail", 10.0, true, time.Now(), time.Now(), nil)
+		s := &domain.Store{Name: "Store 1", StoreType: "retail", LoyaltyPointsPerRupiah: 1, LoyaltyRupiahPerPoint: 1}
+		rows := sqlmock.NewRows([]string{"id", "name", "address", "phone", "tax_number", "currency", "store_type", "default_tax_percentage", "loyalty_points_per_rupiah", "loyalty_rupiah_per_point", "is_active", "created_at", "updated_at", "deleted_at"}).
+			AddRow("st1", "Store 1", "", "", "", "IDR", "retail", 10.0, 1.0, 1.0, true, time.Now(), time.Now(), nil)
 
-		mock.ExpectQuery(`INSERT INTO stores`).WithArgs(s.Name, s.Address, s.Phone, s.TaxNumber, s.Currency, s.StoreType, s.DefaultTaxPercentage).WillReturnRows(rows)
+		mock.ExpectQuery(`INSERT INTO stores`).WithArgs(s.Name, s.Address, s.Phone, s.TaxNumber, s.Currency, s.StoreType, s.DefaultTaxPercentage, s.LoyaltyPointsPerRupiah, s.LoyaltyRupiahPerPoint).WillReturnRows(rows)
 
 		res, err := repo.Create(ctx, s)
 		assert.NoError(t, err)
@@ -81,8 +81,8 @@ func TestStoreRepo_Basic(t *testing.T) {
 		defer func() { _ = db.Close() }()
 		repo := NewStoreRepo(sqlx.NewDb(db, "postgres"))
 
-		s := &domain.Store{ID: "st1", Name: "S1 Updated"}
-		mock.ExpectQuery(`UPDATE stores`).WithArgs(s.Name, s.Address, s.Phone, s.TaxNumber, s.Currency, s.StoreType, s.DefaultTaxPercentage, s.IsActive, s.ID).
+		s := &domain.Store{ID: "st1", Name: "S1 Updated", LoyaltyPointsPerRupiah: 1, LoyaltyRupiahPerPoint: 1, IsActive: true}
+		mock.ExpectQuery(`UPDATE stores`).WithArgs(s.Name, s.Address, s.Phone, s.TaxNumber, s.Currency, s.StoreType, s.DefaultTaxPercentage, s.LoyaltyPointsPerRupiah, s.LoyaltyRupiahPerPoint, s.IsActive, s.ID).
 			WillReturnRows(sqlmock.NewRows([]string{"id", "name"}).AddRow("st1", "S1 Updated"))
 
 		res, err := repo.Update(ctx, s)

@@ -8,6 +8,7 @@ type Transaction struct {
 	StoreID           string    `db:"store_id"`
 	CashierID         string    `db:"cashier_id"`
 	TableID           *string   `db:"table_id"` // nil for retail; set for restaurant draft orders
+	CustomerID        *string   `db:"customer_id"`
 	CustomerName      string    `db:"customer_name"`
 	CustomerPhone     string    `db:"customer_phone"`
 	Subtotal          float64   `db:"subtotal"`
