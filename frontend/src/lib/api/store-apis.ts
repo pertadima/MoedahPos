@@ -30,6 +30,7 @@ export const storesApi = {
     store_type: string;
     default_tax_percentage?: number;
     loyalty_points_per_rupiah?: number;
+    loyalty_rupiah_per_point?: number;
   }) => api.post<Store>('/stores', payload),
   update: (
     id: string,
@@ -42,6 +43,7 @@ export const storesApi = {
       store_type: string;
       default_tax_percentage?: number;
       loyalty_points_per_rupiah?: number;
+      loyalty_rupiah_per_point?: number;
       is_active?: boolean;
     }
   ) => api.put<Store>(`/stores/${id}`, payload),

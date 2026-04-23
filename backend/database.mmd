@@ -23,6 +23,7 @@ erDiagram
         VARCHAR store_type
         NUMERIC default_tax_percentage
         NUMERIC loyalty_points_per_rupiah
+        NUMERIC loyalty_rupiah_per_point
     }
     roles {
         UUID id PK
@@ -169,6 +170,8 @@ erDiagram
         NUMERIC cart_discount_value
         TIMESTAMPTZ server_updated_at
         INT sync_version
+        NUMERIC points_redeemed
+        NUMERIC points_discount
     }
     transaction_items {
         UUID id PK

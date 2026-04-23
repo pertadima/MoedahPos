@@ -218,11 +218,13 @@ function cartReducer(state: PosCartItem[], action: CartAction): PosCartItem[] {
 // ── Payment Modal ─────────────────────────────────────────────────────────────
 function PaymentModal({
   total,
+  pointsDiscount = 0,
   onClose,
   onConfirm,
   loading,
 }: {
   total: number;
+  pointsDiscount?: number;
   onClose: () => void;
   onConfirm: (method: string, amount: number) => void;
   loading: boolean;
@@ -263,6 +265,31 @@ function PaymentModal({
             <X size={16} />
           </button>
         </div>
+
+        {pointsDiscount > 0 && (
+          <div
+            style={{
+              background: 'rgba(251,191,36,0.1)',
+              border: '1px solid rgba(251,191,36,0.3)',
+              borderRadius: 10,
+              padding: '10px 14px',
+              marginBottom: 12,
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Star size={14} style={{ color: '#f59e0b' }} />
+              <span style={{ fontSize: '0.82rem', color: 'var(--text-2)' }}>
+                Diskon Poin Loyalitas
+              </span>
+            </div>
+            <span style={{ fontWeight: 700, color: '#f59e0b', fontSize: '0.9rem' }}>
+              -{formatRp(pointsDiscount)}
+            </span>
+          </div>
+        )}
 
         <div
           style={{
@@ -698,6 +725,7 @@ export default function POSPage() {
 
   // Loyalty
   const loyalty = useLoyalty();
+  const [pointsToRedeem, setPointsToRedeem] = useState(0);
 
   const storeId = selectedStore?.store_id;
 
@@ -955,7 +983,15 @@ export default function POSPage() {
       : Math.min(cartDiscountValue, subtotalAfterItems);
 
   const subtotal = Math.max(0, subtotalAfterItems - cartDiscountAmt); // post-cart-discount net
-  const total = subtotal + taxAmt;
+
+  // Loyalty points redemption
+  const loyaltyRupiahPerPoint = selectedStore?.loyalty_rupiah_per_point ?? 1;
+  const loyaltyBalance = loyalty.balance?.balance ?? 0;
+  const maxRedeemablePoints = selectedCustomer
+    ? Math.min(loyaltyBalance, Math.floor((subtotal + taxAmt) / loyaltyRupiahPerPoint))
+    : 0;
+  const pointsDiscount = Math.min(pointsToRedeem, maxRedeemablePoints) * loyaltyRupiahPerPoint;
+  const total = Math.max(0, subtotal + taxAmt - pointsDiscount);
 
   // Total discount across both levels (item + cart)
   const totalItemDiscount = cart.reduce(
@@ -977,8 +1013,10 @@ export default function POSPage() {
           res = await transactionsApi.payDraft(storeId, activeDraft.id, {
             payment_method: method,
             payment_amount: amount,
+            customer_id: selectedCustomer?.id ?? '',
             customer_name: selectedCustomer?.name ?? '',
             customer_phone: selectedCustomer?.phone ?? '',
+            points_redeemed: pointsToRedeem > 0 ? pointsToRedeem : undefined,
           });
           // Table goes back to available
           if (selectedTable) {
@@ -1007,6 +1045,7 @@ export default function POSPage() {
 
           const payloadData = {
             table_id: null,
+            customer_id: selectedCustomer?.id ?? '',
             customer_name: selectedCustomer?.name ?? '',
             customer_phone: selectedCustomer?.phone ?? '',
             subtotal: subtotalAfterItems,
@@ -1020,6 +1059,7 @@ export default function POSPage() {
             notes: '',
             cart_discount_type: cartDiscountType,
             cart_discount_value: cartDiscountValue,
+            points_redeemed: pointsToRedeem > 0 ? pointsToRedeem : undefined,
             items: txItems as any,
           };
 
@@ -1044,6 +1084,7 @@ export default function POSPage() {
         setSelectedCustomer(null);
         setCustSearch('');
         loyalty.reset();
+        setPointsToRedeem(0);
         setShowPayment(false);
         setCartDiscountValue(0);
         setCartDiscountType('PERCENTAGE');
@@ -1073,6 +1114,7 @@ export default function POSPage() {
       handleBackToTables,
       cartDiscountType,
       cartDiscountValue,
+      pointsToRedeem,
     ]
   );
 
@@ -1771,6 +1813,87 @@ export default function POSPage() {
           )}
         </div>
 
+        {/* ── Points Redemption ── */}
+        {selectedCustomer && loyalty.balance && loyalty.balance.balance > 0 && cart.length > 0 && (
+          <div
+            style={{
+              padding: '10px 12px',
+              borderBottom: '1px solid var(--border)',
+              background: 'var(--bg-elevated)',
+            }}
+          >
+            <div
+              style={{
+                fontSize: '0.68rem',
+                fontWeight: 700,
+                color: 'var(--text-3)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.08em',
+                marginBottom: 6,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 4,
+              }}
+            >
+              <Star size={11} style={{ color: '#f59e0b' }} />
+              Tukar Poin Loyalitas
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ flex: 1 }}>
+                <input
+                  id="pos-points-redeem"
+                  type="number"
+                  className="input"
+                  min={0}
+                  max={maxRedeemablePoints}
+                  step={1}
+                  style={{ height: 34, fontSize: '0.85rem' }}
+                  placeholder={`Maks. ${maxRedeemablePoints.toLocaleString('id-ID')} poin`}
+                  value={pointsToRedeem || ''}
+                  onChange={e => {
+                    const v = Math.min(
+                      Math.max(0, Number(e.target.value) || 0),
+                      maxRedeemablePoints
+                    );
+                    setPointsToRedeem(v);
+                  }}
+                />
+              </div>
+              {pointsToRedeem > 0 && (
+                <button
+                  className="btn btn-ghost btn-sm"
+                  onClick={() => setPointsToRedeem(0)}
+                  style={{ color: 'var(--accent-rd)', padding: '0 8px', flexShrink: 0 }}
+                >
+                  <X size={14} />
+                </button>
+              )}
+            </div>
+            {pointsToRedeem > 0 ? (
+              <p
+                style={{
+                  fontSize: '0.7rem',
+                  color: '#f59e0b',
+                  marginTop: 4,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 4,
+                }}
+              >
+                <Star size={10} style={{ fill: '#f59e0b', color: '#f59e0b' }} />
+                {pointsToRedeem.toLocaleString('id-ID')} poin = diskon {formatRp(pointsDiscount)}
+              </p>
+            ) : (
+              <p style={{ fontSize: '0.7rem', color: 'var(--text-3)', marginTop: 4 }}>
+                Saldo: {loyalty.balance.balance.toLocaleString('id-ID')} poin ·{' '}
+                {loyaltyRupiahPerPoint > 0
+                  ? `1 poin = Rp ${loyaltyRupiahPerPoint.toLocaleString('id-ID')}`
+                  : ''}
+              </p>
+            )}
+          </div>
+        )}
+
         <div className="cart-items">
           {cart.length === 0 ? (
             <div className="empty-state" style={{ paddingTop: 48 }}>
@@ -2427,6 +2550,17 @@ export default function POSPage() {
           </div>
 
           {/* Grand total */}
+          {pointsDiscount > 0 && (
+            <div className="cart-total-row" style={{ color: '#f59e0b' }}>
+              <span
+                style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.8125rem' }}
+              >
+                <Star size={12} style={{ fill: '#f59e0b', color: '#f59e0b' }} />
+                Diskon Poin
+              </span>
+              <span style={{ fontWeight: 700 }}>-{formatRp(pointsDiscount)}</span>
+            </div>
+          )}
           <div className="cart-total-row grand">
             <span>Total</span>
             <span style={{ color: 'var(--brand)' }}>{formatRp(total)}</span>
@@ -2548,6 +2682,7 @@ export default function POSPage() {
         <Portal>
           <PaymentModal
             total={total}
+            pointsDiscount={pointsDiscount}
             onClose={() => setShowPayment(false)}
             onConfirm={handleConfirmPayment}
             loading={payLoading}

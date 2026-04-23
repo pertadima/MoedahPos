@@ -42,18 +42,19 @@ func (r *TransactionRepo) Create(ctx context.Context, input domain.CreateTransac
 	// 1. INSERT transaction header (table_id may be nil for retail)
 	const txnQ = `
 		INSERT INTO transactions
-		  (id, store_id, cashier_id, table_id, customer_name, customer_phone,
+		  (id, store_id, cashier_id, table_id, customer_id, customer_name, customer_phone,
 		   subtotal, discount_amt, tax_amt, total,
 		   payment_method, payment_amount, change_amount, status, notes,
-		   cart_discount_type, cart_discount_value)
-		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)
-		RETURNING id, store_id, cashier_id, table_id,
+		   cart_discount_type, cart_discount_value, points_redeemed, points_discount)
+		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20)
+		RETURNING id, store_id, cashier_id, table_id, customer_id,
 		          COALESCE(customer_name,'')  AS customer_name,
 		          COALESCE(customer_phone,'') AS customer_phone,
 		          subtotal, discount_amt, tax_amt, total,
 		          payment_method, payment_amount, change_amount, status,
 		          COALESCE(notes,'') AS notes,
 		          cart_discount_type, cart_discount_value,
+		          points_redeemed, points_discount,
 		          created_at, updated_at`
 
 	id := input.ID
@@ -63,11 +64,12 @@ func (r *TransactionRepo) Create(ctx context.Context, input domain.CreateTransac
 
 	txn := &domain.Transaction{ID: id}
 	err = tx.QueryRowxContext(ctx, txnQ,
-		id, input.StoreID, input.CashierID, input.TableID,
+		id, input.StoreID, input.CashierID, input.TableID, input.CustomerID,
 		input.CustomerName, input.CustomerPhone,
 		input.Subtotal, input.DiscountAmt, input.TaxAmt, input.Total,
 		input.PaymentMethod, input.PaymentAmount, input.ChangeAmount, status, input.Notes,
 		input.CartDiscountType, input.CartDiscountValue,
+		input.PointsRedeemed, input.PointsDiscount,
 	).StructScan(txn)
 	if err != nil {
 		return nil, fmt.Errorf("TransactionRepo.Create insert txn: %w", err)
@@ -133,12 +135,13 @@ func (r *TransactionRepo) Create(ctx context.Context, input domain.CreateTransac
 // GetDraftByTable returns the open (draft) transaction for a given table, or nil if none.
 func (r *TransactionRepo) GetDraftByTable(ctx context.Context, storeID, tableID string) (*domain.Transaction, error) {
 	const q = `
-		SELECT t.id, t.store_id, t.cashier_id, t.table_id,
+		SELECT t.id, t.store_id, t.cashier_id, t.table_id, t.customer_id,
 		       COALESCE(t.customer_name,'')  AS customer_name,
 		       COALESCE(t.customer_phone,'') AS customer_phone,
 		       t.subtotal, t.discount_amt, t.tax_amt, t.total,
 		       t.payment_method, t.payment_amount, t.change_amount, t.status,
 		       COALESCE(t.notes,'') AS notes,
+		       t.cart_discount_type, t.cart_discount_value, t.points_redeemed, t.points_discount,
 		       t.created_at, t.updated_at, u.name AS cashier_name
 		FROM transactions t
 		JOIN users u ON u.id = t.cashier_id
@@ -333,11 +336,14 @@ func (r *TransactionRepo) PayDraft(ctx context.Context, input domain.PayDraftInp
 		SET payment_method=$2, payment_amount=$3, change_amount=$4,
 		    customer_name=COALESCE(NULLIF($5,''), customer_name),
 		    customer_phone=COALESCE(NULLIF($6,''), customer_phone),
+		    customer_id=COALESCE($7, customer_id),
+		    points_redeemed=$8, points_discount=$9,
 		    status='completed', table_id=NULL, updated_at=NOW()
 		WHERE id=$1 AND status='draft'`
 	res, err := tx.ExecContext(ctx, updQ,
 		input.TransactionID, input.PaymentMethod, input.PaymentAmount, input.ChangeAmount,
-		input.CustomerName, input.CustomerPhone,
+		input.CustomerName, input.CustomerPhone, input.CustomerID,
+		input.PointsRedeemed, input.PointsDiscount,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("TransactionRepo.PayDraft update: %w", err)
@@ -418,12 +424,13 @@ func (r *TransactionRepo) FindAll(ctx context.Context, f dto.TransactionListFilt
 
 	args = append(args, f.PerPage, f.Offset())
 	dataQ := fmt.Sprintf(`
-		SELECT t.id, t.store_id, t.cashier_id, t.table_id,
+		SELECT t.id, t.store_id, t.cashier_id, t.table_id, t.customer_id,
 		       COALESCE(t.customer_name,'')  AS customer_name,
 		       COALESCE(t.customer_phone,'') AS customer_phone,
 		       t.subtotal, t.discount_amt, t.tax_amt, t.total,
 		       t.payment_method, t.payment_amount, t.change_amount, t.status,
 		       COALESCE(t.notes,'') AS notes,
+		       t.cart_discount_type, t.cart_discount_value, t.points_redeemed, t.points_discount,
 		       t.created_at, t.updated_at, u.name AS cashier_name
 		FROM transactions t
 		JOIN users u ON u.id = t.cashier_id
@@ -441,12 +448,13 @@ func (r *TransactionRepo) FindAll(ctx context.Context, f dto.TransactionListFilt
 // FindByID returns a transaction with all its items.
 func (r *TransactionRepo) FindByID(ctx context.Context, id string) (*domain.Transaction, error) {
 	const txnQ = `
-		SELECT t.id, t.store_id, t.cashier_id, t.table_id,
+		SELECT t.id, t.store_id, t.cashier_id, t.table_id, t.customer_id,
 		       COALESCE(t.customer_name,'')  AS customer_name,
 		       COALESCE(t.customer_phone,'') AS customer_phone,
 		       t.subtotal, t.discount_amt, t.tax_amt, t.total,
 		       t.payment_method, t.payment_amount, t.change_amount, t.status,
 		       COALESCE(t.notes,'') AS notes,
+		       t.cart_discount_type, t.cart_discount_value, t.points_redeemed, t.points_discount,
 		       t.created_at, t.updated_at, u.name AS cashier_name
 		FROM transactions t
 		JOIN users u ON u.id = t.cashier_id

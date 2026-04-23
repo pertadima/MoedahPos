@@ -37,6 +37,7 @@ interface StoreForm {
   store_type: 'retail' | 'restaurant';
   default_tax_percentage: number | '';
   loyalty_points_per_rupiah: number | '';
+  loyalty_rupiah_per_point: number | '';
 }
 
 const emptyForm = (): StoreForm => ({
@@ -48,6 +49,7 @@ const emptyForm = (): StoreForm => ({
   store_type: 'retail',
   default_tax_percentage: 0,
   loyalty_points_per_rupiah: 1000,
+  loyalty_rupiah_per_point: 1,
 });
 
 const STORE_TYPE_CONFIG = {
@@ -135,6 +137,7 @@ export default function StoresPage() {
       store_type: (s.store_type as 'retail' | 'restaurant') || 'retail',
       default_tax_percentage: s.default_tax_percentage ?? 0,
       loyalty_points_per_rupiah: s.loyalty_points_per_rupiah ?? 1000,
+      loyalty_rupiah_per_point: s.loyalty_rupiah_per_point ?? 1,
     });
     setFormError('');
     setModal({ open: true, mode: 'edit', store: s });
@@ -161,6 +164,7 @@ export default function StoresPage() {
       store_type: form.store_type,
       default_tax_percentage: Number(form.default_tax_percentage) || 0,
       loyalty_points_per_rupiah: Number(form.loyalty_points_per_rupiah) || 1000,
+      loyalty_rupiah_per_point: Number(form.loyalty_rupiah_per_point) || 1,
     };
     try {
       if (modal.mode === 'create') {
@@ -196,6 +200,7 @@ export default function StoresPage() {
         store_type: s.store_type ?? 'retail',
         default_tax_percentage: s.default_tax_percentage,
         loyalty_points_per_rupiah: s.loyalty_points_per_rupiah,
+        loyalty_rupiah_per_point: s.loyalty_rupiah_per_point,
         is_active: !s.is_active,
       });
       showToast(`${s.name} ${!s.is_active ? 'diaktifkan' : 'dinonaktifkan'}`, 'success');
@@ -921,6 +926,67 @@ export default function StoresPage() {
                     {Number(form.loyalty_points_per_rupiah) > 0
                       ? `Transaksi Rp ${Number(form.loyalty_points_per_rupiah).toLocaleString('id-ID')} = 1 poin`
                       : 'Isi nilai rupiah kelipatan poin'}
+                  </p>
+                </div>
+
+                {/* Loyalty Redemption Rate */}
+                <div>
+                  <label
+                    htmlFor="store-loyalty-redeem-rate"
+                    style={{
+                      display: 'block',
+                      fontSize: '0.82rem',
+                      fontWeight: 600,
+                      marginBottom: 6,
+                      color: 'var(--text-2)',
+                    }}
+                  >
+                    Nilai Rupiah per Poin Ditukarkan
+                    <span
+                      style={{
+                        fontSize: '0.72rem',
+                        color: 'var(--text-3)',
+                        fontWeight: 400,
+                        marginLeft: 6,
+                      }}
+                    >
+                      (nilai diskon untuk setiap 1 poin)
+                    </span>
+                  </label>
+                  <div style={{ position: 'relative' }}>
+                    <input
+                      id="store-loyalty-redeem-rate"
+                      type="number"
+                      min="1"
+                      step="1"
+                      className="input"
+                      placeholder="Contoh: 1"
+                      value={form.loyalty_rupiah_per_point}
+                      onChange={e =>
+                        setForm(f => ({
+                          ...f,
+                          loyalty_rupiah_per_point:
+                            e.target.value === '' ? '' : Number(e.target.value),
+                        }))
+                      }
+                    />
+                    <span
+                      style={{
+                        position: 'absolute',
+                        right: 14,
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        color: 'var(--text-3)',
+                        fontSize: '0.78rem',
+                      }}
+                    >
+                      Rp/poin
+                    </span>
+                  </div>
+                  <p style={{ fontSize: '0.72rem', color: 'var(--text-3)', marginTop: 5 }}>
+                    {Number(form.loyalty_rupiah_per_point) > 0
+                      ? `1 poin = diskon Rp ${Number(form.loyalty_rupiah_per_point).toLocaleString('id-ID')}`
+                      : 'Isi nilai rupiah per poin yang ditukarkan'}
                   </p>
                 </div>
 

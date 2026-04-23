@@ -13,6 +13,7 @@ type Store struct {
 	StoreType              string     `db:"store_type"` // retail | restaurant
 	DefaultTaxPercentage   float64    `db:"default_tax_percentage"`
 	LoyaltyPointsPerRupiah float64    `db:"loyalty_points_per_rupiah"`
+	LoyaltyRupiahPerPoint  float64    `db:"loyalty_rupiah_per_point"`
 	IsActive               bool       `db:"is_active"`
 	CreatedAt              time.Time  `db:"created_at"`
 	UpdatedAt              time.Time  `db:"updated_at"`

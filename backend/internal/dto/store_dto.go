@@ -12,6 +12,7 @@ type CreateStoreRequest struct {
 	StoreType              string  `json:"store_type" validate:"oneof=retail restaurant"`
 	DefaultTaxPercentage   float64 `json:"default_tax_percentage"   validate:"min=0,max=100"`
 	LoyaltyPointsPerRupiah float64 `json:"loyalty_points_per_rupiah" validate:"min=1"`
+	LoyaltyRupiahPerPoint  float64 `json:"loyalty_rupiah_per_point" validate:"min=1"`
 }
 
 // UpdateStoreRequest is the input for PUT /stores/:id.
@@ -24,6 +25,7 @@ type UpdateStoreRequest struct {
 	StoreType              string  `json:"store_type" validate:"oneof=retail restaurant"`
 	DefaultTaxPercentage   float64 `json:"default_tax_percentage"   validate:"min=0,max=100"`
 	LoyaltyPointsPerRupiah float64 `json:"loyalty_points_per_rupiah" validate:"min=0"`
+	LoyaltyRupiahPerPoint  float64 `json:"loyalty_rupiah_per_point" validate:"min=0"`
 	IsActive               *bool   `json:"is_active"`
 }
 
@@ -38,6 +40,7 @@ type StoreResponse struct {
 	StoreType              string  `json:"store_type"`
 	DefaultTaxPercentage   float64 `json:"default_tax_percentage"`
 	LoyaltyPointsPerRupiah float64 `json:"loyalty_points_per_rupiah"`
+	LoyaltyRupiahPerPoint  float64 `json:"loyalty_rupiah_per_point"`
 	IsActive               bool    `json:"is_active"`
 	CreatedAt              string  `json:"created_at"`
 	UpdatedAt              string  `json:"updated_at"`

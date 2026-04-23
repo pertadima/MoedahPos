@@ -25,6 +25,8 @@ type Transaction struct {
 	UpdatedAt         time.Time `db:"updated_at"`
 	ServerUpdatedAt   time.Time `db:"server_updated_at"`
 	SyncVersion       int       `db:"sync_version"`
+	PointsRedeemed    float64   `db:"points_redeemed"`
+	PointsDiscount    float64   `db:"points_discount"`
 
 	// Populated via JOIN
 	CashierName string            `db:"cashier_name"`
@@ -62,6 +64,7 @@ type CreateTransactionInput struct {
 	CashierID         string
 	TableID           *string // nil = retail
 	Status            string  // "draft" or "completed"
+	CustomerID        *string
 	CustomerName      string
 	CustomerPhone     string
 	PaymentMethod     string
@@ -74,17 +77,22 @@ type CreateTransactionInput struct {
 	Total             float64
 	CartDiscountType  string  // PERCENTAGE | FIXED
 	CartDiscountValue float64 // audit: raw value entered by cashier
+	PointsRedeemed    float64
+	PointsDiscount    float64
 	Items             []CreateTransactionItemInput
 }
 
 // PayDraftInput is what the service passes to the repo when finalizing a held order.
 type PayDraftInput struct {
-	TransactionID string
-	PaymentMethod string
-	PaymentAmount float64
-	ChangeAmount  float64
-	CustomerName  string
-	CustomerPhone string
+	TransactionID  string
+	PaymentMethod  string
+	PaymentAmount  float64
+	ChangeAmount   float64
+	CustomerID     *string
+	CustomerName   string
+	CustomerPhone  string
+	PointsRedeemed float64
+	PointsDiscount float64
 }
 
 // CreateTransactionItemInput is a pre-calculated item ready for DB insertion.

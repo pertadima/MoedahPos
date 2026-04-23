@@ -38,6 +38,7 @@ type UserStore struct {
 	StoreType              string  `db:"store_type"`
 	RoleName               string  `db:"role_name"`
 	LoyaltyPointsPerRupiah float64 `db:"loyalty_points_per_rupiah"`
+	LoyaltyRupiahPerPoint  float64 `db:"loyalty_rupiah_per_point"`
 }
 
 // StoreMember is the enriched projection for listing members of a store.

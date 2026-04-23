@@ -67,7 +67,8 @@ func (s *StoreService) CreateStore(ctx context.Context, req *dto.CreateStoreRequ
 		Name: req.Name, Address: req.Address, Phone: req.Phone,
 		TaxNumber: req.TaxNumber, Currency: req.Currency,
 		StoreType: req.StoreType, DefaultTaxPercentage: req.DefaultTaxPercentage,
-		LoyaltyPointsPerRupiah: req.LoyaltyPointsPerRupiah, IsActive: true,
+		LoyaltyPointsPerRupiah: req.LoyaltyPointsPerRupiah,
+		LoyaltyRupiahPerPoint:  req.LoyaltyRupiahPerPoint, IsActive: true,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("creating store: %w", err)
@@ -91,6 +92,9 @@ func (s *StoreService) UpdateStore(ctx context.Context, id string, req *dto.Upda
 	store.DefaultTaxPercentage = req.DefaultTaxPercentage
 	if req.LoyaltyPointsPerRupiah > 0 {
 		store.LoyaltyPointsPerRupiah = req.LoyaltyPointsPerRupiah
+	}
+	if req.LoyaltyRupiahPerPoint > 0 {
+		store.LoyaltyRupiahPerPoint = req.LoyaltyRupiahPerPoint
 	}
 	if req.Currency != "" {
 		store.Currency = req.Currency
@@ -197,6 +201,7 @@ func toStoreResponse(s *domain.Store) *dto.StoreResponse {
 		StoreType:              storeType,
 		DefaultTaxPercentage:   s.DefaultTaxPercentage,
 		LoyaltyPointsPerRupiah: s.LoyaltyPointsPerRupiah,
+		LoyaltyRupiahPerPoint:  s.LoyaltyRupiahPerPoint,
 		IsActive:               s.IsActive,
 		CreatedAt:              s.CreatedAt.Format(time.RFC3339),
 		UpdatedAt:              s.UpdatedAt.Format(time.RFC3339),

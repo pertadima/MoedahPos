@@ -219,6 +219,7 @@ func (s *AuthService) Me(ctx context.Context, userID string) (*dto.MeResponse, e
 			StoreType:              us.StoreType,
 			Role:                   us.RoleName,
 			LoyaltyPointsPerRupiah: us.LoyaltyPointsPerRupiah,
+			LoyaltyRupiahPerPoint:  us.LoyaltyRupiahPerPoint,
 		})
 	}
 
