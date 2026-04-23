@@ -104,7 +104,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const res = await authApi.me();
       const u = res.data;
       setUser(u);
-      
+
       // Update selected store if it still exists
       const savedStoreId = localStorage.getItem('selected_store_id');
       const storeList = u.stores ?? [];
