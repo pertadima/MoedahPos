@@ -18,40 +18,50 @@ import (
 	"github.com/moedahpos/backend/internal/validator"
 )
 
-func TestStoreHandler_CRUD(t *testing.T) {
+func setupStoreHandler() (*mocks.StoreServiceInterface, *StoreHandler) {
 	svc := new(mocks.StoreServiceInterface)
 	v := validator.New()
 	log := zerolog.Nop()
 	h := NewStoreHandler(svc, v, log)
+	return svc, h
+}
 
-	t.Run("List", func(t *testing.T) {
-		req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "/stores", nil)
-		w := httptest.NewRecorder()
+func TestStoreHandler_List(t *testing.T) {
+	svc, h := setupStoreHandler()
 
-		svc.On("ListStores", mock.Anything, mock.Anything).Return([]*dto.StoreResponse{{ID: "s1"}}, dto.PaginationMeta{Total: 1}, nil).Once()
+	req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "/stores", nil)
+	w := httptest.NewRecorder()
 
-		h.List(w, req)
+	svc.On("ListStores", mock.Anything, mock.Anything).Return([]*dto.StoreResponse{{ID: "s1"}}, dto.PaginationMeta{Total: 1}, nil).Once()
 
-		assert.Equal(t, http.StatusOK, w.Code)
-		svc.AssertExpectations(t)
-	})
+	h.List(w, req)
 
-	t.Run("Get", func(t *testing.T) {
-		req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "/stores/s1", nil)
-		w := httptest.NewRecorder()
+	assert.Equal(t, http.StatusOK, w.Code)
+	svc.AssertExpectations(t)
+}
 
-		rctx := chi.NewRouteContext()
-		rctx.URLParams.Add("storeId", "s1")
-		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+func TestStoreHandler_Get(t *testing.T) {
+	svc, h := setupStoreHandler()
 
-		svc.On("GetStore", mock.Anything, "s1").Return(&dto.StoreResponse{ID: "s1"}, nil).Once()
+	req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "/stores/s1", nil)
+	w := httptest.NewRecorder()
 
-		h.Get(w, req)
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("storeId", "s1")
+	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 
-		assert.Equal(t, http.StatusOK, w.Code)
-	})
+	svc.On("GetStore", mock.Anything, "s1").Return(&dto.StoreResponse{ID: "s1"}, nil).Once()
 
-	t.Run("Create", func(t *testing.T) {
+	h.Get(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	svc.AssertExpectations(t)
+}
+
+func TestStoreHandler_Create(t *testing.T) {
+	svc, h := setupStoreHandler()
+
+	t.Run("success", func(t *testing.T) {
 		reqBody := dto.CreateStoreRequest{
 			Name:                   "New Store",
 			Currency:               "IDR",
@@ -68,16 +78,31 @@ func TestStoreHandler_CRUD(t *testing.T) {
 		h.Create(w, req)
 
 		assert.Equal(t, http.StatusCreated, w.Code)
+		svc.AssertExpectations(t)
 	})
 
-	t.Run("Update", func(t *testing.T) {
+	t.Run("Validation Error", func(t *testing.T) {
+		reqBody := dto.CreateStoreRequest{Name: ""}
+		body, _ := json.Marshal(reqBody)
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodPost, "/stores", bytes.NewBuffer(body))
+		w := httptest.NewRecorder()
+
+		h.Create(w, req)
+		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
+	})
+}
+
+func TestStoreHandler_Update(t *testing.T) {
+	svc, h := setupStoreHandler()
+
+	t.Run("success", func(t *testing.T) {
 		reqBody := dto.UpdateStoreRequest{
 			Name:      "Updated Name",
 			Currency:  "IDR",
 			StoreType: "retail",
 		}
 		body, _ := json.Marshal(reqBody)
-		req, _ := http.NewRequestWithContext(context.Background(), http.MethodPut, "/stores/s1", bytes.NewBuffer(body))
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodPost, "/stores/s1", bytes.NewBuffer(body))
 		w := httptest.NewRecorder()
 
 		rctx := chi.NewRouteContext()
@@ -89,46 +114,63 @@ func TestStoreHandler_CRUD(t *testing.T) {
 		h.Update(w, req)
 
 		assert.Equal(t, http.StatusOK, w.Code)
+		svc.AssertExpectations(t)
 	})
 
-	t.Run("Delete", func(t *testing.T) {
-		req, _ := http.NewRequestWithContext(context.Background(), http.MethodDelete, "/stores/s1", nil)
-		w := httptest.NewRecorder()
-
+	t.Run("Validation Error", func(t *testing.T) {
+		reqBody := dto.UpdateStoreRequest{Name: ""}
+		body, _ := json.Marshal(reqBody)
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodPost, "/stores/s1", bytes.NewBuffer(body))
 		rctx := chi.NewRouteContext()
 		rctx.URLParams.Add("storeId", "s1")
 		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+		w := httptest.NewRecorder()
 
-		svc.On("DeleteStore", mock.Anything, "s1").Return(nil).Once()
-
-		h.Delete(w, req)
-
-		assert.Equal(t, http.StatusOK, w.Code)
+		h.Update(w, req)
+		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
 	})
 }
 
-func TestStoreHandler_Members(t *testing.T) {
-	svc := new(mocks.StoreServiceInterface)
-	v := validator.New()
-	log := zerolog.Nop()
-	h := NewStoreHandler(svc, v, log)
+func TestStoreHandler_Delete(t *testing.T) {
+	svc, h := setupStoreHandler()
 
-	t.Run("Members_List", func(t *testing.T) {
-		req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "/stores/s1/members", nil)
-		w := httptest.NewRecorder()
+	req, _ := http.NewRequestWithContext(context.Background(), http.MethodDelete, "/stores/s1", nil)
+	w := httptest.NewRecorder()
 
-		rctx := chi.NewRouteContext()
-		rctx.URLParams.Add("storeId", "s1")
-		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("storeId", "s1")
+	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 
-		svc.On("ListMembers", mock.Anything, "s1").Return([]*dto.MemberResponse{{UserID: "u1"}}, nil).Once()
+	svc.On("DeleteStore", mock.Anything, "s1").Return(nil).Once()
 
-		h.ListMembers(w, req)
+	h.Delete(w, req)
 
-		assert.Equal(t, http.StatusOK, w.Code)
-	})
+	assert.Equal(t, http.StatusOK, w.Code)
+	svc.AssertExpectations(t)
+}
 
-	t.Run("Members_Add", func(t *testing.T) {
+func TestStoreHandler_ListMembers(t *testing.T) {
+	svc, h := setupStoreHandler()
+
+	req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "/stores/s1/members", nil)
+	w := httptest.NewRecorder()
+
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("storeId", "s1")
+	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+	svc.On("ListMembers", mock.Anything, "s1").Return([]*dto.MemberResponse{{UserID: "u1"}}, nil).Once()
+
+	h.ListMembers(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	svc.AssertExpectations(t)
+}
+
+func TestStoreHandler_AddMember(t *testing.T) {
+	svc, h := setupStoreHandler()
+
+	t.Run("success", func(t *testing.T) {
 		reqBody := dto.AddMemberRequest{UserID: "00000000-0000-0000-0000-000000000001", RoleID: "00000000-0000-0000-0000-000000000002"}
 		body, _ := json.Marshal(reqBody)
 		req, _ := http.NewRequestWithContext(context.Background(), http.MethodPost, "/stores/s1/members", bytes.NewBuffer(body))
@@ -143,39 +185,59 @@ func TestStoreHandler_Members(t *testing.T) {
 		h.AddMember(w, req)
 
 		assert.Equal(t, http.StatusCreated, w.Code)
+		svc.AssertExpectations(t)
 	})
 
-	t.Run("Members_UpdateRole", func(t *testing.T) {
-		reqBody := dto.UpdateMemberRoleRequest{RoleID: "00000000-0000-0000-0000-000000000002"}
+	t.Run("Validation Error", func(t *testing.T) {
+		reqBody := dto.AddMemberRequest{UserID: "invalid"}
 		body, _ := json.Marshal(reqBody)
-		req, _ := http.NewRequestWithContext(context.Background(), http.MethodPut, "/stores/s1/members/u1", bytes.NewBuffer(body))
-		w := httptest.NewRecorder()
-
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodPost, "/stores/s1/members", bytes.NewBuffer(body))
 		rctx := chi.NewRouteContext()
 		rctx.URLParams.Add("storeId", "s1")
-		rctx.URLParams.Add("userId", "u1")
 		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
-
-		svc.On("UpdateMemberRole", mock.Anything, "s1", "u1", mock.Anything).Return(nil).Once()
-
-		h.UpdateMemberRole(w, req)
-
-		assert.Equal(t, http.StatusOK, w.Code)
-	})
-
-	t.Run("Members_Remove", func(t *testing.T) {
-		req, _ := http.NewRequestWithContext(context.Background(), http.MethodDelete, "/stores/s1/members/u1", nil)
 		w := httptest.NewRecorder()
 
-		rctx := chi.NewRouteContext()
-		rctx.URLParams.Add("storeId", "s1")
-		rctx.URLParams.Add("userId", "u1")
-		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
-
-		svc.On("RemoveMember", mock.Anything, "s1", "u1").Return(nil).Once()
-
-		h.RemoveMember(w, req)
-
-		assert.Equal(t, http.StatusOK, w.Code)
+		h.AddMember(w, req)
+		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
 	})
+}
+
+func TestStoreHandler_UpdateMemberRole(t *testing.T) {
+	svc, h := setupStoreHandler()
+
+	reqBody := dto.UpdateMemberRoleRequest{RoleID: "00000000-0000-0000-0000-000000000002"}
+	body, _ := json.Marshal(reqBody)
+	req, _ := http.NewRequestWithContext(context.Background(), http.MethodPut, "/stores/s1/members/u1", bytes.NewBuffer(body))
+	w := httptest.NewRecorder()
+
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("storeId", "s1")
+	rctx.URLParams.Add("userId", "u1")
+	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+	svc.On("UpdateMemberRole", mock.Anything, "s1", "u1", mock.Anything).Return(nil).Once()
+
+	h.UpdateMemberRole(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	svc.AssertExpectations(t)
+}
+
+func TestStoreHandler_RemoveMember(t *testing.T) {
+	svc, h := setupStoreHandler()
+
+	req, _ := http.NewRequestWithContext(context.Background(), http.MethodDelete, "/stores/s1/members/u1", nil)
+	w := httptest.NewRecorder()
+
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("storeId", "s1")
+	rctx.URLParams.Add("userId", "u1")
+	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+	svc.On("RemoveMember", mock.Anything, "s1", "u1").Return(nil).Once()
+
+	h.RemoveMember(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	svc.AssertExpectations(t)
 }

@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -17,8 +16,7 @@ func TestReportRepo_StockValuation(t *testing.T) {
 	}
 	defer func() { _ = db.Close() }()
 
-	sqlxDB := sqlx.NewDb(db, "postgres")
-	repo := NewReportRepo(sqlxDB)
+	repo := NewReportRepository(db)
 
 	ctx := context.Background()
 	storeID := "s1"
@@ -46,8 +44,7 @@ func TestReportRepo_SalesByProduct(t *testing.T) {
 	}
 	defer func() { _ = db.Close() }()
 
-	sqlxDB := sqlx.NewDb(db, "postgres")
-	repo := NewReportRepo(sqlxDB)
+	repo := NewReportRepository(db)
 
 	ctx := context.Background()
 	storeID := "s1"
@@ -76,8 +73,7 @@ func TestReportRepo_CashFlow(t *testing.T) {
 	}
 	defer func() { _ = db.Close() }()
 
-	sqlxDB := sqlx.NewDb(db, "postgres")
-	repo := NewReportRepo(sqlxDB)
+	repo := NewReportRepository(db)
 
 	ctx := context.Background()
 	storeID := "s1"

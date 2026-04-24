@@ -2,19 +2,23 @@ package postgres
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 
 	"github.com/jmoiron/sqlx"
 
 	"github.com/moedahpos/backend/internal/domain"
 	"github.com/moedahpos/backend/internal/dto"
+	"github.com/moedahpos/backend/internal/repository"
 )
 
 // BatchRepo is the PostgreSQL implementation of repository.BatchRepository.
 type BatchRepo struct{ db *sqlx.DB }
 
-// NewBatchRepo creates a new BatchRepo backed by the given database connection.
-func NewBatchRepo(db *sqlx.DB) *BatchRepo { return &BatchRepo{db: db} }
+// NewBatchRepository creates a new BatchRepository.
+func NewBatchRepository(db *sql.DB) repository.BatchRepository {
+	return &BatchRepo{db: sqlx.NewDb(db, "postgres")}
+}
 
 // CreateBatch inserts one stock batch record generated when a PO item is received.
 func (r *BatchRepo) CreateBatch(ctx context.Context, batch *domain.StockBatch) error {

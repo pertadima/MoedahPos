@@ -65,31 +65,32 @@ func main() {
 	validate := validator.New()
 
 	// ── Repositories ──────────────────────────────────────────────────────────
-	userRepo := postgres.NewUserRepo(sqlxDB)
-	refreshTokenRepo := postgres.NewRefreshTokenRepo(sqlxDB)
-	storeRepo := postgres.NewStoreRepo(sqlxDB)
-	categoryRepo := postgres.NewCategoryRepo(sqlxDB)
-	productRepo := postgres.NewProductRepo(sqlxDB)
-	stockRepo := postgres.NewStockRepo(sqlxDB)
-	transactionRepo := postgres.NewTransactionRepo(sqlxDB)
-	poRepo := postgres.NewPORepo(sqlxDB)
-	supplierRepo := postgres.NewSupplierRepo(sqlxDB)
-	reportRepo := postgres.NewReportRepo(sqlxDB)
-	tableRepo := postgres.NewTableRepo(sqlxDB)
-	menuItemRepo := postgres.NewMenuItemRepo(sqlxDB)
-	priceHistoryRepo := postgres.NewPriceHistoryRepo(sqlxDB)
-	poPaymentRepo := postgres.NewPOPaymentRepo(sqlxDB)
-	customerRepo := postgres.NewCustomerRepo(sqlxDB)
-	roleRepo := postgres.NewRoleRepo(sqlxDB)
-	batchRepo := postgres.NewBatchRepo(sqlxDB)                 // FIFO batch inventory
-	terminRepo := postgres.NewTerminRepo(sqlxDB)               // PO installment schedule
-	paymentRecordRepo := postgres.NewPaymentRecordRepo(sqlxDB) // PO payment records
-	expenseRepo := postgres.NewExpenseRepo(sqlxDB)
-	stockAdjustmentRepo := postgres.NewStockAdjustmentRepo(sqlxDB)
-	incomeRepo := postgres.NewIncomeRepo(sqlxDB)
-	activityLogRepo := postgres.NewActivityLogRepo(sqlxDB)
-	loyaltyRepo := postgres.NewLoyaltyRepo(sqlxDB)
-	tierRepo := postgres.NewMembershipTierRepo(sqlxDB)
+	dbRaw := sqlxDB.DB
+	userRepo := postgres.NewUserRepository(dbRaw)
+	refreshTokenRepo := postgres.NewRefreshTokenRepository(dbRaw)
+	storeRepo := postgres.NewStoreRepository(dbRaw)
+	categoryRepo := postgres.NewCategoryRepository(dbRaw)
+	productRepo := postgres.NewProductRepository(dbRaw)
+	stockRepo := postgres.NewStockRepository(dbRaw)
+	transactionRepo := postgres.NewTransactionRepository(dbRaw)
+	poRepo := postgres.NewPurchaseOrderRepository(dbRaw)
+	supplierRepo := postgres.NewSupplierRepository(dbRaw)
+	reportRepo := postgres.NewReportRepository(dbRaw)
+	tableRepo := postgres.NewTableRepository(dbRaw)
+	menuItemRepo := postgres.NewMenuItemRepository(dbRaw)
+	priceHistoryRepo := postgres.NewPriceHistoryRepository(dbRaw)
+	poPaymentRepo := postgres.NewPOPaymentRepository(dbRaw)
+	customerRepo := postgres.NewCustomerRepository(dbRaw)
+	roleRepo := postgres.NewRoleRepository(dbRaw)
+	batchRepo := postgres.NewBatchRepository(dbRaw)                 // FIFO batch inventory
+	terminRepo := postgres.NewTerminRepository(dbRaw)               // PO installment schedule
+	paymentRecordRepo := postgres.NewPaymentRecordRepository(dbRaw) // PO payment records
+	expenseRepo := postgres.NewExpenseRepository(dbRaw)
+	stockAdjustmentRepo := postgres.NewStockAdjustmentRepository(dbRaw)
+	incomeRepo := postgres.NewIncomeRepository(dbRaw)
+	activityLogRepo := postgres.NewActivityLogRepository(dbRaw)
+	loyaltyRepo := postgres.NewLoyaltyRepository(dbRaw)
+	tierRepo := postgres.NewMembershipTierRepository(dbRaw)
 
 	// ── Services ──────────────────────────────────────────────────────────────
 	batchSvc := service.NewBatchStockService(batchRepo, log) // FIFO batch inventory

@@ -12,12 +12,16 @@ import (
 
 	"github.com/moedahpos/backend/internal/domain"
 	"github.com/moedahpos/backend/internal/dto"
+	"github.com/moedahpos/backend/internal/repository"
 )
 
 // IncomeRepo handles income_categories and incomes persistence.
 type IncomeRepo struct{ db *sqlx.DB }
 
-func NewIncomeRepo(db *sqlx.DB) *IncomeRepo { return &IncomeRepo{db: db} }
+// NewIncomeRepository creates a new IncomeRepository.
+func NewIncomeRepository(db *sql.DB) repository.IncomeRepository {
+	return &IncomeRepo{db: sqlx.NewDb(db, "postgres")}
+}
 
 // ─── Categories ───────────────────────────────────────────────────────────────
 

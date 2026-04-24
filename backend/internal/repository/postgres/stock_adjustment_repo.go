@@ -2,20 +2,23 @@ package postgres
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 
 	"github.com/moedahpos/backend/internal/domain"
+	"github.com/moedahpos/backend/internal/repository"
 )
 
 type StockAdjustmentRepo struct {
 	db *sqlx.DB
 }
 
-func NewStockAdjustmentRepo(db *sqlx.DB) *StockAdjustmentRepo {
-	return &StockAdjustmentRepo{db: db}
+// NewStockAdjustmentRepository creates a new StockAdjustmentRepository.
+func NewStockAdjustmentRepository(db *sql.DB) repository.StockAdjustmentRepository {
+	return &StockAdjustmentRepo{db: sqlx.NewDb(db, "postgres")}
 }
 
 //nolint:funlen,cyclop,gocognit // The accounting implementation demands strict integrity rules in a single tx

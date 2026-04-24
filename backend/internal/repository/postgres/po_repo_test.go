@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -22,8 +21,7 @@ func TestPORepo_Create(t *testing.T) {
 	}
 	defer func() { _ = db.Close() }()
 
-	sqlxDB := sqlx.NewDb(db, "postgres")
-	repo := NewPORepo(sqlxDB)
+	repo := NewPurchaseOrderRepository(db)
 	ctx := context.Background()
 
 	po := &domain.PurchaseOrder{
@@ -69,8 +67,7 @@ func TestPORepo_FindByID(t *testing.T) {
 	}
 	defer func() { _ = db.Close() }()
 
-	sqlxDB := sqlx.NewDb(db, "postgres")
-	repo := NewPORepo(sqlxDB)
+	repo := NewPurchaseOrderRepository(db)
 	ctx := context.Background()
 
 	mock.ExpectQuery(`SELECT po.id`).WithArgs("po1").
@@ -101,8 +98,7 @@ func TestPORepo_Submit(t *testing.T) {
 	}
 	defer func() { _ = db.Close() }()
 
-	sqlxDB := sqlx.NewDb(db, "postgres")
-	repo := NewPORepo(sqlxDB)
+	repo := NewPurchaseOrderRepository(db)
 	ctx := context.Background()
 
 	mock.ExpectExec(`UPDATE purchase_orders`).WithArgs("po1").
@@ -130,8 +126,7 @@ func TestPORepo_Receive(t *testing.T) {
 	}
 	defer func() { _ = db.Close() }()
 
-	sqlxDB := sqlx.NewDb(db, "postgres")
-	repo := NewPORepo(sqlxDB)
+	repo := NewPurchaseOrderRepository(db)
 	ctx := context.Background()
 
 	mock.ExpectQuery(`SELECT product_id, quantity, unit_cost`).WithArgs("po1").
@@ -178,8 +173,7 @@ func TestPORepo_Cancel(t *testing.T) {
 	}
 	defer func() { _ = db.Close() }()
 
-	sqlxDB := sqlx.NewDb(db, "postgres")
-	repo := NewPORepo(sqlxDB)
+	repo := NewPurchaseOrderRepository(db)
 	ctx := context.Background()
 
 	mock.ExpectExec(`UPDATE purchase_orders SET status='cancelled'`).WithArgs("po1").
@@ -201,8 +195,7 @@ func TestPORepo_FindAll(t *testing.T) {
 	}
 	defer func() { _ = db.Close() }()
 
-	sqlxDB := sqlx.NewDb(db, "postgres")
-	repo := NewPORepo(sqlxDB)
+	repo := NewPurchaseOrderRepository(db)
 	ctx := context.Background()
 
 	mock.ExpectQuery(`SELECT COUNT\(\*\) FROM purchase_orders`).WithArgs("s1").
@@ -223,8 +216,7 @@ func TestPORepo_Update(t *testing.T) {
 	require.NoErrorf(t, err, "failed to open sqlmock")
 	defer func() { _ = db.Close() }()
 
-	sqlxDB := sqlx.NewDb(db, "postgres")
-	repo := NewPORepo(sqlxDB)
+	repo := NewPurchaseOrderRepository(db)
 	ctx := context.Background()
 
 	po := &domain.PurchaseOrder{

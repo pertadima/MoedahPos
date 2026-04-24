@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/moedahpos/backend/internal/domain"
@@ -22,8 +21,7 @@ func TestTerminRepo_CreateSchedule(t *testing.T) {
 	}
 	defer func() { _ = db.Close() }()
 
-	sqlxDB := sqlx.NewDb(db, "postgres")
-	repo := NewTerminRepo(sqlxDB)
+	repo := NewTerminRepository(db)
 
 	ctx := context.Background()
 	poID := testPOID
@@ -54,8 +52,7 @@ func TestTerminRepo_FindByPO(t *testing.T) {
 	}
 	defer func() { _ = db.Close() }()
 
-	sqlxDB := sqlx.NewDb(db, "postgres")
-	repo := NewTerminRepo(sqlxDB)
+	repo := NewTerminRepository(db)
 
 	ctx := context.Background()
 	poID := testPOID
@@ -81,8 +78,7 @@ func TestTerminRepo_FindByID(t *testing.T) {
 	}
 	defer func() { _ = db.Close() }()
 
-	sqlxDB := sqlx.NewDb(db, "postgres")
-	repo := NewTerminRepo(sqlxDB)
+	repo := NewTerminRepository(db)
 
 	ctx := context.Background()
 	tid := "t1"
@@ -114,8 +110,7 @@ func TestTerminRepo_UpdateStatus(t *testing.T) {
 	}
 	defer func() { _ = db.Close() }()
 
-	sqlxDB := sqlx.NewDb(db, "postgres")
-	repo := NewTerminRepo(sqlxDB)
+	repo := NewTerminRepository(db)
 
 	ctx := context.Background()
 	tid := "t1"
@@ -136,8 +131,7 @@ func TestTerminRepo_DebtSummary(t *testing.T) {
 	}
 	defer func() { _ = db.Close() }()
 
-	sqlxDB := sqlx.NewDb(db, "postgres")
-	repo := NewTerminRepo(sqlxDB)
+	repo := NewTerminRepository(db)
 
 	ctx := context.Background()
 	poID := testPOID

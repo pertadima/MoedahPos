@@ -12,13 +12,17 @@ import (
 
 	"github.com/moedahpos/backend/internal/domain"
 	"github.com/moedahpos/backend/internal/dto"
+	"github.com/moedahpos/backend/internal/repository"
 )
 
 // ── Supplier Repo ─────────────────────────────────────────────────────────────
 
 type SupplierRepo struct{ db *sqlx.DB }
 
-func NewSupplierRepo(db *sqlx.DB) *SupplierRepo { return &SupplierRepo{db: db} }
+// NewSupplierRepository creates a new SupplierRepository.
+func NewSupplierRepository(db *sql.DB) repository.SupplierRepository {
+	return &SupplierRepo{db: sqlx.NewDb(db, "postgres")}
+}
 
 func (r *SupplierRepo) Create(ctx context.Context, s *domain.Supplier) (*domain.Supplier, error) {
 	const q = `
@@ -114,7 +118,10 @@ func (r *SupplierRepo) SoftDelete(ctx context.Context, id string) error {
 
 type ReportRepo struct{ db *sqlx.DB }
 
-func NewReportRepo(db *sqlx.DB) *ReportRepo { return &ReportRepo{db: db} }
+// NewReportRepository creates a new ReportRepository.
+func NewReportRepository(db *sql.DB) repository.ReportRepository {
+	return &ReportRepo{db: sqlx.NewDb(db, "postgres")}
+}
 
 func (r *ReportRepo) SalesSummary(ctx context.Context, storeID string, from, to time.Time) ([]dto.SalesSummaryRow, error) {
 	const q = `

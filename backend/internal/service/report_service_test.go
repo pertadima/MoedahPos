@@ -64,4 +64,35 @@ func TestReportService(t *testing.T) {
 		assert.Equal(t, 300.0, resp.NetCash)
 		assert.Equal(t, 300.0, resp.CashInByMethod["cash"])
 	})
+
+	t.Run("SalesByProduct", func(t *testing.T) {
+		filter := dto.ReportFilter{StoreID: "s1"}
+		repo.On("SalesByProduct", ctx, "s1", mock.Anything, mock.Anything).Return([]dto.SalesByProductRow{{ProductName: "P1", TotalQuantity: 10}}, nil).Once()
+		res, err := svc.SalesByProduct(ctx, filter)
+		assert.NoError(t, err)
+		assert.Len(t, res, 1)
+	})
+
+	t.Run("SalesByCashier", func(t *testing.T) {
+		filter := dto.ReportFilter{StoreID: "s1"}
+		repo.On("SalesByCashier", ctx, "s1", mock.Anything, mock.Anything).Return([]dto.SalesByCashierRow{{CashierName: "U1", TotalSales: 100}}, nil).Once()
+		res, err := svc.SalesByCashier(ctx, filter)
+		assert.NoError(t, err)
+		assert.Len(t, res, 1)
+	})
+
+	t.Run("ProfitSummary", func(t *testing.T) {
+		filter := dto.ReportFilter{StoreID: "s1"}
+		repo.On("ProfitSummary", ctx, "s1", mock.Anything, mock.Anything, "day").Return([]dto.ProfitPeriodRow{{Period: "2024-01-01", GrossProfit: 100}}, nil).Once()
+		res, err := svc.ProfitSummary(ctx, filter, "day")
+		assert.NoError(t, err)
+		assert.Len(t, res.Rows, 1)
+	})
+
+	t.Run("CashFlowDetail", func(t *testing.T) {
+		repo.On("CashFlowDetail", ctx, "s1", mock.Anything, mock.Anything).Return([]dto.CashFlowDetailEntry{{Amount: 100}}, nil).Once()
+		res, err := svc.CashFlowDetail(ctx, "s1", "2024-01-01")
+		assert.NoError(t, err)
+		assert.Len(t, res, 1)
+	})
 }

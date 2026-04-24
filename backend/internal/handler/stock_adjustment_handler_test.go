@@ -64,4 +64,21 @@ func TestStockAdjustmentHandler(t *testing.T) {
 
 		assert.Equal(t, http.StatusOK, w.Code)
 	})
+
+	t.Run("Create_Validation_Error", func(t *testing.T) {
+		reqBody := domain.CreateAdjustmentInput{
+			ProductID: "", // Invalid
+		}
+		body, _ := json.Marshal(reqBody)
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodPost, "/stores/s1/stock/adjust", bytes.NewBuffer(body))
+		w := httptest.NewRecorder()
+
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("storeId", "s1")
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+		req = req.WithContext(context.WithValue(req.Context(), middleware.UserIDKey, "u1"))
+
+		h.Create(w, req)
+		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
+	})
 }

@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -17,8 +16,7 @@ func TestRoleRepo(t *testing.T) {
 	}
 	defer func() { _ = db.Close() }()
 
-	sqlxDB := sqlx.NewDb(db, "postgres")
-	repo := NewRoleRepo(sqlxDB)
+	repo := NewRoleRepository(db)
 
 	t.Run("ListRoles", func(t *testing.T) {
 		roleRows := sqlmock.NewRows([]string{"id", "name", "description", "created_at", "updated_at"}).

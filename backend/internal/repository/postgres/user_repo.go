@@ -10,6 +10,7 @@ import (
 	"github.com/jmoiron/sqlx"
 
 	"github.com/moedahpos/backend/internal/domain"
+	"github.com/moedahpos/backend/internal/repository"
 )
 
 // UserRepo is the PostgreSQL implementation of repository.UserRepository.
@@ -17,9 +18,9 @@ type UserRepo struct {
 	db *sqlx.DB
 }
 
-// NewUserRepo creates a new UserRepo.
-func NewUserRepo(db *sqlx.DB) *UserRepo {
-	return &UserRepo{db: db}
+// NewUserRepository creates a new UserRepository.
+func NewUserRepository(db *sql.DB) repository.UserRepository {
+	return &UserRepo{db: sqlx.NewDb(db, "postgres")}
 }
 
 // Create inserts a new user record and returns the fully hydrated entity.
@@ -239,9 +240,9 @@ type RefreshTokenRepo struct {
 	db *sqlx.DB
 }
 
-// NewRefreshTokenRepo creates a new RefreshTokenRepo.
-func NewRefreshTokenRepo(db *sqlx.DB) *RefreshTokenRepo {
-	return &RefreshTokenRepo{db: db}
+// NewRefreshTokenRepository creates a new RefreshTokenRepository.
+func NewRefreshTokenRepository(db *sql.DB) repository.RefreshTokenRepository {
+	return &RefreshTokenRepo{db: sqlx.NewDb(db, "postgres")}
 }
 
 // Create inserts a new refresh token record.

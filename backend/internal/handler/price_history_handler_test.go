@@ -52,4 +52,31 @@ func TestPriceHistoryHandler(t *testing.T) {
 		assert.Equal(t, http.StatusOK, w.Code)
 		svc.AssertExpectations(t)
 	})
+
+	t.Run("ListByStore Service Error", func(t *testing.T) {
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "/stores/s1/price-history", nil)
+		w := httptest.NewRecorder()
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("storeId", "s1")
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+		svc.On("ListByStore", mock.Anything, "s1", mock.Anything).Return(nil, dto.PaginationMeta{}, assert.AnError).Once()
+
+		h.ListByStore(w, req)
+		assert.Equal(t, http.StatusInternalServerError, w.Code)
+	})
+
+	t.Run("ListByProduct Service Error", func(t *testing.T) {
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "/stores/s1/products/p1/price-history", nil)
+		w := httptest.NewRecorder()
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("storeId", "s1")
+		rctx.URLParams.Add("productId", "p1")
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+		svc.On("ListByProduct", mock.Anything, "p1", mock.Anything).Return(nil, dto.PaginationMeta{}, assert.AnError).Once()
+
+		h.ListByProduct(w, req)
+		assert.Equal(t, http.StatusInternalServerError, w.Code)
+	})
 }

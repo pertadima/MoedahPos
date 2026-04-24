@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"time"
 
@@ -9,12 +10,16 @@ import (
 
 	"github.com/moedahpos/backend/internal/domain"
 	"github.com/moedahpos/backend/internal/dto"
+	"github.com/moedahpos/backend/internal/repository"
 )
 
 // POPaymentRepo handles the po_payments table.
 type POPaymentRepo struct{ db *sqlx.DB }
 
-func NewPOPaymentRepo(db *sqlx.DB) *POPaymentRepo { return &POPaymentRepo{db: db} }
+// NewPOPaymentRepository creates a new POPaymentRepository.
+func NewPOPaymentRepository(db *sql.DB) repository.POPaymentRepository {
+	return &POPaymentRepo{db: sqlx.NewDb(db, "postgres")}
+}
 
 // Create inserts one payment record.
 func (r *POPaymentRepo) Create(ctx context.Context, p domain.POPayment) (*domain.POPayment, error) {

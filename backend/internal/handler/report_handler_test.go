@@ -65,4 +65,52 @@ func TestReportHandler(t *testing.T) {
 
 		assert.Equal(t, http.StatusOK, w.Code)
 	})
+
+	t.Run("SalesByProduct", func(t *testing.T) {
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "/stores/s1/reports/sales-by-product", nil)
+		w := httptest.NewRecorder()
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("storeId", "s1")
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+		svc.On("SalesByProduct", mock.Anything, mock.Anything).Return([]dto.SalesByProductRow{}, nil).Once()
+		h.SalesByProduct(w, req)
+		assert.Equal(t, http.StatusOK, w.Code)
+	})
+
+	t.Run("SalesByCashier", func(t *testing.T) {
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "/stores/s1/reports/sales-by-cashier", nil)
+		w := httptest.NewRecorder()
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("storeId", "s1")
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+		svc.On("SalesByCashier", mock.Anything, mock.Anything).Return([]dto.SalesByCashierRow{}, nil).Once()
+		h.SalesByCashier(w, req)
+		assert.Equal(t, http.StatusOK, w.Code)
+	})
+
+	t.Run("ProfitSummary", func(t *testing.T) {
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "/stores/s1/reports/profit?group_by=day", nil)
+		w := httptest.NewRecorder()
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("storeId", "s1")
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+		svc.On("ProfitSummary", mock.Anything, mock.Anything, "day").Return(&dto.ProfitSummaryResponse{}, nil).Once()
+		h.ProfitSummary(w, req)
+		assert.Equal(t, http.StatusOK, w.Code)
+	})
+
+	t.Run("CashFlowDetail", func(t *testing.T) {
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "/stores/s1/reports/cash-flow/detail?date=2024-01-01", nil)
+		w := httptest.NewRecorder()
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("storeId", "s1")
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+		svc.On("CashFlowDetail", mock.Anything, "s1", "2024-01-01").Return([]dto.CashFlowDetailEntry{}, nil).Once()
+		h.CashFlowDetail(w, req)
+		assert.Equal(t, http.StatusOK, w.Code)
+	})
 }

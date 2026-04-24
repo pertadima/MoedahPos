@@ -47,14 +47,36 @@ func TestTransactionHandler_Checkout(t *testing.T) {
 
 	t.Run("Insufficient Payment", func(t *testing.T) {
 		reqBody := dto.CreateTransactionRequest{
-			Items:         []dto.TxItemInput{{ProductID: "p1", Quantity: 1}},
+			Items:         []dto.TxItemInput{{ProductID: "00000000-0000-0000-0000-000000000001", Quantity: 1}},
 			PaymentAmount: 10,
+			PaymentMethod: "cash",
 		}
 		body, _ := json.Marshal(reqBody)
 		req, _ := http.NewRequestWithContext(context.Background(), http.MethodPost, "/stores/s1/transactions", bytes.NewBuffer(body))
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("storeId", "s1")
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 
-		svc.On("Checkout", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, service.ErrInsuficientPayment)
+		svc.On("Checkout", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, service.ErrInsuficientPayment).Once()
 
+		w := httptest.NewRecorder()
+		h.Checkout(w, req)
+		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
+	})
+
+	t.Run("Invalid JSON", func(t *testing.T) {
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodPost, "/stores/s1/transactions", bytes.NewBufferString("invalid"))
+		w := httptest.NewRecorder()
+		h.Checkout(w, req)
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+	})
+
+	t.Run("Validation Error", func(t *testing.T) {
+		reqBody := dto.CreateTransactionRequest{
+			Items: []dto.TxItemInput{}, // missing items
+		}
+		body, _ := json.Marshal(reqBody)
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodPost, "/stores/s1/transactions", bytes.NewBuffer(body))
 		w := httptest.NewRecorder()
 		h.Checkout(w, req)
 		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
@@ -190,6 +212,55 @@ func TestTransactionHandler_Draft(t *testing.T) {
 		h.PayDraft(w, req)
 		assert.Equal(t, http.StatusCreated, w.Code)
 	})
+
+	t.Run("PayDraftWithLoyalty", func(t *testing.T) {
+		reqBody := dto.PayDraftRequest{
+			CustomerID:     "00000000-0000-0000-0000-000000000001",
+			PointsRedeemed: 10,
+			PaymentMethod:  "cash",
+			PaymentAmount:  1000,
+		}
+		body, _ := json.Marshal(reqBody)
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodPost, "/stores/s1/transactions/draft/d1/pay", bytes.NewBuffer(body))
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("storeId", "s1")
+		rctx.URLParams.Add("txnId", "d1")
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+		svc.On("PayDraft", mock.Anything, "s1", "d1", "", mock.MatchedBy(func(r *dto.PayDraftRequest) bool {
+			return r.CustomerID == "00000000-0000-0000-0000-000000000001" && r.PointsRedeemed == 10
+		})).Return(&dto.TransactionResponse{ID: "d1"}, nil).Once()
+
+		w := httptest.NewRecorder()
+		h.PayDraft(w, req)
+		assert.Equal(t, http.StatusCreated, w.Code)
+	})
+
+	t.Run("PayDraft NotFound", func(t *testing.T) {
+		reqBody := dto.PayDraftRequest{
+			PaymentMethod: "cash",
+			PaymentAmount: 1000,
+		}
+		body, _ := json.Marshal(reqBody)
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodPost, "/stores/s1/transactions/draft/d1/pay", bytes.NewBuffer(body))
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("storeId", "s1")
+		rctx.URLParams.Add("txnId", "d1")
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+		svc.On("PayDraft", mock.Anything, "s1", "d1", "", mock.Anything).Return(nil, service.ErrDraftNotFound).Once()
+
+		w := httptest.NewRecorder()
+		h.PayDraft(w, req)
+		assert.Equal(t, http.StatusNotFound, w.Code)
+	})
+
+	t.Run("PayDraft Invalid JSON", func(t *testing.T) {
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodPost, "/stores/s1/transactions/draft/d1/pay", bytes.NewBufferString("invalid"))
+		w := httptest.NewRecorder()
+		h.PayDraft(w, req)
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+	})
 }
 
 func TestTransactionHandler_KDS(t *testing.T) {
@@ -222,5 +293,18 @@ func TestTransactionHandler_KDS(t *testing.T) {
 		w := httptest.NewRecorder()
 		h.UpdateKDSItemStatus(w, req)
 		assert.Equal(t, http.StatusOK, w.Code)
+	})
+
+	t.Run("UpdateItemStatus Validation Error", func(t *testing.T) {
+		reqBody := dto.UpdateKDSItemStatusRequest{Status: ""}
+		body, _ := json.Marshal(reqBody)
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodPut, "/stores/s1/kds/items/item1", bytes.NewBuffer(body))
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("itemId", "item1")
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+		w := httptest.NewRecorder()
+
+		h.UpdateKDSItemStatus(w, req)
+		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
 	})
 }

@@ -191,6 +191,21 @@ func TestCustomerHandler_Update(t *testing.T) {
 		assert.Equal(t, http.StatusOK, w.Code)
 		svc.AssertExpectations(t)
 	})
+
+	t.Run("validation_error", func(t *testing.T) {
+		reqBody := dto.UpdateCustomerRequest{Name: ""} // Invalid
+		body, _ := json.Marshal(reqBody)
+
+		req, _ := http.NewRequestWithContext(context.Background(), "PUT", "/stores/"+customerTestStoreID+"/customers/"+customerID, bytes.NewBuffer(body))
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("customerId", customerID)
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+		w := httptest.NewRecorder()
+		h.Update(w, req)
+
+		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
+	})
 }
 
 func TestCustomerHandler_Search(t *testing.T) {

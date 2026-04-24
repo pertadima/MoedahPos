@@ -2,19 +2,23 @@ package postgres
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"time"
 
 	"github.com/jmoiron/sqlx"
 
 	"github.com/moedahpos/backend/internal/domain"
+	"github.com/moedahpos/backend/internal/repository"
 )
 
 // TerminRepo is the PostgreSQL implementation of repository.TerminRepository.
 type TerminRepo struct{ db *sqlx.DB }
 
-// NewTerminRepo creates a TerminRepo backed by the given database connection.
-func NewTerminRepo(db *sqlx.DB) *TerminRepo { return &TerminRepo{db: db} }
+// NewTerminRepository creates a new TerminRepository.
+func NewTerminRepository(db *sql.DB) repository.TerminRepository {
+	return &TerminRepo{db: sqlx.NewDb(db, "postgres")}
+}
 
 // CreateSchedule atomically replaces the termin schedule for a PO.
 // It deletes any existing termins (and their payment_records via CASCADE)

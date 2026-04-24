@@ -17,7 +17,7 @@ type SyncService struct {
 	productRepo     repository.ProductRepository
 	stockRepo       repository.StockRepository
 	transactionRepo repository.TransactionRepository
-	customerRepo    repository.CustomerSyncRepository
+	customerRepo    repository.CustomerRepository
 	log             zerolog.Logger
 }
 
@@ -26,7 +26,7 @@ func NewSyncService(
 	prodRepo repository.ProductRepository,
 	stockRepo repository.StockRepository,
 	txnRepo repository.TransactionRepository,
-	customerRepo repository.CustomerSyncRepository,
+	customerRepo repository.CustomerRepository,
 	log zerolog.Logger,
 ) *SyncService {
 	return &SyncService{

@@ -74,6 +74,102 @@ func (_m *MenuItemRepository) FindByID(ctx context.Context, id string) (*domain.
 	return r0, r1
 }
 
+// Create provides a mock function with given fields: ctx, item
+func (_m *MenuItemRepository) Create(ctx context.Context, item *domain.MenuItem) (*domain.MenuItem, error) {
+	ret := _m.Called(ctx, item)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Create")
+	}
+
+	var r0 *domain.MenuItem
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *domain.MenuItem) (*domain.MenuItem, error)); ok {
+		return rf(ctx, item)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *domain.MenuItem) *domain.MenuItem); ok {
+		r0 = rf(ctx, item)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*domain.MenuItem)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *domain.MenuItem) error); ok {
+		r1 = rf(ctx, item)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// Update provides a mock function with given fields: ctx, item
+func (_m *MenuItemRepository) Update(ctx context.Context, item *domain.MenuItem) (*domain.MenuItem, error) {
+	ret := _m.Called(ctx, item)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Update")
+	}
+
+	var r0 *domain.MenuItem
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *domain.MenuItem) (*domain.MenuItem, error)); ok {
+		return rf(ctx, item)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *domain.MenuItem) *domain.MenuItem); ok {
+		r0 = rf(ctx, item)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*domain.MenuItem)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *domain.MenuItem) error); ok {
+		r1 = rf(ctx, item)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// ReplaceIngredients provides a mock function with given fields: ctx, menuItemID, ings
+func (_m *MenuItemRepository) ReplaceIngredients(ctx context.Context, menuItemID string, ings []domain.MenuItemIngredient) error {
+	ret := _m.Called(ctx, menuItemID, ings)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ReplaceIngredients")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, []domain.MenuItemIngredient) error); ok {
+		r0 = rf(ctx, menuItemID, ings)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// SoftDelete provides a mock function with given fields: ctx, id
+func (_m *MenuItemRepository) SoftDelete(ctx context.Context, id string) error {
+	ret := _m.Called(ctx, id)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SoftDelete")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
+		r0 = rf(ctx, id)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // NewMenuItemRepository creates a new instance of MenuItemRepository. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewMenuItemRepository(t interface {

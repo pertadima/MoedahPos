@@ -64,6 +64,15 @@ func TestIncomeService(t *testing.T) {
 		res2, err := svc.CreateCategory(ctx, &dto.CreateIncomeCategoryRequest{Name: "Gift"})
 		assert.NoError(t, err)
 		assert.NotNil(t, res2)
+
+		repo.On("UpdateCategory", ctx, "c1", "Updated", "", false).Return(&domain.IncomeCategory{ID: "c1", Name: "Updated"}, nil).Once()
+		res3, err := svc.UpdateCategory(ctx, "c1", &dto.UpdateIncomeCategoryRequest{Name: "Updated"})
+		assert.NoError(t, err)
+		assert.Equal(t, "Updated", res3.Name)
+
+		repo.On("SoftDeleteCategory", ctx, "c1").Return(nil).Once()
+		err = svc.SoftDeleteCategory(ctx, "c1")
+		assert.NoError(t, err)
 	})
 
 	t.Run("Update/Delete Income", func(t *testing.T) {

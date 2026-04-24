@@ -14,6 +14,7 @@ import (
 
 	"github.com/moedahpos/backend/internal/domain"
 	"github.com/moedahpos/backend/internal/dto"
+	"github.com/moedahpos/backend/internal/repository"
 )
 
 // TransactionRepo is the PostgreSQL implementation of repository.TransactionRepository.
@@ -23,7 +24,10 @@ type TransactionRepo struct{ db *sqlx.DB }
 
 const statusCompleted = "completed"
 
-func NewTransactionRepo(db *sqlx.DB) *TransactionRepo { return &TransactionRepo{db: db} }
+// NewTransactionRepository creates a new TransactionRepository.
+func NewTransactionRepository(db *sql.DB) repository.TransactionRepository {
+	return &TransactionRepo{db: sqlx.NewDb(db, "postgres")}
+}
 
 // Create persists a full transaction with items and (for completed orders) stock movements.
 // Set input.Status = "draft" to hold an order without deducting stock.

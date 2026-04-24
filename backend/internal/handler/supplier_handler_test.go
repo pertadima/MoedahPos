@@ -132,6 +132,19 @@ func TestSupplierHandler_Update(t *testing.T) {
 
 		assert.Equal(t, http.StatusOK, w.Code)
 	})
+
+	t.Run("validation error", func(t *testing.T) {
+		reqBody := dto.UpdateSupplierRequest{Name: ""}
+		body, _ := json.Marshal(reqBody)
+		req := httptest.NewRequestWithContext(context.Background(), "PUT", "/suppliers/s1", bytes.NewBuffer(body))
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("supplierId", "s1")
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+		w := httptest.NewRecorder()
+
+		h.Update(w, req)
+		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
+	})
 }
 
 func TestSupplierHandler_Delete(t *testing.T) {
@@ -151,5 +164,17 @@ func TestSupplierHandler_Delete(t *testing.T) {
 		h.Delete(w, req)
 
 		assert.Equal(t, http.StatusOK, w.Code)
+	})
+
+	t.Run("not found", func(t *testing.T) {
+		svc.On("DeleteSupplier", mock.Anything, "s2").Return(service.ErrSupplierNotFound).Once()
+		req := httptest.NewRequestWithContext(context.Background(), "DELETE", "/suppliers/s2", nil)
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("supplierId", "s2")
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+		w := httptest.NewRecorder()
+
+		h.Delete(w, req)
+		assert.Equal(t, http.StatusNotFound, w.Code)
 	})
 }

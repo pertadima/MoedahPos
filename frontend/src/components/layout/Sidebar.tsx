@@ -343,12 +343,22 @@ export default function Sidebar() {
             </select>
             {selectedStore && (
               <div className="flex items-center gap-2 mt-2 px-0.5">
-                <span className="badge badge-gray" style={{ fontSize: '0.6rem', padding: '2px 7px' }}>
+                <span
+                  className="badge badge-gray"
+                  style={{ fontSize: '0.6rem', padding: '2px 7px' }}
+                >
                   <UserRound size={10} strokeWidth={3} className="mr-1" />
                   {selectedStore.role}
                 </span>
-                <span className={`badge ${isRestaurant ? 'badge-amber' : 'badge-green'}`} style={{ fontSize: '0.6rem', padding: '2px 7px' }}>
-                  {isRestaurant ? <UtensilsCrossed size={10} strokeWidth={3} className="mr-1" /> : <Store size={10} strokeWidth={3} className="mr-1" />}
+                <span
+                  className={`badge ${isRestaurant ? 'badge-amber' : 'badge-green'}`}
+                  style={{ fontSize: '0.6rem', padding: '2px 7px' }}
+                >
+                  {isRestaurant ? (
+                    <UtensilsCrossed size={10} strokeWidth={3} className="mr-1" />
+                  ) : (
+                    <Store size={10} strokeWidth={3} className="mr-1" />
+                  )}
                   {isRestaurant ? 'Restaurant' : 'Retail'}
                 </span>
               </div>
@@ -359,21 +369,29 @@ export default function Sidebar() {
         <nav className="sidebar-nav" style={{ flex: 1, overflowY: 'auto' }}>
           {finalGroups.map(group => {
             const hasActiveItem = group.items.some(
-              item => pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href + '/'))
+              item =>
+                pathname === item.href ||
+                (item.href !== '/dashboard' && pathname.startsWith(item.href + '/'))
             );
-            const isCollapsedSection = collapsedSections[group.label] && !isCollapsed && !hasActiveItem;
+            const isCollapsedSection =
+              collapsedSections[group.label] && !isCollapsed && !hasActiveItem;
 
             return (
               <div key={group.label} className="nav-group-container">
                 {!isCollapsed && (
                   <div className="nav-section-header" onClick={() => toggleSection(group.label)}>
                     <span className="nav-section-title">{group.label}</span>
-                    <ChevronDown size={12} className={`nav-section-chevron ${isCollapsedSection ? 'collapsed' : ''}`} />
+                    <ChevronDown
+                      size={12}
+                      className={`nav-section-chevron ${isCollapsedSection ? 'collapsed' : ''}`}
+                    />
                   </div>
                 )}
                 <div className={`nav-section-items ${isCollapsedSection ? 'collapsed' : ''}`}>
                   {group.items.map(({ href, icon: Icon, label }) => {
-                    const active = pathname === href || (href !== '/dashboard' && pathname.startsWith(href + '/'));
+                    const active =
+                      pathname === href ||
+                      (href !== '/dashboard' && pathname.startsWith(href + '/'));
                     return (
                       <Link
                         key={href}
@@ -386,7 +404,9 @@ export default function Sidebar() {
                         }}
                       >
                         <Icon size={14} strokeWidth={active ? 2.5 : 2} />
-                        {!isCollapsed && <span style={{ transition: 'opacity 0.2s' }}>{label}</span>}
+                        {!isCollapsed && (
+                          <span style={{ transition: 'opacity 0.2s' }}>{label}</span>
+                        )}
                       </Link>
                     );
                   })}

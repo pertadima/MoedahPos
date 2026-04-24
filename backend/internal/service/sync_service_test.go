@@ -130,6 +130,24 @@ type mockCustomerSyncRepo struct {
 	err       error
 }
 
+func (m *mockCustomerSyncRepo) Create(_ context.Context, _ *domain.Customer) (*domain.Customer, error) {
+	return nil, nil
+}
+func (m *mockCustomerSyncRepo) FindAll(_ context.Context, _ dto.CustomerListFilter) ([]*domain.Customer, int, error) {
+	return nil, 0, nil
+}
+func (m *mockCustomerSyncRepo) FindByID(_ context.Context, _ string) (*domain.Customer, error) {
+	return nil, nil
+}
+func (m *mockCustomerSyncRepo) Update(_ context.Context, _ *domain.Customer) (*domain.Customer, error) {
+	return nil, nil
+}
+func (m *mockCustomerSyncRepo) SoftDelete(_ context.Context, _ string) error {
+	return nil
+}
+func (m *mockCustomerSyncRepo) SearchByPhone(_ context.Context, _, _ string) ([]*domain.Customer, error) {
+	return nil, nil
+}
 func (m *mockCustomerSyncRepo) GetModifiedSince(_ context.Context, _ string, _ time.Time) ([]*domain.Customer, error) {
 	return m.customers, m.err
 }

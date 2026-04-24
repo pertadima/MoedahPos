@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -20,8 +19,7 @@ func TestPOPaymentRepo_Basic(t *testing.T) {
 	}
 	defer func() { _ = db.Close() }()
 
-	sqlxDB := sqlx.NewDb(db, "postgres")
-	repo := NewPOPaymentRepo(sqlxDB)
+	repo := NewPOPaymentRepository(db)
 
 	t.Run("Create", func(t *testing.T) {
 		p := domain.POPayment{
@@ -93,8 +91,7 @@ func TestPOPaymentRepo_Extended(t *testing.T) {
 	}
 	defer func() { _ = db.Close() }()
 
-	sqlxDB := sqlx.NewDb(db, "postgres")
-	repo := NewPOPaymentRepo(sqlxDB)
+	repo := NewPOPaymentRepository(db)
 
 	t.Run("PayableSummary", func(t *testing.T) {
 		mock.ExpectQuery(`(?is)WITH combined_payments AS.*SELECT.*FROM purchase_orders`).

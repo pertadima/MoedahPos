@@ -11,12 +11,16 @@ import (
 
 	"github.com/moedahpos/backend/internal/domain"
 	"github.com/moedahpos/backend/internal/dto"
+	"github.com/moedahpos/backend/internal/repository"
 )
 
 // PORepo is the PostgreSQL implementation of repository.PurchaseOrderRepository.
 type PORepo struct{ db *sqlx.DB }
 
-func NewPORepo(db *sqlx.DB) *PORepo { return &PORepo{db: db} }
+// NewPurchaseOrderRepository creates a new PurchaseOrderRepository.
+func NewPurchaseOrderRepository(db *sql.DB) repository.PurchaseOrderRepository {
+	return &PORepo{db: sqlx.NewDb(db, "postgres")}
+}
 
 func (r *PORepo) Create(ctx context.Context, po *domain.PurchaseOrder, items []domain.POItem) (*domain.PurchaseOrder, error) {
 	tx, err := r.db.BeginTxx(ctx, nil)

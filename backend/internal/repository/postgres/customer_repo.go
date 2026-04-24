@@ -12,6 +12,7 @@ import (
 
 	"github.com/moedahpos/backend/internal/domain"
 	"github.com/moedahpos/backend/internal/dto"
+	"github.com/moedahpos/backend/internal/repository"
 )
 
 // customerColsBase — always-present columns (safe before migration 00030).
@@ -31,7 +32,10 @@ const customerColsWithLoyalty = `
 // CustomerRepo is the PostgreSQL implementation for customers.
 type CustomerRepo struct{ db *sqlx.DB }
 
-func NewCustomerRepo(db *sqlx.DB) *CustomerRepo { return &CustomerRepo{db: db} }
+// NewCustomerRepository creates a new instance of CustomerRepository.
+func NewCustomerRepository(db *sql.DB) repository.CustomerRepository {
+	return &CustomerRepo{db: sqlx.NewDb(db, "postgres")}
+}
 
 func (r *CustomerRepo) Create(ctx context.Context, c *domain.Customer) (*domain.Customer, error) {
 	const q = `

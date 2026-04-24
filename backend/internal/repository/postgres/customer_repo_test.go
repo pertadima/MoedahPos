@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -23,8 +22,7 @@ func TestCustomerRepo_FindAll(t *testing.T) {
 	require.NoError(t, err)
 	defer func() { _ = db.Close() }()
 
-	sqlxDB := sqlx.NewDb(db, "postgres")
-	repo := NewCustomerRepo(sqlxDB)
+	repo := NewCustomerRepository(db)
 
 	storeID := customerTestStoreID
 	filter := dto.CustomerListFilter{
@@ -58,8 +56,7 @@ func TestCustomerRepo_Create(t *testing.T) {
 	require.NoError(t, err)
 	defer func() { _ = db.Close() }()
 
-	sqlxDB := sqlx.NewDb(db, "postgres")
-	repo := NewCustomerRepo(sqlxDB)
+	repo := NewCustomerRepository(db)
 
 	c := &domain.Customer{
 		StoreID: customerTestStoreID,
@@ -84,8 +81,7 @@ func TestCustomerRepo_Update(t *testing.T) {
 	require.NoError(t, err)
 	defer func() { _ = db.Close() }()
 
-	sqlxDB := sqlx.NewDb(db, "postgres")
-	repo := NewCustomerRepo(sqlxDB)
+	repo := NewCustomerRepository(db)
 
 	c := &domain.Customer{
 		ID:   "c1",
@@ -116,8 +112,7 @@ func TestCustomerRepo_SoftDelete(t *testing.T) {
 	require.NoError(t, err)
 	defer func() { _ = db.Close() }()
 
-	sqlxDB := sqlx.NewDb(db, "postgres")
-	repo := NewCustomerRepo(sqlxDB)
+	repo := NewCustomerRepository(db)
 
 	id := "c1"
 
@@ -140,7 +135,7 @@ func TestCustomerRepo_FindByID(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	require.NoError(t, err)
 	defer func() { _ = db.Close() }()
-	repo := NewCustomerRepo(sqlx.NewDb(db, "postgres"))
+	repo := NewCustomerRepository(db)
 
 	t.Run("success", func(t *testing.T) {
 		mock.ExpectQuery(`(?is)SELECT .* FROM customers c LEFT JOIN membership_tiers t .* WHERE c.id=\$1 AND c.deleted_at IS NULL`).
@@ -164,7 +159,7 @@ func TestCustomerRepo_SearchByPhone(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	require.NoError(t, err)
 	defer func() { _ = db.Close() }()
-	repo := NewCustomerRepo(sqlx.NewDb(db, "postgres"))
+	repo := NewCustomerRepository(db)
 
 	t.Run("success", func(t *testing.T) {
 		mock.ExpectQuery(`(?is)SELECT .* FROM customers WHERE store_id=\$1 AND phone ILIKE \$2`).

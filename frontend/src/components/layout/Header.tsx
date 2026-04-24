@@ -52,7 +52,7 @@ export default function Header() {
           title={mounted ? (isDark ? 'Mode Terang' : 'Mode Gelap') : 'Tema'}
           style={{ padding: '8px' }}
         >
-          {mounted ? (isDark ? <Sun size={18} /> : <Moon size={18} />) : <Sun size={18} />}
+          {mounted ? isDark ? <Sun size={18} /> : <Moon size={18} /> : <Sun size={18} />}
         </button>
 
         <div className="header-divider" />

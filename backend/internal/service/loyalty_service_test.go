@@ -122,6 +122,9 @@ func (m *mockCustomerRepoLoyalty) SoftDelete(_ context.Context, _ string) error 
 func (m *mockCustomerRepoLoyalty) SearchByPhone(_ context.Context, _, _ string) ([]*domain.Customer, error) {
 	return nil, nil
 }
+func (m *mockCustomerRepoLoyalty) GetModifiedSince(_ context.Context, _ string, _ time.Time) ([]*domain.Customer, error) {
+	return nil, nil
+}
 
 // Ensure mocks satisfy interfaces.
 var _ repository.LoyaltyRepository = (*mockLoyaltyRepo)(nil)

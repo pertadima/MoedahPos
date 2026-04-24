@@ -9,6 +9,7 @@ import (
 	"github.com/jmoiron/sqlx"
 
 	"github.com/moedahpos/backend/internal/domain"
+	"github.com/moedahpos/backend/internal/repository"
 )
 
 // ─── MembershipTierRepo ───────────────────────────────────────────────────────
@@ -16,8 +17,9 @@ import (
 // MembershipTierRepo is the PostgreSQL implementation for membership tiers.
 type MembershipTierRepo struct{ db *sqlx.DB }
 
-func NewMembershipTierRepo(db *sqlx.DB) *MembershipTierRepo {
-	return &MembershipTierRepo{db: db}
+// NewMembershipTierRepository creates a new MembershipTierRepository.
+func NewMembershipTierRepository(db *sql.DB) repository.MembershipTierRepository {
+	return &MembershipTierRepo{db: sqlx.NewDb(db, "postgres")}
 }
 
 func (r *MembershipTierRepo) FindAll(ctx context.Context) ([]*domain.MembershipTier, error) {
@@ -46,8 +48,9 @@ func (r *MembershipTierRepo) FindByID(ctx context.Context, id string) (*domain.M
 // LoyaltyRepo is the PostgreSQL implementation for the loyalty ledger.
 type LoyaltyRepo struct{ db *sqlx.DB }
 
-func NewLoyaltyRepo(db *sqlx.DB) *LoyaltyRepo {
-	return &LoyaltyRepo{db: db}
+// NewLoyaltyRepository creates a new LoyaltyRepository.
+func NewLoyaltyRepository(db *sql.DB) repository.LoyaltyRepository {
+	return &LoyaltyRepo{db: sqlx.NewDb(db, "postgres")}
 }
 
 // GetBalance returns the algebraic sum of all points_delta entries for the customer.

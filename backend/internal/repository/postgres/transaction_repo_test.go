@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -22,8 +21,7 @@ func TestTransactionRepo_Create(t *testing.T) {
 	}
 	defer func() { _ = db.Close() }()
 
-	sqlxDB := sqlx.NewDb(db, "postgres")
-	repo := NewTransactionRepo(sqlxDB)
+	repo := NewTransactionRepository(db)
 
 	ctx := context.Background()
 	pid := "p1"
@@ -88,8 +86,7 @@ func TestTransactionRepo_FindByID(t *testing.T) {
 	}
 	defer func() { _ = db.Close() }()
 
-	sqlxDB := sqlx.NewDb(db, "postgres")
-	repo := NewTransactionRepo(sqlxDB)
+	repo := NewTransactionRepository(db)
 
 	ctx := context.Background()
 
@@ -130,8 +127,7 @@ func TestTransactionRepo_FindAll(t *testing.T) {
 	}
 	defer func() { _ = db.Close() }()
 
-	sqlxDB := sqlx.NewDb(db, "postgres")
-	repo := NewTransactionRepo(sqlxDB)
+	repo := NewTransactionRepository(db)
 
 	ctx := context.Background()
 	filter := dto.TransactionListFilter{
@@ -165,8 +161,7 @@ func TestTransactionRepo_Void(t *testing.T) {
 	}
 	defer func() { _ = db.Close() }()
 
-	sqlxDB := sqlx.NewDb(db, "postgres")
-	repo := NewTransactionRepo(sqlxDB)
+	repo := NewTransactionRepository(db)
 
 	ctx := context.Background()
 	tid := "t1"
@@ -207,8 +202,7 @@ func TestTransactionRepo_UpdateKDSItemStatus(t *testing.T) {
 	}
 	defer func() { _ = db.Close() }()
 
-	sqlxDB := sqlx.NewDb(db, "postgres")
-	repo := NewTransactionRepo(sqlxDB)
+	repo := NewTransactionRepository(db)
 
 	ctx := context.Background()
 
@@ -240,8 +234,7 @@ func TestTransactionRepo_GetKDSTickets(t *testing.T) {
 	}
 	defer func() { _ = db.Close() }()
 
-	sqlxDB := sqlx.NewDb(db, "postgres")
-	repo := NewTransactionRepo(sqlxDB)
+	repo := NewTransactionRepository(db)
 
 	ctx := context.Background()
 
@@ -265,7 +258,7 @@ func TestTransactionRepo_GetDraftByTable(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	require.NoError(t, err)
 	defer func() { _ = db.Close() }()
-	repo := NewTransactionRepo(sqlx.NewDb(db, "postgres"))
+	repo := NewTransactionRepository(db)
 
 	ctx := context.Background()
 	cols := []string{"id", "store_id", "cashier_id", "table_id", "customer_id", "customer_name", "customer_phone", "subtotal", "discount_amt", "tax_amt", "total", "payment_method", "payment_amount", "change_amount", "status", "notes", "cart_discount_type", "cart_discount_value", "points_redeemed", "points_discount", "created_at", "updated_at", "cashier_name"}
@@ -294,7 +287,7 @@ func TestTransactionRepo_UpdateDraftItems(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	require.NoError(t, err)
 	defer func() { _ = db.Close() }()
-	repo := NewTransactionRepo(sqlx.NewDb(db, "postgres"))
+	repo := NewTransactionRepository(db)
 
 	ctx := context.Background()
 	tid := "t1"
@@ -359,7 +352,7 @@ func TestTransactionRepo_PayDraft(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	require.NoError(t, err)
 	defer func() { _ = db.Close() }()
-	repo := NewTransactionRepo(sqlx.NewDb(db, "postgres"))
+	repo := NewTransactionRepository(db)
 
 	ctx := context.Background()
 	tid := "t1"

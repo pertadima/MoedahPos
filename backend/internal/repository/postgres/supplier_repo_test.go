@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -21,8 +20,7 @@ func TestSupplierRepo_Create(t *testing.T) {
 	require.NoError(t, err)
 	defer func() { _ = db.Close() }()
 
-	sqlxDB := sqlx.NewDb(db, "postgres")
-	repo := NewSupplierRepo(sqlxDB)
+	repo := NewSupplierRepository(db)
 
 	s := &domain.Supplier{
 		Name:        "Supplier A",
@@ -52,8 +50,7 @@ func TestSupplierRepo_FindAll(t *testing.T) {
 	require.NoError(t, err)
 	defer func() { _ = db.Close() }()
 
-	sqlxDB := sqlx.NewDb(db, "postgres")
-	repo := NewSupplierRepo(sqlxDB)
+	repo := NewSupplierRepository(db)
 
 	filter := dto.SupplierListFilter{
 		Search:   "test",
@@ -84,8 +81,7 @@ func TestSupplierRepo_FindByID(t *testing.T) {
 	require.NoError(t, err)
 	defer func() { _ = db.Close() }()
 
-	sqlxDB := sqlx.NewDb(db, "postgres")
-	repo := NewSupplierRepo(sqlxDB)
+	repo := NewSupplierRepository(db)
 
 	id := "s1"
 
@@ -116,8 +112,7 @@ func TestSupplierRepo_Update(t *testing.T) {
 	require.NoError(t, err)
 	defer func() { _ = db.Close() }()
 
-	sqlxDB := sqlx.NewDb(db, "postgres")
-	repo := NewSupplierRepo(sqlxDB)
+	repo := NewSupplierRepository(db)
 
 	s := &domain.Supplier{
 		ID:          "s1",
@@ -147,8 +142,7 @@ func TestSupplierRepo_SoftDelete(t *testing.T) {
 	require.NoError(t, err)
 	defer func() { _ = db.Close() }()
 
-	sqlxDB := sqlx.NewDb(db, "postgres")
-	repo := NewSupplierRepo(sqlxDB)
+	repo := NewSupplierRepository(db)
 
 	id := "s1"
 

@@ -83,10 +83,24 @@ type StockRepository interface {
 	GetModifiedSince(ctx context.Context, storeID string, since time.Time) ([]*domain.StockLevel, error)
 }
 
-// MenuItemRepository handles menu item retrieval for restaurant checkouts.
+// TableRepository manages physical tables in a restaurant.
+type TableRepository interface {
+	FindAllByStore(ctx context.Context, storeID string) ([]*domain.RestaurantTable, error)
+	FindByID(ctx context.Context, id string) (*domain.RestaurantTable, error)
+	Create(ctx context.Context, t *domain.RestaurantTable) (*domain.RestaurantTable, error)
+	Update(ctx context.Context, t *domain.RestaurantTable) (*domain.RestaurantTable, error)
+	UpdateStatus(ctx context.Context, id string, status domain.TableStatus) error
+	SoftDelete(ctx context.Context, id string) error
+}
+
+// MenuItemRepository handles menu item retrieval and management.
 type MenuItemRepository interface {
 	FindByID(ctx context.Context, id string) (*domain.MenuItem, error)
 	FindAllByStore(ctx context.Context, storeID string) ([]*domain.MenuItem, error)
+	Create(ctx context.Context, item *domain.MenuItem) (*domain.MenuItem, error)
+	Update(ctx context.Context, item *domain.MenuItem) (*domain.MenuItem, error)
+	ReplaceIngredients(ctx context.Context, menuItemID string, ings []domain.MenuItemIngredient) error
+	SoftDelete(ctx context.Context, id string) error
 }
 
 // ─── Phase 3 ──────────────────────────────────────────────────────────────────
@@ -171,6 +185,7 @@ type CustomerRepository interface {
 	Update(ctx context.Context, c *domain.Customer) (*domain.Customer, error)
 	SoftDelete(ctx context.Context, id string) error
 	SearchByPhone(ctx context.Context, storeID, phone string) ([]*domain.Customer, error)
+	GetModifiedSince(ctx context.Context, storeID string, since time.Time) ([]*domain.Customer, error)
 }
 
 type StockAdjustmentRepository interface {
@@ -264,6 +279,7 @@ type IncomeRepository interface {
 	FindByID(ctx context.Context, id string) (*domain.Income, error)
 	Update(ctx context.Context, inc *domain.Income) (*domain.Income, error)
 	Delete(ctx context.Context, id, storeID string) error
+	SumByDateRange(ctx context.Context, storeID string, from, to time.Time) (float64, error)
 }
 
 // ─── Loyalty System ───────────────────────────────────────────────────────────
@@ -292,8 +308,4 @@ type LoyaltyRepository interface {
 	GetCustomerTier(ctx context.Context, customerID string) (*domain.MembershipTier, error)
 }
 
-// CustomerSyncRepository adds delta-sync support to the customer repository.
-// Implemented by the same postgres struct that implements CustomerRepository.
-type CustomerSyncRepository interface {
-	GetModifiedSince(ctx context.Context, storeID string, since time.Time) ([]*domain.Customer, error)
-}
+

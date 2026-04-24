@@ -74,6 +74,33 @@ func TestExpenseService(t *testing.T) {
 		res2, err := svc.CreateCategory(ctx, &dto.CreateExpenseCategoryRequest{Name: "Travel"})
 		assert.NoError(t, err)
 		assert.NotNil(t, res2)
+
+		repo.On("UpdateCategory", ctx, "c1", "Updated", "", true).Return(&domain.ExpenseCategory{ID: "c1", Name: "Updated"}, nil).Once()
+		res3, err := svc.UpdateCategory(ctx, "c1", &dto.UpdateExpenseCategoryRequest{Name: "Updated", IsActive: true})
+		assert.NoError(t, err)
+		assert.Equal(t, "Updated", res3.Name)
+
+		repo.On("SoftDeleteCategory", ctx, "c1").Return(nil).Once()
+		err = svc.SoftDeleteCategory(ctx, "c1")
+		assert.NoError(t, err)
+	})
+
+	t.Run("ListExpenses Success", func(t *testing.T) {
+		filter := dto.ExpenseListFilter{StoreID: "s1"}
+		filter.Defaults()
+		repo.On("FindAll", ctx, filter).Return([]*domain.Expense{{ID: "e1"}}, 1, nil).Once()
+		resp, _, err := svc.ListExpenses(ctx, filter)
+		assert.NoError(t, err)
+		assert.Len(t, resp, 1)
+	})
+
+	t.Run("UpdateExpense Success", func(t *testing.T) {
+		req := &dto.UpdateExpenseRequest{Amount: 600, ExpenseDate: "2024-01-01"}
+		repo.On("Update", ctx, mock.Anything).Return(&domain.Expense{ID: "e1", Amount: 600, ExpenseDate: time.Now()}, nil).Once()
+		activitySvc.On("LogActivity", ctx, "SYSTEM", "s1", domain.ActionExpenseUpdate, domain.ModuleExpense, "e1", mock.Anything).Return().Once()
+		resp, err := svc.UpdateExpense(ctx, "e1", "s1", req)
+		assert.NoError(t, err)
+		assert.Equal(t, 600.0, resp.Amount)
 	})
 
 	t.Run("ProcessDueRecurringExpenses", func(t *testing.T) {

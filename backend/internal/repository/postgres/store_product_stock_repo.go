@@ -12,6 +12,7 @@ import (
 
 	"github.com/moedahpos/backend/internal/domain"
 	"github.com/moedahpos/backend/internal/dto"
+	"github.com/moedahpos/backend/internal/repository"
 )
 
 // StoreRepo is the PostgreSQL implementation of repository.StoreRepository.
@@ -19,7 +20,10 @@ type StoreRepo struct {
 	db *sqlx.DB
 }
 
-func NewStoreRepo(db *sqlx.DB) *StoreRepo { return &StoreRepo{db: db} }
+// NewStoreRepository creates a new StoreRepository.
+func NewStoreRepository(db *sql.DB) repository.StoreRepository {
+	return &StoreRepo{db: sqlx.NewDb(db, "postgres")}
+}
 
 func (r *StoreRepo) Create(ctx context.Context, s *domain.Store) (*domain.Store, error) {
 	const q = `
@@ -193,7 +197,10 @@ func (r *StoreRepo) DeactivateMember(ctx context.Context, userID, storeID string
 
 type CategoryRepo struct{ db *sqlx.DB }
 
-func NewCategoryRepo(db *sqlx.DB) *CategoryRepo { return &CategoryRepo{db: db} }
+// NewCategoryRepository creates a new CategoryRepository.
+func NewCategoryRepository(db *sql.DB) repository.CategoryRepository {
+	return &CategoryRepo{db: sqlx.NewDb(db, "postgres")}
+}
 
 func (r *CategoryRepo) Create(ctx context.Context, c *domain.Category) (*domain.Category, error) {
 	const q = `
@@ -280,7 +287,10 @@ func (r *CategoryRepo) GetModifiedSince(ctx context.Context, storeID string, sin
 
 type ProductRepo struct{ db *sqlx.DB }
 
-func NewProductRepo(db *sqlx.DB) *ProductRepo { return &ProductRepo{db: db} }
+// NewProductRepository creates a new ProductRepository.
+func NewProductRepository(db *sql.DB) repository.ProductRepository {
+	return &ProductRepo{db: sqlx.NewDb(db, "postgres")}
+}
 
 func (r *ProductRepo) Create(ctx context.Context, p *domain.Product) (*domain.Product, error) {
 	const q = `
@@ -468,7 +478,10 @@ func (r *ProductRepo) GetModifiedSince(ctx context.Context, storeID string, sinc
 
 type StockRepo struct{ db *sqlx.DB }
 
-func NewStockRepo(db *sqlx.DB) *StockRepo { return &StockRepo{db: db} }
+// NewStockRepository creates a new StockRepository.
+func NewStockRepository(db *sql.DB) repository.StockRepository {
+	return &StockRepo{db: sqlx.NewDb(db, "postgres")}
+}
 
 func (r *StockRepo) FindLevelsByStore(ctx context.Context, storeID string, lowStockOnly bool) ([]*domain.StockLevel, error) {
 	q := `

@@ -184,6 +184,31 @@ func TestProductService_Queries(t *testing.T) {
 	})
 }
 
+func TestProductService_DeleteProduct(t *testing.T) {
+	ctx := context.Background()
+	log := zerolog.Nop()
+
+	t.Run("Success", func(t *testing.T) {
+		pRepo := new(repomocks.ProductRepository)
+		pRepo.On("FindByID", ctx, "p1").Return(&domain.Product{ID: "p1"}, nil).Once()
+		pRepo.On("SoftDelete", ctx, "p1").Return(nil).Once()
+
+		s := NewProductService(pRepo, nil, nil, nil, log)
+		err := s.DeleteProduct(ctx, "p1")
+		assert.NoError(t, err)
+		pRepo.AssertExpectations(t)
+	})
+
+	t.Run("Not Found", func(t *testing.T) {
+		pRepo := new(repomocks.ProductRepository)
+		pRepo.On("FindByID", ctx, "p1").Return(nil, nil).Once()
+
+		s := NewProductService(pRepo, nil, nil, nil, log)
+		err := s.DeleteProduct(ctx, "p1")
+		assert.ErrorIs(t, err, ErrProductNotFound)
+	})
+}
+
 func ptrString(s string) *string {
 	return &s
 }
