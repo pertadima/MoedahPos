@@ -167,3 +167,80 @@ func TestStockHandler_GetProductStock(t *testing.T) {
 		svc.AssertExpectations(t)
 	})
 }
+
+func TestStockHandler_GetLowStock(t *testing.T) {
+	svc := new(mocks.StockServiceInterface)
+	v := validator.New()
+	h := NewStockHandler(svc, v, zerolog.Nop())
+
+	t.Run("success", func(t *testing.T) {
+		levels := []*dto.StockLevelResponse{{ProductID: "p1", Quantity: 2}}
+		svc.On("GetStockLevels", mock.Anything, "store-1", true).Return(levels, nil).Once()
+
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "/stores/store-1/stock/low", nil)
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("storeId", "store-1")
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+		w := httptest.NewRecorder()
+		h.GetLowStock(w, req)
+
+		assert.Equal(t, http.StatusOK, w.Code)
+	})
+}
+
+func TestStockHandler_SetMinStock(t *testing.T) {
+	svc := new(mocks.StockServiceInterface)
+	v := validator.New()
+	h := NewStockHandler(svc, v, zerolog.Nop())
+
+	t.Run("success", func(t *testing.T) {
+		reqBody := dto.SetMinStockRequest{ProductID: "550e8400-e29b-41d4-a716-446655440000", MinQuantity: 10}
+		body, _ := json.Marshal(reqBody)
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodPost, "/stores/s1/stock/min", bytes.NewBuffer(body))
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("storeId", "s1")
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+		svc.On("SetMinStock", mock.Anything, "s1", mock.Anything).Return(nil).Once()
+
+		w := httptest.NewRecorder()
+		h.SetMinStock(w, req)
+
+		assert.Equal(t, http.StatusOK, w.Code)
+	})
+
+	t.Run("validation error", func(t *testing.T) {
+		reqBody := dto.SetMinStockRequest{MinQuantity: -1}
+		body, _ := json.Marshal(reqBody)
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodPost, "/stores/s1/stock/min", bytes.NewBuffer(body))
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("storeId", "s1")
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+		w := httptest.NewRecorder()
+
+		h.SetMinStock(w, req)
+		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
+	})
+}
+
+func TestStockHandler_GetMovements(t *testing.T) {
+	svc := new(mocks.StockServiceInterface)
+	v := validator.New()
+	h := NewStockHandler(svc, v, zerolog.Nop())
+
+	t.Run("success", func(t *testing.T) {
+		movements := []*dto.StockMovementResponse{{ID: "m1"}}
+		svc.On("GetMovements", mock.Anything, mock.Anything).Return(movements, dto.PaginationMeta{Total: 1}, nil).Once()
+
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "/stores/s1/stock/movements", nil)
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("storeId", "s1")
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+		w := httptest.NewRecorder()
+		h.GetMovements(w, req)
+
+		assert.Equal(t, http.StatusOK, w.Code)
+	})
+}

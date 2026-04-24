@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -170,5 +171,127 @@ func TestUserAdminHandler_Misc(t *testing.T) {
 		h.ListRoles(w, req)
 
 		assert.Equal(t, http.StatusOK, w.Code)
+	})
+
+	t.Run("SetStores", func(t *testing.T) {
+		reqBody := dto.SetUserStoresRequest{
+			Stores: []dto.StoreAssignDTO{
+				{StoreID: "00000000-0000-4000-8000-000000000001", RoleID: "00000000-0000-4000-8000-000000000002"},
+			},
+		}
+		body, _ := json.Marshal(reqBody)
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodPost, "/admin/users/u1/stores", bytes.NewBuffer(body))
+		w := httptest.NewRecorder()
+
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("userId", "u1")
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+		svc.On("SetUserStores", mock.Anything, "u1", mock.Anything).Return(&dto.UserResponse{ID: "u1"}, nil).Once()
+
+		h.SetStores(w, req)
+		assert.Equal(t, http.StatusOK, w.Code)
+	})
+
+	t.Run("Deactivate_NotFound", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest(http.MethodPost, "/admin/users/u2/deactivate", nil)
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("userId", "u2")
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+		svc.On("DeactivateUser", mock.Anything, "u2").Return(service.ErrAdminUserNotFound).Once()
+
+		h.Deactivate(w, req)
+		assert.Equal(t, http.StatusNotFound, w.Code)
+	})
+
+	t.Run("Deactivate_InternalError", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest(http.MethodPost, "/admin/users/u2/deactivate", nil)
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("userId", "u2")
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+		svc.On("DeactivateUser", mock.Anything, "u2").Return(errors.New("db error")).Once()
+
+		h.Deactivate(w, req)
+		assert.Equal(t, http.StatusInternalServerError, w.Code)
+	})
+
+	t.Run("Update_NotFound", func(t *testing.T) {
+		reqBody := dto.UpdateUserRequest{Name: "New Name", Email: "new@example.com"}
+		body, _ := json.Marshal(reqBody)
+		req, _ := http.NewRequest(http.MethodPut, "/admin/users/u1", bytes.NewBuffer(body))
+		w := httptest.NewRecorder()
+
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("userId", "u1")
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+		svc.On("UpdateUser", mock.Anything, "u1", mock.Anything).Return(nil, service.ErrAdminUserNotFound).Once()
+
+		h.Update(w, req)
+		assert.Equal(t, http.StatusNotFound, w.Code)
+	})
+
+	t.Run("Update_Conflict", func(t *testing.T) {
+		reqBody := dto.UpdateUserRequest{Name: "Old Name", Email: "taken@example.com"}
+		body, _ := json.Marshal(reqBody)
+		req, _ := http.NewRequest(http.MethodPut, "/admin/users/u1", bytes.NewBuffer(body))
+		w := httptest.NewRecorder()
+
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("userId", "u1")
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+		svc.On("UpdateUser", mock.Anything, "u1", mock.Anything).Return(nil, service.ErrAdminEmailConflict).Once()
+
+		h.Update(w, req)
+		assert.Equal(t, http.StatusConflict, w.Code)
+	})
+
+	t.Run("ResetPassword_NotFound", func(t *testing.T) {
+		reqBody := dto.ResetPasswordRequest{Password: "newpassword123"}
+		body, _ := json.Marshal(reqBody)
+		req, _ := http.NewRequest(http.MethodPost, "/admin/users/u1/reset-password", bytes.NewBuffer(body))
+		w := httptest.NewRecorder()
+
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("userId", "u1")
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+		svc.On("ResetPassword", mock.Anything, "u1", mock.Anything).Return(service.ErrAdminUserNotFound).Once()
+
+		h.ResetPassword(w, req)
+		assert.Equal(t, http.StatusNotFound, w.Code)
+	})
+
+	t.Run("Update_ValidationError", func(t *testing.T) {
+		reqBody := dto.UpdateUserRequest{Name: "U"} // missing email, short name
+		body, _ := json.Marshal(reqBody)
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodPut, "/admin/users/u1", bytes.NewBuffer(body))
+		w := httptest.NewRecorder()
+
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("userId", "u1")
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+		h.Update(w, req)
+		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
+	})
+
+	t.Run("ResetPassword_ValidationError", func(t *testing.T) {
+		reqBody := dto.ResetPasswordRequest{Password: "123"} // too short
+		body, _ := json.Marshal(reqBody)
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodPost, "/admin/users/u1/reset-password", bytes.NewBuffer(body))
+		w := httptest.NewRecorder()
+
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("userId", "u1")
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+		h.ResetPassword(w, req)
+		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
 	})
 }

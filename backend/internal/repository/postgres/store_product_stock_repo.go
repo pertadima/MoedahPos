@@ -12,6 +12,7 @@ import (
 
 	"github.com/moedahpos/backend/internal/domain"
 	"github.com/moedahpos/backend/internal/dto"
+	"github.com/moedahpos/backend/internal/repository"
 )
 
 // StoreRepo is the PostgreSQL implementation of repository.StoreRepository.
@@ -19,15 +20,18 @@ type StoreRepo struct {
 	db *sqlx.DB
 }
 
-func NewStoreRepo(db *sqlx.DB) *StoreRepo { return &StoreRepo{db: db} }
+// NewStoreRepository creates a new StoreRepository.
+func NewStoreRepository(db *sql.DB) repository.StoreRepository {
+	return &StoreRepo{db: sqlx.NewDb(db, "postgres")}
+}
 
 func (r *StoreRepo) Create(ctx context.Context, s *domain.Store) (*domain.Store, error) {
 	const q = `
-		INSERT INTO stores (name, address, phone, tax_number, currency, store_type, default_tax_percentage)
-		VALUES ($1, $2, $3, $4, $5, $6, $7)
-		RETURNING id, name, address, phone, tax_number, currency, store_type, default_tax_percentage, is_active, created_at, updated_at, deleted_at`
+		INSERT INTO stores (name, address, phone, tax_number, currency, store_type, default_tax_percentage, loyalty_points_per_rupiah, loyalty_rupiah_per_point)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+		RETURNING id, name, address, phone, tax_number, currency, store_type, default_tax_percentage, loyalty_points_per_rupiah, loyalty_rupiah_per_point, is_active, created_at, updated_at, deleted_at`
 	row := &domain.Store{}
-	err := r.db.QueryRowxContext(ctx, q, s.Name, s.Address, s.Phone, s.TaxNumber, s.Currency, s.StoreType, s.DefaultTaxPercentage).StructScan(row)
+	err := r.db.QueryRowxContext(ctx, q, s.Name, s.Address, s.Phone, s.TaxNumber, s.Currency, s.StoreType, s.DefaultTaxPercentage, s.LoyaltyPointsPerRupiah, s.LoyaltyRupiahPerPoint).StructScan(row)
 	if err != nil {
 		return nil, fmt.Errorf("StoreRepo.Create: %w", err)
 	}
@@ -62,7 +66,7 @@ func (r *StoreRepo) FindAll(ctx context.Context, filter dto.StoreListFilter) ([]
 	// Data
 	args = append(args, filter.PerPage, filter.Offset())
 	dataQ := fmt.Sprintf(`
-		SELECT id, name, address, phone, tax_number, currency, store_type, default_tax_percentage, is_active, created_at, updated_at, deleted_at
+		SELECT id, name, address, phone, tax_number, currency, store_type, default_tax_percentage, loyalty_points_per_rupiah, loyalty_rupiah_per_point, is_active, created_at, updated_at, deleted_at
 		FROM stores s %s
 		ORDER BY s.created_at DESC
 		LIMIT $%d OFFSET $%d`, where, i, i+1)
@@ -76,7 +80,7 @@ func (r *StoreRepo) FindAll(ctx context.Context, filter dto.StoreListFilter) ([]
 
 func (r *StoreRepo) FindByID(ctx context.Context, id string) (*domain.Store, error) {
 	const q = `
-		SELECT id, name, address, phone, tax_number, currency, store_type, default_tax_percentage, is_active, created_at, updated_at, deleted_at
+		SELECT id, name, address, phone, tax_number, currency, store_type, default_tax_percentage, loyalty_points_per_rupiah, loyalty_rupiah_per_point, is_active, created_at, updated_at, deleted_at
 		FROM stores WHERE id = $1 AND deleted_at IS NULL`
 	s := &domain.Store{}
 	if err := r.db.QueryRowxContext(ctx, q, id).StructScan(s); err != nil {
@@ -91,11 +95,11 @@ func (r *StoreRepo) FindByID(ctx context.Context, id string) (*domain.Store, err
 func (r *StoreRepo) Update(ctx context.Context, s *domain.Store) (*domain.Store, error) {
 	const q = `
 		UPDATE stores
-		SET name=$1, address=$2, phone=$3, tax_number=$4, currency=$5, store_type=$6, default_tax_percentage=$7, is_active=$8, updated_at=NOW()
-		WHERE id=$9 AND deleted_at IS NULL
-		RETURNING id, name, address, phone, tax_number, currency, store_type, default_tax_percentage, is_active, created_at, updated_at, deleted_at`
+		SET name=$1, address=$2, phone=$3, tax_number=$4, currency=$5, store_type=$6, default_tax_percentage=$7, loyalty_points_per_rupiah=$8, loyalty_rupiah_per_point=$9, is_active=$10, updated_at=NOW()
+		WHERE id=$11 AND deleted_at IS NULL
+		RETURNING id, name, address, phone, tax_number, currency, store_type, default_tax_percentage, loyalty_points_per_rupiah, loyalty_rupiah_per_point, is_active, created_at, updated_at, deleted_at`
 	row := &domain.Store{}
-	err := r.db.QueryRowxContext(ctx, q, s.Name, s.Address, s.Phone, s.TaxNumber, s.Currency, s.StoreType, s.DefaultTaxPercentage, s.IsActive, s.ID).StructScan(row)
+	err := r.db.QueryRowxContext(ctx, q, s.Name, s.Address, s.Phone, s.TaxNumber, s.Currency, s.StoreType, s.DefaultTaxPercentage, s.LoyaltyPointsPerRupiah, s.LoyaltyRupiahPerPoint, s.IsActive, s.ID).StructScan(row)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
@@ -193,7 +197,10 @@ func (r *StoreRepo) DeactivateMember(ctx context.Context, userID, storeID string
 
 type CategoryRepo struct{ db *sqlx.DB }
 
-func NewCategoryRepo(db *sqlx.DB) *CategoryRepo { return &CategoryRepo{db: db} }
+// NewCategoryRepository creates a new CategoryRepository.
+func NewCategoryRepository(db *sql.DB) repository.CategoryRepository {
+	return &CategoryRepo{db: sqlx.NewDb(db, "postgres")}
+}
 
 func (r *CategoryRepo) Create(ctx context.Context, c *domain.Category) (*domain.Category, error) {
 	const q = `
@@ -280,7 +287,10 @@ func (r *CategoryRepo) GetModifiedSince(ctx context.Context, storeID string, sin
 
 type ProductRepo struct{ db *sqlx.DB }
 
-func NewProductRepo(db *sqlx.DB) *ProductRepo { return &ProductRepo{db: db} }
+// NewProductRepository creates a new ProductRepository.
+func NewProductRepository(db *sql.DB) repository.ProductRepository {
+	return &ProductRepo{db: sqlx.NewDb(db, "postgres")}
+}
 
 func (r *ProductRepo) Create(ctx context.Context, p *domain.Product) (*domain.Product, error) {
 	const q = `
@@ -468,7 +478,10 @@ func (r *ProductRepo) GetModifiedSince(ctx context.Context, storeID string, sinc
 
 type StockRepo struct{ db *sqlx.DB }
 
-func NewStockRepo(db *sqlx.DB) *StockRepo { return &StockRepo{db: db} }
+// NewStockRepository creates a new StockRepository.
+func NewStockRepository(db *sql.DB) repository.StockRepository {
+	return &StockRepo{db: sqlx.NewDb(db, "postgres")}
+}
 
 func (r *StockRepo) FindLevelsByStore(ctx context.Context, storeID string, lowStockOnly bool) ([]*domain.StockLevel, error) {
 	q := `

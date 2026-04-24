@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -22,13 +21,13 @@ func TestStoreRepo_Basic(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		require.NoError(t, err)
 		defer func() { _ = db.Close() }()
-		repo := NewStoreRepo(sqlx.NewDb(db, "postgres"))
+		repo := NewStoreRepository(db)
 
-		s := &domain.Store{Name: "Store 1", StoreType: "retail"}
-		rows := sqlmock.NewRows([]string{"id", "name", "address", "phone", "tax_number", "currency", "store_type", "default_tax_percentage", "is_active", "created_at", "updated_at", "deleted_at"}).
-			AddRow("st1", "Store 1", "", "", "", "IDR", "retail", 10.0, true, time.Now(), time.Now(), nil)
+		s := &domain.Store{Name: "Store 1", StoreType: "retail", LoyaltyPointsPerRupiah: 1, LoyaltyRupiahPerPoint: 1}
+		rows := sqlmock.NewRows([]string{"id", "name", "address", "phone", "tax_number", "currency", "store_type", "default_tax_percentage", "loyalty_points_per_rupiah", "loyalty_rupiah_per_point", "is_active", "created_at", "updated_at", "deleted_at"}).
+			AddRow("st1", "Store 1", "", "", "", "IDR", "retail", 10.0, 1.0, 1.0, true, time.Now(), time.Now(), nil)
 
-		mock.ExpectQuery(`INSERT INTO stores`).WithArgs(s.Name, s.Address, s.Phone, s.TaxNumber, s.Currency, s.StoreType, s.DefaultTaxPercentage).WillReturnRows(rows)
+		mock.ExpectQuery(`INSERT INTO stores`).WithArgs(s.Name, s.Address, s.Phone, s.TaxNumber, s.Currency, s.StoreType, s.DefaultTaxPercentage, s.LoyaltyPointsPerRupiah, s.LoyaltyRupiahPerPoint).WillReturnRows(rows)
 
 		res, err := repo.Create(ctx, s)
 		assert.NoError(t, err)
@@ -39,7 +38,7 @@ func TestStoreRepo_Basic(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		require.NoError(t, err)
 		defer func() { _ = db.Close() }()
-		repo := NewStoreRepo(sqlx.NewDb(db, "postgres"))
+		repo := NewStoreRepository(db)
 
 		rows := sqlmock.NewRows([]string{"id", "user_id", "store_id", "role_id", "is_active", "created_at"}).
 			AddRow("m1", "u1", "st1", "admin", true, time.Now())
@@ -61,7 +60,7 @@ func TestStoreRepo_Basic(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		require.NoError(t, err)
 		defer func() { _ = db.Close() }()
-		repo := NewStoreRepo(sqlx.NewDb(db, "postgres"))
+		repo := NewStoreRepository(db)
 
 		f := dto.StoreListFilter{Search: "S1"}
 		f.Defaults()
@@ -79,10 +78,10 @@ func TestStoreRepo_Basic(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		require.NoError(t, err)
 		defer func() { _ = db.Close() }()
-		repo := NewStoreRepo(sqlx.NewDb(db, "postgres"))
+		repo := NewStoreRepository(db)
 
-		s := &domain.Store{ID: "st1", Name: "S1 Updated"}
-		mock.ExpectQuery(`UPDATE stores`).WithArgs(s.Name, s.Address, s.Phone, s.TaxNumber, s.Currency, s.StoreType, s.DefaultTaxPercentage, s.IsActive, s.ID).
+		s := &domain.Store{ID: "st1", Name: "S1 Updated", LoyaltyPointsPerRupiah: 1, LoyaltyRupiahPerPoint: 1, IsActive: true}
+		mock.ExpectQuery(`UPDATE stores`).WithArgs(s.Name, s.Address, s.Phone, s.TaxNumber, s.Currency, s.StoreType, s.DefaultTaxPercentage, s.LoyaltyPointsPerRupiah, s.LoyaltyRupiahPerPoint, s.IsActive, s.ID).
 			WillReturnRows(sqlmock.NewRows([]string{"id", "name"}).AddRow("st1", "S1 Updated"))
 
 		res, err := repo.Update(ctx, s)
@@ -104,7 +103,7 @@ func TestStoreRepo_Members(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		require.NoError(t, err)
 		defer func() { _ = db.Close() }()
-		repo := NewStoreRepo(sqlx.NewDb(db, "postgres"))
+		repo := NewStoreRepository(db)
 
 		// ListMembers
 		mock.ExpectQuery(`SELECT .* FROM user_stores us`).WithArgs("st1").WillReturnRows(sqlmock.NewRows([]string{"user_id", "user_name"}).AddRow("u1", "U1"))
@@ -137,7 +136,7 @@ func TestStoreRepo_Members(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		require.NoError(t, err)
 		defer func() { _ = db.Close() }()
-		repo := NewStoreRepo(sqlx.NewDb(db, "postgres"))
+		repo := NewStoreRepository(db)
 
 		rows := sqlmock.NewRows([]string{"id", "name"}).AddRow("st1", "Store 1")
 		mock.ExpectQuery(`SELECT .* FROM stores WHERE id = \$1`).WithArgs("st1").WillReturnRows(rows)
@@ -158,7 +157,7 @@ func TestStoreRepo_Members(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		require.NoError(t, err)
 		defer func() { _ = db.Close() }()
-		repo := NewStoreRepo(sqlx.NewDb(db, "postgres"))
+		repo := NewStoreRepository(db)
 
 		mock.ExpectExec(`UPDATE stores SET deleted_at = NOW\(\)`).WithArgs("st1").WillReturnResult(sqlmock.NewResult(1, 1))
 
@@ -179,7 +178,7 @@ func TestCategoryRepo(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		require.NoError(t, err)
 		defer func() { _ = db.Close() }()
-		repo := NewCategoryRepo(sqlx.NewDb(db, "postgres"))
+		repo := NewCategoryRepository(db)
 
 		// Create
 		c := &domain.Category{StoreID: "st1", Name: "Cat 1"}
@@ -220,7 +219,7 @@ func TestCategoryRepo(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		require.NoError(t, err)
 		defer func() { _ = db.Close() }()
-		repo := NewCategoryRepo(sqlx.NewDb(db, "postgres"))
+		repo := NewCategoryRepository(db)
 
 		mock.ExpectQuery(`SELECT .* FROM categories WHERE id = \$1`).WithArgs("c1").
 			WillReturnRows(sqlmock.NewRows([]string{"id", "name"}).AddRow("c1", "Cat 1"))
@@ -245,7 +244,7 @@ func TestProductRepo(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		require.NoError(t, err)
 		defer func() { _ = db.Close() }()
-		repo := NewProductRepo(sqlx.NewDb(db, "postgres"))
+		repo := NewProductRepository(db)
 
 		// FindByID
 		cols := []string{"id", "store_id", "category_id", "sku", "name", "description", "barcode", "unit", "cost_price", "sell_price", "use_global_tax", "tax_percentage", "image_url", "is_active", "created_at", "updated_at", "deleted_at", "category_name", "store_default_tax"}
@@ -294,7 +293,7 @@ func TestStockRepo(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		require.NoError(t, err)
 		defer func() { _ = db.Close() }()
-		repo := NewStockRepo(sqlx.NewDb(db, "postgres"))
+		repo := NewStockRepository(db)
 
 		f := dto.StockMovementFilter{StoreID: "st1"}
 		f.Defaults()
@@ -312,7 +311,7 @@ func TestStockRepo(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		require.NoError(t, err)
 		defer func() { _ = db.Close() }()
-		repo := NewStockRepo(sqlx.NewDb(db, "postgres"))
+		repo := NewStockRepository(db)
 
 		input := domain.AdjustInput{ProductID: "p1", StoreID: "st1", Delta: 10.0}
 		mock.ExpectBegin()
@@ -331,7 +330,7 @@ func TestStockRepo(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		require.NoError(t, err)
 		defer func() { _ = db.Close() }()
-		repo := NewStockRepo(sqlx.NewDb(db, "postgres"))
+		repo := NewStockRepository(db)
 
 		mock.ExpectBegin()
 		mock.ExpectExec(`INSERT INTO stock_movements`).WillReturnResult(sqlmock.NewResult(1, 1))
@@ -346,7 +345,7 @@ func TestStockRepo(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		require.NoError(t, err)
 		defer func() { _ = db.Close() }()
-		repo := NewStockRepo(sqlx.NewDb(db, "postgres"))
+		repo := NewStockRepository(db)
 
 		// Not Found
 		mock.ExpectQuery(`SELECT .* FROM stock_levels sl`).WithArgs("p_unknown", "st1").WillReturnError(sql.ErrNoRows)
@@ -354,4 +353,54 @@ func TestStockRepo(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Nil(t, res)
 	})
+
+	t.Run("GetModifiedSince", func(t *testing.T) {
+		db, mock, err := sqlmock.New()
+		require.NoError(t, err)
+		defer func() { _ = db.Close() }()
+		repo := NewStockRepository(db)
+
+		since := time.Now()
+		mock.ExpectQuery(`SELECT .* FROM stock_levels WHERE store_id = \$1 AND server_updated_at > \$2`).
+			WithArgs("st1", since).
+			WillReturnRows(sqlmock.NewRows([]string{"id", "product_id"}).AddRow("sl1", "p1"))
+
+		res, err := repo.GetModifiedSince(ctx, "st1", since)
+		assert.NoError(t, err)
+		assert.Len(t, res, 1)
+	})
+}
+
+func TestCategoryRepo_Sync(t *testing.T) {
+	ctx := context.Background()
+	db, mock, err := sqlmock.New()
+	require.NoError(t, err)
+	defer func() { _ = db.Close() }()
+	repo := NewCategoryRepository(db)
+
+	since := time.Now()
+	mock.ExpectQuery(`SELECT .* FROM categories WHERE store_id = \$1 AND server_updated_at > \$2`).
+		WithArgs("st1", since).
+		WillReturnRows(sqlmock.NewRows([]string{"id", "name"}).AddRow("cat1", "C1"))
+
+	res, err := repo.GetModifiedSince(ctx, "st1", since)
+	assert.NoError(t, err)
+	assert.Len(t, res, 1)
+}
+
+func TestProductRepo_Sync(t *testing.T) {
+	ctx := context.Background()
+	db, mock, err := sqlmock.New()
+	require.NoError(t, err)
+	defer func() { _ = db.Close() }()
+	repo := NewProductRepository(db)
+
+	since := time.Now()
+	mock.ExpectQuery(`SELECT .* FROM products WHERE store_id = \$1 AND server_updated_at > \$2`).
+		WithArgs("st1", since).
+		WillReturnRows(sqlmock.NewRows([]string{"id", "name"}).AddRow("p1", "P1"))
+
+	res, err := repo.GetModifiedSince(ctx, "st1", since)
+	assert.NoError(t, err)
+	assert.Len(t, res, 1)
 }

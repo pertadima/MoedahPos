@@ -22,6 +22,8 @@ erDiagram
         TIMESTAMPTZ deleted_at
         VARCHAR store_type
         NUMERIC default_tax_percentage
+        NUMERIC loyalty_points_per_rupiah
+        NUMERIC loyalty_rupiah_per_point
     }
     roles {
         UUID id PK
@@ -168,6 +170,8 @@ erDiagram
         NUMERIC cart_discount_value
         TIMESTAMPTZ server_updated_at
         INT sync_version
+        NUMERIC points_redeemed
+        NUMERIC points_discount
     }
     transaction_items {
         UUID id PK
@@ -251,6 +255,7 @@ erDiagram
     customers {
         UUID id PK
         UUID store_id FK
+        UUID loyalty_tier_id FK
         VARCHAR name
         VARCHAR phone
         VARCHAR email
@@ -259,6 +264,23 @@ erDiagram
         TIMESTAMPTZ created_at
         TIMESTAMPTZ updated_at
         TIMESTAMPTZ deleted_at
+        TIMESTAMPTZ server_updated_at
+        INT sync_version
+    }
+    membership_tiers {
+        UUID id PK
+        VARCHAR name
+        NUMERIC multiplier
+        TIMESTAMPTZ created_at
+        TIMESTAMPTZ updated_at
+    }
+    loyalty_ledger {
+        UUID id PK
+        UUID customer_id FK
+        NUMERIC points_delta
+        UUID transaction_id FK
+        VARCHAR type
+        TIMESTAMPTZ created_at
     }
     stock_batches {
         UUID id PK
@@ -443,3 +465,6 @@ erDiagram
     users ||--o{ incomes : "creates"
     users ||--o{ activity_logs : "creates"
     stores ||--o{ activity_logs : "has"
+    membership_tiers ||--o{ customers : "assigned to"
+    customers ||--o{ loyalty_ledger : "has ledger"
+    transactions ||--o{ loyalty_ledger : "triggers"

@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -23,8 +22,7 @@ func TestStockAdjustmentRepo_CreateAdjustment_IN(t *testing.T) {
 	require.NoError(t, err)
 	defer func() { _ = db.Close() }()
 
-	sqlxDB := sqlx.NewDb(db, "postgres")
-	repo := NewStockAdjustmentRepo(sqlxDB)
+	repo := NewStockAdjustmentRepository(db)
 
 	storeID := stockTestStoreID
 	userID := testUserID
@@ -81,8 +79,7 @@ func TestStockAdjustmentRepo_CreateAdjustment_OUT(t *testing.T) {
 	require.NoError(t, err)
 	defer func() { _ = db.Close() }()
 
-	sqlxDB := sqlx.NewDb(db, "postgres")
-	repo := NewStockAdjustmentRepo(sqlxDB)
+	repo := NewStockAdjustmentRepository(db)
 
 	storeID := stockTestStoreID
 	userID := testUserID
@@ -162,7 +159,7 @@ func TestStockAdjustmentRepo_History(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	require.NoError(t, err)
 	defer func() { _ = db.Close() }()
-	repo := NewStockAdjustmentRepo(sqlx.NewDb(db, "postgres"))
+	repo := NewStockAdjustmentRepository(db)
 	ctx := context.Background()
 
 	t.Run("success_all", func(t *testing.T) {

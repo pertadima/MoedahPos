@@ -74,6 +74,20 @@ func TestAuthHandler_Register(t *testing.T) {
 
 		assert.Equal(t, http.StatusBadRequest, w.Code)
 	})
+
+	t.Run("Validation Error", func(t *testing.T) {
+		aSvc := new(mocks.AuthServiceInterface)
+		v := validator.New()
+		h := NewAuthHandler(aSvc, v, zerolog.Nop())
+
+		reqBody := dto.RegisterRequest{Email: "invalid"}
+		body, _ := json.Marshal(reqBody)
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodPost, "/auth/register", bytes.NewBuffer(body))
+		w := httptest.NewRecorder()
+
+		h.Register(w, req)
+		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
+	})
 }
 
 func TestAuthHandler_Login(t *testing.T) {
@@ -92,6 +106,20 @@ func TestAuthHandler_Login(t *testing.T) {
 		h.Login(w, req)
 
 		assert.Equal(t, http.StatusOK, w.Code)
+	})
+
+	t.Run("Validation Error", func(t *testing.T) {
+		aSvc := new(mocks.AuthServiceInterface)
+		v := validator.New()
+		h := NewAuthHandler(aSvc, v, zerolog.Nop())
+
+		reqBody := dto.LoginRequest{Email: "invalid"}
+		body, _ := json.Marshal(reqBody)
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodPost, "/auth/login", bytes.NewBuffer(body))
+		w := httptest.NewRecorder()
+
+		h.Login(w, req)
+		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
 	})
 
 	t.Run("Invalid Credentials", func(t *testing.T) {
@@ -128,6 +156,20 @@ func TestAuthHandler_Refresh(t *testing.T) {
 		h.Refresh(w, req)
 
 		assert.Equal(t, http.StatusOK, w.Code)
+	})
+
+	t.Run("Validation Error", func(t *testing.T) {
+		aSvc := new(mocks.AuthServiceInterface)
+		v := validator.New()
+		h := NewAuthHandler(aSvc, v, zerolog.Nop())
+
+		reqBody := dto.RefreshRequest{RefreshToken: ""}
+		body, _ := json.Marshal(reqBody)
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodPost, "/auth/refresh", bytes.NewBuffer(body))
+		w := httptest.NewRecorder()
+
+		h.Refresh(w, req)
+		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
 	})
 }
 

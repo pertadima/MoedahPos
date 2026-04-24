@@ -4,6 +4,8 @@ package dto
 
 // CreateTransactionRequest is the input for POST /stores/:storeId/transactions.
 type CreateTransactionRequest struct {
+	ID                string        `json:"id"                   validate:"omitempty,uuid"`
+	CustomerID        string        `json:"customer_id"          validate:"omitempty,uuid"`
 	CustomerName      string        `json:"customer_name"        validate:"max=100"`
 	CustomerPhone     string        `json:"customer_phone"       validate:"max=20"`
 	PaymentMethod     string        `json:"payment_method"       validate:"required,oneof=cash card qris transfer"`
@@ -12,6 +14,7 @@ type CreateTransactionRequest struct {
 	Items             []TxItemInput `json:"items"                validate:"required,min=1,dive"`
 	CartDiscountType  string        `json:"cart_discount_type"   validate:"omitempty,oneof=PERCENTAGE FIXED"`
 	CartDiscountValue float64       `json:"cart_discount_value"  validate:"min=0"`
+	PointsRedeemed    float64       `json:"points_redeemed"      validate:"min=0"`
 }
 
 // TxItemInput is a single line in a sale request.
@@ -49,10 +52,12 @@ type UpdateDraftRequest struct {
 
 // PayDraftRequest finalizes a held order with payment details.
 type PayDraftRequest struct {
-	PaymentMethod string  `json:"payment_method" validate:"required,oneof=cash card qris transfer"`
-	PaymentAmount float64 `json:"payment_amount" validate:"required,min=0"`
-	CustomerName  string  `json:"customer_name"  validate:"max=100"`
-	CustomerPhone string  `json:"customer_phone" validate:"max=20"`
+	PaymentMethod  string  `json:"payment_method" validate:"required,oneof=cash card qris transfer"`
+	PaymentAmount  float64 `json:"payment_amount" validate:"required,min=0"`
+	CustomerID     string  `json:"customer_id"    validate:"omitempty,uuid"`
+	CustomerName   string  `json:"customer_name"  validate:"max=100"`
+	CustomerPhone  string  `json:"customer_phone" validate:"max=20"`
+	PointsRedeemed float64 `json:"points_redeemed" validate:"min=0"`
 }
 
 // ─── Responses ────────────────────────────────────────────────────────────────

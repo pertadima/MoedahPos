@@ -9,13 +9,17 @@ import (
 	"github.com/jmoiron/sqlx"
 
 	"github.com/moedahpos/backend/internal/domain"
+	"github.com/moedahpos/backend/internal/repository"
 )
 
 // ─── Table Repo ───────────────────────────────────────────────────────────────
 
 type TableRepo struct{ db *sqlx.DB }
 
-func NewTableRepo(db *sqlx.DB) *TableRepo { return &TableRepo{db: db} }
+// NewTableRepository creates a new TableRepository.
+func NewTableRepository(db *sql.DB) repository.TableRepository {
+	return &TableRepo{db: sqlx.NewDb(db, "postgres")}
+}
 
 func (r *TableRepo) FindAllByStore(ctx context.Context, storeID string) ([]*domain.RestaurantTable, error) {
 	const q = `
@@ -104,7 +108,10 @@ func (r *TableRepo) SoftDelete(ctx context.Context, id string) error {
 
 type MenuItemRepo struct{ db *sqlx.DB }
 
-func NewMenuItemRepo(db *sqlx.DB) *MenuItemRepo { return &MenuItemRepo{db: db} }
+// NewMenuItemRepository creates a new MenuItemRepository.
+func NewMenuItemRepository(db *sql.DB) repository.MenuItemRepository {
+	return &MenuItemRepo{db: sqlx.NewDb(db, "postgres")}
+}
 
 func (r *MenuItemRepo) FindAllByStore(ctx context.Context, storeID string) ([]*domain.MenuItem, error) {
 	const q = `

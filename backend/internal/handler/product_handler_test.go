@@ -74,10 +74,10 @@ func TestProductHandler_ListCategories(t *testing.T) {
 	})
 }
 func TestProductHandler_Categories(t *testing.T) {
-	t.Run("CreateCategory", func(t *testing.T) {
-		pSvc := new(mocks.ProductServiceInterface)
-		h := NewProductHandler(pSvc, validator.New(), zerolog.Nop())
+	pSvc := new(mocks.ProductServiceInterface)
+	h := NewProductHandler(pSvc, validator.New(), zerolog.Nop())
 
+	t.Run("CreateCategory", func(t *testing.T) {
 		reqBody := dto.CreateCategoryRequest{Name: "New Cat"}
 		body, _ := json.Marshal(reqBody)
 
@@ -95,9 +95,6 @@ func TestProductHandler_Categories(t *testing.T) {
 	})
 
 	t.Run("UpdateCategory", func(t *testing.T) {
-		pSvc := new(mocks.ProductServiceInterface)
-		h := NewProductHandler(pSvc, validator.New(), zerolog.Nop())
-
 		reqBody := dto.UpdateCategoryRequest{Name: "Updated Cat"}
 		body, _ := json.Marshal(reqBody)
 
@@ -115,9 +112,6 @@ func TestProductHandler_Categories(t *testing.T) {
 	})
 
 	t.Run("DeleteCategory", func(t *testing.T) {
-		pSvc := new(mocks.ProductServiceInterface)
-		h := NewProductHandler(pSvc, validator.New(), zerolog.Nop())
-
 		r := chi.NewRouter()
 		r.Delete("/stores/{storeId}/categories/{categoryId}", h.DeleteCategory)
 
@@ -129,6 +123,33 @@ func TestProductHandler_Categories(t *testing.T) {
 		r.ServeHTTP(w, req)
 
 		assert.Equal(t, http.StatusOK, w.Code)
+	})
+
+	t.Run("CreateCategory Validation Error", func(t *testing.T) {
+		reqBody := dto.CreateCategoryRequest{Name: ""}
+		body, _ := json.Marshal(reqBody)
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodPost, "/stores/s1/categories", bytes.NewBuffer(body))
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("storeId", "s1")
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+		w := httptest.NewRecorder()
+
+		h.CreateCategory(w, req)
+		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
+	})
+
+	t.Run("UpdateCategory Validation Error", func(t *testing.T) {
+		reqBody := dto.UpdateCategoryRequest{Name: ""}
+		body, _ := json.Marshal(reqBody)
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodPut, "/stores/s1/categories/c1", bytes.NewBuffer(body))
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("storeId", "s1")
+		rctx.URLParams.Add("categoryId", "c1")
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+		w := httptest.NewRecorder()
+
+		h.UpdateCategory(w, req)
+		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
 	})
 }
 
@@ -185,6 +206,20 @@ func TestProductHandler_Products(t *testing.T) {
 		w := httptest.NewRecorder()
 		r.ServeHTTP(w, req)
 		assert.Equal(t, http.StatusOK, w.Code)
+	})
+
+	t.Run("Update Validation Error", func(t *testing.T) {
+		reqBody := dto.UpdateProductRequest{Name: ""}
+		body, _ := json.Marshal(reqBody)
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodPut, "/stores/s1/products/p1", bytes.NewBuffer(body))
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("storeId", "s1")
+		rctx.URLParams.Add("productId", "p1")
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+		w := httptest.NewRecorder()
+
+		h.Update(w, req)
+		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
 	})
 
 	t.Run("Delete", func(t *testing.T) {

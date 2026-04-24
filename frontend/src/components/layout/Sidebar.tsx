@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
@@ -50,13 +50,6 @@ interface NavGroup {
 }
 
 // ── Role → permission map (mirrors backend role_permissions seed) ─────────────
-//
-// Rather than fetching permissions from the API on every render, we mirror the
-// backend RBAC model here. This is safe because:
-//   - The role name lives in the JWT / /me response (`selectedStore.role`).
-//   - Menu visibility is *cosmetic*; the backend still enforces per-request checks.
-//   - If the seed changes, update this map too.
-//
 type Permission =
   | 'products.read'
   | 'products.create'
@@ -238,9 +231,15 @@ export default function Sidebar() {
   const { isDark } = useTheme();
   const { isCollapsed, toggleCollapsed } = useSidebar();
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMounted(true);
+  }, []);
 
   const toggleSection = (label: string) => {
-    if (isCollapsed) return; // Don't toggle inside mini-sidebar
+    if (isCollapsed) return;
     setCollapsedSections(prev => ({
       ...prev,
       [label]: !prev[label],
@@ -251,17 +250,15 @@ export default function Sidebar() {
   const role = selectedStore?.role;
   const isSuperOrAdmin = role === 'superadmin' || role === 'admin';
 
-  // Inject restaurant group after "Penjualan" when in restaurant mode
-  const allGroups: NavGroup[] = isRestaurant
-    ? [baseGroups[0], baseGroups[1], restaurantGroup, ...baseGroups.slice(2)]
-    : baseGroups;
-
   // Build the final visible groups based on the current store role
   const finalGroups = useMemo(() => {
-    return allGroups
+    const groupsToRender: NavGroup[] = isRestaurant
+      ? [baseGroups[0], baseGroups[1], restaurantGroup, ...baseGroups.slice(2)]
+      : baseGroups;
+
+    return groupsToRender
       .map(group => {
         const isSettings = group.label === 'Pengaturan';
-
         const visibleItems = group.items
           .map(item => {
             if (item.href === '/products' && isRestaurant) {
@@ -276,32 +273,26 @@ export default function Sidebar() {
           });
 
         if (visibleItems.length === 0) return null;
-
-        // For non-settings groups, check group-level permission gate
         if (!isSettings && group.permission && !hasPermission(role, group.permission)) return null;
-
         return { ...group, items: visibleItems };
       })
       .filter(Boolean) as NavGroup[];
-  }, [allGroups, isRestaurant, isSuperOrAdmin, role]);
+  }, [isRestaurant, isSuperOrAdmin, role]);
 
   return (
     <>
-      {/* Mobile overlay */}
       <div
         className={`sidebar-overlay-backdrop ${!isCollapsed ? 'open' : ''}`}
         onClick={toggleCollapsed}
       />
 
       <aside className={`sidebar ${isCollapsed ? 'sidebar-collapsed' : 'sidebar-expanded open'}`}>
-        {/* ── Logo / Header ── */}
         <div className="sidebar-logo">
           {isCollapsed ? (
             <button
               onClick={toggleCollapsed}
               className="btn btn-ghost btn-sm"
               title="Perluas sidebar"
-              aria-label="Expand sidebar"
               style={{ padding: '6px 8px', margin: 'auto' }}
             >
               <ChevronRight size={16} />
@@ -310,7 +301,7 @@ export default function Sidebar() {
             <div className="flex items-center justify-between w-full">
               <div className="flex items-center">
                 <Image
-                  src={isDark ? '/logo-dashboard-dark.svg' : '/logo-dashboard-light.svg'}
+                  src={mounted && isDark ? '/logo-dashboard-dark.svg' : '/logo-dashboard-light.svg'}
                   alt="Moedah"
                   width={90}
                   height={24}
@@ -323,7 +314,6 @@ export default function Sidebar() {
                   onClick={toggleCollapsed}
                   className="btn btn-ghost btn-sm"
                   title="Ciutkan sidebar"
-                  aria-label="Collapse sidebar"
                   style={{ padding: '6px' }}
                 >
                   <ChevronLeft size={14} />
@@ -333,14 +323,8 @@ export default function Sidebar() {
           )}
         </div>
 
-        {/* ── Store Selector ── */}
         {stores.length > 0 && !isCollapsed && (
-          <div
-            style={{
-              padding: '10px 12px 10px',
-              borderBottom: '1px solid var(--border)',
-            }}
-          >
+          <div style={{ padding: '10px 12px 10px', borderBottom: '1px solid var(--border)' }}>
             <p className="type-overline" style={{ marginBottom: 6, paddingLeft: 2 }}>
               Toko Aktif
             </p>
@@ -360,44 +344,20 @@ export default function Sidebar() {
             {selectedStore && (
               <div className="flex items-center gap-2 mt-2 px-0.5">
                 <span
-                  style={{
-                    background: 'var(--bg-card)',
-                    color: 'var(--text-3)',
-                    fontSize: '0.6rem',
-                    fontWeight: 800,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.05em',
-                    padding: '2px 7px',
-                    borderRadius: 5,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 4,
-                    border: '1px solid var(--border-md)',
-                  }}
+                  className="badge badge-gray"
+                  style={{ fontSize: '0.6rem', padding: '2px 7px' }}
                 >
-                  <UserRound size={10} strokeWidth={3} />
+                  <UserRound size={10} strokeWidth={3} className="mr-1" />
                   {selectedStore.role}
                 </span>
                 <span
-                  style={{
-                    background: isRestaurant ? 'rgba(249,115,22,0.04)' : 'rgba(16,185,129,0.04)',
-                    color: isRestaurant ? '#f97316' : '#10b981',
-                    fontSize: '0.6rem',
-                    fontWeight: 800,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.05em',
-                    padding: '2px 7px',
-                    borderRadius: 5,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 4,
-                    border: `1px solid ${isRestaurant ? 'rgba(249,115,22,0.15)' : 'rgba(16,185,129,0.15)'}`,
-                  }}
+                  className={`badge ${isRestaurant ? 'badge-amber' : 'badge-green'}`}
+                  style={{ fontSize: '0.6rem', padding: '2px 7px' }}
                 >
                   {isRestaurant ? (
-                    <UtensilsCrossed size={10} strokeWidth={3} />
+                    <UtensilsCrossed size={10} strokeWidth={3} className="mr-1" />
                   ) : (
-                    <Store size={10} strokeWidth={3} />
+                    <Store size={10} strokeWidth={3} className="mr-1" />
                   )}
                   {isRestaurant ? 'Restaurant' : 'Retail'}
                 </span>
@@ -406,7 +366,6 @@ export default function Sidebar() {
           </div>
         )}
 
-        {/* ── Navigation ── */}
         <nav className="sidebar-nav" style={{ flex: 1, overflowY: 'auto' }}>
           {finalGroups.map(group => {
             const hasActiveItem = group.items.some(
@@ -419,13 +378,8 @@ export default function Sidebar() {
 
             return (
               <div key={group.label} className="nav-group-container">
-                {/* Group section label */}
                 {!isCollapsed && (
-                  <div
-                    className="nav-section-header"
-                    onClick={() => toggleSection(group.label)}
-                    title={isCollapsedSection ? `Perluas ${group.label}` : `Ciutkan ${group.label}`}
-                  >
+                  <div className="nav-section-header" onClick={() => toggleSection(group.label)}>
                     <span className="nav-section-title">{group.label}</span>
                     <ChevronDown
                       size={12}
@@ -433,8 +387,6 @@ export default function Sidebar() {
                     />
                   </div>
                 )}
-
-                {/* Group nav items */}
                 <div className={`nav-section-items ${isCollapsedSection ? 'collapsed' : ''}`}>
                   {group.items.map(({ href, icon: Icon, label }) => {
                     const active =
@@ -453,15 +405,7 @@ export default function Sidebar() {
                       >
                         <Icon size={14} strokeWidth={active ? 2.5 : 2} />
                         {!isCollapsed && (
-                          <span
-                            style={{
-                              opacity: isCollapsed ? 0 : 1,
-                              transition: 'opacity 0.2s',
-                              whiteSpace: 'nowrap',
-                            }}
-                          >
-                            {label}
-                          </span>
+                          <span style={{ transition: 'opacity 0.2s' }}>{label}</span>
                         )}
                       </Link>
                     );

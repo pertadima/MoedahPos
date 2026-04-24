@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -20,7 +19,7 @@ func TestActivityLogRepo(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		require.NoError(t, err)
 		defer func() { _ = db.Close() }()
-		repo := NewActivityLogRepo(sqlx.NewDb(db, "postgres"))
+		repo := NewActivityLogRepository(db)
 
 		mock.ExpectExec(`(?is)INSERT INTO activity_logs`).
 			WithArgs("u1", "s1", "create", "product", sqlmock.AnyArg(), sqlmock.AnyArg()).
@@ -36,7 +35,7 @@ func TestActivityLogRepo(t *testing.T) {
 		db, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherRegexp))
 		require.NoError(t, err)
 		defer func() { _ = db.Close() }()
-		repo := NewActivityLogRepo(sqlx.NewDb(db, "postgres"))
+		repo := NewActivityLogRepository(db)
 
 		// Case 1: Minimal store_id
 		mock.ExpectPrepare(`(?is)SELECT COUNT\(\*\) FROM activity_logs`).

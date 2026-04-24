@@ -10,6 +10,8 @@ export interface UserStore {
   store_name: string;
   role: string;
   store_type?: 'retail' | 'restaurant';
+  loyalty_points_per_rupiah?: number;
+  loyalty_rupiah_per_point?: number;
 }
 export interface LoginResponse {
   access_token: string;

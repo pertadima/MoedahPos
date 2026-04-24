@@ -53,6 +53,7 @@ type Dependencies struct {
 	IncomeHandler          *handler.IncomeHandler
 	ActivityLogHandler     *handler.ActivityLogHandler
 	SyncHandler            *handler.SyncHandler
+	LoyaltyHandler         *handler.LoyaltyHandler
 
 	// Shared
 	RoleStore *rbac.RoleStore
@@ -195,6 +196,17 @@ func New(deps *Dependencies) http.Handler { //nolint:funlen // route wiring is i
 							r.Get("/{customerId}", withPerm(deps, "products.read", deps.CustomerHandler.Get))
 							r.Put("/{customerId}", withPerm(deps, "products.update", deps.CustomerHandler.Update))
 							r.Delete("/{customerId}", withPerm(deps, "products.delete", deps.CustomerHandler.Delete))
+							// Loyalty sub-routes per customer
+							r.Get("/{customerId}/loyalty", withPerm(deps, "products.read", deps.LoyaltyHandler.GetBalance))
+							r.Post("/{customerId}/loyalty/earn", withPerm(deps, "transactions.create", deps.LoyaltyHandler.EarnPoints))
+							r.Post("/{customerId}/loyalty/redeem", withPerm(deps, "transactions.create", deps.LoyaltyHandler.RedeemPoints))
+							r.Get("/{customerId}/loyalty/history", withPerm(deps, "products.read", deps.LoyaltyHandler.GetHistory))
+							r.Put("/{customerId}/loyalty/tier", withPerm(deps, "products.update", deps.LoyaltyHandler.AssignTier))
+						})
+
+						// Loyalty tiers (store-scoped read)
+						r.Route("/loyalty", func(r chi.Router) {
+							r.Get("/tiers", withPerm(deps, "products.read", deps.LoyaltyHandler.ListTiers))
 						})
 
 						// Stock

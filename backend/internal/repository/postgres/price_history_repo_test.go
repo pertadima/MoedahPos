@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/moedahpos/backend/internal/domain"
@@ -20,8 +19,7 @@ func TestPriceHistoryRepo_Record(t *testing.T) {
 	}
 	defer func() { _ = db.Close() }()
 
-	sqlxDB := sqlx.NewDb(db, "postgres")
-	repo := NewPriceHistoryRepo(sqlxDB)
+	repo := NewPriceHistoryRepository(db)
 
 	t.Run("Record", func(t *testing.T) {
 		h := domain.PriceHistory{
@@ -51,8 +49,7 @@ func TestPriceHistoryRepo_Query(t *testing.T) {
 	}
 	defer func() { _ = db.Close() }()
 
-	sqlxDB := sqlx.NewDb(db, "postgres")
-	repo := NewPriceHistoryRepo(sqlxDB)
+	repo := NewPriceHistoryRepository(db)
 
 	t.Run("FindByProduct", func(t *testing.T) {
 		mock.ExpectQuery(`(?is)SELECT COUNT\(\*\) FROM price_history WHERE product_id = \$1`).

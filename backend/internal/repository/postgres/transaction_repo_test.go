@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -22,8 +21,7 @@ func TestTransactionRepo_Create(t *testing.T) {
 	}
 	defer func() { _ = db.Close() }()
 
-	sqlxDB := sqlx.NewDb(db, "postgres")
-	repo := NewTransactionRepo(sqlxDB)
+	repo := NewTransactionRepository(db)
 
 	ctx := context.Background()
 	pid := "p1"
@@ -46,11 +44,11 @@ func TestTransactionRepo_Create(t *testing.T) {
 	mock.ExpectBegin()
 
 	// 1. Transaction Header
-	rows := sqlmock.NewRows([]string{"id", "store_id", "cashier_id", "table_id", "customer_name", "customer_phone", "subtotal", "discount_amt", "tax_amt", "total", "payment_method", "payment_amount", "change_amount", "status", "notes", "cart_discount_type", "cart_discount_value", "created_at", "updated_at"}).
-		AddRow("t1", "s1", "u1", nil, "", "", 100, 0, 10, 110, "cash", 110, 0, "completed", "", "", 0, time.Now(), time.Now())
+	rows := sqlmock.NewRows([]string{"id", "store_id", "cashier_id", "table_id", "customer_id", "customer_name", "customer_phone", "subtotal", "discount_amt", "tax_amt", "total", "payment_method", "payment_amount", "change_amount", "status", "notes", "cart_discount_type", "cart_discount_value", "points_redeemed", "points_discount", "created_at", "updated_at"}).
+		AddRow("t1", "s1", "u1", nil, nil, "", "", 100.0, 0.0, 10.0, 110.0, "cash", 110.0, 0.0, "completed", "", "", 0.0, 0, 0.0, time.Now(), time.Now())
 
 	mock.ExpectQuery(`INSERT INTO transactions`).
-		WithArgs(input.StoreID, input.CashierID, input.TableID, input.CustomerName, input.CustomerPhone, input.Subtotal, input.DiscountAmt, input.TaxAmt, input.Total, input.PaymentMethod, input.PaymentAmount, input.ChangeAmount, "completed", input.Notes, input.CartDiscountType, input.CartDiscountValue).
+		WithArgs(sqlmock.AnyArg(), input.StoreID, input.CashierID, input.TableID, input.CustomerID, input.CustomerName, input.CustomerPhone, input.Subtotal, input.DiscountAmt, input.TaxAmt, input.Total, input.PaymentMethod, input.PaymentAmount, input.ChangeAmount, "completed", input.Notes, input.CartDiscountType, 0.0, 0.0, 0.0).
 		WillReturnRows(rows)
 
 	// 2. Transaction Items
@@ -88,13 +86,12 @@ func TestTransactionRepo_FindByID(t *testing.T) {
 	}
 	defer func() { _ = db.Close() }()
 
-	sqlxDB := sqlx.NewDb(db, "postgres")
-	repo := NewTransactionRepo(sqlxDB)
+	repo := NewTransactionRepository(db)
 
 	ctx := context.Background()
 
-	rows := sqlmock.NewRows([]string{"id", "store_id", "cashier_id", "table_id", "customer_name", "customer_phone", "subtotal", "discount_amt", "tax_amt", "total", "payment_method", "payment_amount", "change_amount", "status", "notes", "created_at", "updated_at", "cashier_name"}).
-		AddRow("t1", "s1", "u1", nil, "", "", 100, 0, 10, 110, "cash", 110, 0, "completed", "", time.Now(), time.Now(), "User 1")
+	rows := sqlmock.NewRows([]string{"id", "store_id", "cashier_id", "table_id", "customer_id", "customer_name", "customer_phone", "subtotal", "discount_amt", "tax_amt", "total", "payment_method", "payment_amount", "change_amount", "status", "notes", "cart_discount_type", "cart_discount_value", "points_redeemed", "points_discount", "created_at", "updated_at", "cashier_name"}).
+		AddRow("t1", "s1", "u1", nil, nil, "", "", 100.0, 0.0, 10.0, 110.0, "cash", 110.0, 0.0, "completed", "", "", 0.0, 0, 0.0, time.Now(), time.Now(), "User 1")
 
 	mock.ExpectQuery(`SELECT .* FROM transactions t.* WHERE t.id = \$1`).
 		WithArgs("t1").
@@ -130,8 +127,7 @@ func TestTransactionRepo_FindAll(t *testing.T) {
 	}
 	defer func() { _ = db.Close() }()
 
-	sqlxDB := sqlx.NewDb(db, "postgres")
-	repo := NewTransactionRepo(sqlxDB)
+	repo := NewTransactionRepository(db)
 
 	ctx := context.Background()
 	filter := dto.TransactionListFilter{
@@ -144,8 +140,8 @@ func TestTransactionRepo_FindAll(t *testing.T) {
 		WithArgs("s1", "completed").
 		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
 
-	rows := sqlmock.NewRows([]string{"id", "store_id", "cashier_id", "table_id", "customer_name", "customer_phone", "subtotal", "discount_amt", "tax_amt", "total", "payment_method", "payment_amount", "change_amount", "status", "notes", "created_at", "updated_at", "cashier_name"}).
-		AddRow("t1", "s1", "u1", nil, "", "", 100, 0, 10, 110, "cash", 110, 0, "completed", "", time.Now(), time.Now(), "User 1")
+	rows := sqlmock.NewRows([]string{"id", "store_id", "cashier_id", "table_id", "customer_id", "customer_name", "customer_phone", "subtotal", "discount_amt", "tax_amt", "total", "payment_method", "payment_amount", "change_amount", "status", "notes", "cart_discount_type", "cart_discount_value", "points_redeemed", "points_discount", "created_at", "updated_at", "cashier_name"}).
+		AddRow("t1", "s1", "u1", nil, nil, "", "", 100.0, 0.0, 10.0, 110.0, "cash", 110.0, 0.0, "completed", "", "", 0.0, 0, 0.0, time.Now(), time.Now(), "User 1")
 
 	mock.ExpectQuery(`SELECT .* FROM transactions t.* JOIN users u`).
 		WithArgs("s1", "completed", 10, 0).
@@ -165,8 +161,7 @@ func TestTransactionRepo_Void(t *testing.T) {
 	}
 	defer func() { _ = db.Close() }()
 
-	sqlxDB := sqlx.NewDb(db, "postgres")
-	repo := NewTransactionRepo(sqlxDB)
+	repo := NewTransactionRepository(db)
 
 	ctx := context.Background()
 	tid := "t1"
@@ -207,8 +202,7 @@ func TestTransactionRepo_UpdateKDSItemStatus(t *testing.T) {
 	}
 	defer func() { _ = db.Close() }()
 
-	sqlxDB := sqlx.NewDb(db, "postgres")
-	repo := NewTransactionRepo(sqlxDB)
+	repo := NewTransactionRepository(db)
 
 	ctx := context.Background()
 
@@ -240,8 +234,7 @@ func TestTransactionRepo_GetKDSTickets(t *testing.T) {
 	}
 	defer func() { _ = db.Close() }()
 
-	sqlxDB := sqlx.NewDb(db, "postgres")
-	repo := NewTransactionRepo(sqlxDB)
+	repo := NewTransactionRepository(db)
 
 	ctx := context.Background()
 
@@ -265,14 +258,14 @@ func TestTransactionRepo_GetDraftByTable(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	require.NoError(t, err)
 	defer func() { _ = db.Close() }()
-	repo := NewTransactionRepo(sqlx.NewDb(db, "postgres"))
+	repo := NewTransactionRepository(db)
 
 	ctx := context.Background()
-	cols := []string{"id", "store_id", "cashier_id", "table_id", "customer_name", "customer_phone", "subtotal", "discount_amt", "tax_amt", "total", "payment_method", "payment_amount", "change_amount", "status", "notes", "created_at", "updated_at", "cashier_name"}
+	cols := []string{"id", "store_id", "cashier_id", "table_id", "customer_id", "customer_name", "customer_phone", "subtotal", "discount_amt", "tax_amt", "total", "payment_method", "payment_amount", "change_amount", "status", "notes", "cart_discount_type", "cart_discount_value", "points_redeemed", "points_discount", "created_at", "updated_at", "cashier_name"}
 
 	mock.ExpectQuery(`(?is)SELECT .* FROM transactions .* WHERE .* t\.status = 'draft'`).
 		WithArgs("s1", "tab1").
-		WillReturnRows(sqlmock.NewRows(cols).AddRow("t1", "s1", "u1", "tab1", "", "", 100.0, 0.0, 10.0, 110.0, "", 0.0, 0.0, "draft", "", time.Now(), time.Now(), "U1"))
+		WillReturnRows(sqlmock.NewRows(cols).AddRow("t1", "s1", "u1", "tab1", nil, "", "", 100.0, 0.0, 10.0, 110.0, "", 0.0, 0.0, "draft", "", "", 0.0, 0, 0.0, time.Now(), time.Now(), "U1"))
 
 	mock.ExpectQuery(`(?is)SELECT .* FROM transaction_items`).WithArgs("t1").
 		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow("ti1"))
@@ -294,7 +287,7 @@ func TestTransactionRepo_UpdateDraftItems(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	require.NoError(t, err)
 	defer func() { _ = db.Close() }()
-	repo := NewTransactionRepo(sqlx.NewDb(db, "postgres"))
+	repo := NewTransactionRepository(db)
 
 	ctx := context.Background()
 	tid := "t1"
@@ -317,9 +310,9 @@ func TestTransactionRepo_UpdateDraftItems(t *testing.T) {
 	mock.ExpectCommit()
 
 	// FindByID mock
-	cols := []string{"id", "store_id", "cashier_id", "table_id", "customer_name", "customer_phone", "subtotal", "discount_amt", "tax_amt", "total", "payment_method", "payment_amount", "change_amount", "status", "notes", "created_at", "updated_at", "cashier_name"}
+	cols := []string{"id", "store_id", "cashier_id", "table_id", "customer_id", "customer_name", "customer_phone", "subtotal", "discount_amt", "tax_amt", "total", "payment_method", "payment_amount", "change_amount", "status", "notes", "cart_discount_type", "cart_discount_value", "points_redeemed", "points_discount", "created_at", "updated_at", "cashier_name"}
 	mock.ExpectQuery(`(?is)SELECT .* FROM transactions .* WHERE .*id = \$1`).WithArgs(tid).
-		WillReturnRows(sqlmock.NewRows(cols).AddRow("t1", "s1", "u1", nil, "", "", 100.0, 0.0, 10.0, 110.0, "", 0.0, 0.0, "completed", "", time.Now(), time.Now(), "U1"))
+		WillReturnRows(sqlmock.NewRows(cols).AddRow("t1", "s1", "u1", nil, nil, "", "", 100.0, 0.0, 10.0, 110.0, "", 0.0, 0.0, "completed", "", "", 0.0, 0, 0.0, time.Now(), time.Now(), "U1"))
 	mock.ExpectQuery(`(?is)SELECT .* FROM transaction_items WHERE transaction_id = \$1`).WithArgs(tid).
 		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow("ti1"))
 
@@ -348,7 +341,7 @@ func TestTransactionRepo_UpdateDraftItems(t *testing.T) {
 	mock.ExpectCommit()
 
 	// Final find
-	mock.ExpectQuery(`(?is)SELECT .* FROM transactions`).WillReturnRows(sqlmock.NewRows(cols).AddRow("t1", "s1", "u1", nil, "Cust", "", 100.0, 0.0, 10.0, 110.0, "cash", 110.0, 0.0, "draft", "", time.Now(), time.Now(), "U1"))
+	mock.ExpectQuery(`(?is)SELECT .* FROM transactions`).WillReturnRows(sqlmock.NewRows(cols).AddRow("t1", "s1", "u1", nil, nil, "Cust", "", 100.0, 0.0, 10.0, 110.0, "cash", 110.0, 0.0, "draft", "", "", 0.0, 0, 0.0, time.Now(), time.Now(), "U1"))
 	mock.ExpectQuery(`SELECT .* FROM transaction_items`).WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow("ti1"))
 
 	_, err = repo.UpdateDraftItems(ctx, tid, newItems, 100, 0, 0, 100, "Cust", "")
@@ -359,7 +352,7 @@ func TestTransactionRepo_PayDraft(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	require.NoError(t, err)
 	defer func() { _ = db.Close() }()
-	repo := NewTransactionRepo(sqlx.NewDb(db, "postgres"))
+	repo := NewTransactionRepository(db)
 
 	ctx := context.Background()
 	tid := "t1"
@@ -376,7 +369,7 @@ func TestTransactionRepo_PayDraft(t *testing.T) {
 
 	mock.ExpectBegin()
 	mock.ExpectExec(`(?is)UPDATE transactions SET .* status='completed'`).
-		WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
+		WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	// Stock reduction (inside tx)
@@ -386,9 +379,9 @@ func TestTransactionRepo_PayDraft(t *testing.T) {
 	mock.ExpectCommit()
 
 	// FindByID mock call at the end
-	cols := []string{"id", "store_id", "cashier_id", "table_id", "customer_name", "customer_phone", "subtotal", "discount_amt", "tax_amt", "total", "payment_method", "payment_amount", "change_amount", "status", "notes", "created_at", "updated_at", "cashier_name"}
+	cols := []string{"id", "store_id", "cashier_id", "table_id", "customer_id", "customer_name", "customer_phone", "subtotal", "discount_amt", "tax_amt", "total", "payment_method", "payment_amount", "change_amount", "status", "notes", "cart_discount_type", "cart_discount_value", "points_redeemed", "points_discount", "created_at", "updated_at", "cashier_name"}
 	mock.ExpectQuery(`(?is)SELECT .* FROM transactions`).WithArgs(tid).
-		WillReturnRows(sqlmock.NewRows(cols).AddRow("t1", "s1", "u1", nil, "", "", 100.0, 0.0, 10.0, 110.0, "cash", 110.0, 0.0, "completed", "", time.Now(), time.Now(), "U1"))
+		WillReturnRows(sqlmock.NewRows(cols).AddRow("t1", "s1", "u1", nil, nil, "", "", 100.0, 0.0, 10.0, 110.0, "cash", 110.0, 0.0, "completed", "", "", 0.0, 0, 0.0, time.Now(), time.Now(), "U1"))
 	mock.ExpectQuery(`(?is)SELECT .* FROM transaction_items`).WithArgs(tid).
 		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow("ti1"))
 

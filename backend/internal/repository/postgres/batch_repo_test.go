@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -21,7 +20,7 @@ func TestBatchRepo_Lifecycle(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		require.NoError(t, err)
 		defer func() { _ = db.Close() }()
-		repo := NewBatchRepo(sqlx.NewDb(db, "postgres"))
+		repo := NewBatchRepository(db)
 
 		batch := &domain.StockBatch{
 			ProductID:         "p1",
@@ -42,7 +41,7 @@ func TestBatchRepo_Lifecycle(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		require.NoError(t, err)
 		defer func() { _ = db.Close() }()
-		repo := NewBatchRepo(sqlx.NewDb(db, "postgres"))
+		repo := NewBatchRepository(db)
 
 		rows := sqlmock.NewRows([]string{"id", "product_id", "store_id", "po_id", "quantity_remaining", "purchase_price", "received_at", "created_at", "product_name", "product_sku", "unit"}).
 			AddRow("b1", "p1", "s1", nil, 10.0, 50.0, time.Now(), time.Now(), "P1", "SKU1", "pcs")
@@ -60,7 +59,7 @@ func TestBatchRepo_Lifecycle(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		require.NoError(t, err)
 		defer func() { _ = db.Close() }()
-		repo := NewBatchRepo(sqlx.NewDb(db, "postgres"))
+		repo := NewBatchRepository(db)
 
 		filter := dto.BatchListFilter{StoreID: "s1", ProductID: "p1"}
 		rows := sqlmock.NewRows([]string{"id", "product_id", "store_id", "po_id", "quantity_remaining", "purchase_price", "received_at", "created_at", "product_name", "product_sku", "unit"}).
@@ -79,7 +78,7 @@ func TestBatchRepo_Lifecycle(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		require.NoError(t, err)
 		defer func() { _ = db.Close() }()
-		repo := NewBatchRepo(sqlx.NewDb(db, "postgres"))
+		repo := NewBatchRepository(db)
 
 		rows := sqlmock.NewRows([]string{"product_id", "product_name", "product_sku", "unit", "total_qty", "batch_count", "avg_cost_price"}).
 			AddRow("p1", "P1", "SKU1", "pcs", 20.0, 2, 55.0)
@@ -100,8 +99,7 @@ func TestBatchRepo_DeductFIFO(t *testing.T) {
 	require.NoError(t, err)
 	defer func() { _ = db.Close() }()
 
-	sqlxDB := sqlx.NewDb(db, "postgres")
-	repo := NewBatchRepo(sqlxDB)
+	repo := NewBatchRepository(db)
 	ctx := context.Background()
 
 	t.Run("Success Multiple Batches", func(t *testing.T) {

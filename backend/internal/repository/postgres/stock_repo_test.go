@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -22,8 +21,7 @@ func TestStockRepo_FindLevelsByStore(t *testing.T) {
 	require.NoError(t, err)
 	defer func() { _ = db.Close() }()
 
-	sqlxDB := sqlx.NewDb(db, "postgres")
-	repo := NewStockRepo(sqlxDB)
+	repo := NewStockRepository(db)
 
 	storeID := customerTestStoreID
 	now := time.Now()
@@ -64,8 +62,7 @@ func TestStockRepo_FindLevelByProduct(t *testing.T) {
 	require.NoError(t, err)
 	defer func() { _ = db.Close() }()
 
-	sqlxDB := sqlx.NewDb(db, "postgres")
-	repo := NewStockRepo(sqlxDB)
+	repo := NewStockRepository(db)
 
 	productID := "p1"
 	storeID := customerTestStoreID
@@ -102,8 +99,7 @@ func TestStockRepo_SetMinQuantity(t *testing.T) {
 	require.NoError(t, err)
 	defer func() { _ = db.Close() }()
 
-	sqlxDB := sqlx.NewDb(db, "postgres")
-	repo := NewStockRepo(sqlxDB)
+	repo := NewStockRepository(db)
 
 	productID := "p1"
 	storeID := customerTestStoreID
@@ -124,8 +120,7 @@ func TestStockRepo_Adjust(t *testing.T) {
 	require.NoError(t, err)
 	defer func() { _ = db.Close() }()
 
-	sqlxDB := sqlx.NewDb(db, "postgres")
-	repo := NewStockRepo(sqlxDB)
+	repo := NewStockRepository(db)
 
 	input := domain.AdjustInput{
 		ProductID: "p1",
@@ -183,8 +178,7 @@ func TestStockRepo_FindMovements(t *testing.T) {
 	require.NoError(t, err)
 	defer func() { _ = db.Close() }()
 
-	sqlxDB := sqlx.NewDb(db, "postgres")
-	repo := NewStockRepo(sqlxDB)
+	repo := NewStockRepository(db)
 
 	filter := dto.StockMovementFilter{
 		StoreID: "store-1",
@@ -219,8 +213,7 @@ func TestStockRepo_DeductStock(t *testing.T) {
 	require.NoError(t, err)
 	defer func() { _ = db.Close() }()
 
-	sqlxDB := sqlx.NewDb(db, "postgres")
-	repo := NewStockRepo(sqlxDB)
+	repo := NewStockRepository(db)
 
 	productID := "p1"
 	storeID := "store-1"

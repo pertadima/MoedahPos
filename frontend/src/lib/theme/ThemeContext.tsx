@@ -16,14 +16,19 @@ const ThemeContext = createContext<ThemeContextValue>({
   isDark: true,
 });
 
-function getInitialTheme(): Theme {
-  if (typeof window === 'undefined') return 'dark';
-  return (localStorage.getItem('moedah-theme') as Theme) ?? 'dark';
-}
-
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  // Initialize directly from localStorage to avoid setState-in-effect
-  const [theme, setTheme] = useState<Theme>(getInitialTheme);
+  // Start with 'dark' to match server-side rendering and avoid hydration mismatch.
+  // The blocking script in layout.tsx ensures the correct classes are on <html>
+  // before the first paint, preventing flashes.
+  const [theme, setTheme] = useState<Theme>('dark');
+
+  useEffect(() => {
+    const saved = localStorage.getItem('moedah-theme') as Theme;
+    if (saved) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setTheme(saved);
+    }
+  }, []);
 
   // Sync the `dark` class on <html> whenever theme changes.
   // Tailwind v4's @custom-variant dark targets `.dark` ancestors,

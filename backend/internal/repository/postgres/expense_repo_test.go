@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -24,8 +23,7 @@ func TestExpenseRepo_Categories(t *testing.T) {
 	require.NoError(t, err)
 	defer func() { _ = db.Close() }()
 
-	sqlxDB := sqlx.NewDb(db, "postgres")
-	repo := NewExpenseRepo(sqlxDB)
+	repo := NewExpenseRepository(db)
 	ctx := context.Background()
 
 	t.Run("ListCategories", func(t *testing.T) {
@@ -110,7 +108,7 @@ func TestExpenseRepo_Expenses_Basic(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		require.NoError(t, err)
 		defer func() { _ = db.Close() }()
-		repo := NewExpenseRepo(sqlx.NewDb(db, "postgres"))
+		repo := NewExpenseRepository(db)
 
 		mock.ExpectQuery(`(?is)INSERT INTO expenses`).
 			WithArgs("s1", "c1", 1000.0, sqlmock.AnyArg(), "note1", "pending", "u1").
@@ -133,7 +131,7 @@ func TestExpenseRepo_Expenses_Basic(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		require.NoError(t, err)
 		defer func() { _ = db.Close() }()
-		repo := NewExpenseRepo(sqlx.NewDb(db, "postgres"))
+		repo := NewExpenseRepository(db)
 
 		mock.ExpectQuery(`(?is)SELECT COUNT\(\*\) FROM expenses e`).
 			WithArgs("s1").
@@ -154,7 +152,7 @@ func TestExpenseRepo_Expenses_Basic(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		require.NoError(t, err)
 		defer func() { _ = db.Close() }()
-		repo := NewExpenseRepo(sqlx.NewDb(db, "postgres"))
+		repo := NewExpenseRepository(db)
 
 		mock.ExpectQuery(`(?is)SELECT .* FROM expenses e .* WHERE e.id = \$1 AND e.store_id = \$2`).
 			WithArgs("e1", "s1").
@@ -182,7 +180,7 @@ func TestExpenseRepo_Expenses_Update(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		require.NoError(t, err)
 		defer func() { _ = db.Close() }()
-		repo := NewExpenseRepo(sqlx.NewDb(db, "postgres"))
+		repo := NewExpenseRepository(db)
 
 		mock.ExpectQuery(`(?is)UPDATE expenses`).
 			WithArgs("c1", 1200.0, sqlmock.AnyArg(), "updated note", "e1", "s1").
@@ -208,7 +206,7 @@ func TestExpenseRepo_Expenses_Update(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		require.NoError(t, err)
 		defer func() { _ = db.Close() }()
-		repo := NewExpenseRepo(sqlx.NewDb(db, "postgres"))
+		repo := NewExpenseRepository(db)
 
 		mock.ExpectExec(`(?is)DELETE FROM expenses WHERE id = \$1 AND store_id = \$2`).
 			WithArgs("e1", "s1").
@@ -228,7 +226,7 @@ func TestExpenseRepo_Expenses_Update(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		require.NoError(t, err)
 		defer func() { _ = db.Close() }()
-		repo := NewExpenseRepo(sqlx.NewDb(db, "postgres"))
+		repo := NewExpenseRepository(db)
 
 		mock.ExpectQuery(`(?is)UPDATE expenses SET payment_status = \$1`).
 			WithArgs("paid", "e1", "s1").
@@ -259,7 +257,7 @@ func TestExpenseRepo_Recurring_Basic(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		require.NoError(t, err)
 		defer func() { _ = db.Close() }()
-		repo := NewExpenseRepo(sqlx.NewDb(db, "postgres"))
+		repo := NewExpenseRepository(db)
 
 		mock.ExpectQuery(`(?is)INSERT INTO recurring_expenses`).
 			WithArgs("s1", "c1", "Recur", 500.0, "monthly", 1, "2024-01-01", nil, "2024-02-01", "notes", true, strPtrExp("u1")).
@@ -283,7 +281,7 @@ func TestExpenseRepo_Recurring_Basic(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		require.NoError(t, err)
 		defer func() { _ = db.Close() }()
-		repo := NewExpenseRepo(sqlx.NewDb(db, "postgres"))
+		repo := NewExpenseRepository(db)
 
 		mock.ExpectQuery(`(?is)SELECT COUNT\(\*\) FROM recurring_expenses re`).
 			WithArgs("s1").
@@ -303,7 +301,7 @@ func TestExpenseRepo_Recurring_Basic(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		require.NoError(t, err)
 		defer func() { _ = db.Close() }()
-		repo := NewExpenseRepo(sqlx.NewDb(db, "postgres"))
+		repo := NewExpenseRepository(db)
 
 		mock.ExpectQuery(`(?is)SELECT .* FROM recurring_expenses re .* WHERE re.id = \$1`).
 			WithArgs("re1", "s1").
@@ -329,7 +327,7 @@ func TestExpenseRepo_Recurring_Manage(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		require.NoError(t, err)
 		defer func() { _ = db.Close() }()
-		repo := NewExpenseRepo(sqlx.NewDb(db, "postgres"))
+		repo := NewExpenseRepository(db)
 
 		mock.ExpectQuery(`(?is)UPDATE recurring_expenses`).
 			WillReturnRows(sqlmock.NewRows([]string{"id", "name", "category_id"}).AddRow("re1", "Updated", "c1"))
@@ -353,7 +351,7 @@ func TestExpenseRepo_Recurring_Manage(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		require.NoError(t, err)
 		defer func() { _ = db.Close() }()
-		repo := NewExpenseRepo(sqlx.NewDb(db, "postgres"))
+		repo := NewExpenseRepository(db)
 
 		mock.ExpectExec(`(?is)DELETE FROM recurring_expenses`).
 			WithArgs("re1", "s1").
@@ -373,7 +371,7 @@ func TestExpenseRepo_Recurring_Manage(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		require.NoError(t, err)
 		defer func() { _ = db.Close() }()
-		repo := NewExpenseRepo(sqlx.NewDb(db, "postgres"))
+		repo := NewExpenseRepository(db)
 
 		cols := []string{"id", "store_id", "category_id", "category_name", "name", "amount", "interval", "interval_value", "start_date", "end_date", "next_run_date", "notes", "is_active", "created_by", "created_at", "updated_at", "last_generated_at"}
 		mock.ExpectQuery(`(?is)SELECT .* FROM recurring_expenses re`).
@@ -388,7 +386,7 @@ func TestExpenseRepo_Recurring_Manage(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		require.NoError(t, err)
 		defer func() { _ = db.Close() }()
-		repo := NewExpenseRepo(sqlx.NewDb(db, "postgres"))
+		repo := NewExpenseRepository(db)
 
 		mock.ExpectExec(`(?is)UPDATE recurring_expenses SET next_run_date`).
 			WithArgs("2024-03-01", "re1").

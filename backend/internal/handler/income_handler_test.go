@@ -34,6 +34,69 @@ func TestIncomeHandler_ListCategories(t *testing.T) {
 
 		assert.Equal(t, http.StatusOK, w.Code)
 	})
+
+	t.Run("CreateCategory Success", func(t *testing.T) {
+		reqBody := dto.CreateIncomeCategoryRequest{Name: "New Cat"}
+		body, _ := json.Marshal(reqBody)
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodPost, "/income-categories", bytes.NewBuffer(body))
+		w := httptest.NewRecorder()
+
+		svc.On("CreateCategory", mock.Anything, mock.Anything).Return(&dto.IncomeCategoryResponse{ID: "cat2", Name: "New Cat"}, nil).Once()
+
+		h.CreateCategory(w, req)
+		assert.Equal(t, http.StatusCreated, w.Code)
+	})
+
+	t.Run("UpdateCategory Success", func(t *testing.T) {
+		reqBody := dto.UpdateIncomeCategoryRequest{Name: "Updated Cat"}
+		body, _ := json.Marshal(reqBody)
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodPut, "/income-categories/cat1", bytes.NewBuffer(body))
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("id", "cat1")
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+		w := httptest.NewRecorder()
+
+		svc.On("UpdateCategory", mock.Anything, "cat1", mock.Anything).Return(&dto.IncomeCategoryResponse{ID: "cat1", Name: "Updated Cat"}, nil).Once()
+
+		h.UpdateCategory(w, req)
+		assert.Equal(t, http.StatusOK, w.Code)
+	})
+
+	t.Run("DeleteCategory Success", func(t *testing.T) {
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodDelete, "/income-categories/cat1", nil)
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("id", "cat1")
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+		w := httptest.NewRecorder()
+
+		svc.On("SoftDeleteCategory", mock.Anything, "cat1").Return(nil).Once()
+
+		h.DeleteCategory(w, req)
+		assert.Equal(t, http.StatusOK, w.Code)
+	})
+
+	t.Run("CreateCategory Validation Error", func(t *testing.T) {
+		reqBody := dto.CreateIncomeCategoryRequest{Name: ""}
+		body, _ := json.Marshal(reqBody)
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodPost, "/income-categories", bytes.NewBuffer(body))
+		w := httptest.NewRecorder()
+
+		h.CreateCategory(w, req)
+		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
+	})
+
+	t.Run("UpdateCategory Validation Error", func(t *testing.T) {
+		reqBody := dto.UpdateIncomeCategoryRequest{Name: ""}
+		body, _ := json.Marshal(reqBody)
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodPut, "/income-categories/cat1", bytes.NewBuffer(body))
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("id", "cat1")
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+		w := httptest.NewRecorder()
+
+		h.UpdateCategory(w, req)
+		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
+	})
 }
 
 func TestIncomeHandler_CreateIncome(t *testing.T) {
@@ -65,6 +128,19 @@ func TestIncomeHandler_CreateIncome(t *testing.T) {
 		h.CreateIncome(w, req)
 
 		assert.Equal(t, http.StatusCreated, w.Code)
+	})
+
+	t.Run("Validation Error", func(t *testing.T) {
+		reqBodyEmpty := dto.CreateIncomeRequest{Amount: -10}
+		bodyEmpty, _ := json.Marshal(reqBodyEmpty)
+		req := httptest.NewRequestWithContext(context.Background(), "POST", "/stores/"+storeID+"/incomes", bytes.NewBuffer(bodyEmpty))
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("storeId", storeID)
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+		w := httptest.NewRecorder()
+
+		h.CreateIncome(w, req)
+		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
 	})
 }
 
@@ -106,6 +182,20 @@ func TestIncomeHandler_Update(t *testing.T) {
 		h.UpdateIncome(w, req)
 
 		assert.Equal(t, http.StatusOK, w.Code)
+	})
+
+	t.Run("Validation Error", func(t *testing.T) {
+		reqBodyEmpty := dto.UpdateIncomeRequest{Amount: -10}
+		bodyEmpty, _ := json.Marshal(reqBodyEmpty)
+		req := httptest.NewRequestWithContext(context.Background(), "PUT", "/stores/s1/incomes/inc1", bytes.NewBuffer(bodyEmpty))
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("storeId", "s1")
+		rctx.URLParams.Add("id", "inc1")
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+		w := httptest.NewRecorder()
+
+		h.UpdateIncome(w, req)
+		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
 	})
 }
 

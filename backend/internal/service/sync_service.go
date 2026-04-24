@@ -17,6 +17,7 @@ type SyncService struct {
 	productRepo     repository.ProductRepository
 	stockRepo       repository.StockRepository
 	transactionRepo repository.TransactionRepository
+	customerRepo    repository.CustomerRepository
 	log             zerolog.Logger
 }
 
@@ -25,6 +26,7 @@ func NewSyncService(
 	prodRepo repository.ProductRepository,
 	stockRepo repository.StockRepository,
 	txnRepo repository.TransactionRepository,
+	customerRepo repository.CustomerRepository,
 	log zerolog.Logger,
 ) *SyncService {
 	return &SyncService{
@@ -32,6 +34,7 @@ func NewSyncService(
 		productRepo:     prodRepo,
 		stockRepo:       stockRepo,
 		transactionRepo: txnRepo,
+		customerRepo:    customerRepo,
 		log:             log,
 	}
 }
@@ -42,6 +45,7 @@ func (s *SyncService) Pull(ctx context.Context, storeID string, since time.Time)
 		Products:     []*domain.Product{},
 		StockLevels:  []*domain.StockLevel{},
 		Transactions: []*domain.Transaction{},
+		Customers:    []*domain.Customer{},
 	}
 
 	cats, err := s.categoryRepo.GetModifiedSince(ctx, storeID, since)
@@ -78,6 +82,15 @@ func (s *SyncService) Pull(ctx context.Context, storeID string, since time.Time)
 	}
 	if txns != nil {
 		out.Transactions = txns
+	}
+
+	customers, err := s.customerRepo.GetModifiedSince(ctx, storeID, since)
+	if err != nil {
+		s.log.Error().Err(err).Str("store_id", storeID).Msg("SyncService.Pull failed for customers")
+		return nil, fmt.Errorf("failed to sync customers: %w", err)
+	}
+	if customers != nil {
+		out.Customers = customers
 	}
 
 	return out, nil

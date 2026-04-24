@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -21,8 +20,7 @@ func TestProductRepo_Create(t *testing.T) {
 	}
 	defer func() { _ = db.Close() }()
 
-	sqlxDB := sqlx.NewDb(db, "postgres")
-	repo := NewProductRepo(sqlxDB)
+	repo := NewProductRepository(db)
 
 	ctx := context.Background()
 	desc := "Description 1"
@@ -65,8 +63,7 @@ func TestCategoryRepo_Create(t *testing.T) {
 	}
 	defer func() { _ = db.Close() }()
 
-	sqlxDB := sqlx.NewDb(db, "postgres")
-	repo := NewCategoryRepo(sqlxDB)
+	repo := NewCategoryRepository(db)
 
 	ctx := context.Background()
 	c := &domain.Category{
@@ -96,8 +93,7 @@ func TestProductRepo_FindByID(t *testing.T) {
 	}
 	defer func() { _ = db.Close() }()
 
-	sqlxDB := sqlx.NewDb(db, "postgres")
-	repo := NewProductRepo(sqlxDB)
+	repo := NewProductRepository(db)
 
 	ctx := context.Background()
 	rows := sqlmock.NewRows([]string{"id", "store_id", "category_id", "sku", "name", "description", "barcode", "unit", "cost_price", "sell_price", "use_global_tax", "tax_percentage", "image_url", "is_active", "created_at", "updated_at", "deleted_at", "category_name", "store_default_tax"}).
@@ -118,8 +114,7 @@ func TestProductRepo_ExistsBySKU(t *testing.T) {
 	}
 	defer func() { _ = db.Close() }()
 
-	sqlxDB := sqlx.NewDb(db, "postgres")
-	repo := NewProductRepo(sqlxDB)
+	repo := NewProductRepository(db)
 
 	ctx := context.Background()
 
@@ -133,7 +128,7 @@ func TestProductRepo_FindAll(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	require.NoError(t, err)
 	defer func() { _ = db.Close() }()
-	repo := NewProductRepo(sqlx.NewDb(db, "postgres"))
+	repo := NewProductRepository(db)
 	ctx := context.Background()
 
 	f := dto.ProductListFilter{StoreID: "s1", WithStock: true}
@@ -152,7 +147,7 @@ func TestProductRepo_FindByBarcode(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	require.NoError(t, err)
 	defer func() { _ = db.Close() }()
-	repo := NewProductRepo(sqlx.NewDb(db, "postgres"))
+	repo := NewProductRepository(db)
 	ctx := context.Background()
 
 	barcode := "123"

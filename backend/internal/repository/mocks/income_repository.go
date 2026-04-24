@@ -4,6 +4,7 @@ package mocks
 
 import (
 	context "context"
+	time "time"
 
 	domain "github.com/moedahpos/backend/internal/domain"
 	dto "github.com/moedahpos/backend/internal/dto"
@@ -262,6 +263,34 @@ func (_m *IncomeRepository) Update(ctx context.Context, inc *domain.Income) (*do
 
 	if rf, ok := ret.Get(1).(func(context.Context, *domain.Income) error); ok {
 		r1 = rf(ctx, inc)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// SumByDateRange provides a mock function with given fields: ctx, storeID, from, to
+func (_m *IncomeRepository) SumByDateRange(ctx context.Context, storeID string, from time.Time, to time.Time) (float64, error) {
+	ret := _m.Called(ctx, storeID, from, to)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SumByDateRange")
+	}
+
+	var r0 float64
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, time.Time, time.Time) (float64, error)); ok {
+		return rf(ctx, storeID, from, to)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, time.Time, time.Time) float64); ok {
+		r0 = rf(ctx, storeID, from, to)
+	} else {
+		r0 = ret.Get(0).(float64)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, time.Time, time.Time) error); ok {
+		r1 = rf(ctx, storeID, from, to)
 	} else {
 		r1 = ret.Error(1)
 	}

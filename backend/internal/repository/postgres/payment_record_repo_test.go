@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/moedahpos/backend/internal/domain"
@@ -19,8 +18,7 @@ func TestPaymentRecordRepo_Create(t *testing.T) {
 	}
 	defer func() { _ = db.Close() }()
 
-	sqlxDB := sqlx.NewDb(db, "postgres")
-	repo := NewPaymentRecordRepo(sqlxDB)
+	repo := NewPaymentRecordRepository(db)
 
 	ctx := context.Background()
 	uid := "u1"
@@ -56,8 +54,7 @@ func TestPaymentRecordRepo_FindByTermin(t *testing.T) {
 	}
 	defer func() { _ = db.Close() }()
 
-	sqlxDB := sqlx.NewDb(db, "postgres")
-	repo := NewPaymentRecordRepo(sqlxDB)
+	repo := NewPaymentRecordRepository(db)
 
 	ctx := context.Background()
 	tid := "t1"

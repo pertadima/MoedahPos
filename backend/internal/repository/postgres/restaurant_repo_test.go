@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -20,7 +19,7 @@ func TestTableRepo_Basic(t *testing.T) {
 	t.Run("FindAllByStore", func(t *testing.T) {
 		db, mock, _ := sqlmock.New()
 		defer func() { _ = db.Close() }()
-		repo := NewTableRepo(sqlx.NewDb(db, "postgres"))
+		repo := NewTableRepository(db)
 
 		rows := sqlmock.NewRows([]string{"id", "store_id", "table_number", "capacity", "status", "notes", "is_active", "created_at", "updated_at", "deleted_at"}).
 			AddRow("t1", "s1", "1A", 4, "available", "Near window", true, time.Now(), time.Now(), nil)
@@ -33,7 +32,7 @@ func TestTableRepo_Basic(t *testing.T) {
 	t.Run("FindByID", func(t *testing.T) {
 		db, mock, _ := sqlmock.New()
 		defer func() { _ = db.Close() }()
-		repo := NewTableRepo(sqlx.NewDb(db, "postgres"))
+		repo := NewTableRepository(db)
 
 		rows := sqlmock.NewRows([]string{"id", "store_id", "table_number", "capacity", "status", "notes", "is_active", "created_at", "updated_at", "deleted_at"}).
 			AddRow("t1", "s1", "1A", 4, "available", "Notes", true, time.Now(), time.Now(), nil)
@@ -52,7 +51,7 @@ func TestTableRepo_Basic(t *testing.T) {
 	t.Run("Create", func(t *testing.T) {
 		db, mock, _ := sqlmock.New()
 		defer func() { _ = db.Close() }()
-		repo := NewTableRepo(sqlx.NewDb(db, "postgres"))
+		repo := NewTableRepository(db)
 
 		rows := sqlmock.NewRows([]string{"id", "store_id", "table_number", "capacity", "status", "notes", "is_active", "created_at", "updated_at", "deleted_at"}).
 			AddRow("t1", "s1", "1A", 4, "available", "notes", true, time.Now(), time.Now(), nil)
@@ -78,7 +77,7 @@ func TestTableRepo_Manage(t *testing.T) {
 	t.Run("Update", func(t *testing.T) {
 		db, mock, _ := sqlmock.New()
 		defer func() { _ = db.Close() }()
-		repo := NewTableRepo(sqlx.NewDb(db, "postgres"))
+		repo := NewTableRepository(db)
 
 		rows := sqlmock.NewRows([]string{"id", "store_id", "table_number", "capacity", "status", "notes", "is_active", "created_at", "updated_at", "deleted_at"}).
 			AddRow("t1", "s1", "1B", 6, "available", "New", true, time.Now(), time.Now(), nil)
@@ -107,7 +106,7 @@ func TestTableRepo_Manage(t *testing.T) {
 	t.Run("UpdateStatus", func(t *testing.T) {
 		db, mock, _ := sqlmock.New()
 		defer func() { _ = db.Close() }()
-		repo := NewTableRepo(sqlx.NewDb(db, "postgres"))
+		repo := NewTableRepository(db)
 
 		mock.ExpectExec(`(?is)UPDATE restaurant_tables SET status=\$1`).WithArgs("occupied", "t1").WillReturnResult(sqlmock.NewResult(1, 1))
 		err := repo.UpdateStatus(context.Background(), "t1", "occupied")
@@ -122,7 +121,7 @@ func TestTableRepo_Manage(t *testing.T) {
 	t.Run("SoftDelete", func(t *testing.T) {
 		db, mock, _ := sqlmock.New()
 		defer func() { _ = db.Close() }()
-		repo := NewTableRepo(sqlx.NewDb(db, "postgres"))
+		repo := NewTableRepository(db)
 
 		mock.ExpectExec(`(?is)UPDATE restaurant_tables SET deleted_at=NOW()`).WithArgs("t1").WillReturnResult(sqlmock.NewResult(1, 1))
 		err := repo.SoftDelete(context.Background(), "t1")
@@ -139,7 +138,7 @@ func TestMenuItemRepo_Basic(t *testing.T) {
 	t.Run("FindAllByStore", func(t *testing.T) {
 		db, mock, _ := sqlmock.New()
 		defer func() { _ = db.Close() }()
-		repo := NewMenuItemRepo(sqlx.NewDb(db, "postgres"))
+		repo := NewMenuItemRepository(db)
 
 		rows := sqlmock.NewRows([]string{"id", "store_id", "category_id", "name", "description", "sell_price", "use_global_tax", "tax_percentage", "image_url", "is_active", "packaging_cost", "overhead_cost", "labor_cost", "created_at", "updated_at", "deleted_at", "category_name", "store_default_tax"}).
 			AddRow("m1", "s1", "c1", "Coffee", "Hot", 20000.0, true, 10.0, "", true, 1000.0, 500.0, 2000.0, time.Now(), time.Now(), nil, "Drinks", 10.0)
@@ -157,7 +156,7 @@ func TestMenuItemRepo_Basic(t *testing.T) {
 	t.Run("FindByID", func(t *testing.T) {
 		db, mock, _ := sqlmock.New()
 		defer func() { _ = db.Close() }()
-		repo := NewMenuItemRepo(sqlx.NewDb(db, "postgres"))
+		repo := NewMenuItemRepository(db)
 
 		cols := []string{"id", "store_id", "category_id", "name", "description", "sell_price", "use_global_tax", "tax_percentage", "image_url", "is_active", "packaging_cost", "overhead_cost", "labor_cost", "created_at", "updated_at", "deleted_at", "category_name", "store_default_tax"}
 		rows := sqlmock.NewRows(cols).
@@ -189,7 +188,7 @@ func TestMenuItemRepo_Manage(t *testing.T) {
 	t.Run("Create", func(t *testing.T) {
 		db, mock, _ := sqlmock.New()
 		defer func() { _ = db.Close() }()
-		repo := NewMenuItemRepo(sqlx.NewDb(db, "postgres"))
+		repo := NewMenuItemRepository(db)
 
 		rows := sqlmock.NewRows([]string{"id", "store_id", "category_id", "name", "description", "sell_price", "use_global_tax", "tax_percentage", "packaging_cost", "overhead_cost", "labor_cost", "image_url", "is_active", "created_at", "updated_at", "deleted_at"}).
 			AddRow("m1", "s1", "c1", "Coffee", nil, 20000.0, true, nil, 1000.0, 500.0, 2000.0, nil, true, time.Now(), time.Now(), nil)
@@ -214,7 +213,7 @@ func TestMenuItemRepo_Manage(t *testing.T) {
 	t.Run("Update", func(t *testing.T) {
 		db, mock, _ := sqlmock.New()
 		defer func() { _ = db.Close() }()
-		repo := NewMenuItemRepo(sqlx.NewDb(db, "postgres"))
+		repo := NewMenuItemRepository(db)
 
 		rows := sqlmock.NewRows([]string{"id", "store_id", "category_id", "name", "description", "sell_price", "use_global_tax", "tax_percentage", "packaging_cost", "overhead_cost", "labor_cost", "image_url", "is_active", "created_at", "updated_at", "deleted_at"}).
 			AddRow("m1", "s1", "c1", "New Coffee", "Desc", 25000.0, true, nil, 1000.0, 500.0, 2000.0, nil, true, time.Now(), time.Now(), nil)
@@ -243,7 +242,7 @@ func TestMenuItemRepo_Manage_Ingredients(t *testing.T) {
 	t.Run("ReplaceIngredients", func(t *testing.T) {
 		db, mock, _ := sqlmock.New()
 		defer func() { _ = db.Close() }()
-		repo := NewMenuItemRepo(sqlx.NewDb(db, "postgres"))
+		repo := NewMenuItemRepository(db)
 
 		mock.ExpectBegin()
 		mock.ExpectExec(`(?is)DELETE FROM menu_item_ingredients WHERE menu_item_id = \$1`).WithArgs("m1").WillReturnResult(sqlmock.NewResult(1, 1))
@@ -257,7 +256,7 @@ func TestMenuItemRepo_Manage_Ingredients(t *testing.T) {
 	t.Run("SoftDelete", func(t *testing.T) {
 		db, mock, _ := sqlmock.New()
 		defer func() { _ = db.Close() }()
-		repo := NewMenuItemRepo(sqlx.NewDb(db, "postgres"))
+		repo := NewMenuItemRepository(db)
 
 		mock.ExpectExec(`(?is)UPDATE menu_items SET deleted_at=NOW()`).WithArgs("m1").WillReturnResult(sqlmock.NewResult(1, 1))
 		err := repo.SoftDelete(context.Background(), "m1")

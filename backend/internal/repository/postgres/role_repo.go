@@ -2,11 +2,13 @@ package postgres
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 
 	"github.com/jmoiron/sqlx"
 
 	"github.com/moedahpos/backend/internal/domain"
+	"github.com/moedahpos/backend/internal/repository"
 )
 
 // RoleRepo is the PostgreSQL implementation of repository.RoleRepository.
@@ -14,7 +16,10 @@ type RoleRepo struct {
 	db *sqlx.DB
 }
 
-func NewRoleRepo(db *sqlx.DB) *RoleRepo { return &RoleRepo{db: db} }
+// NewRoleRepository creates a new RoleRepository.
+func NewRoleRepository(db *sql.DB) repository.RoleRepository {
+	return &RoleRepo{db: sqlx.NewDb(db, "postgres")}
+}
 
 // ListRoles returns all roles with their associated permission names.
 func (r *RoleRepo) ListRoles(ctx context.Context) ([]*domain.Role, error) {

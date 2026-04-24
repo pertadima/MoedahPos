@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -22,7 +21,7 @@ func TestSupplierRepo_Basic(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		require.NoError(t, err)
 		defer func() { _ = db.Close() }()
-		repo := NewSupplierRepo(sqlx.NewDb(db, "postgres"))
+		repo := NewSupplierRepository(db)
 
 		mock.ExpectQuery(`(?is)INSERT INTO suppliers`).
 			WithArgs("Supplier 1", "Contact 1", "phone1", "email1", "address1").
@@ -40,7 +39,7 @@ func TestSupplierRepo_Basic(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		require.NoError(t, err)
 		defer func() { _ = db.Close() }()
-		repo := NewSupplierRepo(sqlx.NewDb(db, "postgres"))
+		repo := NewSupplierRepository(db)
 
 		mock.ExpectQuery(`(?is)SELECT COUNT\(\*\) FROM suppliers`).
 			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
@@ -59,7 +58,7 @@ func TestSupplierRepo_Basic(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		require.NoError(t, err)
 		defer func() { _ = db.Close() }()
-		repo := NewSupplierRepo(sqlx.NewDb(db, "postgres"))
+		repo := NewSupplierRepository(db)
 
 		mock.ExpectQuery(`(?is)SELECT .* FROM suppliers WHERE id = \$1`).
 			WithArgs("s1").
@@ -84,7 +83,7 @@ func TestSupplierRepo_Manage(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		require.NoError(t, err)
 		defer func() { _ = db.Close() }()
-		repo := NewSupplierRepo(sqlx.NewDb(db, "postgres"))
+		repo := NewSupplierRepository(db)
 
 		mock.ExpectQuery(`(?is)UPDATE suppliers`).
 			WithArgs("Updated", "Contact", "phone", "email", "addr", true, "s1").
@@ -105,7 +104,7 @@ func TestSupplierRepo_Manage(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		require.NoError(t, err)
 		defer func() { _ = db.Close() }()
-		repo := NewSupplierRepo(sqlx.NewDb(db, "postgres"))
+		repo := NewSupplierRepository(db)
 
 		mock.ExpectExec(`(?is)UPDATE suppliers SET deleted_at`).
 			WithArgs("s1").
@@ -130,7 +129,7 @@ func TestReportRepo_Sales(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		require.NoError(t, err)
 		defer func() { _ = db.Close() }()
-		repo := NewReportRepo(sqlx.NewDb(db, "postgres"))
+		repo := NewReportRepository(db)
 
 		mock.ExpectQuery(`(?is)WITH sales AS .* SELECT .* FROM sales s FULL OUTER JOIN exp_agg e`).
 			WithArgs("st1", from, to).
@@ -145,7 +144,7 @@ func TestReportRepo_Sales(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		require.NoError(t, err)
 		defer func() { _ = db.Close() }()
-		repo := NewReportRepo(sqlx.NewDb(db, "postgres"))
+		repo := NewReportRepository(db)
 
 		mock.ExpectQuery(`(?is)SELECT .* FROM transaction_items ti .* GROUP BY ti.product_id`).
 			WithArgs("st1", from, to).
@@ -160,7 +159,7 @@ func TestReportRepo_Sales(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		require.NoError(t, err)
 		defer func() { _ = db.Close() }()
-		repo := NewReportRepo(sqlx.NewDb(db, "postgres"))
+		repo := NewReportRepository(db)
 
 		mock.ExpectQuery(`(?is)SELECT .* FROM transactions t JOIN users u .* GROUP BY u.id`).
 			WithArgs("st1", from, to).
@@ -181,7 +180,7 @@ func TestReportRepo_Financials(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		require.NoError(t, err)
 		defer func() { _ = db.Close() }()
-		repo := NewReportRepo(sqlx.NewDb(db, "postgres"))
+		repo := NewReportRepository(db)
 
 		mock.ExpectQuery(`(?is)SELECT .* FROM products p LEFT JOIN stock_levels sl`).
 			WithArgs("st1").
@@ -196,7 +195,7 @@ func TestReportRepo_Financials(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		require.NoError(t, err)
 		defer func() { _ = db.Close() }()
-		repo := NewReportRepo(sqlx.NewDb(db, "postgres"))
+		repo := NewReportRepository(db)
 
 		// Test for "day"
 		mock.ExpectQuery(`(?is)WITH sales AS .* SELECT .* FROM sales s FULL OUTER JOIN exp_agg e`).
@@ -220,7 +219,7 @@ func TestReportRepo_Financials(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		require.NoError(t, err)
 		defer func() { _ = db.Close() }()
-		repo := NewReportRepo(sqlx.NewDb(db, "postgres"))
+		repo := NewReportRepository(db)
 
 		mock.ExpectQuery(`(?is)SELECT .* AS date, SUM\(t.total\) AS cash_in`).
 			WithArgs("st1", from, to).
@@ -244,7 +243,7 @@ func TestReportRepo_Financials(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		require.NoError(t, err)
 		defer func() { _ = db.Close() }()
-		repo := NewReportRepo(sqlx.NewDb(db, "postgres"))
+		repo := NewReportRepository(db)
 
 		mock.ExpectQuery(`(?is)SELECT 'SALE' AS type`).
 			WithArgs("st1", from, to).
