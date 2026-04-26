@@ -55,11 +55,29 @@ type UserListResponse struct {
 	Meta PaginationMeta `json:"meta"`
 }
 
-// ─── Role Response ────────────────────────────────────────────────────────────
+// ─── Role & Permission DTOs ───────────────────────────────────────────────────
+
+type CreateRoleRequest struct {
+	Name          string   `json:"name"          validate:"required,min=2,max=100"`
+	Description   string   `json:"description"   validate:"required"`
+	PermissionIDs []string `json:"permission_ids" validate:"required,min=1,dive,uuid4"`
+}
+
+type UpdateRoleRequest struct {
+	Name          string   `json:"name"          validate:"required,min=2,max=100"`
+	Description   string   `json:"description"   validate:"required"`
+	PermissionIDs []string `json:"permission_ids" validate:"required,min=1,dive,uuid4"`
+}
 
 type RoleResponse struct {
 	ID          string   `json:"id"`
 	Name        string   `json:"name"`
 	Description string   `json:"description"`
 	Permissions []string `json:"permissions"`
+}
+
+type PermissionResponse struct {
+	ID          string `json:"id"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
 }

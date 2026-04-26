@@ -11,37 +11,36 @@ INSERT INTO roles (id, name, description) VALUES
 
 -- ─── Seed Permissions ─────────────────────────────────────────────────────────
 INSERT INTO permissions (id, name, description) VALUES
-    -- Users
-    (uuid_generate_v4(), 'users.create',          'Create new users'),
-    (uuid_generate_v4(), 'users.read',             'View user details'),
-    (uuid_generate_v4(), 'users.update',           'Update user details'),
-    (uuid_generate_v4(), 'users.delete',           'Delete users'),
-    -- Stores
-    (uuid_generate_v4(), 'stores.create',          'Create new stores'),
-    (uuid_generate_v4(), 'stores.read',            'View store details'),
-    (uuid_generate_v4(), 'stores.update',          'Update store details'),
-    (uuid_generate_v4(), 'stores.delete',          'Delete stores'),
-    -- Products
-    (uuid_generate_v4(), 'products.create',        'Create new products'),
-    (uuid_generate_v4(), 'products.read',          'View product details'),
-    (uuid_generate_v4(), 'products.update',        'Update product details'),
-    (uuid_generate_v4(), 'products.delete',        'Delete products'),
-    -- Stock
-    (uuid_generate_v4(), 'stock.read',             'View stock levels'),
-    (uuid_generate_v4(), 'stock.adjust',           'Manually adjust stock'),
-    (uuid_generate_v4(), 'stock.transfer',         'Transfer stock between stores'),
-    -- Transactions
-    (uuid_generate_v4(), 'transactions.create',    'Create new transactions'),
-    (uuid_generate_v4(), 'transactions.read',      'View transactions'),
-    (uuid_generate_v4(), 'transactions.void',      'Void/cancel transactions'),
-    -- Purchase Orders
-    (uuid_generate_v4(), 'purchase_orders.create', 'Create purchase orders'),
-    (uuid_generate_v4(), 'purchase_orders.read',   'View purchase orders'),
-    (uuid_generate_v4(), 'purchase_orders.update', 'Update purchase orders'),
-    (uuid_generate_v4(), 'purchase_orders.receive','Mark purchase orders as received'),
-    -- Reports
-    (uuid_generate_v4(), 'reports.view',           'View reports and analytics'),
-    (uuid_generate_v4(), 'reports.export',         'Export reports');
+    -- Penjualan (Transactions/Sales History)
+    (uuid_generate_v4(), 'penjualan:read',   'View sales history'),
+    (uuid_generate_v4(), 'penjualan:write',  'Create sales records'),
+    (uuid_generate_v4(), 'penjualan:update', 'Update sales records'),
+    (uuid_generate_v4(), 'penjualan:delete', 'Delete/Void sales'),
+    -- Kasir (Active POS operations)
+    (uuid_generate_v4(), 'kasir:read',       'Access POS interface'),
+    (uuid_generate_v4(), 'kasir:write',      'Process new transactions'),
+    (uuid_generate_v4(), 'kasir:update',     'Modify active cart'),
+    (uuid_generate_v4(), 'kasir:delete',     'Clear active cart'),
+    -- Inventory (Products, Categories, Stock)
+    (uuid_generate_v4(), 'inventory:read',   'View inventory and stock'),
+    (uuid_generate_v4(), 'inventory:write',  'Add new products/stock'),
+    (uuid_generate_v4(), 'inventory:update', 'Edit product details'),
+    (uuid_generate_v4(), 'inventory:delete', 'Delete products'),
+    -- Pembelian (Purchase Orders, Suppliers)
+    (uuid_generate_v4(), 'pembelian:read',   'View purchase orders'),
+    (uuid_generate_v4(), 'pembelian:write',  'Create purchase orders'),
+    (uuid_generate_v4(), 'pembelian:update', 'Edit purchase orders'),
+    (uuid_generate_v4(), 'pembelian:delete', 'Delete purchase orders'),
+    -- Keuangan (Expenses, Incomes)
+    (uuid_generate_v4(), 'keuangan:read',    'View financial records'),
+    (uuid_generate_v4(), 'keuangan:write',   'Add expenses/incomes'),
+    (uuid_generate_v4(), 'keuangan:update',  'Edit financial records'),
+    (uuid_generate_v4(), 'keuangan:delete',  'Delete financial records'),
+    -- Settings (Users, Stores, Roles, System)
+    (uuid_generate_v4(), 'settings:read',    'View settings and users'),
+    (uuid_generate_v4(), 'settings:write',   'Add users/roles'),
+    (uuid_generate_v4(), 'settings:update',  'Edit settings/users'),
+    (uuid_generate_v4(), 'settings:delete',  'Delete users/roles');
 
 -- ─── Assign Permissions to Roles ─────────────────────────────────────────────
 -- superadmin: all permissions
@@ -50,45 +49,38 @@ SELECT r.id, p.id
 FROM roles r, permissions p
 WHERE r.name = 'superadmin';
 
--- admin: all permissions (within their store)
+-- admin: all permissions
 INSERT INTO role_permissions (role_id, permission_id)
 SELECT r.id, p.id
 FROM roles r, permissions p
 WHERE r.name = 'admin';
 
--- manager: products, stock, purchase orders, reports (no user management)
+-- manager: all except settings write/update/delete
 INSERT INTO role_permissions (role_id, permission_id)
 SELECT r.id, p.id
 FROM roles r, permissions p
 WHERE r.name = 'manager'
-  AND p.name IN (
-    'products.create','products.read','products.update',
-    'stock.read','stock.adjust','stock.transfer',
-    'purchase_orders.create','purchase_orders.read','purchase_orders.update','purchase_orders.receive',
-    'transactions.read',
-    'reports.view','reports.export'
-  );
+  AND p.name NOT IN ('settings:write', 'settings:update', 'settings:delete');
 
--- cashier: transactions only + product/stock read
+-- cashier: kasir (all), penjualan (read), inventory (read)
 INSERT INTO role_permissions (role_id, permission_id)
 SELECT r.id, p.id
 FROM roles r, permissions p
 WHERE r.name = 'cashier'
   AND p.name IN (
-    'products.read',
-    'stock.read',
-    'transactions.create','transactions.read'
+    'kasir:read', 'kasir:write', 'kasir:update', 'kasir:delete',
+    'penjualan:read',
+    'inventory:read'
   );
 
--- staff: read-only
+-- staff: read-only for inventory, penjualan
 INSERT INTO role_permissions (role_id, permission_id)
 SELECT r.id, p.id
 FROM roles r, permissions p
 WHERE r.name = 'staff'
   AND p.name IN (
-    'products.read',
-    'stock.read',
-    'transactions.read'
+    'inventory:read',
+    'penjualan:read'
   );
 
 -- +goose StatementEnd

@@ -12,6 +12,7 @@ import (
 	repomocks "github.com/moedahpos/backend/internal/repository/mocks"
 )
 
+//nolint:funlen
 func TestReportService(t *testing.T) {
 	repo := new(repomocks.ReportRepository)
 	log := zerolog.Nop()

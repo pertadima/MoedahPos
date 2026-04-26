@@ -15,6 +15,7 @@ import (
 	"github.com/moedahpos/backend/internal/service/mocks"
 )
 
+//nolint:funlen
 func TestExpenseService(t *testing.T) {
 	repo := new(repomocks.ExpenseRepository)
 	activitySvc := new(mocks.ActivityLogServiceInterface)

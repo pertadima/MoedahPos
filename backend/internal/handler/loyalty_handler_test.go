@@ -19,6 +19,7 @@ import (
 	"github.com/moedahpos/backend/internal/validator"
 )
 
+//nolint:funlen
 func TestLoyaltyHandler(t *testing.T) {
 	svc := new(svcMocks.LoyaltyServiceInterface)
 	v := validator.New()

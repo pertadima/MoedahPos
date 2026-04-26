@@ -7,23 +7,35 @@ import (
 	"github.com/moedahpos/backend/pkg/response"
 )
 
-// RequirePermission returns middleware that checks the current user's store-role
-// has the specified permission. Must be used AFTER Authenticate and StoreContext.
-func RequirePermission(roleStore *rbac.RoleStore, permission string) func(http.Handler) http.Handler {
+// RequirePermission returns middleware that checks if the current user's store permissions
+// include the specified permission. Must be used AFTER Authenticate and StoreContext.
+func RequirePermission(permission string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			roleName := StoreRoleFromContext(r.Context())
+			roles := StoreRolesFromContext(r.Context())
 
 			// superadmin bypasses all permission checks.
-			if rbac.IsSuperAdmin(roleName) {
-				next.ServeHTTP(w, r)
-				return
+			for _, roleName := range roles {
+				if rbac.IsSuperAdmin(roleName) {
+					next.ServeHTTP(w, r)
+					return
+				}
 			}
 
-			if !roleStore.Has(roleName, permission) {
+			permissions := StorePermissionsFromContext(r.Context())
+			hasPerm := false
+			for _, p := range permissions {
+				if p == permission {
+					hasPerm = true
+					break
+				}
+			}
+
+			if !hasPerm {
 				response.Forbidden(w)
 				return
 			}
+
 			next.ServeHTTP(w, r)
 		})
 	}

@@ -215,6 +215,7 @@ func TestExpenseHandler_UpdateStatus(t *testing.T) {
 	})
 }
 
+//nolint:funlen
 func TestExpenseHandler_Recurring(t *testing.T) {
 	svc := svcMocks.NewExpenseServiceInterface(t)
 	v := validator.New()

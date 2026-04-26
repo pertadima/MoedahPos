@@ -163,6 +163,10 @@ type UserAdminServiceInterface interface {
 	ResetPassword(ctx context.Context, id string, req *dto.ResetPasswordRequest) error
 	SetUserStores(ctx context.Context, userID string, req *dto.SetUserStoresRequest) (*dto.UserResponse, error)
 	ListRoles(ctx context.Context) ([]*domain.Role, error)
+	CreateRole(ctx context.Context, req *dto.CreateRoleRequest) (*dto.RoleResponse, error)
+	UpdateRole(ctx context.Context, id string, req *dto.UpdateRoleRequest) (*dto.RoleResponse, error)
+	DeleteRole(ctx context.Context, id string) error
+	ListPermissions(ctx context.Context) ([]dto.PermissionResponse, error)
 }
 
 type StoreServiceInterface interface {

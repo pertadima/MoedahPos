@@ -23,6 +23,7 @@ import (
 	"github.com/moedahpos/backend/pkg/jwt"
 )
 
+//nolint:funlen
 func TestPurchaseOrderHandler_CRUD(t *testing.T) {
 	poSvc := new(mocks.PurchaseOrderServiceInterface)
 	v := validator.New()
