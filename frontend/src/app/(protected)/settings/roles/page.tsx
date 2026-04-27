@@ -55,7 +55,7 @@ const ROLE_DESC_LABELS: Record<string, string> = {
 
 // ── Permissions Checkbox Matrix Modal ────────────────────────────────────────
 
-function RoleFormModal({
+function RoleFormDrawer({
   mode,
   role,
   allPermissions,
@@ -140,52 +140,90 @@ function RoleFormModal({
 
   return (
     <Portal>
-      <div className="modal-overlay" style={{ zIndex: 5000 }} onClick={onClose}>
-        <div className="modal-box" style={{ maxWidth: 640 }} onClick={e => e.stopPropagation()}>
+      <div
+        style={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: 5000,
+          display: 'flex',
+          justifyContent: 'flex-end',
+        }}
+        onClick={onClose}
+      >
+        <style>{`
+          @keyframes slideInRight {
+            from { transform: translateX(100%); }
+            to { transform: translateX(0); }
+          }
+        `}</style>
+        {/* Backdrop */}
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            background: 'rgba(0,0,0,0.4)',
+            backdropFilter: 'blur(3px)',
+          }}
+        />
+        {/* Drawer Content */}
+        <div
+          className="card"
+          style={{
+            position: 'relative',
+            width: '100%',
+            maxWidth: 580,
+            height: '100%',
+            borderRadius: 0,
+            padding: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            boxShadow: '-8px 0 32px rgba(0,0,0,0.15)',
+            animation: 'slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+          }}
+          onClick={e => e.stopPropagation()}
+        >
+          {/* Header */}
           <div
             style={{
+              padding: '20px 24px',
+              borderBottom: '1px solid var(--border)',
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
-              marginBottom: 20,
+              background: 'var(--bg-card)',
             }}
           >
-            <h2
-              style={{
-                fontWeight: 800,
-                fontSize: '1.05rem',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-              }}
-            >
-              <ShieldCheck size={18} style={{ color: 'var(--primary)' }} />
-              {mode === 'create' ? 'Tambah Peran' : 'Edit Peran'}
-            </h2>
-            <button className="btn btn-ghost btn-sm" onClick={onClose}>
-              <X size={16} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <ShieldCheck size={22} style={{ color: 'var(--accent-em)' }} />
+              <h2 style={{ fontWeight: 800, fontSize: '1.2rem', margin: 0 }}>
+                {mode === 'create' ? 'Tambah Peran' : 'Edit Peran'}
+              </h2>
+            </div>
+            <button onClick={onClose} className="btn btn-ghost btn-sm" style={{ padding: 6 }}>
+              <X size={20} />
             </button>
           </div>
 
-          {error && (
-            <div
-              style={{
-                background: 'rgba(239,68,68,0.1)',
-                border: '1px solid rgba(239,68,68,0.3)',
-                borderRadius: 8,
-                padding: '8px 12px',
-                color: '#f87171',
-                fontSize: '0.83rem',
-                marginBottom: 14,
-              }}
-            >
-              {error}
-            </div>
-          )}
+          {/* Body */}
+          <div style={{ flex: 1, overflowY: 'auto', padding: '24px' }}>
+            {error && (
+              <div
+                style={{
+                  background: 'rgba(239,68,68,0.12)',
+                  border: '1px solid rgba(239,68,68,0.3)',
+                  borderRadius: 10,
+                  padding: '12px 16px',
+                  color: '#f87171',
+                  fontSize: '0.85rem',
+                  marginBottom: 20,
+                }}
+              >
+                {error}
+              </div>
+            )}
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <div style={{ display: 'flex', gap: 12 }}>
-              <div style={{ flex: 1 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+              <div>
                 <label className="label">Nama Peran</label>
                 <input
                   className="input"
@@ -194,147 +232,154 @@ function RoleFormModal({
                   placeholder="Misal: Manager, Kasir"
                 />
               </div>
-            </div>
-            <div>
-              <label className="label">Deskripsi</label>
-              <textarea
-                className="input"
-                value={form.description}
-                onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-                placeholder="Deskripsi singkat mengenai peran ini"
-                style={{ resize: 'vertical', minHeight: 60 }}
-              />
-            </div>
+              <div>
+                <label className="label">Deskripsi</label>
+                <textarea
+                  className="input"
+                  value={form.description}
+                  onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
+                  placeholder="Deskripsi singkat mengenai peran ini"
+                  style={{ resize: 'vertical', minHeight: 80 }}
+                />
+              </div>
 
-            <div style={{ marginTop: 8 }}>
-              <label className="label">Hak Akses (Permissions)</label>
-              <div
-                style={{
-                  maxHeight: 320,
-                  overflowY: 'auto',
-                  border: '1px solid var(--border)',
-                  borderRadius: 8,
-                  background: 'var(--bg-elevated)',
-                }}
-              >
-                {Object.entries(permsByModule).map(([mod, perms]) => {
-                  const allSelected = perms.every(p => selectedPerms.has(p.id));
-                  const someSelected = perms.some(p => selectedPerms.has(p.id));
+              <div style={{ marginTop: 10 }}>
+                <label className="label" style={{ marginBottom: 12 }}>
+                  Hak Akses (Permissions)
+                </label>
+                <div
+                  style={{
+                    border: '1px solid var(--border)',
+                    borderRadius: 12,
+                    background: 'var(--bg-elevated)',
+                    overflow: 'hidden',
+                  }}
+                >
+                  {Object.entries(permsByModule).map(([mod, perms]) => {
+                    const allSelected = perms.every(p => selectedPerms.has(p.id));
+                    const someSelected = perms.some(p => selectedPerms.has(p.id));
 
-                  return (
-                    <div key={mod} style={{ borderBottom: '1px solid var(--border)' }}>
-                      <div
-                        style={{
-                          padding: '10px 12px',
-                          background: 'rgba(0,0,0,0.02)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 10,
-                          cursor: 'pointer',
-                          transition: 'background 0.2s',
-                        }}
-                        className="module-header"
-                        onClick={() => toggleModule(mod)}
-                      >
+                    return (
+                      <div key={mod} style={{ borderBottom: '1px solid var(--border)' }}>
                         <div
-                          className="checkbox-container"
                           style={{
+                            padding: '12px 16px',
+                            background: 'rgba(0,0,0,0.02)',
                             display: 'flex',
                             alignItems: 'center',
-                            justifyContent: 'center',
-                            width: 18,
-                            height: 18,
-                            borderRadius: 4,
-                            border: `1px solid ${allSelected || someSelected ? 'var(--primary)' : 'var(--border-hover)'}`,
-                            background: allSelected
-                              ? 'var(--primary)'
-                              : someSelected
-                                ? 'rgba(99,102,241,0.15)'
-                                : 'var(--bg-card)',
-                            transition: 'all 0.2s',
+                            gap: 10,
+                            cursor: 'pointer',
+                            transition: 'background 0.2s',
                           }}
+                          className="module-header"
+                          onClick={() => toggleModule(mod)}
                         >
-                          {allSelected && <Check size={12} color="#fff" strokeWidth={3} />}
-                          {!allSelected && someSelected && (
-                            <div
-                              style={{
-                                width: 8,
-                                height: 2,
-                                background: 'var(--primary)',
-                                borderRadius: 1,
-                              }}
-                            />
-                          )}
-                        </div>
-                        <span style={{ fontWeight: 700, fontSize: '0.88rem' }}>
-                          {MODULE_LABELS[mod] || mod}
-                        </span>
-                      </div>
-                      <div
-                        style={{
-                          padding: '8px 12px 12px 36px',
-                          display: 'grid',
-                          gridTemplateColumns: '1fr 1fr',
-                          gap: 8,
-                        }}
-                      >
-                        {perms.map(p => {
-                          const isSelected = selectedPerms.has(p.id);
-                          return (
-                            <div
-                              key={p.id}
-                              className="perm-item"
-                              style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: 10,
-                                cursor: 'pointer',
-                                padding: '6px 8px',
-                                borderRadius: 6,
-                                transition: 'background 0.2s',
-                              }}
-                              onClick={() => togglePermission(p.id)}
-                            >
+                          <div
+                            className="checkbox-container"
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              width: 18,
+                              height: 18,
+                              borderRadius: 4,
+                              border: `1px solid ${allSelected || someSelected ? 'var(--primary)' : 'var(--border-hover)'}`,
+                              background: allSelected
+                                ? 'var(--primary)'
+                                : someSelected
+                                  ? 'rgba(99,102,241,0.15)'
+                                  : 'var(--bg-card)',
+                              transition: 'all 0.2s',
+                            }}
+                          >
+                            {allSelected && <Check size={12} color="#fff" strokeWidth={3} />}
+                            {!allSelected && someSelected && (
                               <div
                                 style={{
-                                  width: 16,
-                                  height: 16,
-                                  borderRadius: 4,
-                                  border: `1px solid ${isSelected ? 'var(--primary)' : 'var(--border-hover)'}`,
-                                  background: isSelected ? 'var(--primary)' : 'var(--bg-card)',
+                                  width: 8,
+                                  height: 2,
+                                  background: 'var(--primary)',
+                                  borderRadius: 1,
+                                }}
+                              />
+                            )}
+                          </div>
+                          <span style={{ fontWeight: 700, fontSize: '0.88rem' }}>
+                            {MODULE_LABELS[mod] || mod}
+                          </span>
+                        </div>
+                        <div
+                          style={{
+                            padding: '12px 16px 16px 44px',
+                            display: 'grid',
+                            gridTemplateColumns: '1fr',
+                            gap: 12,
+                          }}
+                        >
+                          {perms.map(p => {
+                            const isSelected = selectedPerms.has(p.id);
+                            return (
+                              <div
+                                key={p.id}
+                                className="perm-item"
+                                style={{
                                   display: 'flex',
                                   alignItems: 'center',
-                                  justifyContent: 'center',
-                                  flexShrink: 0,
-                                  transition: 'all 0.2s',
+                                  gap: 10,
+                                  cursor: 'pointer',
                                 }}
+                                onClick={() => togglePermission(p.id)}
                               >
-                                {isSelected && <Check size={11} color="#fff" strokeWidth={3} />}
+                                <div
+                                  style={{
+                                    width: 18,
+                                    height: 18,
+                                    borderRadius: 4,
+                                    border: `1px solid ${isSelected ? 'var(--primary)' : 'var(--border-hover)'}`,
+                                    background: isSelected ? 'var(--primary)' : 'var(--bg-card)',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    flexShrink: 0,
+                                    transition: 'all 0.2s',
+                                  }}
+                                >
+                                  {isSelected && <Check size={12} color="#fff" strokeWidth={3} />}
+                                </div>
+                                <span
+                                  style={{
+                                    fontSize: '0.85rem',
+                                    color: isSelected ? 'var(--text-1)' : 'var(--text-2)',
+                                    fontWeight: isSelected ? 600 : 400,
+                                  }}
+                                >
+                                  {PERM_LABELS[p.name] || p.description || p.name}
+                                </span>
                               </div>
-                              <span
-                                style={{
-                                  fontSize: '0.82rem',
-                                  color: isSelected ? 'var(--text-1)' : 'var(--text-2)',
-                                  fontWeight: isSelected ? 600 : 400,
-                                }}
-                              >
-                                {PERM_LABELS[p.name] || p.description || p.name}
-                              </span>
-                            </div>
-                          );
-                        })}
+                            );
+                          })}
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: 8, marginTop: 24 }}>
+          {/* Footer */}
+          <div
+            style={{
+              padding: '20px 24px',
+              borderTop: '1px solid var(--border)',
+              display: 'flex',
+              gap: 12,
+              background: 'var(--bg-card)',
+            }}
+          >
             <button
               className="btn btn-secondary"
-              style={{ flex: 1 }}
+              style={{ flex: 1, height: 44 }}
               onClick={onClose}
               disabled={loading}
             >
@@ -342,11 +387,11 @@ function RoleFormModal({
             </button>
             <button
               className="btn btn-primary"
-              style={{ flex: 1 }}
+              style={{ flex: 1, height: 44 }}
               onClick={handleSubmit}
               disabled={loading}
             >
-              {loading ? <Loader2 size={14} className="loading-spin" /> : null}
+              {loading ? <Loader2 size={16} className="loading-spin" /> : null}
               {loading ? 'Menyimpan...' : mode === 'create' ? 'Buat Peran' : 'Simpan Peran'}
             </button>
           </div>
@@ -509,7 +554,7 @@ export default function RolesPage() {
       </div>
 
       {modalMode && (
-        <RoleFormModal
+        <RoleFormDrawer
           mode={modalMode}
           role={editingRole}
           allPermissions={permissions}
