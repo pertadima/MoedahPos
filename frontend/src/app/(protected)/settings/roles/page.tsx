@@ -229,32 +229,44 @@ function RoleFormModal({
                           background: 'rgba(0,0,0,0.02)',
                           display: 'flex',
                           alignItems: 'center',
-                          gap: 8,
+                          gap: 10,
                           cursor: 'pointer',
-                          fontWeight: 700,
-                          fontSize: '0.85rem',
+                          transition: 'background 0.2s',
                         }}
+                        className="module-header"
                         onClick={() => toggleModule(mod)}
                       >
                         <div
+                          className="checkbox-container"
                           style={{
-                            width: 16,
-                            height: 16,
-                            borderRadius: 4,
-                            border: '1px solid var(--border-hover)',
-                            background: allSelected
-                              ? 'var(--primary)'
-                              : someSelected
-                                ? 'var(--text-3)'
-                                : 'transparent',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
+                            width: 18,
+                            height: 18,
+                            borderRadius: 4,
+                            border: `1px solid ${allSelected || someSelected ? 'var(--primary)' : 'var(--border-hover)'}`,
+                            background: allSelected
+                              ? 'var(--primary)'
+                              : someSelected
+                                ? 'rgba(99,102,241,0.15)'
+                                : 'var(--bg-card)',
+                            transition: 'all 0.2s',
                           }}
                         >
-                          {(allSelected || someSelected) && <Check size={12} color="#fff" />}
+                          {allSelected && <Check size={12} color="#fff" strokeWidth={3} />}
+                          {!allSelected && someSelected && (
+                            <div
+                              style={{
+                                width: 8,
+                                height: 2,
+                                background: 'var(--primary)',
+                                borderRadius: 1,
+                              }}
+                            />
+                          )}
                         </div>
-                        <span style={{ textTransform: 'capitalize' }}>
+                        <span style={{ fontWeight: 700, fontSize: '0.88rem' }}>
                           {MODULE_LABELS[mod] || mod}
                         </span>
                       </div>
@@ -271,33 +283,39 @@ function RoleFormModal({
                           return (
                             <div
                               key={p.id}
+                              className="perm-item"
                               style={{
                                 display: 'flex',
                                 alignItems: 'center',
-                                gap: 6,
+                                gap: 10,
                                 cursor: 'pointer',
+                                padding: '6px 8px',
+                                borderRadius: 6,
+                                transition: 'background 0.2s',
                               }}
                               onClick={() => togglePermission(p.id)}
                             >
                               <div
                                 style={{
-                                  width: 14,
-                                  height: 14,
-                                  borderRadius: 3,
-                                  border: '1px solid var(--border-hover)',
-                                  background: isSelected ? 'var(--primary)' : 'transparent',
+                                  width: 16,
+                                  height: 16,
+                                  borderRadius: 4,
+                                  border: `1px solid ${isSelected ? 'var(--primary)' : 'var(--border-hover)'}`,
+                                  background: isSelected ? 'var(--primary)' : 'var(--bg-card)',
                                   display: 'flex',
                                   alignItems: 'center',
                                   justifyContent: 'center',
                                   flexShrink: 0,
+                                  transition: 'all 0.2s',
                                 }}
                               >
-                                {isSelected && <Check size={10} color="#fff" />}
+                                {isSelected && <Check size={11} color="#fff" strokeWidth={3} />}
                               </div>
                               <span
                                 style={{
-                                  fontSize: '0.8rem',
+                                  fontSize: '0.82rem',
                                   color: isSelected ? 'var(--text-1)' : 'var(--text-2)',
+                                  fontWeight: isSelected ? 600 : 400,
                                 }}
                               >
                                 {PERM_LABELS[p.name] || p.description || p.name}
