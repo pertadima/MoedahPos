@@ -7,6 +7,52 @@ import { rolesApi } from '@/lib/api/store-apis';
 import { ApiError } from '@/lib/api/client';
 import type { Role, Permission } from '@/types';
 
+// ── Translations ─────────────────────────────────────────────────────────────
+
+const MODULE_LABELS: Record<string, string> = {
+  penjualan: 'Riwayat Penjualan',
+  kasir: 'Kasir / POS',
+  inventory: 'Stok & Inventori',
+  pembelian: 'Pembelian & Supplier',
+  keuangan: 'Keuangan & Biaya',
+  settings: 'Pengaturan Sistem',
+};
+
+const PERM_LABELS: Record<string, string> = {
+  'penjualan:read': 'Lihat riwayat penjualan',
+  'penjualan:write': 'Buat catatan penjualan',
+  'penjualan:update': 'Ubah catatan penjualan',
+  'penjualan:delete': 'Hapus/Batalkan penjualan',
+  'kasir:read': 'Akses antarmuka kasir',
+  'kasir:write': 'Proses transaksi baru',
+  'kasir:update': 'Ubah keranjang aktif',
+  'kasir:delete': 'Kosongkan keranjang aktif',
+  'inventory:read': 'Lihat stok dan produk',
+  'inventory:write': 'Tambah produk/stok baru',
+  'inventory:update': 'Ubah detail produk',
+  'inventory:delete': 'Hapus produk',
+  'pembelian:read': 'Lihat pesanan pembelian',
+  'pembelian:write': 'Buat pesanan pembelian',
+  'pembelian:update': 'Ubah pesanan pembelian',
+  'pembelian:delete': 'Hapus pesanan pembelian',
+  'keuangan:read': 'Lihat catatan keuangan',
+  'keuangan:write': 'Tambah pemasukan/pengeluaran',
+  'keuangan:update': 'Ubah catatan keuangan',
+  'keuangan:delete': 'Hapus catatan keuangan',
+  'settings:read': 'Lihat pengaturan dan pengguna',
+  'settings:write': 'Tambah pengguna/peran',
+  'settings:update': 'Ubah pengaturan/pengguna',
+  'settings:delete': 'Hapus pengguna/peran',
+};
+
+const ROLE_DESC_LABELS: Record<string, string> = {
+  'Full system access across all stores': 'Akses sistem penuh di semua toko',
+  'Full access within assigned stores': 'Akses penuh dalam toko yang ditugaskan',
+  'Process transactions only': 'Hanya memproses transaksi',
+  'Manage products, stock, and reports': 'Kelola produk, stok, dan laporan',
+  'View-only access': 'Akses lihat saja',
+};
+
 // ── Permissions Checkbox Matrix Modal ────────────────────────────────────────
 
 function RoleFormModal({
@@ -37,8 +83,9 @@ function RoleFormModal({
   const permsByModule = useMemo(() => {
     const grouped: Record<string, Permission[]> = {};
     for (const p of allPermissions) {
-      if (!grouped[p.module]) grouped[p.module] = [];
-      grouped[p.module].push(p);
+      const mod = p.name.split(':')[0] || 'Lainnya';
+      if (!grouped[mod]) grouped[mod] = [];
+      grouped[mod].push(p);
     }
     return grouped;
   }, [allPermissions]);
@@ -207,7 +254,9 @@ function RoleFormModal({
                         >
                           {(allSelected || someSelected) && <Check size={12} color="#fff" />}
                         </div>
-                        <span style={{ textTransform: 'capitalize' }}>{mod}</span>
+                        <span style={{ textTransform: 'capitalize' }}>
+                          {MODULE_LABELS[mod] || mod}
+                        </span>
                       </div>
                       <div
                         style={{
@@ -251,7 +300,7 @@ function RoleFormModal({
                                   color: isSelected ? 'var(--text-1)' : 'var(--text-2)',
                                 }}
                               >
-                                {p.description || `${p.module}:${p.action}`}
+                                {PERM_LABELS[p.name] || p.description || p.name}
                               </span>
                             </div>
                           );
@@ -330,10 +379,21 @@ export default function RolesPage() {
   };
 
   return (
-    <div className="page-container">
-      <div className="page-header">
+    <div className="w-full p-6">
+      <div
+        className="reveal-animate"
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
+          marginBottom: 20,
+        }}
+      >
         <div>
-          <h1 className="page-title">Peran & Hak Akses</h1>
+          <h1 className="page-title" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <ShieldCheck size={22} style={{ color: 'var(--accent-em)' }} />
+            Peran & Hak Akses
+          </h1>
           <p className="page-subtitle">Kelola akses modular untuk sistem POS Anda.</p>
         </div>
         <button
@@ -347,15 +407,15 @@ export default function RolesPage() {
         </button>
       </div>
 
-      <div className="card">
+      <div className="card reveal-animate" style={{ padding: 0, animationDelay: '0.1s' }}>
         {loading ? (
           <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-3)' }}>
             <Loader2 size={24} className="loading-spin mx-auto mb-2" />
             <p>Memuat peran...</p>
           </div>
         ) : (
-          <div className="table-responsive">
-            <table className="table">
+          <div className="tbl-container">
+            <table className="tbl">
               <thead>
                 <tr>
                   <th style={{ width: '25%' }}>Nama Peran</th>
@@ -379,7 +439,7 @@ export default function RolesPage() {
                       </td>
                       <td>
                         <span style={{ fontSize: '0.85rem', color: 'var(--text-2)' }}>
-                          {role.description || '-'}
+                          {ROLE_DESC_LABELS[role.description] || role.description || '-'}
                         </span>
                       </td>
                       <td>
