@@ -68,9 +68,9 @@ const ROLE_DESC_LABELS: Record<string, string> = {
   'View-only access': 'Akses lihat saja',
 };
 
-// ── Toggle Switch Component ──────────────────────────────────────────────────
+// ── Checkbox Component ─────────────────────────────────────────────────────────
 
-function ToggleSwitch({ checked, onChange }: { checked: boolean; onChange: () => void }) {
+function CustomCheckbox({ checked, onChange }: { checked: boolean; onChange: () => void }) {
   return (
     <div
       onClick={e => {
@@ -78,29 +78,36 @@ function ToggleSwitch({ checked, onChange }: { checked: boolean; onChange: () =>
         onChange();
       }}
       style={{
-        width: 34,
-        height: 18,
-        borderRadius: 18,
-        background: checked ? 'var(--primary)' : 'var(--border-hover, #cbd5e1)',
-        position: 'relative',
+        width: 20,
+        height: 20,
+        borderRadius: 6,
+        border: checked ? '2px solid #10b981' : '2px solid #cbd5e1',
+        background: checked ? '#10b981' : 'transparent',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
         cursor: 'pointer',
-        transition: 'background 0.3s ease',
+        transition: 'all 0.2s ease',
         flexShrink: 0,
       }}
     >
-      <div
+      <svg
+        width="12"
+        height="12"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="white"
+        strokeWidth="4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
         style={{
-          width: 14,
-          height: 14,
-          borderRadius: '50%',
-          background: '#fff',
-          position: 'absolute',
-          top: 2,
-          left: checked ? 18 : 2,
-          transition: 'left 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+          opacity: checked ? 1 : 0,
+          transform: checked ? 'scale(1)' : 'scale(0.5)',
+          transition: 'all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
         }}
-      />
+      >
+        <polyline points="20 6 9 17 4 12" />
+      </svg>
     </div>
   );
 }
@@ -381,9 +388,9 @@ function RoleFormDrawer({
                     style={{
                       padding: 0,
                       overflow: 'hidden',
-                      border: allSelected ? '1px solid var(--primary)' : '1px solid var(--border)',
+                      border: allSelected ? '1px solid #10b981' : '1px solid var(--border)',
                       boxShadow: allSelected
-                        ? '0 4px 12px rgba(99,102,241,0.08)'
+                        ? '0 4px 12px rgba(16, 185, 129, 0.08)'
                         : '0 2px 8px rgba(0,0,0,0.04)',
                       transition: 'all 0.3s ease',
                     }}
@@ -394,7 +401,7 @@ function RoleFormDrawer({
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between',
-                        background: allSelected ? 'rgba(99,102,241,0.04)' : 'transparent',
+                        background: allSelected ? 'rgba(16, 185, 129, 0.04)' : 'transparent',
                         cursor: 'pointer',
                       }}
                       onClick={() => setExpandedModule(expandedModule === mod ? null : mod)}
@@ -405,7 +412,7 @@ function RoleFormDrawer({
                             width: 32,
                             height: 32,
                             borderRadius: 8,
-                            background: allSelected ? 'var(--primary)' : 'var(--bg-elevated)',
+                            background: allSelected ? '#10b981' : 'var(--bg-elevated)',
                             color: allSelected ? '#fff' : 'var(--text-2)',
                             display: 'flex',
                             alignItems: 'center',
@@ -425,7 +432,7 @@ function RoleFormDrawer({
                             {count > 0 ? (
                               <span
                                 style={{
-                                  color: allSelected ? 'var(--primary)' : 'inherit',
+                                  color: allSelected ? '#10b981' : 'inherit',
                                   fontWeight: 600,
                                 }}
                               >
@@ -439,7 +446,7 @@ function RoleFormDrawer({
                         </div>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                        <ToggleSwitch checked={allSelected} onChange={() => toggleModule(mod)} />
+                        <CustomCheckbox checked={allSelected} onChange={() => toggleModule(mod)} />
                         {expandedModule === mod ? (
                           <ChevronUp size={16} color="var(--text-3)" />
                         ) : (
@@ -474,11 +481,11 @@ function RoleFormDrawer({
                                 justifyContent: 'space-between',
                                 padding: '8px 10px',
                                 borderRadius: 8,
-                                background: isSel ? 'var(--bg-elevated)' : 'transparent',
-                                border: `1px solid ${isSel ? 'var(--primary-light, rgba(99,102,241,0.3))' : 'var(--border)'}`,
+                                background: isSel ? 'rgba(16, 185, 129, 0.04)' : 'transparent',
+                                border: `1px solid ${isSel ? 'rgba(16, 185, 129, 0.3)' : 'var(--border)'}`,
                                 cursor: 'pointer',
                                 transition: 'all 0.2s ease',
-                                boxShadow: isSel ? '0 1px 4px rgba(0,0,0,0.02)' : 'none',
+                                boxShadow: isSel ? '0 1px 4px rgba(16, 185, 129, 0.05)' : 'none',
                               }}
                             >
                               <span
@@ -490,7 +497,7 @@ function RoleFormDrawer({
                               >
                                 {PERM_LABELS[p.name] || p.name}
                               </span>
-                              <ToggleSwitch
+                              <CustomCheckbox
                                 checked={isSel}
                                 onChange={() => togglePermission(p.id)}
                               />
