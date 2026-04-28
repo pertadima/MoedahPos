@@ -19,7 +19,6 @@ import (
 	"github.com/moedahpos/backend/pkg/db"
 	"github.com/moedahpos/backend/pkg/jwt"
 	"github.com/moedahpos/backend/pkg/logger"
-	"github.com/moedahpos/backend/pkg/rbac"
 )
 
 //nolint:gocognit,funlen // bootstrap wiring is inherently long
@@ -52,13 +51,6 @@ func main() {
 			log.Fatal().Err(err).Msg("failed to run migrations")
 		}
 	}
-
-	// ── RBAC (loaded once at startup) ─────────────────────────────────────────
-	roleStore, err := rbac.New(sqlxDB)
-	if err != nil {
-		log.Fatal().Err(err).Msg("failed to load RBAC role store")
-	}
-	log.Info().Msg("RBAC role store loaded")
 
 	// ── Shared Utilities ──────────────────────────────────────────────────────
 	jwtMgr := jwt.New(cfg.JWT.Secret, cfg.JWT.AccessTTL, cfg.JWT.RefreshTTL)
@@ -160,7 +152,6 @@ func main() {
 		ActivityLogHandler:     activityLogHandler,
 		SyncHandler:            syncHandler,
 		LoyaltyHandler:         loyaltyHandler,
-		RoleStore:              roleStore,
 		DB:                     sqlxDB,
 		Log:                    log,
 	})

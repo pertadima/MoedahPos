@@ -15,6 +15,7 @@ import (
 	"github.com/moedahpos/backend/internal/service/mocks"
 )
 
+//nolint:funlen
 func TestReportHandler(t *testing.T) {
 	svc := new(mocks.ReportServiceInterface)
 	log := zerolog.Nop()

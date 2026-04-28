@@ -27,6 +27,10 @@ type UserRepository interface {
 
 type RoleRepository interface {
 	ListRoles(ctx context.Context) ([]*domain.Role, error)
+	CreateRole(ctx context.Context, role *domain.Role, permissionIDs []string) (*domain.Role, error)
+	UpdateRole(ctx context.Context, role *domain.Role, permissionIDs []string) (*domain.Role, error)
+	DeleteRole(ctx context.Context, id string) error
+	ListPermissions(ctx context.Context) ([]*domain.Permission, error)
 }
 
 type RefreshTokenRepository interface {
@@ -307,5 +311,3 @@ type LoyaltyRepository interface {
 	// GetCustomerTier returns the tier for a customer (nil if unassigned).
 	GetCustomerTier(ctx context.Context, customerID string) (*domain.MembershipTier, error)
 }
-
-

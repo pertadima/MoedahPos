@@ -38,9 +38,15 @@ export interface UserAdmin {
   store_count: number;
   stores?: UserStoreAssignment[];
 }
+export interface Permission {
+  id: string;
+  name: string;
+  description: string;
+}
+
 export interface Role {
   id: string;
   name: string;
   description: string;
-  permissions: string[];
+  permissions: Permission[];
 }

@@ -19,6 +19,7 @@ import (
 	"github.com/moedahpos/backend/internal/validator"
 )
 
+//nolint:funlen
 func TestRestaurantHandler(t *testing.T) {
 	tableSvc := new(mocks.TableServiceInterface)
 	menuSvc := new(mocks.MenuItemServiceInterface)

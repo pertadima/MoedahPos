@@ -14,6 +14,7 @@ import (
 	"github.com/moedahpos/backend/internal/service/mocks"
 )
 
+//nolint:funlen
 func TestTransactionService_LoyaltyRedemption(t *testing.T) {
 	ctx := context.Background()
 	log := zerolog.Nop()

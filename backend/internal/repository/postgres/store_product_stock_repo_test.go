@@ -286,6 +286,7 @@ func TestProductRepo(t *testing.T) {
 	})
 }
 
+//nolint:funlen
 func TestStockRepo(t *testing.T) {
 	ctx := context.Background()
 

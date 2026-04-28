@@ -141,6 +141,7 @@ func TestTransactionHandler_List(t *testing.T) {
 	})
 }
 
+//nolint:funlen
 func TestTransactionHandler_Draft(t *testing.T) {
 	svc := new(mocks.TransactionServiceInterface)
 	h := NewTransactionHandler(svc, validator.New(), zerolog.Nop())

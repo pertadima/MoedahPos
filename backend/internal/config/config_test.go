@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestConfig_Load(t *testing.T) {
@@ -17,10 +18,10 @@ func TestConfig_Load(t *testing.T) {
 
 	t.Run("Valid Config", func(t *testing.T) {
 		os.Clearenv()
-		os.Setenv("JWT_SECRET", "very-long-secret-key-at-least-32-chars")
-		os.Setenv("APP_PORT", "9090")
-		os.Setenv("DB_HOST", "db-host")
-		
+		require.NoError(t, os.Setenv("JWT_SECRET", "very-long-secret-key-at-least-32-chars"))
+		require.NoError(t, os.Setenv("APP_PORT", "9090"))
+		require.NoError(t, os.Setenv("DB_HOST", "db-host"))
+
 		cfg, err := Load()
 		assert.NoError(t, err)
 		assert.Equal(t, "9090", cfg.App.Port)
@@ -43,11 +44,11 @@ func TestDBConfig_DSN(t *testing.T) {
 }
 
 func TestGetEnvHelpers(t *testing.T) {
-	os.Setenv("TEST_INT", "100")
+	require.NoError(t, os.Setenv("TEST_INT", "100"))
 	assert.Equal(t, 100, getEnvInt("TEST_INT", 10))
 	assert.Equal(t, 10, getEnvInt("NON_EXIST", 10))
 
-	os.Setenv("TEST_BOOL", "true")
+	require.NoError(t, os.Setenv("TEST_BOOL", "true"))
 	assert.Equal(t, true, getEnvBool("TEST_BOOL", false))
 	assert.Equal(t, false, getEnvBool("NON_EXIST", false))
 }

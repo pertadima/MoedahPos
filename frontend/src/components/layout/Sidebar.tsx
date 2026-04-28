@@ -210,6 +210,7 @@ const baseGroups: NavGroup[] = [
         label: 'Kategori Pengeluaran',
         adminOnly: true,
       },
+      { href: '/settings/roles', icon: ShieldCheck, label: 'Peran & Izin', adminOnly: true },
     ],
   },
 ];

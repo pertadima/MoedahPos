@@ -78,3 +78,65 @@ func TestMembershipTierRepo_FindAll(t *testing.T) {
 	assert.Len(t, tiers, 1)
 	assert.Equal(t, "Gold", tiers[0].Name)
 }
+
+func TestLoyaltyRepo_SpendPoints(t *testing.T) {
+	db, mock, _ := sqlmock.New()
+	defer func() { _ = db.Close() }()
+	repo := NewLoyaltyRepository(db)
+	ctx := context.Background()
+
+	rows := sqlmock.NewRows([]string{"id", "customer_id", "points_delta", "transaction_id", "type", "created_at"}).
+		AddRow("l2", "c1", -5.0, "t1", "SPEND", time.Now())
+
+	mock.ExpectQuery(`INSERT INTO loyalty_ledger`).WithArgs("c1", -5.0, sqlmock.AnyArg()).WillReturnRows(rows)
+
+	entry, err := repo.SpendPoints(ctx, "c1", nil, 5.0)
+	assert.NoError(t, err)
+	assert.Equal(t, -5.0, entry.PointsDelta)
+}
+
+func TestLoyaltyRepo_GetHistory(t *testing.T) {
+	db, mock, _ := sqlmock.New()
+	defer func() { _ = db.Close() }()
+	repo := NewLoyaltyRepository(db)
+	ctx := context.Background()
+
+	rows := sqlmock.NewRows([]string{"id", "customer_id", "points_delta", "transaction_id", "type", "created_at"}).
+		AddRow("l1", "c1", 10.0, "t1", "EARN", time.Now())
+
+	mock.ExpectQuery(`SELECT .* FROM loyalty_ledger`).WithArgs("c1").WillReturnRows(rows)
+
+	history, err := repo.GetHistory(ctx, "c1")
+	assert.NoError(t, err)
+	assert.Len(t, history, 1)
+}
+
+func TestLoyaltyRepo_AssignTier(t *testing.T) {
+	db, mock, _ := sqlmock.New()
+	defer func() { _ = db.Close() }()
+	repo := NewLoyaltyRepository(db)
+	ctx := context.Background()
+
+	mock.ExpectExec(`UPDATE customers SET loyalty_tier_id = .* WHERE id = .*`).WithArgs("t1", "c1").WillReturnResult(sqlmock.NewResult(0, 1))
+
+	err := repo.AssignTier(ctx, "c1", "t1")
+	assert.NoError(t, err)
+}
+
+func TestLoyaltyRepo_GetCustomerTier(t *testing.T) {
+	db, mock, _ := sqlmock.New()
+	defer func() { _ = db.Close() }()
+	repo := NewLoyaltyRepository(db)
+	ctx := context.Background()
+
+	rows := sqlmock.NewRows([]string{"id", "name", "multiplier", "created_at", "updated_at"}).
+		AddRow("t1", "Gold", 1.2, time.Now(), time.Now())
+
+	mock.ExpectQuery(`SELECT .* FROM membership_tiers .* JOIN customers .*`).WithArgs("c1").WillReturnRows(rows)
+
+	tier, err := repo.GetCustomerTier(ctx, "c1")
+	assert.NoError(t, err)
+	if assert.NotNil(t, tier) {
+		assert.Equal(t, "Gold", tier.Name)
+	}
+}

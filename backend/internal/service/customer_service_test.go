@@ -106,3 +106,49 @@ func TestCustomerService_Delete(t *testing.T) {
 		repo.AssertExpectations(t)
 	})
 }
+
+func TestCustomerService_Get(t *testing.T) {
+	repo := new(repomocks.CustomerRepository)
+	log := zerolog.Nop()
+	svc := NewCustomerService(repo, log)
+
+	id := "c1"
+
+	t.Run("success", func(t *testing.T) {
+		repo.On("FindByID", mock.Anything, id).Return(&domain.Customer{ID: id, Name: "Customer 1"}, nil).Once()
+
+		resp, err := svc.Get(context.Background(), id)
+		assert.NoError(t, err)
+		assert.Equal(t, id, resp.ID)
+		repo.AssertExpectations(t)
+	})
+
+	t.Run("not_found", func(t *testing.T) {
+		repo.On("FindByID", mock.Anything, id).Return(nil, nil).Once()
+
+		resp, err := svc.Get(context.Background(), id)
+		assert.ErrorIs(t, err, ErrCustomerNotFound)
+		assert.Nil(t, resp)
+		repo.AssertExpectations(t)
+	})
+}
+
+func TestCustomerService_Search(t *testing.T) {
+	repo := new(repomocks.CustomerRepository)
+	log := zerolog.Nop()
+	svc := NewCustomerService(repo, log)
+
+	storeID := "s1"
+	query := "test"
+	filter := dto.CustomerListFilter{StoreID: storeID, Search: query}
+	filter.Defaults()
+
+	t.Run("success", func(t *testing.T) {
+		repo.On("FindAll", mock.Anything, filter).Return([]*domain.Customer{{ID: "c1", Name: "Test Customer"}}, 1, nil).Once()
+
+		resp, err := svc.Search(context.Background(), filter)
+		assert.NoError(t, err)
+		assert.Len(t, resp, 1)
+		repo.AssertExpectations(t)
+	})
+}

@@ -194,3 +194,66 @@ func (h *UserAdminHandler) ListRoles(w http.ResponseWriter, r *http.Request) {
 	}
 	response.JSON(w, http.StatusOK, map[string]any{"data": resp})
 }
+
+// CreateRole godoc — POST /admin/roles
+func (h *UserAdminHandler) CreateRole(w http.ResponseWriter, r *http.Request) {
+	var req dto.CreateRoleRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		response.Error(w, http.StatusBadRequest, "Invalid JSON body")
+		return
+	}
+	if errs := h.validator.ValidateStruct(req); len(errs) > 0 {
+		response.ValidationError(w, errs)
+		return
+	}
+	role, err := h.svc.CreateRole(r.Context(), &req)
+	if err != nil {
+		h.log.Error().Err(err).Msg("UserAdminHandler.CreateRole")
+		response.Error(w, http.StatusInternalServerError, "Failed to create role")
+		return
+	}
+	response.JSON(w, http.StatusCreated, role)
+}
+
+// UpdateRole godoc — PUT /admin/roles/:roleId
+func (h *UserAdminHandler) UpdateRole(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "roleId")
+	var req dto.UpdateRoleRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		response.Error(w, http.StatusBadRequest, "Invalid JSON body")
+		return
+	}
+	if errs := h.validator.ValidateStruct(req); len(errs) > 0 {
+		response.ValidationError(w, errs)
+		return
+	}
+	role, err := h.svc.UpdateRole(r.Context(), id, &req)
+	if err != nil {
+		h.log.Error().Err(err).Msg("UserAdminHandler.UpdateRole")
+		response.Error(w, http.StatusInternalServerError, "Failed to update role")
+		return
+	}
+	response.JSON(w, http.StatusOK, role)
+}
+
+// DeleteRole godoc — DELETE /admin/roles/:roleId
+func (h *UserAdminHandler) DeleteRole(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "roleId")
+	if err := h.svc.DeleteRole(r.Context(), id); err != nil {
+		h.log.Error().Err(err).Msg("UserAdminHandler.DeleteRole")
+		response.Error(w, http.StatusInternalServerError, "Failed to delete role")
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
+// ListPermissions godoc — GET /admin/permissions
+func (h *UserAdminHandler) ListPermissions(w http.ResponseWriter, r *http.Request) {
+	perms, err := h.svc.ListPermissions(r.Context())
+	if err != nil {
+		h.log.Error().Err(err).Msg("UserAdminHandler.ListPermissions")
+		response.Error(w, http.StatusInternalServerError, "Failed to fetch permissions")
+		return
+	}
+	response.JSON(w, http.StatusOK, map[string]any{"data": perms})
+}

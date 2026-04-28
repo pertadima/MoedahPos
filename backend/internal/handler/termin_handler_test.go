@@ -16,11 +16,13 @@ import (
 
 	"github.com/moedahpos/backend/internal/dto"
 	"github.com/moedahpos/backend/internal/middleware"
+	"github.com/moedahpos/backend/internal/service"
 	"github.com/moedahpos/backend/internal/service/mocks"
 	"github.com/moedahpos/backend/internal/validator"
 	"github.com/moedahpos/backend/pkg/jwt"
 )
 
+//nolint:funlen
 func TestTerminHandler(t *testing.T) {
 	tSvc := new(mocks.TerminServiceInterface)
 	v := validator.New()
@@ -77,5 +79,35 @@ func TestTerminHandler(t *testing.T) {
 
 		r.ServeHTTP(w, req)
 		assert.Equal(t, http.StatusOK, w.Code)
+	})
+
+	t.Run("List Termins Success", func(t *testing.T) {
+		tSvc.On("GetTerminSchedule", mock.Anything, "po1").Return([]dto.TerminResponse{{ID: "t1"}}, nil)
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "/stores/s1/purchase-orders/po1/termins", nil)
+		req.Header.Set("Authorization", "Bearer "+token)
+		w := httptest.NewRecorder()
+
+		r.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusOK, w.Code)
+	})
+
+	t.Run("Get Document Success", func(t *testing.T) {
+		tSvc.On("GenerateDocumentData", mock.Anything, "po1", "invoice").Return(&dto.PODocumentData{DocType: "invoice"}, nil)
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "/stores/s1/purchase-orders/po1/document", nil)
+		req.Header.Set("Authorization", "Bearer "+token)
+		w := httptest.NewRecorder()
+
+		r.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusOK, w.Code)
+	})
+
+	t.Run("List Termins Error", func(t *testing.T) {
+		tSvc.On("GetTerminSchedule", mock.Anything, "po2").Return(nil, service.ErrPONotFound)
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "/stores/s1/purchase-orders/po2/termins", nil)
+		req.Header.Set("Authorization", "Bearer "+token)
+		w := httptest.NewRecorder()
+
+		r.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusNotFound, w.Code)
 	})
 }

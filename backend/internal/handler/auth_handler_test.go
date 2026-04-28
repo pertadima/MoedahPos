@@ -81,7 +81,7 @@ func TestAuthHandler_Register(t *testing.T) {
 		h := NewAuthHandler(aSvc, v, zerolog.Nop())
 
 		reqBody := dto.RegisterRequest{Email: "invalid"}
-		body, _ := json.Marshal(reqBody)
+		body, _ := json.Marshal(reqBody) //nolint:gosec
 		req, _ := http.NewRequestWithContext(context.Background(), http.MethodPost, "/auth/register", bytes.NewBuffer(body))
 		w := httptest.NewRecorder()
 
@@ -114,7 +114,7 @@ func TestAuthHandler_Login(t *testing.T) {
 		h := NewAuthHandler(aSvc, v, zerolog.Nop())
 
 		reqBody := dto.LoginRequest{Email: "invalid"}
-		body, _ := json.Marshal(reqBody)
+		body, _ := json.Marshal(reqBody) //nolint:gosec
 		req, _ := http.NewRequestWithContext(context.Background(), http.MethodPost, "/auth/login", bytes.NewBuffer(body))
 		w := httptest.NewRecorder()
 
@@ -164,7 +164,7 @@ func TestAuthHandler_Refresh(t *testing.T) {
 		h := NewAuthHandler(aSvc, v, zerolog.Nop())
 
 		reqBody := dto.RefreshRequest{RefreshToken: ""}
-		body, _ := json.Marshal(reqBody)
+		body, _ := json.Marshal(reqBody) //nolint:gosec
 		req, _ := http.NewRequestWithContext(context.Background(), http.MethodPost, "/auth/refresh", bytes.NewBuffer(body))
 		w := httptest.NewRecorder()
 

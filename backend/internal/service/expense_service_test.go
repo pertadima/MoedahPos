@@ -15,6 +15,7 @@ import (
 	"github.com/moedahpos/backend/internal/service/mocks"
 )
 
+//nolint:funlen
 func TestExpenseService(t *testing.T) {
 	repo := new(repomocks.ExpenseRepository)
 	activitySvc := new(mocks.ActivityLogServiceInterface)
@@ -118,5 +119,35 @@ func TestExpenseService(t *testing.T) {
 		err := svc.ProcessDueRecurringExpenses(ctx)
 		assert.NoError(t, err)
 		repo.AssertExpectations(t)
+	})
+
+	t.Run("DeleteExpense Success", func(t *testing.T) {
+		repo.On("GetByID", ctx, "e1", "s1").Return(&domain.Expense{ID: "e1", Amount: 100}, nil).Once()
+		repo.On("Delete", ctx, "e1", "s1").Return(nil).Once()
+		activitySvc.On("LogActivity", ctx, "SYSTEM", "s1", domain.ActionExpenseDelete, domain.ModuleExpense, "e1", mock.Anything).Return().Once()
+		err := svc.DeleteExpense(ctx, "e1", "s1")
+		assert.NoError(t, err)
+	})
+
+	t.Run("UpdatePaymentStatus Success", func(t *testing.T) {
+		req := &dto.UpdateExpenseStatusRequest{PaymentStatus: "paid"}
+		repo.On("UpdatePaymentStatus", ctx, "e1", "s1", "paid").Return(&domain.Expense{ID: "e1", Amount: 100, PaymentStatus: "paid", ExpenseDate: time.Now()}, nil).Once()
+		resp, err := svc.UpdatePaymentStatus(ctx, "e1", "s1", req)
+		assert.NoError(t, err)
+		assert.NotNil(t, resp)
+	})
+
+	t.Run("UpdateRecurringExpense Success", func(t *testing.T) {
+		req := &dto.UpdateRecurringExpenseRequest{Name: "New Rent", Amount: 1100, StartDate: "2024-01-01"}
+		repo.On("UpdateRecurring", ctx, mock.Anything).Return(&domain.RecurringExpense{ID: "re1", Name: "New Rent", StartDate: time.Now(), NextRunDate: time.Now()}, nil).Once()
+		resp, err := svc.UpdateRecurringExpense(ctx, "re1", "s1", req)
+		assert.NoError(t, err)
+		assert.Equal(t, "New Rent", resp.Name)
+	})
+
+	t.Run("DeleteRecurringExpense Success", func(t *testing.T) {
+		repo.On("DeleteRecurring", ctx, "re1", "s1").Return(nil).Once()
+		err := svc.DeleteRecurringExpense(ctx, "re1", "s1")
+		assert.NoError(t, err)
 	})
 }

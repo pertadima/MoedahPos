@@ -1,6 +1,7 @@
 package router
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -12,7 +13,7 @@ func TestRouter_Health(t *testing.T) {
 	deps := &Dependencies{}
 	r := New(deps)
 
-	req, _ := http.NewRequest(http.MethodGet, "/health", nil)
+	req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "/health", nil)
 	w := httptest.NewRecorder()
 
 	r.ServeHTTP(w, req)

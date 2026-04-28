@@ -263,6 +263,11 @@ export const usersAdminApi = {
 
 export const rolesApi = {
   list: () => api.get<any>('/admin/roles'),
+  get: (id: string) => api.get<any>(`/admin/roles/${id}`),
+  create: (body: any) => api.post<any>('/admin/roles', body),
+  update: (id: string, body: any) => api.put<any>(`/admin/roles/${id}`, body),
+  delete: (id: string) => api.delete<any>(`/admin/roles/${id}`),
+  listPermissions: () => api.get<any>('/admin/permissions'),
 };
 
 export const expensesApi = {
