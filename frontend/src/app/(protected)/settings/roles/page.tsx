@@ -125,9 +125,21 @@ function RoleFormDrawer({
     description: role?.description ?? '',
   });
   // Map of selected permission IDs
-  const [selectedPerms, setSelectedPerms] = useState<Set<string>>(
-    new Set(role?.permissions?.map(p => p.id) ?? [])
-  );
+  const [selectedPerms, setSelectedPerms] = useState<Set<string>>(() => {
+    const initialPerms = new Set<string>();
+    const rolePerms = role?.permissions || [];
+
+    rolePerms.forEach((rp: any) => {
+      if (typeof rp === 'object' && rp !== null) {
+        if (rp.id) initialPerms.add(rp.id);
+      } else {
+        const matched = allPermissions.find(p => p.name === rp || p.id === rp);
+        if (matched) initialPerms.add(matched.id);
+      }
+    });
+
+    return initialPerms;
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [expandedModule, setExpandedModule] = useState<string | null>(null);
