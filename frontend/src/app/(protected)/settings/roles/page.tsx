@@ -1,7 +1,22 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { ShieldCheck, Plus, Loader2, X, Edit3, Trash2, Check } from 'lucide-react';
+import {
+  ShieldCheck,
+  Plus,
+  Loader2,
+  X,
+  Edit3,
+  Trash2,
+  BarChart2,
+  Calculator,
+  Package,
+  Truck,
+  Wallet,
+  Settings,
+  ChevronDown,
+  ChevronUp,
+} from 'lucide-react';
 import Portal from '@/components/ui/Portal';
 import { rolesApi } from '@/lib/api/store-apis';
 import { ApiError } from '@/lib/api/client';
@@ -9,13 +24,13 @@ import type { Role, Permission } from '@/types';
 
 // ── Translations ─────────────────────────────────────────────────────────────
 
-const MODULE_LABELS: Record<string, string> = {
-  penjualan: 'Riwayat Penjualan',
-  kasir: 'Kasir / POS',
-  inventory: 'Stok & Inventori',
-  pembelian: 'Pembelian & Supplier',
-  keuangan: 'Keuangan & Biaya',
-  settings: 'Pengaturan Sistem',
+const MODULE_INFO: Record<string, { label: string; icon: React.ElementType; desc: string }> = {
+  penjualan: { label: 'Penjualan', icon: BarChart2, desc: 'Riwayat & Laporan' },
+  kasir: { label: 'Kasir / POS', icon: Calculator, desc: 'Transaksi aktif' },
+  inventory: { label: 'Stok & Inventori', icon: Package, desc: 'Manajemen barang' },
+  pembelian: { label: 'Pembelian', icon: Truck, desc: 'Restock & Supplier' },
+  keuangan: { label: 'Keuangan', icon: Wallet, desc: 'Pemasukan & Pengeluaran' },
+  settings: { label: 'Sistem', icon: Settings, desc: 'Pengaturan & Peran' },
 };
 
 const PERM_LABELS: Record<string, string> = {
@@ -53,7 +68,44 @@ const ROLE_DESC_LABELS: Record<string, string> = {
   'View-only access': 'Akses lihat saja',
 };
 
-// ── Permissions Checkbox Matrix Modal ────────────────────────────────────────
+// ── Toggle Switch Component ──────────────────────────────────────────────────
+
+function ToggleSwitch({ checked, onChange }: { checked: boolean; onChange: () => void }) {
+  return (
+    <div
+      onClick={e => {
+        e.stopPropagation();
+        onChange();
+      }}
+      style={{
+        width: 34,
+        height: 18,
+        borderRadius: 18,
+        background: checked ? 'var(--primary)' : 'var(--border-hover, #cbd5e1)',
+        position: 'relative',
+        cursor: 'pointer',
+        transition: 'background 0.3s ease',
+        flexShrink: 0,
+      }}
+    >
+      <div
+        style={{
+          width: 14,
+          height: 14,
+          borderRadius: '50%',
+          background: '#fff',
+          position: 'absolute',
+          top: 2,
+          left: checked ? 18 : 2,
+          transition: 'left 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+        }}
+      />
+    </div>
+  );
+}
+
+// ── Permissions Drawer ───────────────────────────────────────────────────────
 
 function RoleFormDrawer({
   mode,
@@ -78,6 +130,7 @@ function RoleFormDrawer({
   );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [expandedModule, setExpandedModule] = useState<string | null>(null);
 
   // Group permissions by module
   const permsByModule = useMemo(() => {
@@ -205,7 +258,9 @@ function RoleFormDrawer({
           </div>
 
           {/* Body */}
-          <div style={{ flex: 1, overflowY: 'auto', padding: '24px' }}>
+          <div
+            style={{ flex: 1, overflowY: 'auto', padding: '24px', background: 'var(--bg-body)' }}
+          >
             {error && (
               <div
                 style={{
@@ -222,148 +277,219 @@ function RoleFormDrawer({
               </div>
             )}
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-              <div>
-                <label className="label">Nama Peran</label>
-                <input
-                  className="input"
-                  value={form.name}
-                  onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                  placeholder="Misal: Manager, Kasir"
-                />
-              </div>
-              <div>
-                <label className="label">Deskripsi</label>
-                <textarea
-                  className="input"
-                  value={form.description}
-                  onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-                  placeholder="Deskripsi singkat mengenai peran ini"
-                  style={{ resize: 'vertical', minHeight: 80 }}
-                />
-              </div>
-
-              <div style={{ marginTop: 10 }}>
-                <label className="label" style={{ marginBottom: 12 }}>
-                  Hak Akses (Permissions)
-                </label>
-                <div
+            <div style={{ marginBottom: 28 }}>
+              <div style={{ marginBottom: 16 }}>
+                <h3
                   style={{
-                    border: '1px solid var(--border)',
-                    borderRadius: 12,
-                    background: 'var(--bg-elevated)',
-                    overflow: 'hidden',
+                    fontSize: '1rem',
+                    fontWeight: 700,
+                    color: 'var(--text-1)',
+                    marginBottom: 4,
                   }}
                 >
-                  {Object.entries(permsByModule).map(([mod, perms]) => {
-                    const allSelected = perms.every(p => selectedPerms.has(p.id));
-                    const someSelected = perms.some(p => selectedPerms.has(p.id));
-
-                    return (
-                      <div key={mod} style={{ borderBottom: '1px solid var(--border)' }}>
-                        <div
-                          style={{
-                            padding: '12px 16px',
-                            background: 'rgba(0,0,0,0.02)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 10,
-                            cursor: 'pointer',
-                            transition: 'background 0.2s',
-                          }}
-                          className="module-header"
-                          onClick={() => toggleModule(mod)}
-                        >
-                          <div
-                            className="checkbox-container"
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              width: 18,
-                              height: 18,
-                              borderRadius: 4,
-                              border: `1px solid ${allSelected || someSelected ? 'var(--primary)' : 'var(--border-hover)'}`,
-                              background: allSelected
-                                ? 'var(--primary)'
-                                : someSelected
-                                  ? 'rgba(99,102,241,0.15)'
-                                  : 'var(--bg-card)',
-                              transition: 'all 0.2s',
-                            }}
-                          >
-                            {allSelected && <Check size={12} color="#fff" strokeWidth={3} />}
-                            {!allSelected && someSelected && (
-                              <div
-                                style={{
-                                  width: 8,
-                                  height: 2,
-                                  background: 'var(--primary)',
-                                  borderRadius: 1,
-                                }}
-                              />
-                            )}
-                          </div>
-                          <span style={{ fontWeight: 700, fontSize: '0.88rem' }}>
-                            {MODULE_LABELS[mod] || mod}
-                          </span>
-                        </div>
-                        <div
-                          style={{
-                            padding: '12px 16px 16px 44px',
-                            display: 'grid',
-                            gridTemplateColumns: '1fr',
-                            gap: 12,
-                          }}
-                        >
-                          {perms.map(p => {
-                            const isSelected = selectedPerms.has(p.id);
-                            return (
-                              <div
-                                key={p.id}
-                                className="perm-item"
-                                style={{
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  gap: 10,
-                                  cursor: 'pointer',
-                                }}
-                                onClick={() => togglePermission(p.id)}
-                              >
-                                <div
-                                  style={{
-                                    width: 18,
-                                    height: 18,
-                                    borderRadius: 4,
-                                    border: `1px solid ${isSelected ? 'var(--primary)' : 'var(--border-hover)'}`,
-                                    background: isSelected ? 'var(--primary)' : 'var(--bg-card)',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    flexShrink: 0,
-                                    transition: 'all 0.2s',
-                                  }}
-                                >
-                                  {isSelected && <Check size={12} color="#fff" strokeWidth={3} />}
-                                </div>
-                                <span
-                                  style={{
-                                    fontSize: '0.85rem',
-                                    color: isSelected ? 'var(--text-1)' : 'var(--text-2)',
-                                    fontWeight: isSelected ? 600 : 400,
-                                  }}
-                                >
-                                  {PERM_LABELS[p.name] || p.description || p.name}
-                                </span>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    );
-                  })}
+                  Informasi Dasar
+                </h3>
+                <p style={{ fontSize: '0.82rem', color: 'var(--text-3)', margin: 0 }}>
+                  Lengkapi detail nama dan deskripsi peran.
+                </p>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                <div>
+                  <label className="label">Nama Peran</label>
+                  <input
+                    className="input"
+                    value={form.name}
+                    onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                    placeholder="Misal: Manager, Kasir"
+                  />
+                </div>
+                <div>
+                  <label className="label">Deskripsi</label>
+                  <textarea
+                    className="input"
+                    value={form.description}
+                    onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
+                    placeholder="Deskripsi singkat mengenai peran ini"
+                    style={{ resize: 'vertical', minHeight: 80 }}
+                  />
                 </div>
               </div>
+            </div>
+
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'flex-end',
+                marginBottom: 16,
+              }}
+            >
+              <div>
+                <h3
+                  style={{
+                    fontSize: '1rem',
+                    fontWeight: 700,
+                    color: 'var(--text-1)',
+                    marginBottom: 4,
+                  }}
+                >
+                  Konfigurasi Hak Akses
+                </h3>
+                <p style={{ fontSize: '0.82rem', color: 'var(--text-3)', margin: 0 }}>
+                  Tentukan fitur apa saja yang dapat diakses.
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  if (selectedPerms.size === allPermissions.length) setSelectedPerms(new Set());
+                  else setSelectedPerms(new Set(allPermissions.map(p => p.id)));
+                }}
+                className="btn btn-ghost btn-sm"
+                style={{ color: 'var(--primary)', fontWeight: 600, padding: '4px 12px' }}
+              >
+                {selectedPerms.size === allPermissions.length ? 'Hapus Semua' : 'Pilih Semua'}
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {Object.entries(permsByModule).map(([mod, perms]) => {
+                const info = MODULE_INFO[mod] || {
+                  label: mod,
+                  icon: ShieldCheck,
+                  desc: 'Modul sistem',
+                };
+                const Icon = info.icon;
+                const allSelected = perms.every(p => selectedPerms.has(p.id));
+                const count = perms.filter(p => selectedPerms.has(p.id)).length;
+
+                return (
+                  <div
+                    key={mod}
+                    className="card"
+                    style={{
+                      padding: 0,
+                      overflow: 'hidden',
+                      border: allSelected ? '1px solid var(--primary)' : '1px solid var(--border)',
+                      boxShadow: allSelected
+                        ? '0 4px 12px rgba(99,102,241,0.08)'
+                        : '0 2px 8px rgba(0,0,0,0.04)',
+                      transition: 'all 0.3s ease',
+                    }}
+                  >
+                    <div
+                      style={{
+                        padding: '10px 14px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        background: allSelected ? 'rgba(99,102,241,0.04)' : 'transparent',
+                        cursor: 'pointer',
+                      }}
+                      onClick={() => setExpandedModule(expandedModule === mod ? null : mod)}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                        <div
+                          style={{
+                            width: 32,
+                            height: 32,
+                            borderRadius: 8,
+                            background: allSelected ? 'var(--primary)' : 'var(--bg-elevated)',
+                            color: allSelected ? '#fff' : 'var(--text-2)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            transition: 'all 0.3s ease',
+                          }}
+                        >
+                          <Icon size={16} />
+                        </div>
+                        <div>
+                          <div
+                            style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-1)' }}
+                          >
+                            {info.label}
+                          </div>
+                          <div style={{ fontSize: '0.7rem', color: 'var(--text-3)' }}>
+                            {count > 0 ? (
+                              <span
+                                style={{
+                                  color: allSelected ? 'var(--primary)' : 'inherit',
+                                  fontWeight: 600,
+                                }}
+                              >
+                                {count} dari {perms.length}
+                              </span>
+                            ) : (
+                              `${count} dari ${perms.length}`
+                            )}{' '}
+                            aktif
+                          </div>
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                        <ToggleSwitch checked={allSelected} onChange={() => toggleModule(mod)} />
+                        {expandedModule === mod ? (
+                          <ChevronUp size={16} color="var(--text-3)" />
+                        ) : (
+                          <ChevronDown size={16} color="var(--text-3)" />
+                        )}
+                      </div>
+                    </div>
+
+                    {expandedModule === mod && (
+                      <div
+                        style={{
+                          padding: '0 14px 14px',
+                          display: 'grid',
+                          gridTemplateColumns: '1fr 1fr',
+                          gap: 8,
+                          borderTop: '1px solid var(--border-light, rgba(0,0,0,0.05))',
+                          paddingTop: 12,
+                        }}
+                      >
+                        {perms.map(p => {
+                          const isSel = selectedPerms.has(p.id);
+                          return (
+                            <div
+                              key={p.id}
+                              onClick={e => {
+                                e.stopPropagation();
+                                togglePermission(p.id);
+                              }}
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                padding: '8px 10px',
+                                borderRadius: 8,
+                                background: isSel ? 'var(--bg-elevated)' : 'transparent',
+                                border: `1px solid ${isSel ? 'var(--primary-light, rgba(99,102,241,0.3))' : 'var(--border)'}`,
+                                cursor: 'pointer',
+                                transition: 'all 0.2s ease',
+                                boxShadow: isSel ? '0 1px 4px rgba(0,0,0,0.02)' : 'none',
+                              }}
+                            >
+                              <span
+                                style={{
+                                  fontSize: '0.8rem',
+                                  fontWeight: isSel ? 600 : 400,
+                                  color: isSel ? 'var(--text-1)' : 'var(--text-2)',
+                                }}
+                              >
+                                {PERM_LABELS[p.name] || p.name}
+                              </span>
+                              <ToggleSwitch
+                                checked={isSel}
+                                onChange={() => togglePermission(p.id)}
+                              />
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
 
