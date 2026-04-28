@@ -1,4 +1,9 @@
+%% Moedah POS Database Schema
+%% Optimized for Modular RBAC and Offline Sync
 erDiagram
+    %% Modular Permission Convention: {module}:{action}
+    %% Example: 'inventory:read', 'kasir:write', 'settings:delete'
+
     users {
         UUID id PK
         VARCHAR name

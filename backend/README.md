@@ -8,7 +8,7 @@ Moedah POS is a modern, feature-rich point-of-sale system designed for retail an
 - **Advanced Inventory**: FIFO-based stock batch tracking, automated stock levels, and movement history.
 - **Restaurant Optimization**: Specialized support for table management, menu ingredients (BOM), and KDS (Kitchen Display System) status tracking.
 - **Financial Management**: Integrated tracking for incomes, expenses, recurring costs, and cash flow analysis.
-- **Granular RBAC**: Flexible Role-Based Access Control allowing precise permission management per store.
+- **Granular RBAC**: Flexible Role-Based Access Control using a modular naming convention (`{module}:{action}`). Allows precise permission management (read, write, update, delete) per system module.
 - **Comprehensive Auditing**: Detailed activity logs for all critical system actions.
 
 ## 🛠 Tech Stack & Dependencies

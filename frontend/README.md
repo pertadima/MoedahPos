@@ -8,7 +8,7 @@ This is the modern, responsive web interface for the Moedah POS system. Built wi
 - **Dynamic POS Interface**: Fast and intuitive checkout process for both retail and restaurant modes.
 - **Real-time Reports**: Visual data representation using Recharts for sales, expenses, and cash flow.
 - **Inventory Management**: Comprehensive tools for tracking stock, batches, and movements.
-- **Store Settings**: Easy configuration for tax, currencies, and multi-store roles.
+- **Store Settings**: Easy configuration for tax, currencies, and granular modular roles/permissions.
 - **Theme Support**: Premium look and feel with full responsiveness across all devices.
 
 ## 🛠 Tech Stack
