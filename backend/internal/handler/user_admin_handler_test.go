@@ -295,4 +295,56 @@ func TestUserAdminHandler_Misc(t *testing.T) {
 		h.ResetPassword(w, req)
 		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
 	})
+
+	t.Run("CreateRole", func(t *testing.T) {
+		reqBody := dto.CreateRoleRequest{Name: "Manager", Description: "Store Manager", PermissionIDs: []string{"00000000-0000-4000-8000-000000000001"}}
+		body, _ := json.Marshal(reqBody)
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodPost, "/admin/roles", bytes.NewBuffer(body))
+		w := httptest.NewRecorder()
+
+		svc.On("CreateRole", mock.Anything, mock.Anything).Return(&dto.RoleResponse{ID: "r1"}, nil).Once()
+
+		h.CreateRole(w, req)
+		assert.Equal(t, http.StatusCreated, w.Code)
+	})
+
+	t.Run("UpdateRole", func(t *testing.T) {
+		reqBody := dto.UpdateRoleRequest{Name: "Admin", Description: "System Admin", PermissionIDs: []string{"00000000-0000-4000-8000-000000000001"}}
+		body, _ := json.Marshal(reqBody)
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodPut, "/admin/roles/r1", bytes.NewBuffer(body))
+		w := httptest.NewRecorder()
+
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("roleId", "r1")
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+		svc.On("UpdateRole", mock.Anything, "r1", mock.Anything).Return(&dto.RoleResponse{ID: "r1"}, nil).Once()
+
+		h.UpdateRole(w, req)
+		assert.Equal(t, http.StatusOK, w.Code)
+	})
+
+	t.Run("DeleteRole", func(t *testing.T) {
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodDelete, "/admin/roles/r1", nil)
+		w := httptest.NewRecorder()
+
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("roleId", "r1")
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+		svc.On("DeleteRole", mock.Anything, "r1").Return(nil).Once()
+
+		h.DeleteRole(w, req)
+		assert.Equal(t, http.StatusNoContent, w.Code)
+	})
+
+	t.Run("ListPermissions", func(t *testing.T) {
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "/admin/permissions", nil)
+		w := httptest.NewRecorder()
+
+		svc.On("ListPermissions", mock.Anything).Return([]dto.PermissionResponse{{ID: "p1"}}, nil).Once()
+
+		h.ListPermissions(w, req)
+		assert.Equal(t, http.StatusOK, w.Code)
+	})
 }

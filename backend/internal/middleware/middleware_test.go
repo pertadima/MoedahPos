@@ -94,3 +94,35 @@ func TestRequirePermission(t *testing.T) {
 		assert.Equal(t, http.StatusOK, w.Code)
 	})
 }
+
+func TestAdminMiddlewares(t *testing.T) {
+	db, mock, _ := sqlmock.New()
+	sqlxDB := sqlx.NewDb(db, "postgres")
+	h := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+
+	t.Run("RequireAdminOrSuperAdmin_Success", func(t *testing.T) {
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "/", nil)
+		req = req.WithContext(context.WithValue(req.Context(), UserIDKey, "u1"))
+		w := httptest.NewRecorder()
+
+		mock.ExpectQuery("SELECT COUNT").WithArgs("u1").WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
+
+		mw := RequireAdminOrSuperAdmin(sqlxDB)
+		mw(h).ServeHTTP(w, req)
+		assert.Equal(t, http.StatusOK, w.Code)
+	})
+
+	t.Run("RequireSuperAdmin_Forbidden", func(t *testing.T) {
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "/", nil)
+		req = req.WithContext(context.WithValue(req.Context(), UserIDKey, "u1"))
+		w := httptest.NewRecorder()
+
+		mock.ExpectQuery("SELECT COUNT").WithArgs("u1").WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(0))
+
+		mw := RequireSuperAdmin(sqlxDB)
+		mw(h).ServeHTTP(w, req)
+		assert.Equal(t, http.StatusForbidden, w.Code)
+	})
+}
