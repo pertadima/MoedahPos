@@ -22,6 +22,7 @@ import (
 	"github.com/moedahpos/backend/pkg/jwt"
 )
 
+//nolint:funlen
 func TestTerminHandler(t *testing.T) {
 	tSvc := new(mocks.TerminServiceInterface)
 	v := validator.New()
