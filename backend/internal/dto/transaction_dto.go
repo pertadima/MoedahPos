@@ -108,6 +108,8 @@ type TransactionResponse struct {
 	Notes             string                    `json:"notes,omitempty"`
 	CartDiscountType  string                    `json:"cart_discount_type"`
 	CartDiscountValue float64                   `json:"cart_discount_value"`
+	PointsRedeemed    float64                   `json:"points_redeemed"`
+	PointsDiscount    float64                   `json:"points_discount"`
 	Items             []TransactionItemResponse `json:"items"`
 	CreatedAt         string                    `json:"created_at"`
 	UpdatedAt         string                    `json:"updated_at"`

@@ -948,6 +948,8 @@ func toTransactionResponse(t *domain.Transaction) *dto.TransactionResponse {
 		Notes:             t.Notes,
 		CartDiscountType:  t.CartDiscountType,
 		CartDiscountValue: t.CartDiscountValue,
+		PointsRedeemed:    t.PointsRedeemed,
+		PointsDiscount:    t.PointsDiscount,
 		Items:             items,
 		CreatedAt:         t.CreatedAt.Format(time.RFC3339),
 		UpdatedAt:         t.UpdatedAt.Format(time.RFC3339),

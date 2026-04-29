@@ -11,8 +11,6 @@ import {
   CheckCircle2,
   XCircle,
   Clock,
-  User,
-  CreditCard,
   Loader2,
   Eye,
   TrendingUp,
@@ -181,6 +179,7 @@ function ReceiptModal({ txn, onClose }: { txn: Transaction; onClose: () => void 
   <div class="row muted"><span>Subtotal</span><span>${formatRp(txn.subtotal)}</span></div>
   ${txn.discount_amt > 0 ? `<div class="row muted"><span>Diskon</span><span>-${formatRp(txn.discount_amt)}</span></div>` : ''}
   <div class="row muted"><span>PPN</span><span>${formatRp(txn.tax_amt)}</span></div>
+  ${txn.points_redeemed && txn.points_redeemed > 0 ? `<div class="row muted"><span>Poin Digunakan (${txn.points_redeemed} pts)</span><span>-${formatRp(txn.points_discount ?? 0)}</span></div>` : ''}
   <div class="total-row"><span>TOTAL</span><span>${formatRp(txn.total)}</span></div>
   <div class="row muted" style="margin-top:4px;"><span>Bayar (${(txn.payment_method ?? '').toUpperCase()})</span><span>${formatRp(txn.payment_amount)}</span></div>
   ${txn.change_amount > 0 ? `<div class="row muted"><span>Kembalian</span><span>${formatRp(txn.change_amount)}</span></div>` : ''}
@@ -316,6 +315,19 @@ function ReceiptModal({ txn, onClose }: { txn: Transaction; onClose: () => void 
               <span>PPN</span>
               <span>{formatRp(txn.tax_amt)}</span>
             </div>
+            {txn.points_redeemed && txn.points_redeemed > 0 ? (
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  color: '#f59e0b',
+                  fontSize: '0.8rem',
+                }}
+              >
+                <span>Poin ({txn.points_redeemed.toLocaleString('id-ID')} pts)</span>
+                <span>-{formatRp(txn.points_discount ?? 0)}</span>
+              </div>
+            ) : null}
             <div
               style={{
                 display: 'flex',
@@ -395,319 +407,173 @@ function DetailDrawer({
   onClose: () => void;
   onReprint: (t: Transaction) => void;
 }) {
-  return (
+  const Row = ({ label, value, bold }: { label: string; value: string; bold?: boolean }) => (
     <div
       style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 5000,
         display: 'flex',
-        justifyContent: 'flex-end',
+        justifyContent: 'space-between',
+        fontSize: '0.83rem',
+        padding: '4px 0',
+        fontWeight: bold ? 600 : 400,
+        color: bold ? 'var(--text-1)' : 'var(--text-2)',
       }}
+    >
+      <span>{label}</span>
+      <span style={{ fontVariantNumeric: 'tabular-nums' }}>{value}</span>
+    </div>
+  );
+
+  const Section = ({ children }: { children: React.ReactNode }) => (
+    <div
+      style={{
+        background: 'var(--bg-card)',
+        border: '1px solid var(--border)',
+        borderRadius: 10,
+        padding: '12px 14px',
+        marginBottom: 10,
+      }}
+    >
+      {children}
+    </div>
+  );
+
+  const Label = ({ text }: { text: string }) => (
+    <div
+      style={{
+        fontSize: '0.68rem',
+        color: 'var(--text-3)',
+        textTransform: 'uppercase',
+        letterSpacing: '0.06em',
+        marginBottom: 8,
+      }}
+    >
+      {text}
+    </div>
+  );
+
+  return (
+    <div
+      style={{ position: 'fixed', inset: 0, zIndex: 5000, display: 'flex', justifyContent: 'flex-end' }}
       onClick={onClose}
     >
-      {/* backdrop */}
-      <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)' }} />
-      {/* drawer */}
+      <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.35)' }} />
       <div
         style={{
           position: 'relative',
-          width: 420,
+          width: 400,
           height: '100%',
-          background: 'var(--bg-card)',
+          background: 'var(--bg-elevated)',
           borderLeft: '1px solid var(--border)',
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
-          boxShadow: '-4px 0 24px rgba(0,0,0,0.35)',
         }}
         onClick={e => e.stopPropagation()}
       >
-        {/* header */}
+        {/* Header */}
         <div
           style={{
-            padding: '18px 20px',
+            padding: '16px 20px',
             borderBottom: '1px solid var(--border)',
+            background: 'var(--bg-card)',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
           }}
         >
           <div>
-            <div style={{ fontWeight: 700, fontSize: '1rem' }}>Detail Transaksi</div>
-            <div
-              style={{
-                fontSize: '0.75rem',
-                color: 'var(--text-3)',
-                fontFamily: 'monospace',
-                marginTop: 2,
-              }}
-            >
+            <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>Detail Transaksi</div>
+            <div style={{ fontSize: '0.7rem', color: 'var(--text-3)', marginTop: 2, fontFamily: 'monospace' }}>
               #{txn.id.slice(0, 8).toUpperCase()}
             </div>
           </div>
           <button className="btn btn-ghost btn-sm" onClick={onClose}>
-            <X size={16} />
+            <X size={15} />
           </button>
         </div>
 
-        {/* body */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '20px' }}>
-          {/* cashier shift card */}
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 12,
-              background: 'var(--bg-elevated)',
-              borderRadius: 10,
-              padding: '12px 14px',
-              marginBottom: 16,
-              border: '1px solid var(--border-md)',
-            }}
-          >
-            <div
-              style={{
-                width: 38,
-                height: 38,
-                borderRadius: 10,
-                background: 'rgba(99,102,241,0.15)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <User size={18} style={{ color: '#818cf8' }} />
-            </div>
-            <div>
-              <div style={{ fontWeight: 700, fontSize: '0.92rem' }}>{txn.cashier_name}</div>
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-3)' }}>
-                {new Date(txn.created_at).toLocaleString('id-ID', {
-                  dateStyle: 'long',
-                  timeStyle: 'short',
-                })}
-              </div>
-            </div>
-            <div style={{ marginLeft: 'auto' }}>
-              <StatusBadge status={txn.status} />
-            </div>
-          </div>
+        {/* Body */}
+        <div style={{ flex: 1, overflowY: 'auto', padding: '16px' }}>
 
-          {/* payment summary */}
-          <div
-            style={{
-              background: 'rgba(16,185,129,0.07)',
-              borderRadius: 10,
-              padding: '14px',
-              border: '1px solid rgba(16,185,129,0.15)',
-              marginBottom: 16,
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
-              <CreditCard size={14} style={{ color: 'var(--accent-em)' }} />
-              <span style={{ fontWeight: 700, fontSize: '0.85rem' }}>Pembayaran</span>
-              <span style={{ marginLeft: 'auto' }}>
-                <PayBadge method={txn.payment_method} />
-              </span>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-              {[
-                { label: 'Subtotal', val: formatRp(txn.subtotal) },
-                ...(txn.discount_amt > 0
-                  ? [{ label: 'Diskon', val: `-${formatRp(txn.discount_amt)}`, red: true }]
-                  : []),
-                { label: 'PPN', val: formatRp(txn.tax_amt) },
-              ].map(({ label, val, red }) => (
-                <div
-                  key={label}
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    fontSize: '0.82rem',
-                    color: red ? 'var(--accent-rd)' : 'var(--text-2)',
-                  }}
-                >
-                  <span>{label}</span>
-                  <span>{val}</span>
+          {/* Meta */}
+          <Section>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <div style={{ fontSize: '0.85rem', fontWeight: 500 }}>{txn.cashier_name}</div>
+                <div style={{ fontSize: '0.72rem', color: 'var(--text-3)', marginTop: 2 }}>
+                  {new Date(txn.created_at).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })}
                 </div>
-              ))}
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  fontWeight: 800,
-                  fontSize: '1rem',
-                  color: 'var(--accent-em)',
-                  paddingTop: 6,
-                  borderTop: '1px dashed rgba(16,185,129,0.3)',
-                  marginTop: 4,
-                }}
-              >
-                <span>TOTAL</span>
-                <span>{formatRp(txn.total)}</span>
               </div>
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  fontSize: '0.82rem',
-                  color: 'var(--text-2)',
-                }}
-              >
-                <span>Dibayar</span>
-                <span>{formatRp(txn.payment_amount)}</span>
+              <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                <StatusBadge status={txn.status} />
+                <PayBadge method={txn.payment_method} />
               </div>
-              {txn.change_amount > 0 && (
-                <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    fontSize: '0.82rem',
-                    color: 'var(--accent-em)',
-                    fontWeight: 600,
-                  }}
-                >
-                  <span>Kembalian</span>
-                  <span>{formatRp(txn.change_amount)}</span>
+            </div>
+          </Section>
+
+          {/* Customer */}
+          {txn.customer_name && (
+            <Section>
+              <Label text="Pelanggan" />
+              <div style={{ fontSize: '0.85rem', fontWeight: 500 }}>{txn.customer_name}</div>
+              {txn.customer_phone && (
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-3)', marginTop: 2 }}>
+                  {txn.customer_phone}
                 </div>
               )}
-            </div>
-          </div>
+            </Section>
+          )}
 
-          {/* customer info */}
-          <div
-            style={{
-              marginBottom: 16,
-              padding: '12px 14px',
-              background: txn.customer_name ? 'rgba(16,185,129,0.07)' : 'var(--bg-elevated)',
-              borderRadius: 10,
-              border: txn.customer_name
-                ? '1px solid rgba(16,185,129,0.25)'
-                : '1px solid var(--border-md)',
-            }}
-          >
-            <div
-              style={{
-                fontSize: '0.68rem',
-                color: txn.customer_name ? '#10b981' : 'var(--text-3)',
-                marginBottom: 6,
-                textTransform: 'uppercase',
-                letterSpacing: '0.08em',
-                fontWeight: 700,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 4,
-              }}
-            >
-              <User size={11} /> Pelanggan
-            </div>
-            {txn.customer_name ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <div
-                  style={{
-                    width: 34,
-                    height: 34,
-                    borderRadius: '50%',
-                    background: 'linear-gradient(135deg, #10b981, #059669)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontWeight: 800,
-                    fontSize: '0.85rem',
-                    color: '#fff',
-                    flexShrink: 0,
-                  }}
-                >
-                  {txn.customer_name.charAt(0).toUpperCase()}
-                </div>
-                <div>
-                  <div style={{ fontWeight: 700, fontSize: '0.92rem', color: '#10b981' }}>
-                    {txn.customer_name}
-                  </div>
-                  {txn.customer_phone && (
-                    <div style={{ fontSize: '0.78rem', color: 'var(--text-2)' }}>
-                      📞 {txn.customer_phone}
+          {/* Items */}
+          <Section>
+            <Label text={`Item · ${txn.items?.length ?? 0}`} />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {(txn.items ?? []).map((item, i) => (
+                <div key={i} style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: '0.85rem', fontWeight: 500 }}>{item.product_name}</div>
+                    <div style={{ fontSize: '0.72rem', color: 'var(--text-3)', marginTop: 1 }}>
+                      {formatRp(item.unit_price)} × {item.quantity}
+                      {item.tax_rate > 0 && ` · PPN ${item.tax_rate}%`}
                     </div>
-                  )}
-                </div>
-              </div>
-            ) : (
-              <div style={{ fontSize: '0.82rem', color: 'var(--text-3)', fontStyle: 'italic' }}>
-                Tidak ada data customer
-              </div>
-            )}
-          </div>
-
-          {/* items */}
-          <div
-            style={{
-              fontSize: '0.75rem',
-              color: 'var(--text-3)',
-              marginBottom: 8,
-              textTransform: 'uppercase',
-              letterSpacing: '0.05em',
-            }}
-          >
-            Item ({txn.items?.length ?? 0})
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            {(txn.items ?? []).map((item, i) => (
-              <div
-                key={i}
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'flex-start',
-                  padding: '10px 12px',
-                  background: 'var(--bg-elevated)',
-                  borderRadius: 8,
-                  border: '1px solid var(--border)',
-                }}
-              >
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 600, fontSize: '0.88rem' }}>{item.product_name}</div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-3)', marginTop: 1 }}>
-                    {formatRp(item.unit_price)} × {item.quantity}
-                    {item.tax_rate > 0 && ` · PPN ${item.tax_rate}%`}
+                  </div>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 500, marginLeft: 12, whiteSpace: 'nowrap' }}>
+                    {formatRp(item.subtotal)}
                   </div>
                 </div>
-                <div
-                  style={{
-                    fontWeight: 700,
-                    fontSize: '0.88rem',
-                    color: 'var(--accent-em)',
-                    marginLeft: 12,
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  {formatRp(item.subtotal)}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {txn.notes && (
-            <div
-              style={{
-                marginTop: 12,
-                padding: '10px 12px',
-                background: 'var(--bg-elevated)',
-                borderRadius: 8,
-                border: '1px solid var(--border)',
-                fontSize: '0.82rem',
-                color: 'var(--text-2)',
-              }}
-            >
-              📝 {txn.notes}
+              ))}
             </div>
+          </Section>
+
+          {/* Payment */}
+          <Section>
+            <Label text="Rincian" />
+            <Row label="Subtotal" value={formatRp(txn.subtotal)} />
+            {txn.discount_amt > 0 && <Row label="Diskon" value={`−${formatRp(txn.discount_amt)}`} />}
+            {txn.tax_amt > 0 && <Row label="PPN" value={formatRp(txn.tax_amt)} />}
+            {txn.points_redeemed && txn.points_redeemed > 0 ? (
+              <Row label={`Poin (${txn.points_redeemed.toLocaleString('id-ID')} pts)`} value={`−${formatRp(txn.points_discount ?? 0)}`} />
+            ) : null}
+            <div style={{ borderTop: '1px solid var(--border)', margin: '8px 0' }} />
+            <Row label="Total" value={formatRp(txn.total)} bold />
+            <Row label="Dibayar" value={formatRp(txn.payment_amount)} />
+            {txn.change_amount > 0 && <Row label="Kembalian" value={formatRp(txn.change_amount)} />}
+          </Section>
+
+          {/* Notes */}
+          {txn.notes && (
+            <Section>
+              <div style={{ fontSize: '0.82rem', color: 'var(--text-2)' }}>{txn.notes}</div>
+            </Section>
           )}
         </div>
 
-        {/* footer */}
+        {/* Footer */}
         <div
           style={{
-            padding: '14px 20px',
+            padding: '14px 16px',
             borderTop: '1px solid var(--border)',
+            background: 'var(--bg-card)',
             display: 'flex',
             gap: 8,
           }}
