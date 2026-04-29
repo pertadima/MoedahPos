@@ -26,6 +26,6 @@ export interface LoyaltyHistoryPage {
     total: number;
     page: number;
     per_page: number;
-    last_page: number;
+    total_pages: number;
   };
 }

@@ -160,7 +160,7 @@ func (h *LoyaltyHandler) GetHistoryPaginated(w http.ResponseWriter, r *http.Requ
 		response.Error(w, http.StatusInternalServerError, "Failed to get loyalty history")
 		return
 	}
-	response.JSON(w, http.StatusOK, dto.LoyaltyHistoryResponse{Data: entries, Meta: meta})
+	response.Success(w, dto.LoyaltyHistoryResponse{Data: entries, Meta: meta})
 }
 
 // VoidTransactionPoints godoc
