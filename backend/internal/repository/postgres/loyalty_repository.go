@@ -5,10 +5,12 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 
 	"github.com/moedahpos/backend/internal/domain"
+	"github.com/moedahpos/backend/internal/dto"
 	"github.com/moedahpos/backend/internal/repository"
 )
 
@@ -209,4 +211,74 @@ var _ interface {
 	GetHistoryPaginated(context.Context, string, int, int) ([]*domain.LoyaltyLedger, int, error)
 	AssignTier(context.Context, string, string) error
 	GetCustomerTier(context.Context, string) (*domain.MembershipTier, error)
+	GetTopCustomersByBalance(context.Context, string, int) ([]dto.TopCustomerLoyalty, error)
+	GetPointsSummary(context.Context, string, time.Time, time.Time) (float64, float64, error)
 } = (*LoyaltyRepo)(nil)
+
+// GetTopCustomersByBalance returns the top N customers by current loyalty balance for a store.
+func (r *LoyaltyRepo) GetTopCustomersByBalance(ctx context.Context, storeID string, limit int) ([]dto.TopCustomerLoyalty, error) {
+	const q = `
+		SELECT
+			c.id                     AS customer_id,
+			c.name                   AS customer_name,
+			COALESCE(bal.balance, 0) AS balance,
+			mt.name                  AS tier_name,
+			mt.multiplier            AS tier_multiplier
+		FROM customers c
+		LEFT JOIN LATERAL (
+			SELECT COALESCE(SUM(points_delta), 0) AS balance
+			FROM loyalty_ledger
+			WHERE customer_id = c.id
+		) bal ON true
+		LEFT JOIN membership_tiers mt ON mt.id = c.loyalty_tier_id
+		WHERE c.store_id = $1
+		  AND c.deleted_at IS NULL
+		  AND COALESCE(bal.balance, 0) > 0
+		ORDER BY balance DESC
+		LIMIT $2`
+
+	type row struct {
+		CustomerID   string   `db:"customer_id"`
+		CustomerName string   `db:"customer_name"`
+		Balance      float64  `db:"balance"`
+		TierName     *string  `db:"tier_name"`
+		TierMult     *float64 `db:"tier_multiplier"`
+	}
+	var rows []row
+	if err := r.db.SelectContext(ctx, &rows, q, storeID, limit); err != nil {
+		return nil, fmt.Errorf("LoyaltyRepo.GetTopCustomersByBalance: %w", err)
+	}
+	out := make([]dto.TopCustomerLoyalty, 0, len(rows))
+	for _, row := range rows {
+		out = append(out, dto.TopCustomerLoyalty{
+			CustomerID:   row.CustomerID,
+			CustomerName: row.CustomerName,
+			Balance:      row.Balance,
+			TierName:     row.TierName,
+			TierMult:     row.TierMult,
+		})
+	}
+	return out, nil
+}
+
+// GetPointsSummary returns total earned and total used (absolute) within [from, to) for a store.
+func (r *LoyaltyRepo) GetPointsSummary(ctx context.Context, storeID string, from, to time.Time) (earned, used float64, err error) {
+	const q = `
+		SELECT
+			COALESCE(SUM(CASE WHEN ll.points_delta > 0 THEN ll.points_delta  ELSE 0 END), 0) AS earned,
+			COALESCE(SUM(CASE WHEN ll.points_delta < 0 THEN -ll.points_delta ELSE 0 END), 0) AS used
+		FROM loyalty_ledger ll
+		JOIN customers c ON c.id = ll.customer_id
+		WHERE c.store_id = $1
+		  AND ll.created_at >= $2
+		  AND ll.created_at < $3`
+
+	var res struct {
+		Earned float64 `db:"earned"`
+		Used   float64 `db:"used"`
+	}
+	if err = r.db.QueryRowxContext(ctx, q, storeID, from, to).StructScan(&res); err != nil {
+		return 0, 0, fmt.Errorf("LoyaltyRepo.GetPointsSummary: %w", err)
+	}
+	return res.Earned, res.Used, nil
+}

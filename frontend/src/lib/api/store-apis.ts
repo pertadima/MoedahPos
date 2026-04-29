@@ -11,6 +11,7 @@ import type {
   LoyaltyBalance,
   LoyaltyLedgerEntry,
   LoyaltyHistoryPage,
+  LoyaltySummary,
 } from '@/types';
 
 export const storesApi = {
@@ -415,6 +416,12 @@ export const loyaltyApi = {
     const res = await api.get<LoyaltyHistoryPage>(
       `/stores/${storeId}/customers/${customerId}/loyalty/history/paged?page=${page}&per_page=${perPage}`
     );
+    return res.data;
+  },
+
+  /** Get loyalty dashboard summary: top customers + points earned/used per period. */
+  getSummary: async (storeId: string): Promise<LoyaltySummary> => {
+    const res = await api.get<LoyaltySummary>(`/stores/${storeId}/loyalty/summary`);
     return res.data;
   },
 

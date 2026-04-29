@@ -299,6 +299,50 @@ func (s *LoyaltyService) AssignTier(ctx context.Context, customerID, tierID stri
 	return nil
 }
 
+// GetLoyaltySummary returns dashboard loyalty data: top customers + points earned/used per period.
+func (s *LoyaltyService) GetLoyaltySummary(ctx context.Context, storeID string) (*dto.LoyaltySummaryResponse, error) {
+	top, err := s.loyaltyRepo.GetTopCustomersByBalance(ctx, storeID, 5)
+	if err != nil {
+		return nil, fmt.Errorf("LoyaltyService.GetLoyaltySummary top: %w", err)
+	}
+
+	now := time.Now()
+	midnight := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+	monday := midnight.AddDate(0, 0, -(int(now.Weekday())+6)%7)
+	firstOfMonth := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
+	tomorrow := midnight.AddDate(0, 0, 1)
+
+	type bucket struct {
+		period string
+		from   time.Time
+		to     time.Time
+	}
+	buckets := []bucket{
+		{"today", midnight, tomorrow},
+		{"week", monday, tomorrow},
+		{"month", firstOfMonth, tomorrow},
+	}
+
+	periods := make([]dto.LoyaltyPointsSummary, 0, 3)
+	for _, b := range buckets {
+		earned, used, err := s.loyaltyRepo.GetPointsSummary(ctx, storeID, b.from, b.to)
+		if err != nil {
+			return nil, fmt.Errorf("LoyaltyService.GetLoyaltySummary %s: %w", b.period, err)
+		}
+		periods = append(periods, dto.LoyaltyPointsSummary{
+			Period:    b.period,
+			Earned:    earned,
+			Used:      used,
+			NetChange: earned - used,
+		})
+	}
+
+	return &dto.LoyaltySummaryResponse{
+		TopCustomers: top,
+		Periods:      periods,
+	}, nil
+}
+
 // ─── Mappers ──────────────────────────────────────────────────────────────────
 
 func toTierResponse(t *domain.MembershipTier) *dto.MembershipTierResponse {

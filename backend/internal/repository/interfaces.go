@@ -316,4 +316,8 @@ type LoyaltyRepository interface {
 	AssignTier(ctx context.Context, customerID, tierID string) error
 	// GetCustomerTier returns the tier for a customer (nil if unassigned).
 	GetCustomerTier(ctx context.Context, customerID string) (*domain.MembershipTier, error)
+	// GetTopCustomersByBalance returns top N customers by total point balance for a store.
+	GetTopCustomersByBalance(ctx context.Context, storeID string, limit int) ([]dto.TopCustomerLoyalty, error)
+	// GetPointsSummary returns total points earned and used within [from, to) for a store.
+	GetPointsSummary(ctx context.Context, storeID string, from, to time.Time) (earned, used float64, err error)
 }

@@ -254,3 +254,16 @@ func (h *LoyaltyHandler) AssignTier(w http.ResponseWriter, r *http.Request) {
 func isLoyaltyValidationError(err error) bool {
 	return errors.Is(err, service.ErrInsufficientPoints) || errors.Is(err, service.ErrInvalidRedemption)
 }
+
+// GetLoyaltySummary godoc
+// GET /api/v1/stores/{storeId}/loyalty/summary
+func (h *LoyaltyHandler) GetLoyaltySummary(w http.ResponseWriter, r *http.Request) {
+	storeID := chi.URLParam(r, "storeId")
+	result, err := h.svc.GetLoyaltySummary(r.Context(), storeID)
+	if err != nil {
+		h.log.Error().Err(err).Str("store_id", storeID).Msg("LoyaltyHandler.GetLoyaltySummary failed")
+		response.Error(w, http.StatusInternalServerError, "Failed to get loyalty summary")
+		return
+	}
+	response.Success(w, result)
+}

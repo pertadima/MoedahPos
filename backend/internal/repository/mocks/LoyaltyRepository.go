@@ -4,8 +4,10 @@ package mocks
 
 import (
 	context "context"
+	"time"
 
 	domain "github.com/moedahpos/backend/internal/domain"
+	dto "github.com/moedahpos/backend/internal/dto"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -273,6 +275,24 @@ func (_m *LoyaltyRepository) GetHistoryPaginated(ctx context.Context, customerID
 	}
 
 	return r0, r1, r2
+}
+
+// GetTopCustomersByBalance provides a mock function with given fields: ctx, storeID, limit
+func (_m *LoyaltyRepository) GetTopCustomersByBalance(ctx context.Context, storeID string, limit int) ([]dto.TopCustomerLoyalty, error) {
+	ret := _m.Called(ctx, storeID, limit)
+	var r0 []dto.TopCustomerLoyalty
+	if rf, ok := ret.Get(0).(func(context.Context, string, int) []dto.TopCustomerLoyalty); ok {
+		r0 = rf(ctx, storeID, limit)
+	} else if ret.Get(0) != nil {
+		r0 = ret.Get(0).([]dto.TopCustomerLoyalty)
+	}
+	return r0, ret.Error(1)
+}
+
+// GetPointsSummary provides a mock function with given fields: ctx, storeID, from, to
+func (_m *LoyaltyRepository) GetPointsSummary(ctx context.Context, storeID string, from, to time.Time) (float64, float64, error) {
+	ret := _m.Called(ctx, storeID, from, to)
+	return ret.Get(0).(float64), ret.Get(1).(float64), ret.Error(2)
 }
 
 // NewLoyaltyRepository creates a new instance of LoyaltyRepository. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

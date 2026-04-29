@@ -29,3 +29,23 @@ export interface LoyaltyHistoryPage {
     total_pages: number;
   };
 }
+
+export interface TopCustomerLoyalty {
+  customer_id: string;
+  customer_name: string;
+  balance: number;
+  tier_name?: string;
+  tier_multiplier?: number;
+}
+
+export interface LoyaltyPointsSummary {
+  period: 'today' | 'week' | 'month';
+  earned: number;
+  used: number;
+  net_change: number;
+}
+
+export interface LoyaltySummary {
+  top_customers: TopCustomerLoyalty[];
+  periods: LoyaltyPointsSummary[];
+}

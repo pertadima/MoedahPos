@@ -118,6 +118,12 @@ func (m *mockLoyaltyRepo) GetHistoryPaginated(_ context.Context, _ string, page,
 	}
 	return m.history[start:end], len(m.history), nil
 }
+func (m *mockLoyaltyRepo) GetTopCustomersByBalance(_ context.Context, _ string, _ int) ([]dto.TopCustomerLoyalty, error) {
+	return nil, nil
+}
+func (m *mockLoyaltyRepo) GetPointsSummary(_ context.Context, _ string, _, _ time.Time) (float64, float64, error) {
+	return 0, 0, nil
+}
 func (m *mockLoyaltyRepo) AssignTier(_ context.Context, _, _ string) error { return m.assignErr }
 func (m *mockLoyaltyRepo) GetCustomerTier(_ context.Context, _ string) (*domain.MembershipTier, error) {
 	return m.tier, m.tierErr

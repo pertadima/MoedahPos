@@ -196,4 +196,5 @@ type LoyaltyServiceInterface interface {
 	VoidTransactionPoints(ctx context.Context, customerID string, transactionID *string, originalPoints float64) error
 	AdjustPoints(ctx context.Context, customerID string, delta float64, note string) (*dto.LoyaltyLedgerResponse, error)
 	AssignTier(ctx context.Context, customerID, tierID string) error
+	GetLoyaltySummary(ctx context.Context, storeID string) (*dto.LoyaltySummaryResponse, error)
 }

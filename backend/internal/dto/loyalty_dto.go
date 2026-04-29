@@ -64,3 +64,29 @@ type LoyaltyHistoryResponse struct {
 type AssignTierRequest struct {
 	TierID string `json:"tier_id" validate:"required,uuid"`
 }
+
+// ─── Loyalty Summary (Dashboard) ─────────────────────────────────────────────
+
+// LoyaltyPointsSummary is points earned/used in a single period bucket.
+type LoyaltyPointsSummary struct {
+	Period    string  `json:"period"` // "today" | "week" | "month"
+	Earned    float64 `json:"earned"`
+	Used      float64 `json:"used"`
+	NetChange float64 `json:"net_change"` // earned - used (positive = net credit)
+}
+
+// TopCustomerLoyalty is one customer's loyalty standing.
+type TopCustomerLoyalty struct {
+	CustomerID   string   `json:"customer_id"`
+	CustomerName string   `json:"customer_name"`
+	Balance      float64  `json:"balance"`
+	TierName     *string  `json:"tier_name,omitempty"`
+	TierMult     *float64 `json:"tier_multiplier,omitempty"`
+}
+
+// LoyaltySummaryResponse is the full dashboard payload for the loyalty block.
+type LoyaltySummaryResponse struct {
+	TopCustomers []TopCustomerLoyalty   `json:"top_customers"` // top 5 by balance
+	Periods      []LoyaltyPointsSummary `json:"periods"`       // today / week / month
+}
+

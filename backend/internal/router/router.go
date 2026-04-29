@@ -215,6 +215,7 @@ func New(deps *Dependencies) http.Handler { //nolint:funlen // route wiring is i
 						// Loyalty tiers (store-scoped read)
 						r.Route("/loyalty", func(r chi.Router) {
 							r.Get("/tiers", withPerm(deps, "kasir:read", deps.LoyaltyHandler.ListTiers))
+							r.Get("/summary", withPerm(deps, "kasir:read", deps.LoyaltyHandler.GetLoyaltySummary))
 						})
 
 						// Stock

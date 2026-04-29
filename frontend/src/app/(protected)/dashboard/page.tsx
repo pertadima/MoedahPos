@@ -16,7 +16,7 @@ import {
   LayoutDashboard,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthContext';
-import { reportsApi, stockApi, purchaseOrdersApi } from '@/lib/api/store-apis';
+import { reportsApi, stockApi, purchaseOrdersApi, loyaltyApi } from '@/lib/api/store-apis';
 import { transactionsApi } from '@/lib/api/transactions';
 import { formatRp, formatDateTime, thirtyDaysAgoStr, sevenDaysAgoStr, todayStr } from '@/lib/utils';
 import type {
@@ -26,6 +26,7 @@ import type {
   SalesByProductRow,
   ProfitSummaryResponse,
   PaginatedData,
+  LoyaltySummary,
 } from '@/types';
 import {
   LineChart,
@@ -68,6 +69,7 @@ export default function DashboardPage() {
   const [lowStock, setLowStock] = useState<StockLevel[]>([]);
   const [payables, setPayables] = useState<PayablesSummary | null>(null);
   const [profitData, setProfitData] = useState<ProfitSummaryResponse | null>(null);
+  const [loyaltySummary, setLoyaltySummary] = useState<LoyaltySummary | null>(null);
   const [loading, setLoading] = useState(true);
 
   type TimeFilter = 'today' | '7days' | '30days';
@@ -123,13 +125,15 @@ export default function DashboardPage() {
       stockApi.levels(sid, true),
       purchaseOrdersApi.payableSummary(sid),
       reportsApi.profit(sid, thirtyDaysAgoStr(), todayStr(), 'day'),
+      loyaltyApi.getSummary(sid).catch(() => null),
     ])
-      .then(([s, t, st, p, pr]) => {
+      .then(([s, t, st, p, pr, ls]) => {
         setSummary(s.data as SalesSummaryResponse);
         setRecentTxns((t.data as PaginatedData<Transaction>).data ?? []);
         setLowStock(st.data as StockLevel[]);
         setPayables(p.data as PayablesSummary);
         setProfitData(pr.data as ProfitSummaryResponse);
+        if (ls) setLoyaltySummary(ls as LoyaltySummary);
       })
       .catch(console.error)
       .finally(() => setLoading(false));
@@ -592,6 +596,60 @@ export default function DashboardPage() {
                     </span>
                     <span className="badge badge-amber">
                       {s.quantity} {s.unit}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* ── Loyalty Points Summary ── */}
+          {loyaltySummary && (
+            <div className="card reveal-animate" style={{ padding: 18, animationDelay: '0.7s' }}>
+              <div className="type-subheading" style={{ marginBottom: 14 }}>Poin Loyalitas</div>
+              <div className="flex flex-col gap-3">
+                {loyaltySummary.periods.map(p => (
+                  <div key={p.period} className="flex justify-between items-center">
+                    <span className="type-body-sm" style={{ textTransform: 'capitalize' }}>
+                      {p.period === 'today' ? 'Hari Ini' : p.period === 'week' ? 'Minggu Ini' : 'Bulan Ini'}
+                    </span>
+                    <div style={{ display: 'flex', gap: 6, fontSize: '0.78rem' }}>
+                      <span style={{ color: '#10b981', fontWeight: 600 }}>
+                        +{p.earned.toLocaleString('id-ID')}
+                      </span>
+                      <span style={{ color: 'var(--text-3)' }}>/</span>
+                      <span style={{ color: '#f59e0b', fontWeight: 600 }}>
+                        −{p.used.toLocaleString('id-ID')}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+                <div style={{ fontSize: '0.68rem', color: 'var(--text-3)', marginTop: 2 }}>
+                  Didapatkan / Digunakan (pts)
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ── Top Loyal Customers ── */}
+          {loyaltySummary && loyaltySummary.top_customers.length > 0 && (
+            <div className="card reveal-animate" style={{ padding: 18, animationDelay: '0.72s' }}>
+              <div className="type-subheading" style={{ marginBottom: 14 }}>Top Pelanggan Setia</div>
+              <div className="flex flex-col gap-2">
+                {loyaltySummary.top_customers.map((c, i) => (
+                  <div
+                    key={c.customer_id}
+                    className="flex justify-between items-center"
+                    style={{ padding: '6px 0', borderBottom: i < loyaltySummary.top_customers.length - 1 ? '1px solid var(--border)' : 'none' }}
+                  >
+                    <div>
+                      <div className="type-body-sm" style={{ fontWeight: 600 }}>{c.customer_name}</div>
+                      {c.tier_name && (
+                        <div className="type-caption">{c.tier_name}</div>
+                      )}
+                    </div>
+                    <span style={{ fontSize: '0.82rem', fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
+                      {c.balance.toLocaleString('id-ID')} pts
                     </span>
                   </div>
                 ))}
