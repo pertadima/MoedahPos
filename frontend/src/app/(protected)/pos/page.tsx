@@ -156,11 +156,15 @@ function makeFromMenu(item: MenuItem, qty = 1): PosCartItem {
 function cartReducer(state: PosCartItem[], action: CartAction): PosCartItem[] {
   switch (action.type) {
     case 'ADD_PRODUCT': {
+      const stock = action.product.stock_qty;
       const idx = state.findIndex(i => i.product.id === action.product.id && !i.menuItemId);
-      if (idx >= 0)
+      if (idx >= 0) {
+        const newQty = state[idx].quantity + 1;
+        if (stock !== undefined && newQty > stock) return state; // at stock limit
         return state.map((item, i) =>
-          i === idx ? makeFromProduct(item.product, item.quantity + 1) : item
+          i === idx ? makeFromProduct(item.product, newQty) : item
         );
+      }
       return [...state, makeFromProduct(action.product)];
     }
     case 'ADD_MENU': {
@@ -177,14 +181,17 @@ function cartReducer(state: PosCartItem[], action: CartAction): PosCartItem[] {
       if (action.qty < 1) return state.filter(i => i.product.id !== action.id);
       return state.map(i => {
         if (i.product.id !== action.id) return i;
+        // Cap at stock for non-menu (retail) items
+        const stock = i.menuItemId ? undefined : i.product.stock_qty;
+        const safeQty = stock !== undefined ? Math.min(action.qty, stock) : action.qty;
         const { unitPrice, subtotal, taxAmt } = applyDiscount(
           i.originalPrice,
-          action.qty,
+          safeQty,
           i.product.tax_rate,
           i.discountType,
           i.discountValue
         );
-        return { ...i, quantity: action.qty, unitPrice, subtotal, taxAmt };
+        return { ...i, quantity: safeQty, unitPrice, subtotal, taxAmt };
       });
     }
     case 'SET_DISCOUNT': {
@@ -1482,13 +1489,17 @@ export default function POSPage() {
             {filteredProducts.map((p, i) => {
               const inCart = cart.find(i => i.product.id === p.id && !i.menuItemId);
               const outOfStock = (p.stock_qty ?? 1) <= 0;
+              const atStockLimit =
+                !outOfStock &&
+                p.stock_qty !== undefined &&
+                (inCart?.quantity ?? 0) >= p.stock_qty;
               return (
-                <div
-                  key={p.id}
-                  className={`product-card ${outOfStock ? 'out-of-stock' : ''} reveal-animate`}
-                  onClick={() => !outOfStock && dispatch({ type: 'ADD_PRODUCT', product: p })}
-                  style={{ animationDelay: `${0.2 + i * 0.012}s` }}
-                >
+                  <div
+                    key={p.id}
+                    className={`product-card ${outOfStock ? 'out-of-stock' : ''} reveal-animate`}
+                    onClick={() => !outOfStock && !atStockLimit && dispatch({ type: 'ADD_PRODUCT', product: p })}
+                    style={{ animationDelay: `${0.2 + i * 0.012}s` }}
+                  >
                   {/* In-cart quantity badge */}
                   {inCart && (
                     <div
@@ -1538,14 +1549,18 @@ export default function POSPage() {
                         width: '100%',
                         justifyContent: 'center',
                         fontSize: '0.75rem',
+                        opacity: atStockLimit ? 0.45 : 1,
+                        cursor: atStockLimit ? 'not-allowed' : 'pointer',
                       }}
+                      disabled={atStockLimit}
+                      title={atStockLimit ? `Stok tersisa ${p.stock_qty} ${p.unit}` : undefined}
                       onClick={e => {
                         e.stopPropagation();
-                        dispatch({ type: 'ADD_PRODUCT', product: p });
+                        if (!atStockLimit) dispatch({ type: 'ADD_PRODUCT', product: p });
                       }}
                     >
                       <Plus size={13} />
-                      Tambah
+                      {atStockLimit ? `Maks. ${p.stock_qty} ${p.unit}` : 'Tambah'}
                     </button>
                   )}
                 </div>
@@ -2040,6 +2055,18 @@ export default function POSPage() {
                       <span className="qty-val">{item.quantity}</span>
                       <button
                         className="qty-btn"
+                        disabled={
+                          !item.menuItemId &&
+                          item.product.stock_qty !== undefined &&
+                          item.quantity >= item.product.stock_qty
+                        }
+                        title={
+                          !item.menuItemId &&
+                          item.product.stock_qty !== undefined &&
+                          item.quantity >= item.product.stock_qty
+                            ? `Stok tersisa ${item.product.stock_qty} ${item.product.unit}`
+                            : undefined
+                        }
                         onClick={() =>
                           dispatch({
                             type: 'SET_QTY',
