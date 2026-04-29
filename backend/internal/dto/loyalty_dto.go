@@ -31,14 +31,33 @@ type RedeemPointsRequest struct {
 	Points float64 `json:"points" validate:"required,gt=0"`
 }
 
+// AdjustPointsRequest for manual admin corrections (positive or negative delta).
+type AdjustPointsRequest struct {
+	Delta float64 `json:"delta" validate:"required"`
+	Note  string  `json:"note"  validate:"required,max=500"`
+}
+
+// VoidPointsRequest issued when a transaction is voided to revoke its points.
+type VoidPointsRequest struct {
+	TransactionID  string  `json:"transaction_id"  validate:"required,uuid"`
+	OriginalPoints float64 `json:"original_points" validate:"required,gt=0"`
+}
+
 // LoyaltyLedgerResponse is the API shape of a single ledger entry.
 type LoyaltyLedgerResponse struct {
-	ID            string  `json:"id"`
-	CustomerID    string  `json:"customer_id"`
-	PointsDelta   float64 `json:"points_delta"`
-	TransactionID *string `json:"transaction_id,omitempty"`
-	Type          string  `json:"type"`
-	CreatedAt     string  `json:"created_at"`
+	ID              string   `json:"id"`
+	CustomerID      string   `json:"customer_id"`
+	PointsDelta     float64  `json:"points_delta"`
+	TransactionID   *string  `json:"transaction_id,omitempty"`
+	Type            string   `json:"type"` // EARN | SPEND | VOID | ADJUST
+	BalanceSnapshot *float64 `json:"balance_snapshot,omitempty"`
+	CreatedAt       string   `json:"created_at"`
+}
+
+// LoyaltyHistoryResponse wraps a paginated list of ledger entries.
+type LoyaltyHistoryResponse struct {
+	Data []*LoyaltyLedgerResponse `json:"data"`
+	Meta PaginationMeta           `json:"meta"`
 }
 
 // AssignTierRequest assigns a loyalty tier to a customer.

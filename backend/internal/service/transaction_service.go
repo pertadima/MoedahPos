@@ -411,6 +411,26 @@ func (s *TransactionService) Checkout(ctx context.Context, storeID string, req *
 		}
 	}
 
+	// ── Post-commit: earn loyalty points for completed transaction ────────────
+	if req.CustomerID != "" && s.storeRepo != nil {
+		store, storeErr := s.storeRepo.FindByID(ctx, storeID)
+		pointsPerRupiah := 1000.0
+		if storeErr == nil && store != nil && store.LoyaltyPointsPerRupiah > 0 {
+			pointsPerRupiah = store.LoyaltyPointsPerRupiah
+		}
+		tier, _ := s.loyaltyRepo.GetCustomerTier(ctx, req.CustomerID)
+		multiplier := 1.0
+		if tier != nil {
+			multiplier = tier.Multiplier
+		}
+		earnPoints := CalculatePoints(total, multiplier, pointsPerRupiah)
+		if earnPoints > 0 {
+			if _, earnErr := s.loyaltyRepo.EarnPoints(ctx, req.CustomerID, &txn.ID, earnPoints); earnErr != nil {
+				s.log.Error().Err(earnErr).Str("txn_id", txn.ID).Float64("points", earnPoints).Msg("Failed to earn loyalty points after checkout")
+			}
+		}
+	}
+
 	// ── Post-commit: deduct ingredient stocks for menu items ─────────────────
 	for _, item := range req.Items {
 		if item.MenuItemID == "" {
@@ -811,6 +831,26 @@ func (s *TransactionService) PayDraft(ctx context.Context, storeID, txnID, cashi
 	if req.PointsRedeemed > 0 && req.CustomerID != "" {
 		if _, err := s.loyaltyRepo.SpendPoints(ctx, req.CustomerID, &txn.ID, req.PointsRedeemed); err != nil {
 			s.log.Error().Err(err).Str("txn_id", txn.ID).Float64("points", req.PointsRedeemed).Msg("Failed to deduct loyalty points after draft payment")
+		}
+	}
+
+	// ── Post-commit: earn loyalty points for paid draft ───────────────────────
+	if req.CustomerID != "" && s.storeRepo != nil {
+		store, storeErr := s.storeRepo.FindByID(ctx, storeID)
+		pointsPerRupiah := 1000.0
+		if storeErr == nil && store != nil && store.LoyaltyPointsPerRupiah > 0 {
+			pointsPerRupiah = store.LoyaltyPointsPerRupiah
+		}
+		tier, _ := s.loyaltyRepo.GetCustomerTier(ctx, req.CustomerID)
+		multiplier := 1.0
+		if tier != nil {
+			multiplier = tier.Multiplier
+		}
+		earnPoints := CalculatePoints(existing.Total, multiplier, pointsPerRupiah)
+		if earnPoints > 0 {
+			if _, earnErr := s.loyaltyRepo.EarnPoints(ctx, req.CustomerID, &txn.ID, earnPoints); earnErr != nil {
+				s.log.Error().Err(earnErr).Str("txn_id", txn.ID).Float64("points", earnPoints).Msg("Failed to earn loyalty points after draft payment")
+			}
 		}
 	}
 

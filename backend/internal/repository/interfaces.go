@@ -304,8 +304,14 @@ type LoyaltyRepository interface {
 	EarnPoints(ctx context.Context, customerID string, transactionID *string, points float64) (*domain.LoyaltyLedger, error)
 	// SpendPoints appends a negative SPEND entry to the ledger.
 	SpendPoints(ctx context.Context, customerID string, transactionID *string, points float64) (*domain.LoyaltyLedger, error)
+	// VoidPoints revokes points earned by a specific transaction (inserts a VOID entry).
+	VoidPoints(ctx context.Context, customerID string, transactionID *string, points float64) (*domain.LoyaltyLedger, error)
+	// AdjustPoints inserts a manual ADJUST entry (positive or negative delta).
+	AdjustPoints(ctx context.Context, customerID string, delta float64, note string) (*domain.LoyaltyLedger, error)
 	// GetHistory returns all ledger entries for a customer, newest first.
 	GetHistory(ctx context.Context, customerID string) ([]*domain.LoyaltyLedger, error)
+	// GetHistoryPaginated returns a page of ledger entries for a customer.
+	GetHistoryPaginated(ctx context.Context, customerID string, page, perPage int) ([]*domain.LoyaltyLedger, int, error)
 	// AssignTier updates the customer's loyalty_tier_id.
 	AssignTier(ctx context.Context, customerID, tierID string) error
 	// GetCustomerTier returns the tier for a customer (nil if unassigned).

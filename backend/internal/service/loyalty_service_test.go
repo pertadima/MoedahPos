@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 	"time"
 
@@ -17,17 +18,21 @@ import (
 
 // mockLoyaltyRepo implements repository.LoyaltyRepository.
 type mockLoyaltyRepo struct {
-	balance    float64
-	balanceErr error
-	earnEntry  *domain.LoyaltyLedger
-	earnErr    error
-	spendEntry *domain.LoyaltyLedger
-	spendErr   error
-	history    []*domain.LoyaltyLedger
-	historyErr error
-	assignErr  error
-	tier       *domain.MembershipTier
-	tierErr    error
+	balance     float64
+	balanceErr  error
+	earnEntry   *domain.LoyaltyLedger
+	earnErr     error
+	spendEntry  *domain.LoyaltyLedger
+	spendErr    error
+	voidEntry   *domain.LoyaltyLedger
+	voidErr     error
+	adjustEntry *domain.LoyaltyLedger
+	adjustErr   error
+	history     []*domain.LoyaltyLedger
+	historyErr  error
+	assignErr   error
+	tier        *domain.MembershipTier
+	tierErr     error
 }
 
 func (m *mockLoyaltyRepo) GetBalance(_ context.Context, _ string) (float64, error) {
@@ -45,7 +50,7 @@ func (m *mockLoyaltyRepo) EarnPoints(_ context.Context, customerID string, trans
 		CustomerID:    customerID,
 		PointsDelta:   points,
 		TransactionID: transactionID,
-		Type:          "EARN",
+		Type:          domain.LedgerTypeEarn,
 		CreatedAt:     time.Now(),
 	}, nil
 }
@@ -61,12 +66,57 @@ func (m *mockLoyaltyRepo) SpendPoints(_ context.Context, customerID string, tran
 		CustomerID:    customerID,
 		PointsDelta:   -points,
 		TransactionID: transactionID,
-		Type:          "SPEND",
+		Type:          domain.LedgerTypeSpend,
 		CreatedAt:     time.Now(),
+	}, nil
+}
+func (m *mockLoyaltyRepo) VoidPoints(_ context.Context, customerID string, transactionID *string, points float64) (*domain.LoyaltyLedger, error) {
+	if m.voidErr != nil {
+		return nil, m.voidErr
+	}
+	if m.voidEntry != nil {
+		return m.voidEntry, nil
+	}
+	return &domain.LoyaltyLedger{
+		ID:            "ledger-3",
+		CustomerID:    customerID,
+		PointsDelta:   -points,
+		TransactionID: transactionID,
+		Type:          domain.LedgerTypeVoid,
+		CreatedAt:     time.Now(),
+	}, nil
+}
+func (m *mockLoyaltyRepo) AdjustPoints(_ context.Context, customerID string, delta float64, _ string) (*domain.LoyaltyLedger, error) {
+	if m.adjustErr != nil {
+		return nil, m.adjustErr
+	}
+	if m.adjustEntry != nil {
+		return m.adjustEntry, nil
+	}
+	return &domain.LoyaltyLedger{
+		ID:          "ledger-4",
+		CustomerID:  customerID,
+		PointsDelta: delta,
+		Type:        domain.LedgerTypeAdjust,
+		CreatedAt:   time.Now(),
 	}, nil
 }
 func (m *mockLoyaltyRepo) GetHistory(_ context.Context, _ string) ([]*domain.LoyaltyLedger, error) {
 	return m.history, m.historyErr
+}
+func (m *mockLoyaltyRepo) GetHistoryPaginated(_ context.Context, _ string, page, perPage int) ([]*domain.LoyaltyLedger, int, error) {
+	if m.historyErr != nil {
+		return nil, 0, m.historyErr
+	}
+	start := (page - 1) * perPage
+	if start >= len(m.history) {
+		return nil, len(m.history), nil
+	}
+	end := start + perPage
+	if end > len(m.history) {
+		end = len(m.history)
+	}
+	return m.history[start:end], len(m.history), nil
 }
 func (m *mockLoyaltyRepo) AssignTier(_ context.Context, _, _ string) error { return m.assignErr }
 func (m *mockLoyaltyRepo) GetCustomerTier(_ context.Context, _ string) (*domain.MembershipTier, error) {
@@ -574,6 +624,261 @@ func TestLoyaltyService_AssignTier(t *testing.T) {
 		err := svc.AssignTier(context.Background(), "c999", "t1")
 		if err == nil {
 			t.Fatal("expected error")
+		}
+	})
+}
+
+// ─── VoidTransactionPoints ────────────────────────────────────────────────────
+
+func TestLoyaltyService_VoidTransactionPoints(t *testing.T) {
+	nop := zerolog.Nop()
+	txID := "txn-refund"
+
+	t.Run("voids full points when balance >= original", func(t *testing.T) {
+		lr := &mockLoyaltyRepo{balance: 100}
+		svc := NewLoyaltyService(lr, &mockTierRepo{}, &mockCustomerRepoLoyalty{}, nil, nop)
+		if err := svc.VoidTransactionPoints(context.Background(), "c1", &txID, 50); err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+	})
+
+	t.Run("partial void when balance < original points (prevents going negative)", func(t *testing.T) {
+		// Customer has only 30pts but we're trying to void 100pts from a txn
+		lr := &mockLoyaltyRepo{balance: 30}
+		svc := NewLoyaltyService(lr, &mockTierRepo{}, &mockCustomerRepoLoyalty{}, nil, nop)
+		if err := svc.VoidTransactionPoints(context.Background(), "c1", &txID, 100); err != nil {
+			t.Fatalf("partial void should not error: %v", err)
+		}
+	})
+
+	t.Run("skips void when originalPoints <= 0", func(t *testing.T) {
+		lr := &mockLoyaltyRepo{balance: 200}
+		svc := NewLoyaltyService(lr, &mockTierRepo{}, &mockCustomerRepoLoyalty{}, nil, nop)
+		if err := svc.VoidTransactionPoints(context.Background(), "c1", &txID, 0); err != nil {
+			t.Fatalf("zero-point void should be no-op: %v", err)
+		}
+	})
+
+	t.Run("skips void when balance is 0 (nothing to revoke)", func(t *testing.T) {
+		lr := &mockLoyaltyRepo{balance: 0}
+		svc := NewLoyaltyService(lr, &mockTierRepo{}, &mockCustomerRepoLoyalty{}, nil, nop)
+		if err := svc.VoidTransactionPoints(context.Background(), "c1", &txID, 50); err != nil {
+			t.Fatalf("zero-balance void should be no-op: %v", err)
+		}
+	})
+
+	t.Run("balance fetch error propagated", func(t *testing.T) {
+		lr := &mockLoyaltyRepo{balanceErr: errors.New("db error")}
+		svc := NewLoyaltyService(lr, &mockTierRepo{}, &mockCustomerRepoLoyalty{}, nil, nop)
+		if err := svc.VoidTransactionPoints(context.Background(), "c1", &txID, 50); err == nil {
+			t.Fatal("expected error from balance fetch")
+		}
+	})
+
+	t.Run("void repo error propagated", func(t *testing.T) {
+		lr := &mockLoyaltyRepo{balance: 100, voidErr: errors.New("db error")}
+		svc := NewLoyaltyService(lr, &mockTierRepo{}, &mockCustomerRepoLoyalty{}, nil, nop)
+		if err := svc.VoidTransactionPoints(context.Background(), "c1", &txID, 50); err == nil {
+			t.Fatal("expected error from VoidPoints repo")
+		}
+	})
+}
+
+// ─── AdjustPoints ─────────────────────────────────────────────────────────────
+
+func TestLoyaltyService_AdjustPoints(t *testing.T) {
+	nop := zerolog.Nop()
+
+	t.Run("positive adjustment credited", func(t *testing.T) {
+		lr := &mockLoyaltyRepo{balance: 50}
+		svc := NewLoyaltyService(lr, &mockTierRepo{}, &mockCustomerRepoLoyalty{}, nil, nop)
+		resp, err := svc.AdjustPoints(context.Background(), "c1", 30, "promo credit")
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if resp.PointsDelta != 30 {
+			t.Errorf("want +30 delta, got %.2f", resp.PointsDelta)
+		}
+		if resp.Type != domain.LedgerTypeAdjust {
+			t.Errorf("expected ADJUST type, got %s", resp.Type)
+		}
+	})
+
+	t.Run("negative adjustment debited within balance", func(t *testing.T) {
+		lr := &mockLoyaltyRepo{balance: 100}
+		svc := NewLoyaltyService(lr, &mockTierRepo{}, &mockCustomerRepoLoyalty{}, nil, nop)
+		resp, err := svc.AdjustPoints(context.Background(), "c1", -40, "correction")
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if resp.PointsDelta != -40 {
+			t.Errorf("want -40 delta, got %.2f", resp.PointsDelta)
+		}
+	})
+
+	t.Run("zero delta returns ErrInvalidAdjustment", func(t *testing.T) {
+		lr := &mockLoyaltyRepo{balance: 100}
+		svc := NewLoyaltyService(lr, &mockTierRepo{}, &mockCustomerRepoLoyalty{}, nil, nop)
+		_, err := svc.AdjustPoints(context.Background(), "c1", 0, "zero")
+		if !errors.Is(err, ErrInvalidAdjustment) {
+			t.Errorf("expected ErrInvalidAdjustment, got: %v", err)
+		}
+	})
+
+	t.Run("negative adjustment exceeding balance returns ErrInsufficientPoints", func(t *testing.T) {
+		lr := &mockLoyaltyRepo{balance: 20}
+		svc := NewLoyaltyService(lr, &mockTierRepo{}, &mockCustomerRepoLoyalty{}, nil, nop)
+		_, err := svc.AdjustPoints(context.Background(), "c1", -50, "too much")
+		if !errors.Is(err, ErrInsufficientPoints) {
+			t.Errorf("expected ErrInsufficientPoints, got: %v", err)
+		}
+	})
+
+	t.Run("balance fetch error for negative adjustment propagated", func(t *testing.T) {
+		lr := &mockLoyaltyRepo{balanceErr: errors.New("db error")}
+		svc := NewLoyaltyService(lr, &mockTierRepo{}, &mockCustomerRepoLoyalty{}, nil, nop)
+		_, err := svc.AdjustPoints(context.Background(), "c1", -10, "any")
+		if err == nil {
+			t.Fatal("expected error")
+		}
+	})
+
+	t.Run("repo error propagated", func(t *testing.T) {
+		lr := &mockLoyaltyRepo{balance: 100, adjustErr: errors.New("db write error")}
+		svc := NewLoyaltyService(lr, &mockTierRepo{}, &mockCustomerRepoLoyalty{}, nil, nop)
+		_, err := svc.AdjustPoints(context.Background(), "c1", 10, "any")
+		if err == nil {
+			t.Fatal("expected error from repo")
+		}
+	})
+}
+
+// ─── GetHistoryPaginated ──────────────────────────────────────────────────────
+
+func TestLoyaltyService_GetHistoryPaginated(t *testing.T) {
+	nop := zerolog.Nop()
+	now := time.Now()
+
+	makeEntries := func(n int) []*domain.LoyaltyLedger {
+		entries := make([]*domain.LoyaltyLedger, n)
+		for i := range entries {
+			entries[i] = &domain.LoyaltyLedger{
+				ID:          fmt.Sprintf("e%d", i+1),
+				CustomerID:  "c1",
+				PointsDelta: 10,
+				Type:        domain.LedgerTypeEarn,
+				CreatedAt:   now.Add(-time.Duration(i) * time.Minute),
+			}
+		}
+		return entries
+	}
+
+	t.Run("returns first page correctly", func(t *testing.T) {
+		lr := &mockLoyaltyRepo{history: makeEntries(25)}
+		svc := NewLoyaltyService(lr, &mockTierRepo{}, &mockCustomerRepoLoyalty{}, nil, nop)
+		resp, meta, err := svc.GetHistoryPaginated(context.Background(), "c1", 1, 10)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if len(resp) != 10 {
+			t.Errorf("want 10 entries on page 1, got %d", len(resp))
+		}
+		if meta.Total != 25 {
+			t.Errorf("want total=25, got %d", meta.Total)
+		}
+	})
+
+	t.Run("returns last page with remainder entries", func(t *testing.T) {
+		lr := &mockLoyaltyRepo{history: makeEntries(25)}
+		svc := NewLoyaltyService(lr, &mockTierRepo{}, &mockCustomerRepoLoyalty{}, nil, nop)
+		resp, meta, err := svc.GetHistoryPaginated(context.Background(), "c1", 3, 10)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if len(resp) != 5 {
+			t.Errorf("want 5 entries on page 3, got %d", len(resp))
+		}
+		if meta.Total != 25 {
+			t.Errorf("want total=25, got %d", meta.Total)
+		}
+	})
+
+	t.Run("empty page beyond total", func(t *testing.T) {
+		lr := &mockLoyaltyRepo{history: makeEntries(5)}
+		svc := NewLoyaltyService(lr, &mockTierRepo{}, &mockCustomerRepoLoyalty{}, nil, nop)
+		resp, _, err := svc.GetHistoryPaginated(context.Background(), "c1", 10, 10)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if len(resp) != 0 {
+			t.Errorf("want 0 entries for out-of-range page, got %d", len(resp))
+		}
+	})
+
+	t.Run("repo error propagated", func(t *testing.T) {
+		lr := &mockLoyaltyRepo{historyErr: errors.New("db error")}
+		svc := NewLoyaltyService(lr, &mockTierRepo{}, &mockCustomerRepoLoyalty{}, nil, nop)
+		_, _, err := svc.GetHistoryPaginated(context.Background(), "c1", 1, 10)
+		if err == nil {
+			t.Fatal("expected error")
+		}
+	})
+}
+
+// ─── Offline-to-Online Sync Reconciliation ────────────────────────────────────
+
+// TestLoyaltySync_Reconciliation covers the scenario where a transaction recorded
+// offline is later synced to the server. The ledger must not double-count points
+// that have already been earned.
+//
+// Strategy: the sync path calls EarnPoints with the transaction_id. If a ledger
+// entry for that transaction already exists, the duplicate insert is prevented at
+// the DB level (unique constraint on transaction_id + type for EARN). In the
+// service layer we verify idempotency by expecting EarnPoints to be called and
+// accepting either success or a duplicate-key sentinel from the repo.
+func TestLoyaltySync_Reconciliation(t *testing.T) {
+	nop := zerolog.Nop()
+	txID := "offline-txn-001"
+
+	t.Run("online sync: earn points for offline transaction (first sync)", func(t *testing.T) {
+		lr := &mockLoyaltyRepo{tier: &domain.MembershipTier{Multiplier: 1.0}}
+		svc := NewLoyaltyService(lr, &mockTierRepo{}, &mockCustomerRepoLoyalty{}, nil, nop)
+
+		resp, err := svc.EarnPoints(context.Background(), "", "c1", &txID, 50000)
+		if err != nil {
+			t.Fatalf("first sync should succeed: %v", err)
+		}
+		if resp.PointsDelta != 50 {
+			t.Errorf("want 50 points for 50000 total at 1x, got %.2f", resp.PointsDelta)
+		}
+		if resp.TransactionID == nil || *resp.TransactionID != txID {
+			t.Error("transaction_id must be carried through to ledger entry")
+		}
+	})
+
+	t.Run("online sync: earn points — repo signals duplicate (idempotency check)", func(t *testing.T) {
+		// Simulate the repo returning an error that indicates the txn was already recorded.
+		// In production this would be a unique-constraint violation. The service just
+		// propagates the error so the sync layer can detect and skip.
+		duplicateErr := errors.New("unique constraint violation")
+		lr := &mockLoyaltyRepo{
+			tier:    &domain.MembershipTier{Multiplier: 1.0},
+			earnErr: duplicateErr,
+		}
+		svc := NewLoyaltyService(lr, &mockTierRepo{}, &mockCustomerRepoLoyalty{}, nil, nop)
+		_, err := svc.EarnPoints(context.Background(), "", "c1", &txID, 50000)
+		if err == nil {
+			t.Fatal("expected error for duplicate transaction_id")
+		}
+	})
+
+	t.Run("void after refund reverses online-synced points", func(t *testing.T) {
+		// Customer earned 50 points; after refund those should be voided.
+		lr := &mockLoyaltyRepo{balance: 50}
+		svc := NewLoyaltyService(lr, &mockTierRepo{}, &mockCustomerRepoLoyalty{}, nil, nop)
+		err := svc.VoidTransactionPoints(context.Background(), "c1", &txID, 50)
+		if err != nil {
+			t.Fatalf("void of synced points should succeed: %v", err)
 		}
 	})
 }

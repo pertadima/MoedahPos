@@ -11,13 +11,22 @@ type MembershipTier struct {
 	UpdatedAt  time.Time `db:"updated_at"`
 }
 
-// LoyaltyLedger is a single point event (EARN or SPEND) for a customer.
-// points_delta is positive for EARN and negative for SPEND.
+// LoyaltyLedger is an immutable point event for a customer.
+// points_delta: positive = credit (EARN/ADJUST+), negative = debit (SPEND/VOID/ADJUST-).
 type LoyaltyLedger struct {
-	ID            string    `db:"id"`
-	CustomerID    string    `db:"customer_id"`
-	PointsDelta   float64   `db:"points_delta"`
-	TransactionID *string   `db:"transaction_id"`
-	Type          string    `db:"type"` // EARN | SPEND
-	CreatedAt     time.Time `db:"created_at"`
+	ID              string   `db:"id"`
+	CustomerID      string   `db:"customer_id"`
+	PointsDelta     float64  `db:"points_delta"`
+	TransactionID   *string  `db:"transaction_id"`
+	Type            string   `db:"type"` // EARN | SPEND | VOID | ADJUST
+	BalanceSnapshot *float64 `db:"balance_snapshot"` // balance after this entry
+	CreatedAt       time.Time `db:"created_at"`
 }
+
+// LoyaltyLedgerType constants.
+const (
+	LedgerTypeEarn   = "EARN"
+	LedgerTypeSpend  = "SPEND"
+	LedgerTypeVoid   = "VOID"   // revoke points earned by a voided transaction
+	LedgerTypeAdjust = "ADJUST" // manual correction by admin
+)

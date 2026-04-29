@@ -10,6 +10,7 @@ import type {
   MembershipTier,
   LoyaltyBalance,
   LoyaltyLedgerEntry,
+  LoyaltyHistoryPage,
 } from '@/types';
 
 export const storesApi = {
@@ -400,6 +401,19 @@ export const loyaltyApi = {
   getHistory: async (storeId: string, customerId: string): Promise<LoyaltyLedgerEntry[]> => {
     const res = await api.get<LoyaltyLedgerEntry[]>(
       `/stores/${storeId}/customers/${customerId}/loyalty/history`
+    );
+    return res.data;
+  },
+
+  /** Get paginated point ledger history for a customer. */
+  getHistoryPaginated: async (
+    storeId: string,
+    customerId: string,
+    page = 1,
+    perPage = 20
+  ): Promise<LoyaltyHistoryPage> => {
+    const res = await api.get<LoyaltyHistoryPage>(
+      `/stores/${storeId}/customers/${customerId}/loyalty/history/paged?page=${page}&per_page=${perPage}`
     );
     return res.data;
   },

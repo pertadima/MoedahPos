@@ -22,6 +22,8 @@ var (
 	ErrInvalidRedemption = errors.New("redemption amount must be greater than zero")
 	// ErrTierNotFound is returned when the target tier does not exist.
 	ErrTierNotFound = errors.New("membership tier not found")
+	// ErrInvalidAdjustment is returned when an ADJUST delta is zero.
+	ErrInvalidAdjustment = errors.New("adjustment delta must not be zero")
 )
 
 // pointsPerUnit is the base: 1 point is earned for every 1000 IDR spent.
@@ -203,6 +205,77 @@ func (s *LoyaltyService) GetHistory(ctx context.Context, customerID string) ([]*
 	return out, nil
 }
 
+// GetHistoryPaginated returns a paginated ledger for a customer.
+func (s *LoyaltyService) GetHistoryPaginated(ctx context.Context, customerID string, page, perPage int) ([]*dto.LoyaltyLedgerResponse, dto.PaginationMeta, error) {
+	entries, total, err := s.loyaltyRepo.GetHistoryPaginated(ctx, customerID, page, perPage)
+	if err != nil {
+		return nil, dto.PaginationMeta{}, fmt.Errorf("LoyaltyService.GetHistoryPaginated: %w", err)
+	}
+	out := make([]*dto.LoyaltyLedgerResponse, 0, len(entries))
+	for _, e := range entries {
+		out = append(out, toLedgerResponse(e))
+	}
+	meta := dto.NewMeta(dto.PaginationQuery{Page: page, PerPage: perPage}, total)
+	return out, meta, nil
+}
+
+// VoidTransactionPoints revokes the loyalty points earned by a completed transaction.
+// This is called when a transaction is voided/refunded. It inserts a VOID ledger entry
+// with a negative delta equal to the original points earned. Silently skips if
+// originalPoints <= 0 (nothing to void).
+func (s *LoyaltyService) VoidTransactionPoints(ctx context.Context, customerID string, transactionID *string, originalPoints float64) error {
+	if originalPoints <= 0 {
+		return nil
+	}
+	// Check current balance — only void up to what's available to prevent going negative.
+	balance, err := s.loyaltyRepo.GetBalance(ctx, customerID)
+	if err != nil {
+		return fmt.Errorf("LoyaltyService.VoidTransactionPoints: get balance: %w", err)
+	}
+	pointsToVoid := originalPoints
+	if balance < pointsToVoid {
+		pointsToVoid = balance // partial void to floor at 0
+	}
+	if pointsToVoid <= 0 {
+		return nil
+	}
+	if _, err := s.loyaltyRepo.VoidPoints(ctx, customerID, transactionID, pointsToVoid); err != nil {
+		return fmt.Errorf("LoyaltyService.VoidTransactionPoints: %w", err)
+	}
+	s.log.Info().
+		Str("customer_id", customerID).
+		Float64("voided_points", pointsToVoid).
+		Msg("loyalty points voided for transaction refund")
+	return nil
+}
+
+// AdjustPoints inserts a manual ADJUST ledger entry (positive or negative delta).
+func (s *LoyaltyService) AdjustPoints(ctx context.Context, customerID string, delta float64, note string) (*dto.LoyaltyLedgerResponse, error) {
+	if delta == 0 {
+		return nil, ErrInvalidAdjustment
+	}
+	// If subtracting, ensure balance is sufficient.
+	if delta < 0 {
+		balance, err := s.loyaltyRepo.GetBalance(ctx, customerID)
+		if err != nil {
+			return nil, fmt.Errorf("LoyaltyService.AdjustPoints: get balance: %w", err)
+		}
+		if balance+delta < 0 {
+			return nil, fmt.Errorf("%w: balance=%.2f, adjustment=%.2f", ErrInsufficientPoints, balance, delta)
+		}
+	}
+	entry, err := s.loyaltyRepo.AdjustPoints(ctx, customerID, delta, note)
+	if err != nil {
+		return nil, fmt.Errorf("LoyaltyService.AdjustPoints: %w", err)
+	}
+	s.log.Info().
+		Str("customer_id", customerID).
+		Float64("delta", delta).
+		Str("note", note).
+		Msg("loyalty points adjusted")
+	return toLedgerResponse(entry), nil
+}
+
 // AssignTier links a customer to a membership tier.
 func (s *LoyaltyService) AssignTier(ctx context.Context, customerID, tierID string) error {
 	// Validate tier exists
@@ -238,11 +311,12 @@ func toTierResponse(t *domain.MembershipTier) *dto.MembershipTierResponse {
 
 func toLedgerResponse(e *domain.LoyaltyLedger) *dto.LoyaltyLedgerResponse {
 	return &dto.LoyaltyLedgerResponse{
-		ID:            e.ID,
-		CustomerID:    e.CustomerID,
-		PointsDelta:   e.PointsDelta,
-		TransactionID: e.TransactionID,
-		Type:          e.Type,
-		CreatedAt:     e.CreatedAt.Format(time.RFC3339),
+		ID:              e.ID,
+		CustomerID:      e.CustomerID,
+		PointsDelta:     e.PointsDelta,
+		TransactionID:   e.TransactionID,
+		Type:            e.Type,
+		BalanceSnapshot: e.BalanceSnapshot,
+		CreatedAt:       e.CreatedAt.Format(time.RFC3339),
 	}
 }

@@ -201,12 +201,15 @@ func New(deps *Dependencies) http.Handler { //nolint:funlen // route wiring is i
 							r.Get("/{customerId}", withPerm(deps, "kasir:read", deps.CustomerHandler.Get))
 							r.Put("/{customerId}", withPerm(deps, "kasir:update", deps.CustomerHandler.Update))
 							r.Delete("/{customerId}", withPerm(deps, "kasir:delete", deps.CustomerHandler.Delete))
-							// Loyalty sub-routes per customer
-							r.Get("/{customerId}/loyalty", withPerm(deps, "kasir:read", deps.LoyaltyHandler.GetBalance))
-							r.Post("/{customerId}/loyalty/earn", withPerm(deps, "kasir:write", deps.LoyaltyHandler.EarnPoints))
-							r.Post("/{customerId}/loyalty/redeem", withPerm(deps, "kasir:write", deps.LoyaltyHandler.RedeemPoints))
-							r.Get("/{customerId}/loyalty/history", withPerm(deps, "kasir:read", deps.LoyaltyHandler.GetHistory))
-							r.Put("/{customerId}/loyalty/tier", withPerm(deps, "kasir:update", deps.LoyaltyHandler.AssignTier))
+						// Loyalty sub-routes per customer
+						r.Get("/{customerId}/loyalty", withPerm(deps, "kasir:read", deps.LoyaltyHandler.GetBalance))
+						r.Post("/{customerId}/loyalty/earn", withPerm(deps, "kasir:write", deps.LoyaltyHandler.EarnPoints))
+						r.Post("/{customerId}/loyalty/redeem", withPerm(deps, "kasir:write", deps.LoyaltyHandler.RedeemPoints))
+						r.Get("/{customerId}/loyalty/history", withPerm(deps, "kasir:read", deps.LoyaltyHandler.GetHistory))
+						r.Get("/{customerId}/loyalty/history/paged", withPerm(deps, "kasir:read", deps.LoyaltyHandler.GetHistoryPaginated))
+						r.Post("/{customerId}/loyalty/void", withPerm(deps, "kasir:write", deps.LoyaltyHandler.VoidTransactionPoints))
+						r.Post("/{customerId}/loyalty/adjust", withPerm(deps, "admin:write", deps.LoyaltyHandler.AdjustPoints))
+						r.Put("/{customerId}/loyalty/tier", withPerm(deps, "kasir:update", deps.LoyaltyHandler.AssignTier))
 						})
 
 						// Loyalty tiers (store-scoped read)

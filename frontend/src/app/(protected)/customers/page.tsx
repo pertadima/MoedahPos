@@ -14,13 +14,19 @@ import {
   Edit3,
   Archive,
   ChevronRight,
+  TrendingUp,
+  TrendingDown,
+  RotateCcw,
+  SlidersHorizontal,
+  History,
+  ChevronLeft,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { usePermission } from '@/hooks/usePermission';
-import { customersApi } from '@/lib/api/store-apis';
+import { customersApi, loyaltyApi } from '@/lib/api/store-apis';
 import Portal from '@/components/ui/Portal';
 import { formatDate } from '@/lib/utils';
-import type { Customer, PaginatedData } from '@/types';
+import type { Customer, LoyaltyLedgerEntry, PaginatedData } from '@/types';
 import { ApiError } from '@/lib/api/client';
 
 // ── Empty form ────────────────────────────────────────────────────────────────
@@ -254,9 +260,191 @@ function DeleteConfirm({
   );
 }
 
+// ── Riwayat Poin (Point History) ──────────────────────────────────────────────
+function RiwayatPoin({ storeId, customerId }: { storeId: string; customerId: string }) {
+  const [entries, setEntries] = useState<LoyaltyLedgerEntry[]>([]);
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const PER_PAGE = 10;
+
+  useEffect(() => {
+    setLoading(true);
+    loyaltyApi
+      .getHistoryPaginated(storeId, customerId, page, PER_PAGE)
+      .then(r => {
+        setEntries(r.data ?? []);
+        setTotal(r.meta?.total ?? 0);
+      })
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, [storeId, customerId, page]);
+
+  const typeIcon = (type: LoyaltyLedgerEntry['type']) => {
+    switch (type) {
+      case 'EARN':
+        return <TrendingUp size={12} style={{ color: '#10b981' }} />;
+      case 'SPEND':
+        return <TrendingDown size={12} style={{ color: '#f59e0b' }} />;
+      case 'VOID':
+        return <RotateCcw size={12} style={{ color: '#f87171' }} />;
+      case 'ADJUST':
+        return <SlidersHorizontal size={12} style={{ color: '#a78bfa' }} />;
+    }
+  };
+
+  const typeLabel: Record<LoyaltyLedgerEntry['type'], string> = {
+    EARN: 'Earn',
+    SPEND: 'Redeem',
+    VOID: 'Void',
+    ADJUST: 'Adjust',
+  };
+
+  const totalPages = Math.ceil(total / PER_PAGE);
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700, fontSize: '0.8rem' }}>
+        <History size={14} style={{ color: 'var(--accent-em)' }} />
+        Riwayat Poin
+        {total > 0 && (
+          <span style={{ color: 'var(--text-3)', fontWeight: 400 }}>({total})</span>
+        )}
+      </div>
+
+      {loading ? (
+        <div style={{ display: 'flex', justifyContent: 'center', padding: 16 }}>
+          <Loader2 size={18} className="loading-spin" style={{ color: 'var(--accent-em)' }} />
+        </div>
+      ) : entries.length === 0 ? (
+        <div
+          style={{
+            textAlign: 'center',
+            color: 'var(--text-3)',
+            fontSize: '0.8rem',
+            padding: '12px 0',
+          }}
+        >
+          Belum ada riwayat poin
+        </div>
+      ) : (
+        <>
+          {entries.map(e => (
+            <div
+              key={e.id}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                background: 'var(--bg-elevated)',
+                borderRadius: 8,
+                padding: '8px 12px',
+                fontSize: '0.78rem',
+              }}
+            >
+              {/* Left: icon + type + date */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div
+                  style={{
+                    width: 24,
+                    height: 24,
+                    borderRadius: '50%',
+                    background: 'var(--bg-card)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                  }}
+                >
+                  {typeIcon(e.type)}
+                </div>
+                <div>
+                  <div style={{ fontWeight: 600 }}>{typeLabel[e.type]}</div>
+                  <div style={{ color: 'var(--text-3)', fontSize: '0.7rem' }}>
+                    {new Date(e.created_at).toLocaleDateString('id-ID', {
+                      day: '2-digit',
+                      month: 'short',
+                      year: 'numeric',
+                    })}
+                  </div>
+                  {e.transaction_id && (
+                    <div
+                      style={{
+                        color: 'var(--text-3)',
+                        fontSize: '0.68rem',
+                        fontFamily: 'monospace',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        maxWidth: 130,
+                        whiteSpace: 'nowrap',
+                      }}
+                      title={`TXN: ${e.transaction_id}`}
+                    >
+                      TXN: {e.transaction_id.slice(0, 8)}…
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Right: delta + snapshot */}
+              <div style={{ textAlign: 'right' }}>
+                <div
+                  style={{
+                    fontWeight: 700,
+                    fontSize: '0.85rem',
+                    color:
+                      e.points_delta > 0
+                        ? '#10b981'
+                        : e.points_delta < 0
+                          ? '#f87171'
+                          : 'var(--text-2)',
+                  }}
+                >
+                  {e.points_delta > 0 ? '+' : ''}
+                  {e.points_delta.toLocaleString('id-ID')} pts
+                </div>
+                {e.balance_snapshot !== undefined && (
+                  <div style={{ color: 'var(--text-3)', fontSize: '0.7rem' }}>
+                    Saldo: {e.balance_snapshot.toLocaleString('id-ID')}
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginTop: 4 }}>
+              <button
+                className="btn btn-ghost btn-sm"
+                disabled={page <= 1}
+                onClick={() => setPage(p => p - 1)}
+              >
+                <ChevronLeft size={13} />
+              </button>
+              <span style={{ alignSelf: 'center', fontSize: '0.75rem', color: 'var(--text-3)' }}>
+                {page} / {totalPages}
+              </span>
+              <button
+                className="btn btn-ghost btn-sm"
+                disabled={page >= totalPages}
+                onClick={() => setPage(p => p + 1)}
+              >
+                <ChevronRight size={13} />
+              </button>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
 // ── Detail Drawer ─────────────────────────────────────────────────────────────
 function DetailDrawer({
   customer,
+  storeId,
   onClose,
   onEdit,
   onDelete,
@@ -264,6 +452,7 @@ function DetailDrawer({
   canDelete,
 }: {
   customer: Customer;
+  storeId: string;
   onClose: () => void;
   onEdit: () => void;
   onDelete: () => void;
@@ -459,6 +648,16 @@ function DetailDrawer({
                 Tidak ada info tambahan
               </div>
             )}
+          </div>
+
+          {/* ── Loyalty Point History ── */}
+          <div
+            style={{
+              borderTop: '1px solid var(--border)',
+              paddingTop: 14,
+            }}
+          >
+            <RiwayatPoin storeId={storeId} customerId={customer.id} />
           </div>
         </div>
       </div>
@@ -808,9 +1007,10 @@ export default function CustomersPage() {
             onClose={() => setDeleting(null)}
           />
         ) : null)}
-      {detail && (
+      {detail && storeId && (
         <DetailDrawer
           customer={detail}
+          storeId={storeId}
           onClose={() => setDetail(null)}
           onEdit={() => {
             setForm(detail);

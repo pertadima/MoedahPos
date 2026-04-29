@@ -15,6 +15,17 @@ export interface LoyaltyLedgerEntry {
   customer_id: string;
   points_delta: number;
   transaction_id?: string;
-  type: 'EARN' | 'SPEND';
+  type: 'EARN' | 'SPEND' | 'VOID' | 'ADJUST';
+  balance_snapshot?: number;
   created_at: string;
+}
+
+export interface LoyaltyHistoryPage {
+  data: LoyaltyLedgerEntry[];
+  meta: {
+    total: number;
+    page: number;
+    per_page: number;
+    last_page: number;
+  };
 }

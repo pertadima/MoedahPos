@@ -63,12 +63,13 @@ func (r *LoyaltyRepo) GetBalance(ctx context.Context, customerID string) (float6
 	return balance, nil
 }
 
-// EarnPoints inserts a positive EARN entry into the ledger.
+// EarnPoints inserts a positive EARN entry into the ledger with balance snapshot.
 func (r *LoyaltyRepo) EarnPoints(ctx context.Context, customerID string, transactionID *string, points float64) (*domain.LoyaltyLedger, error) {
 	const q = `
-		INSERT INTO loyalty_ledger (customer_id, points_delta, transaction_id, type)
-		VALUES ($1, $2, $3, 'EARN')
-		RETURNING id, customer_id, points_delta, transaction_id, type, created_at`
+		INSERT INTO loyalty_ledger (customer_id, points_delta, transaction_id, type, balance_snapshot)
+		VALUES ($1, $2, $3, 'EARN',
+			COALESCE((SELECT SUM(points_delta) FROM loyalty_ledger WHERE customer_id = $1), 0) + $2)
+		RETURNING id, customer_id, points_delta, transaction_id, type, balance_snapshot, created_at`
 	entry := &domain.LoyaltyLedger{}
 	if err := r.db.QueryRowxContext(ctx, q, customerID, points, transactionID).StructScan(entry); err != nil {
 		return nil, fmt.Errorf("LoyaltyRepo.EarnPoints: %w", err)
@@ -76,13 +77,14 @@ func (r *LoyaltyRepo) EarnPoints(ctx context.Context, customerID string, transac
 	return entry, nil
 }
 
-// SpendPoints inserts a negative SPEND entry into the ledger.
+// SpendPoints inserts a negative SPEND entry into the ledger with balance snapshot.
 // The caller is responsible for ensuring the balance is sufficient.
 func (r *LoyaltyRepo) SpendPoints(ctx context.Context, customerID string, transactionID *string, points float64) (*domain.LoyaltyLedger, error) {
 	const q = `
-		INSERT INTO loyalty_ledger (customer_id, points_delta, transaction_id, type)
-		VALUES ($1, $2, $3, 'SPEND')
-		RETURNING id, customer_id, points_delta, transaction_id, type, created_at`
+		INSERT INTO loyalty_ledger (customer_id, points_delta, transaction_id, type, balance_snapshot)
+		VALUES ($1, $2, $3, 'SPEND',
+			COALESCE((SELECT SUM(points_delta) FROM loyalty_ledger WHERE customer_id = $1), 0) + $2)
+		RETURNING id, customer_id, points_delta, transaction_id, type, balance_snapshot, created_at`
 	// Store as negative delta
 	entry := &domain.LoyaltyLedger{}
 	if err := r.db.QueryRowxContext(ctx, q, customerID, -points, transactionID).StructScan(entry); err != nil {
@@ -91,10 +93,39 @@ func (r *LoyaltyRepo) SpendPoints(ctx context.Context, customerID string, transa
 	return entry, nil
 }
 
+// VoidPoints inserts a VOID entry that revokes points earned by a specific transaction.
+func (r *LoyaltyRepo) VoidPoints(ctx context.Context, customerID string, transactionID *string, points float64) (*domain.LoyaltyLedger, error) {
+	const q = `
+		INSERT INTO loyalty_ledger (customer_id, points_delta, transaction_id, type, balance_snapshot)
+		VALUES ($1, $2, $3, 'VOID',
+			COALESCE((SELECT SUM(points_delta) FROM loyalty_ledger WHERE customer_id = $1), 0) + $2)
+		RETURNING id, customer_id, points_delta, transaction_id, type, balance_snapshot, created_at`
+	// Negative delta to revoke earned points
+	entry := &domain.LoyaltyLedger{}
+	if err := r.db.QueryRowxContext(ctx, q, customerID, -points, transactionID).StructScan(entry); err != nil {
+		return nil, fmt.Errorf("LoyaltyRepo.VoidPoints: %w", err)
+	}
+	return entry, nil
+}
+
+// AdjustPoints inserts a manual ADJUST entry (positive or negative delta).
+func (r *LoyaltyRepo) AdjustPoints(ctx context.Context, customerID string, delta float64, _ string) (*domain.LoyaltyLedger, error) {
+	const q = `
+		INSERT INTO loyalty_ledger (customer_id, points_delta, transaction_id, type, balance_snapshot)
+		VALUES ($1, $2, NULL, 'ADJUST',
+			COALESCE((SELECT SUM(points_delta) FROM loyalty_ledger WHERE customer_id = $1), 0) + $2)
+		RETURNING id, customer_id, points_delta, transaction_id, type, balance_snapshot, created_at`
+	entry := &domain.LoyaltyLedger{}
+	if err := r.db.QueryRowxContext(ctx, q, customerID, delta).StructScan(entry); err != nil {
+		return nil, fmt.Errorf("LoyaltyRepo.AdjustPoints: %w", err)
+	}
+	return entry, nil
+}
+
 // GetHistory returns all ledger entries for a customer, newest first.
 func (r *LoyaltyRepo) GetHistory(ctx context.Context, customerID string) ([]*domain.LoyaltyLedger, error) {
 	const q = `
-		SELECT id, customer_id, points_delta, transaction_id, type, created_at
+		SELECT id, customer_id, points_delta, transaction_id, type, balance_snapshot, created_at
 		FROM loyalty_ledger
 		WHERE customer_id = $1
 		ORDER BY created_at DESC`
@@ -103,6 +134,36 @@ func (r *LoyaltyRepo) GetHistory(ctx context.Context, customerID string) ([]*dom
 		return nil, fmt.Errorf("LoyaltyRepo.GetHistory: %w", err)
 	}
 	return entries, nil
+}
+
+// GetHistoryPaginated returns a paginated list of ledger entries for a customer.
+func (r *LoyaltyRepo) GetHistoryPaginated(ctx context.Context, customerID string, page, perPage int) ([]*domain.LoyaltyLedger, int, error) {
+	if page < 1 {
+		page = 1
+	}
+	if perPage < 1 || perPage > 100 {
+		perPage = 20
+	}
+	offset := (page - 1) * perPage
+
+	var total int
+	if err := r.db.QueryRowxContext(ctx,
+		`SELECT COUNT(*) FROM loyalty_ledger WHERE customer_id = $1`, customerID,
+	).Scan(&total); err != nil {
+		return nil, 0, fmt.Errorf("LoyaltyRepo.GetHistoryPaginated count: %w", err)
+	}
+
+	const q = `
+		SELECT id, customer_id, points_delta, transaction_id, type, balance_snapshot, created_at
+		FROM loyalty_ledger
+		WHERE customer_id = $1
+		ORDER BY created_at DESC
+		LIMIT $2 OFFSET $3`
+	var entries []*domain.LoyaltyLedger
+	if err := r.db.SelectContext(ctx, &entries, q, customerID, perPage, offset); err != nil {
+		return nil, 0, fmt.Errorf("LoyaltyRepo.GetHistoryPaginated: %w", err)
+	}
+	return entries, total, nil
 }
 
 // AssignTier updates the customer's loyalty_tier_id and bumps updated_at.
@@ -142,7 +203,10 @@ var _ interface {
 	GetBalance(context.Context, string) (float64, error)
 	EarnPoints(context.Context, string, *string, float64) (*domain.LoyaltyLedger, error)
 	SpendPoints(context.Context, string, *string, float64) (*domain.LoyaltyLedger, error)
+	VoidPoints(context.Context, string, *string, float64) (*domain.LoyaltyLedger, error)
+	AdjustPoints(context.Context, string, float64, string) (*domain.LoyaltyLedger, error)
 	GetHistory(context.Context, string) ([]*domain.LoyaltyLedger, error)
+	GetHistoryPaginated(context.Context, string, int, int) ([]*domain.LoyaltyLedger, int, error)
 	AssignTier(context.Context, string, string) error
 	GetCustomerTier(context.Context, string) (*domain.MembershipTier, error)
 } = (*LoyaltyRepo)(nil)
