@@ -460,7 +460,13 @@ function DetailDrawer({
 }) {
   return (
     <div
-      style={{ position: 'fixed', inset: 0, zIndex: 5000, display: 'flex', justifyContent: 'flex-end' }}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 5000,
+        display: 'flex',
+        justifyContent: 'flex-end',
+      }}
       onClick={onClose}
     >
       <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.35)' }} />
@@ -490,7 +496,14 @@ function DetailDrawer({
         >
           <div>
             <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>Detail Transaksi</div>
-            <div style={{ fontSize: '0.7rem', color: 'var(--text-3)', marginTop: 2, fontFamily: 'monospace' }}>
+            <div
+              style={{
+                fontSize: '0.7rem',
+                color: 'var(--text-3)',
+                marginTop: 2,
+                fontFamily: 'monospace',
+              }}
+            >
               #{txn.id.slice(0, 8).toUpperCase()}
             </div>
           </div>
@@ -501,14 +514,16 @@ function DetailDrawer({
 
         {/* Body */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '16px' }}>
-
           {/* Meta */}
           <DrawerSection>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
                 <div style={{ fontSize: '0.85rem', fontWeight: 500 }}>{txn.cashier_name}</div>
                 <div style={{ fontSize: '0.72rem', color: 'var(--text-3)', marginTop: 2 }}>
-                  {new Date(txn.created_at).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })}
+                  {new Date(txn.created_at).toLocaleString('id-ID', {
+                    dateStyle: 'medium',
+                    timeStyle: 'short',
+                  })}
                 </div>
               </div>
               <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
@@ -544,7 +559,14 @@ function DetailDrawer({
                       {item.tax_rate > 0 && ` · PPN ${item.tax_rate}%`}
                     </div>
                   </div>
-                  <div style={{ fontSize: '0.85rem', fontWeight: 500, marginLeft: 12, whiteSpace: 'nowrap' }}>
+                  <div
+                    style={{
+                      fontSize: '0.85rem',
+                      fontWeight: 500,
+                      marginLeft: 12,
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
                     {formatRp(item.subtotal)}
                   </div>
                 </div>
@@ -556,15 +578,22 @@ function DetailDrawer({
           <DrawerSection>
             <DrawerLabel text="Rincian" />
             <DrawerRow label="Subtotal" value={formatRp(txn.subtotal)} />
-            {txn.discount_amt > 0 && <DrawerRow label="Diskon" value={`−${formatRp(txn.discount_amt)}`} />}
+            {txn.discount_amt > 0 && (
+              <DrawerRow label="Diskon" value={`−${formatRp(txn.discount_amt)}`} />
+            )}
             {txn.tax_amt > 0 && <DrawerRow label="PPN" value={formatRp(txn.tax_amt)} />}
             {txn.points_redeemed && txn.points_redeemed > 0 ? (
-              <DrawerRow label={`Poin (${txn.points_redeemed.toLocaleString('id-ID')} pts)`} value={`−${formatRp(txn.points_discount ?? 0)}`} />
+              <DrawerRow
+                label={`Poin (${txn.points_redeemed.toLocaleString('id-ID')} pts)`}
+                value={`−${formatRp(txn.points_discount ?? 0)}`}
+              />
             ) : null}
             <div style={{ borderTop: '1px solid var(--border)', margin: '8px 0' }} />
             <DrawerRow label="Total" value={formatRp(txn.total)} bold />
             <DrawerRow label="Dibayar" value={formatRp(txn.payment_amount)} />
-            {txn.change_amount > 0 && <DrawerRow label="Kembalian" value={formatRp(txn.change_amount)} />}
+            {txn.change_amount > 0 && (
+              <DrawerRow label="Kembalian" value={formatRp(txn.change_amount)} />
+            )}
           </DrawerSection>
 
           {/* Notes */}

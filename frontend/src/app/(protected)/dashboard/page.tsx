@@ -606,12 +606,18 @@ export default function DashboardPage() {
           {/* ── Loyalty Points Summary ── */}
           {loyaltySummary && (
             <div className="card reveal-animate" style={{ padding: 18, animationDelay: '0.7s' }}>
-              <div className="type-subheading" style={{ marginBottom: 14 }}>Poin Loyalitas</div>
+              <div className="type-subheading" style={{ marginBottom: 14 }}>
+                Poin Loyalitas
+              </div>
               <div className="flex flex-col gap-3">
                 {loyaltySummary.periods.map(p => (
                   <div key={p.period} className="flex justify-between items-center">
                     <span className="type-body-sm" style={{ textTransform: 'capitalize' }}>
-                      {p.period === 'today' ? 'Hari Ini' : p.period === 'week' ? 'Minggu Ini' : 'Bulan Ini'}
+                      {p.period === 'today'
+                        ? 'Hari Ini'
+                        : p.period === 'week'
+                          ? 'Minggu Ini'
+                          : 'Bulan Ini'}
                     </span>
                     <div style={{ display: 'flex', gap: 6, fontSize: '0.78rem' }}>
                       <span style={{ color: '#10b981', fontWeight: 600 }}>
@@ -634,21 +640,35 @@ export default function DashboardPage() {
           {/* ── Top Loyal Customers ── */}
           {loyaltySummary && loyaltySummary.top_customers.length > 0 && (
             <div className="card reveal-animate" style={{ padding: 18, animationDelay: '0.72s' }}>
-              <div className="type-subheading" style={{ marginBottom: 14 }}>Top Pelanggan Setia</div>
+              <div className="type-subheading" style={{ marginBottom: 14 }}>
+                Top Pelanggan Setia
+              </div>
               <div className="flex flex-col gap-2">
                 {loyaltySummary.top_customers.map((c, i) => (
                   <div
                     key={c.customer_id}
                     className="flex justify-between items-center"
-                    style={{ padding: '6px 0', borderBottom: i < loyaltySummary.top_customers.length - 1 ? '1px solid var(--border)' : 'none' }}
+                    style={{
+                      padding: '6px 0',
+                      borderBottom:
+                        i < loyaltySummary.top_customers.length - 1
+                          ? '1px solid var(--border)'
+                          : 'none',
+                    }}
                   >
                     <div>
-                      <div className="type-body-sm" style={{ fontWeight: 600 }}>{c.customer_name}</div>
-                      {c.tier_name && (
-                        <div className="type-caption">{c.tier_name}</div>
-                      )}
+                      <div className="type-body-sm" style={{ fontWeight: 600 }}>
+                        {c.customer_name}
+                      </div>
+                      {c.tier_name && <div className="type-caption">{c.tier_name}</div>}
                     </div>
-                    <span style={{ fontSize: '0.82rem', fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
+                    <span
+                      style={{
+                        fontSize: '0.82rem',
+                        fontWeight: 600,
+                        fontVariantNumeric: 'tabular-nums',
+                      }}
+                    >
                       {c.balance.toLocaleString('id-ID')} pts
                     </span>
                   </div>

@@ -163,9 +163,7 @@ function cartReducer(state: PosCartItem[], action: CartAction): PosCartItem[] {
       if (idx >= 0) {
         const newQty = state[idx].quantity + 1;
         if (stock !== undefined && newQty > stock) return state; // at stock limit
-        return state.map((item, i) =>
-          i === idx ? makeFromProduct(item.product, newQty) : item
-        );
+        return state.map((item, i) => (i === idx ? makeFromProduct(item.product, newQty) : item));
       }
       return [...state, makeFromProduct(action.product)];
     }
@@ -1449,12 +1447,17 @@ export default function POSPage() {
                         {inCart.quantity}
                       </div>
                     )}
-                    <div className="product-icon"><UtensilsCrossed size={20} strokeWidth={1.5} /></div>
+                    <div className="product-icon">
+                      <UtensilsCrossed size={20} strokeWidth={1.5} />
+                    </div>
                     <div className="product-name">{m.name}</div>
                     {m.category_name && <div className="product-sku">{m.category_name}</div>}
                     <div className="product-price">{formatRp(m.sell_price)}</div>
                     {m.ingredients && m.ingredients.length > 0 && (
-                      <div className="product-sku" style={{ marginTop: 2, display: 'flex', alignItems: 'center', gap: 3 }}>
+                      <div
+                        className="product-sku"
+                        style={{ marginTop: 2, display: 'flex', alignItems: 'center', gap: 3 }}
+                      >
                         <Layers size={10} /> {m.ingredients.length} bahan
                       </div>
                     )}
@@ -1492,16 +1495,16 @@ export default function POSPage() {
               const inCart = cart.find(i => i.product.id === p.id && !i.menuItemId);
               const outOfStock = (p.stock_qty ?? 1) <= 0;
               const atStockLimit =
-                !outOfStock &&
-                p.stock_qty !== undefined &&
-                (inCart?.quantity ?? 0) >= p.stock_qty;
+                !outOfStock && p.stock_qty !== undefined && (inCart?.quantity ?? 0) >= p.stock_qty;
               return (
-                  <div
-                    key={p.id}
-                    className={`product-card ${outOfStock ? 'out-of-stock' : ''} reveal-animate`}
-                    onClick={() => !outOfStock && !atStockLimit && dispatch({ type: 'ADD_PRODUCT', product: p })}
-                    style={{ animationDelay: `${0.2 + i * 0.012}s` }}
-                  >
+                <div
+                  key={p.id}
+                  className={`product-card ${outOfStock ? 'out-of-stock' : ''} reveal-animate`}
+                  onClick={() =>
+                    !outOfStock && !atStockLimit && dispatch({ type: 'ADD_PRODUCT', product: p })
+                  }
+                  style={{ animationDelay: `${0.2 + i * 0.012}s` }}
+                >
                   {/* In-cart quantity badge */}
                   {inCart && (
                     <div
@@ -1525,7 +1528,9 @@ export default function POSPage() {
                       {inCart.quantity}
                     </div>
                   )}
-                  <div className="product-icon"><Package size={20} strokeWidth={1.5} /></div>
+                  <div className="product-icon">
+                    <Package size={20} strokeWidth={1.5} />
+                  </div>
                   <div className="product-name">{p.name}</div>
                   <div className="product-sku">{p.sku}</div>
                   <div className="product-price">{formatRp(p.sell_price)}</div>
@@ -2015,7 +2020,15 @@ export default function POSPage() {
                   <div className="cart-item-header">
                     <div className="cart-item-name">
                       {item.menuItemId && (
-                        <UtensilsCrossed size={11} style={{ color: '#fb923c', marginRight: 5, display: 'inline', verticalAlign: 'middle' }} />
+                        <UtensilsCrossed
+                          size={11}
+                          style={{
+                            color: '#fb923c',
+                            marginRight: 5,
+                            display: 'inline',
+                            verticalAlign: 'middle',
+                          }}
+                        />
                       )}
                       {item.product.name}
                     </div>
@@ -2677,7 +2690,11 @@ export default function POSPage() {
                 disabled={cart.length === 0 || holdLoading}
                 onClick={handleHoldOrder}
               >
-                {holdLoading ? <Loader2 size={14} className="loading-spin" /> : <Bookmark size={14} />}
+                {holdLoading ? (
+                  <Loader2 size={14} className="loading-spin" />
+                ) : (
+                  <Bookmark size={14} />
+                )}
                 {activeDraft ? 'Perbarui' : 'Tahan'}
               </button>
               <button

@@ -36,7 +36,7 @@ Do not report "Done" until all three exit with zero errors.
 ## Documentation Maintenance
 
 Update `README.md` when:
+
 - A new page or route is added.
 - A new API client function is added to `src/lib/api/`.
 - A new type is added that affects the public API contract.
-

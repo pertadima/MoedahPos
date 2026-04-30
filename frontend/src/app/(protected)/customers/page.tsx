@@ -306,12 +306,18 @@ function RiwayatPoin({ storeId, customerId }: { storeId: string; customerId: str
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700, fontSize: '0.8rem' }}>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 6,
+          fontWeight: 700,
+          fontSize: '0.8rem',
+        }}
+      >
         <History size={14} style={{ color: 'var(--accent-em)' }} />
         Riwayat Poin
-        {total > 0 && (
-          <span style={{ color: 'var(--text-3)', fontWeight: 400 }}>({total})</span>
-        )}
+        {total > 0 && <span style={{ color: 'var(--text-3)', fontWeight: 400 }}>({total})</span>}
       </div>
 
       {loading ? (
