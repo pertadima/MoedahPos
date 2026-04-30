@@ -768,7 +768,7 @@ func (s *TransactionService) UpdateDraftItems(ctx context.Context, storeID, txnI
 }
 
 // PayDraft finalizes a held order: validates payment, deducts stock, marks completed.
-func (s *TransactionService) PayDraft(ctx context.Context, storeID, txnID, cashierID string, req *dto.PayDraftRequest) (*dto.TransactionResponse, error) { //nolint:gocognit,cyclop // loyalty+payment logic
+func (s *TransactionService) PayDraft(ctx context.Context, storeID, txnID, cashierID string, req *dto.PayDraftRequest) (*dto.TransactionResponse, error) { //nolint:gocognit,cyclop,funlen // loyalty+payment+draft logic is inherently complex
 	existing, err := s.txnRepo.FindByID(ctx, txnID)
 	if err != nil || existing == nil {
 		return nil, ErrDraftNotFound

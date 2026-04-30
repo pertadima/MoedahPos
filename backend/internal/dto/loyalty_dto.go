@@ -89,4 +89,3 @@ type LoyaltySummaryResponse struct {
 	TopCustomers []TopCustomerLoyalty   `json:"top_customers"` // top 5 by balance
 	Periods      []LoyaltyPointsSummary `json:"periods"`       // today / week / month
 }
-

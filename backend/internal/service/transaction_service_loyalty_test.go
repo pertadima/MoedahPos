@@ -43,9 +43,9 @@ func TestTransactionService_LoyaltyRedemption(t *testing.T) {
 
 		lRepo.On("GetBalance", ctx, cid).Return(20.0, nil)
 		sRepo.On("FindByID", ctx, "s1").Return(&domain.Store{
-			ID:                      "s1",
-			LoyaltyRupiahPerPoint:   1,
-			LoyaltyPointsPerRupiah:  1000,
+			ID:                     "s1",
+			LoyaltyRupiahPerPoint:  1,
+			LoyaltyPointsPerRupiah: 1000,
 		}, nil)
 
 		tRepo.On("PayDraft", ctx, mock.MatchedBy(func(in domain.PayDraftInput) bool {

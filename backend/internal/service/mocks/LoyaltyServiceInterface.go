@@ -308,4 +308,3 @@ func NewLoyaltyServiceInterface(t interface {
 
 	return mock
 }
-

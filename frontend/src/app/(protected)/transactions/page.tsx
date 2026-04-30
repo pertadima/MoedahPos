@@ -397,17 +397,9 @@ function ReceiptModal({ txn, onClose }: { txn: Transaction; onClose: () => void 
   );
 }
 
-// ── Detail Drawer ─────────────────────────────────────────────────────────────
-function DetailDrawer({
-  txn,
-  onClose,
-  onReprint,
-}: {
-  txn: Transaction;
-  onClose: () => void;
-  onReprint: (t: Transaction) => void;
-}) {
-  const Row = ({ label, value, bold }: { label: string; value: string; bold?: boolean }) => (
+// ── Detail Drawer helpers (module-level to avoid "component created during render") ──
+function DrawerRow({ label, value, bold }: { label: string; value: string; bold?: boolean }) {
+  return (
     <div
       style={{
         display: 'flex',
@@ -422,8 +414,10 @@ function DetailDrawer({
       <span style={{ fontVariantNumeric: 'tabular-nums' }}>{value}</span>
     </div>
   );
+}
 
-  const Section = ({ children }: { children: React.ReactNode }) => (
+function DrawerSection({ children }: { children: React.ReactNode }) {
+  return (
     <div
       style={{
         background: 'var(--bg-card)',
@@ -436,8 +430,10 @@ function DetailDrawer({
       {children}
     </div>
   );
+}
 
-  const Label = ({ text }: { text: string }) => (
+function DrawerLabel({ text }: { text: string }) {
+  return (
     <div
       style={{
         fontSize: '0.68rem',
@@ -450,7 +446,18 @@ function DetailDrawer({
       {text}
     </div>
   );
+}
 
+// ── Detail Drawer ─────────────────────────────────────────────────────────────
+function DetailDrawer({
+  txn,
+  onClose,
+  onReprint,
+}: {
+  txn: Transaction;
+  onClose: () => void;
+  onReprint: (t: Transaction) => void;
+}) {
   return (
     <div
       style={{ position: 'fixed', inset: 0, zIndex: 5000, display: 'flex', justifyContent: 'flex-end' }}
@@ -496,7 +503,7 @@ function DetailDrawer({
         <div style={{ flex: 1, overflowY: 'auto', padding: '16px' }}>
 
           {/* Meta */}
-          <Section>
+          <DrawerSection>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
                 <div style={{ fontSize: '0.85rem', fontWeight: 500 }}>{txn.cashier_name}</div>
@@ -509,24 +516,24 @@ function DetailDrawer({
                 <PayBadge method={txn.payment_method} />
               </div>
             </div>
-          </Section>
+          </DrawerSection>
 
           {/* Customer */}
           {txn.customer_name && (
-            <Section>
-              <Label text="Pelanggan" />
+            <DrawerSection>
+              <DrawerLabel text="Pelanggan" />
               <div style={{ fontSize: '0.85rem', fontWeight: 500 }}>{txn.customer_name}</div>
               {txn.customer_phone && (
                 <div style={{ fontSize: '0.75rem', color: 'var(--text-3)', marginTop: 2 }}>
                   {txn.customer_phone}
                 </div>
               )}
-            </Section>
+            </DrawerSection>
           )}
 
           {/* Items */}
-          <Section>
-            <Label text={`Item · ${txn.items?.length ?? 0}`} />
+          <DrawerSection>
+            <DrawerLabel text={`Item · ${txn.items?.length ?? 0}`} />
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {(txn.items ?? []).map((item, i) => (
                 <div key={i} style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -543,28 +550,28 @@ function DetailDrawer({
                 </div>
               ))}
             </div>
-          </Section>
+          </DrawerSection>
 
           {/* Payment */}
-          <Section>
-            <Label text="Rincian" />
-            <Row label="Subtotal" value={formatRp(txn.subtotal)} />
-            {txn.discount_amt > 0 && <Row label="Diskon" value={`−${formatRp(txn.discount_amt)}`} />}
-            {txn.tax_amt > 0 && <Row label="PPN" value={formatRp(txn.tax_amt)} />}
+          <DrawerSection>
+            <DrawerLabel text="Rincian" />
+            <DrawerRow label="Subtotal" value={formatRp(txn.subtotal)} />
+            {txn.discount_amt > 0 && <DrawerRow label="Diskon" value={`−${formatRp(txn.discount_amt)}`} />}
+            {txn.tax_amt > 0 && <DrawerRow label="PPN" value={formatRp(txn.tax_amt)} />}
             {txn.points_redeemed && txn.points_redeemed > 0 ? (
-              <Row label={`Poin (${txn.points_redeemed.toLocaleString('id-ID')} pts)`} value={`−${formatRp(txn.points_discount ?? 0)}`} />
+              <DrawerRow label={`Poin (${txn.points_redeemed.toLocaleString('id-ID')} pts)`} value={`−${formatRp(txn.points_discount ?? 0)}`} />
             ) : null}
             <div style={{ borderTop: '1px solid var(--border)', margin: '8px 0' }} />
-            <Row label="Total" value={formatRp(txn.total)} bold />
-            <Row label="Dibayar" value={formatRp(txn.payment_amount)} />
-            {txn.change_amount > 0 && <Row label="Kembalian" value={formatRp(txn.change_amount)} />}
-          </Section>
+            <DrawerRow label="Total" value={formatRp(txn.total)} bold />
+            <DrawerRow label="Dibayar" value={formatRp(txn.payment_amount)} />
+            {txn.change_amount > 0 && <DrawerRow label="Kembalian" value={formatRp(txn.change_amount)} />}
+          </DrawerSection>
 
           {/* Notes */}
           {txn.notes && (
-            <Section>
+            <DrawerSection>
               <div style={{ fontSize: '0.82rem', color: 'var(--text-2)' }}>{txn.notes}</div>
-            </Section>
+            </DrawerSection>
           )}
         </div>
 

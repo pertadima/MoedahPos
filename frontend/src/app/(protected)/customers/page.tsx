@@ -269,6 +269,7 @@ function RiwayatPoin({ storeId, customerId }: { storeId: string; customerId: str
   const PER_PAGE = 10;
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
     loyaltyApi
       .getHistoryPaginated(storeId, customerId, page, PER_PAGE)
