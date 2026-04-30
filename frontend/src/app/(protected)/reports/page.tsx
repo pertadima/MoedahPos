@@ -414,11 +414,6 @@ export default function UnifiedReportsPage() {
     [loadDataset]
   );
 
-  const refreshCurrentTab = useCallback(async () => {
-    if (!storeId) return;
-    await ensureTabData(tab, true);
-  }, [storeId, ensureTabData, tab]);
-
   useEffect(() => {
     setSummary(null);
     setByProduct([]);
@@ -555,8 +550,8 @@ export default function UnifiedReportsPage() {
 
   return (
     <div className="w-full p-6">
-      <div className="reveal-animate flex justify-between items-start mb-6 flex-wrap gap-4 relative z-20">
-        <div>
+      <div className="reveal-animate flex justify-between items-start mb-6 flex-col lg:flex-row gap-4 relative z-20">
+        <div className="w-full lg:w-auto">
           <h1 className="page-title" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <BarChart3 size={22} style={{ color: 'var(--accent-em)' }} />
             Laporan & Keuangan
@@ -566,9 +561,9 @@ export default function UnifiedReportsPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto">
           <div
-            className="card flex items-center gap-2 px-4 shadow-sm"
+            className="card flex items-center justify-between gap-2 px-4 shadow-sm w-full sm:w-auto"
             style={{ height: 44, borderRadius: 22, background: 'var(--bg-card)' }}
           >
             <DatePicker value={dateFrom} onChange={setDateFrom} variant="ghost" />
@@ -586,23 +581,16 @@ export default function UnifiedReportsPage() {
             </div>
             <DatePicker value={dateTo} onChange={setDateTo} variant="ghost" />
           </div>
-          <button
-            className="btn btn-primary px-6 shadow-lg"
-            style={{ height: 44, borderRadius: 22, fontWeight: 700 }}
-            onClick={refreshCurrentTab}
-            disabled={isActiveTabLoading}
-          >
-            {isActiveTabLoading ? <Loader2 size={16} className="loading-spin" /> : 'Update Laporan'}
-          </button>
           {/* Export buttons — shown only for exportable tabs */}
           {storeId && (tab === 'sales' || tab === 'profit' || tab === 'valuation') && (
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5 w-full sm:w-auto">
               <ExportButton
                 storeId={storeId}
                 report={tab === 'valuation' ? 'inventory' : (tab as ExportReportType)}
                 fileType="csv"
                 dateFrom={dateFrom}
                 dateTo={dateTo}
+                className="flex-1 sm:flex-none justify-center"
                 onError={err => setExportError(err.message)}
                 onSuccess={() => setExportError(null)}
               />
@@ -612,6 +600,7 @@ export default function UnifiedReportsPage() {
                 fileType="pdf"
                 dateFrom={dateFrom}
                 dateTo={dateTo}
+                className="flex-1 sm:flex-none justify-center"
                 onError={err => setExportError(err.message)}
                 onSuccess={() => setExportError(null)}
               />

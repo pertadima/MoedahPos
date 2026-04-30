@@ -64,9 +64,9 @@ export default function ExportButton({
       onClick={handleClick}
       disabled={loading}
       className={[
-        'inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium',
-        'border border-[var(--border)] bg-[var(--bg-card)] text-[var(--text-primary)]',
-        'hover:bg-[var(--bg-elevated)] transition-colors',
+        'inline-flex items-center gap-1.5 px-4 text-xs font-semibold shadow-sm h-[44px]',
+        'border border-[var(--border)] bg-[var(--bg-card)] text-[var(--text-1)]',
+        'hover:bg-[var(--bg-elevated)] transition-colors rounded-[22px]',
         'disabled:opacity-50 disabled:cursor-not-allowed',
         className,
       ]
