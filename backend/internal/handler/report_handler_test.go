@@ -152,14 +152,14 @@ func TestExportReportHandler(t *testing.T) {
 		svc := new(mocks.ReportServiceInterface)
 		h := NewReportHandler(svc, zerolog.Nop())
 
-		htmlBytes := []byte("<!DOCTYPE html><html><body>Inventory</body></html>")
-		svc.On("ExportPDF", mock.Anything, "inventory", mock.Anything).Return(htmlBytes, nil).Once()
+		pdfBytes := []byte("%PDF-1.4\n...")
+		svc.On("ExportPDF", mock.Anything, "inventory", mock.Anything).Return(pdfBytes, nil).Once()
 
 		req, w := makeReq(t, "?type=pdf&report=inventory")
 		h.ExportReport(w, req)
 
 		assert.Equal(t, http.StatusOK, w.Code)
-		assert.Contains(t, w.Header().Get("Content-Type"), "text/html")
+		assert.Contains(t, w.Header().Get("Content-Type"), "application/pdf")
 		svc.AssertExpectations(t)
 	})
 

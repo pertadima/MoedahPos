@@ -85,11 +85,11 @@ func TestPeriodLabel(t *testing.T) {
 	}))
 }
 
-// ── renderPDFHTML ─────────────────────────────────────────────────────────────
+// ── renderPDF ─────────────────────────────────────────────────────────────────
 
-func TestRenderPDFHTML_EmptyData(t *testing.T) {
+func TestRenderPDF_EmptyData(t *testing.T) {
 	// Must not panic or error on empty rows / nil TotalRow.
-	data, err := renderPDFHTML(pdfData{
+	data, err := renderPDF(pdfData{
 		Title:      "Test",
 		Period:     "30 hari terakhir",
 		ExportedAt: "2024-01-01 00:00:00",
@@ -99,40 +99,8 @@ func TestRenderPDFHTML_EmptyData(t *testing.T) {
 	})
 	assert.NoError(t, err)
 	assert.NotEmpty(t, data)
-	html := string(data)
-	assert.Contains(t, html, "Test")
-	assert.Contains(t, html, "<table>")
-}
-
-func TestRenderPDFHTML_XSSEscape(t *testing.T) {
-	// html/template must escape user-supplied values.
-	data, err := renderPDFHTML(pdfData{
-		Title:      "<script>alert(1)</script>",
-		Period:     "2024-01-01",
-		ExportedAt: "2024-01-01",
-		Headers:    []string{"<h1>"},
-		Rows:       [][]string{{"<b>value</b>"}},
-		TotalRow:   []string{"<em>total</em>"},
-	})
-	assert.NoError(t, err)
-	html := string(data)
-	// Raw script tag must not appear
-	assert.NotContains(t, html, "<script>alert(1)</script>")
-	// Escaped form must appear
-	assert.Contains(t, html, "&lt;script&gt;")
-}
-
-func TestRenderPDFHTML_TotalRowRendered(t *testing.T) {
-	data, err := renderPDFHTML(pdfData{
-		Title: "T", Period: "P", ExportedAt: "E",
-		Headers:  []string{"X"},
-		Rows:     [][]string{{"row1"}},
-		TotalRow: []string{"total1"},
-	})
-	assert.NoError(t, err)
-	html := string(data)
-	assert.Contains(t, html, "total-row")
-	assert.Contains(t, html, "total1")
+	pdfStr := string(data)
+	assert.Contains(t, pdfStr, "%PDF-") // Standard PDF header
 }
 
 // ── ExportCSV ─────────────────────────────────────────────────────────────────
@@ -230,10 +198,8 @@ func TestExportPDF_Sales(t *testing.T) {
 
 	data, err := svc.ExportPDF(ctx, "sales", filter)
 	assert.NoError(t, err)
-	html := string(data)
-	assert.Contains(t, html, "Laporan Penjualan")
-	assert.Contains(t, html, "2024-01-01")
-	assert.Contains(t, html, "<!DOCTYPE html>")
+	pdfStr := string(data)
+	assert.Contains(t, pdfStr, "%PDF-")
 	repo.AssertExpectations(t)
 }
 
@@ -249,9 +215,8 @@ func TestExportPDF_Inventory(t *testing.T) {
 
 	data, err := svc.ExportPDF(ctx, "inventory", filter)
 	assert.NoError(t, err)
-	html := string(data)
-	assert.Contains(t, html, "Audit Inventaris")
-	assert.Contains(t, html, "Gula")
+	pdfStr := string(data)
+	assert.Contains(t, pdfStr, "%PDF-")
 	repo.AssertExpectations(t)
 }
 
@@ -267,8 +232,8 @@ func TestExportPDF_Profit(t *testing.T) {
 
 	data, err := svc.ExportPDF(ctx, "profit", filter)
 	assert.NoError(t, err)
-	html := string(data)
-	assert.Contains(t, html, "Laporan Laba Rugi")
+	pdfStr := string(data)
+	assert.Contains(t, pdfStr, "%PDF-")
 	repo.AssertExpectations(t)
 }
 
@@ -284,7 +249,7 @@ func TestExportPDF_EmptyDataNoError(t *testing.T) {
 	data, err := svc.ExportPDF(ctx, "sales", filter)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, data)
-	assert.Contains(t, string(data), "<table>")
+	assert.Contains(t, string(data), "%PDF-")
 	repo.AssertExpectations(t)
 }
 

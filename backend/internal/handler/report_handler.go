@@ -163,8 +163,8 @@ func (h *ReportHandler) ExportReport(w http.ResponseWriter, r *http.Request) {
 		contentType = "text/csv; charset=utf-8"
 	default: // "pdf"
 		data, err = h.reportSvc.ExportPDF(r.Context(), reportName, filter)
-		filename = fmt.Sprintf("laporan-%s-%s.html", reportName, dateTag)
-		contentType = "text/html; charset=utf-8"
+		filename = fmt.Sprintf("laporan-%s-%s.pdf", reportName, dateTag)
+		contentType = "application/pdf"
 	}
 
 	if err != nil {

@@ -5,10 +5,11 @@ import (
 	"context"
 	"encoding/csv"
 	"fmt"
-	"html/template"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/go-pdf/fpdf"
 
 	"github.com/moedahpos/backend/internal/dto"
 )
@@ -98,43 +99,7 @@ func profitCSV(data *dto.ProfitSummaryResponse) ([]byte, error) {
 	return writeCSV(header, rows)
 }
 
-// ── PDF (printable HTML) ─────────────────────────────────────────────────────
-
-// pdfHTMLTemplate is a self-contained HTML document styled for browser print-to-PDF.
-// Values are escaped by html/template automatically.
-const pdfHTMLTemplate = `<!DOCTYPE html>
-<html lang="id">
-<head>
-<meta charset="UTF-8"/>
-<title>{{.Title}}</title>
-<style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:Arial,sans-serif;font-size:11px;color:#111;padding:20px}
-h1{font-size:16px;margin-bottom:4px}
-.meta{font-size:10px;color:#555;margin-bottom:16px}
-table{width:100%;border-collapse:collapse;margin-bottom:16px}
-th{background:#1a1a2e;color:#fff;padding:6px 8px;text-align:left;font-size:10px}
-td{padding:5px 8px;border-bottom:1px solid #e5e7eb;font-size:10px}
-tr:last-child td{border-bottom:none}
-.total-row td{font-weight:bold;background:#f9fafb;border-top:2px solid #374151}
-.footer{font-size:9px;color:#9ca3af;text-align:center;margin-top:20px}
-@media print{body{padding:0}@page{margin:15mm}}
-</style>
-</head>
-<body>
-<h1>{{.Title}}</h1>
-<div class="meta">Periode: {{.Period}} &nbsp;|&nbsp; Diekspor: {{.ExportedAt}}</div>
-<table>
-<thead><tr>{{range .Headers}}<th>{{.}}</th>{{end}}</tr></thead>
-<tbody>
-{{range .Rows}}<tr>{{range .}}<td>{{.}}</td>{{end}}</tr>
-{{end -}}
-{{- if .TotalRow}}<tr class="total-row">{{range .TotalRow}}<td>{{.}}</td>{{end}}</tr>{{end}}
-</tbody>
-</table>
-<div class="footer">Moedah POS &mdash; laporan ini digenerate otomatis</div>
-</body>
-</html>`
+// ── PDF Generator ─────────────────────────────────────────────────────────────
 
 type pdfData struct {
 	Title      string
@@ -145,16 +110,77 @@ type pdfData struct {
 	TotalRow   []string
 }
 
-// renderPDFHTML executes the PDF HTML template with the given data.
-func renderPDFHTML(data pdfData) ([]byte, error) {
-	tmpl, err := template.New("pdf").Parse(pdfHTMLTemplate)
-	if err != nil {
-		return nil, fmt.Errorf("parse pdf template: %w", err)
+// renderPDF generates an actual PDF using go-pdf/fpdf
+func renderPDF(data pdfData) ([]byte, error) {
+	// A4, portrait, mm
+	pdf := fpdf.New("P", "mm", "A4", "")
+	pdf.SetMargins(15, 15, 15)
+	pdf.AddPage()
+
+	// Title
+	pdf.SetFont("Arial", "B", 16)
+	pdf.CellFormat(0, 10, data.Title, "", 1, "L", false, 0, "")
+
+	// Meta info
+	pdf.SetFont("Arial", "", 10)
+	pdf.SetTextColor(85, 85, 85)
+	meta := fmt.Sprintf("Periode: %s   |   Diekspor: %s", data.Period, data.ExportedAt)
+	pdf.CellFormat(0, 8, meta, "", 1, "L", false, 0, "")
+	pdf.Ln(5)
+
+	// Calculate column widths based on page width
+	pageWidth, _ := pdf.GetPageSize()
+	usableWidth := pageWidth - 30 // margins 15*2
+	colCount := len(data.Headers)
+	colWidth := usableWidth / float64(colCount)
+
+	// Table Header
+	pdf.SetFont("Arial", "B", 9)
+	pdf.SetFillColor(26, 26, 46) // dark header
+	pdf.SetTextColor(255, 255, 255)
+
+	for _, h := range data.Headers {
+		pdf.CellFormat(colWidth, 8, h, "1", 0, "L", true, 0, "")
 	}
+	pdf.Ln(-1)
+
+	// Table Body
+	pdf.SetFont("Arial", "", 8)
+	pdf.SetTextColor(17, 17, 17)
+
+	for _, row := range data.Rows {
+		for _, cell := range row {
+			// Limit cell text length so it doesn't overflow wildly
+			if len(cell) > 20 && colCount > 5 {
+				cell = cell[:17] + "..."
+			}
+			pdf.CellFormat(colWidth, 7, cell, "B", 0, "L", false, 0, "")
+		}
+		pdf.Ln(-1)
+	}
+
+	// Total Row
+	if len(data.TotalRow) > 0 {
+		pdf.SetFont("Arial", "B", 8)
+		pdf.SetFillColor(249, 250, 251) // light gray
+		for _, cell := range data.TotalRow {
+			pdf.CellFormat(colWidth, 8, cell, "T", 0, "L", true, 0, "")
+		}
+		pdf.Ln(-1)
+	}
+
+	// Footer
+	pdf.SetY(-20)
+	pdf.SetFont("Arial", "I", 8)
+	pdf.SetTextColor(156, 163, 175)
+	pdf.CellFormat(0, 10, "Moedah POS -- laporan ini digenerate otomatis", "", 0, "C", false, 0, "")
+
 	var buf bytes.Buffer
-	if err := tmpl.Execute(&buf, data); err != nil {
-		return nil, fmt.Errorf("render pdf template: %w", err)
+	err := pdf.Output(&buf)
+	if err != nil {
+		return nil, fmt.Errorf("pdf generation failed: %w", err)
 	}
+
 	return buf.Bytes(), nil
 }
 
@@ -207,8 +233,7 @@ func (s *ReportService) ExportCSV(ctx context.Context, report string, filter dto
 
 // ── ExportPDF ────────────────────────────────────────────────────────────────
 
-// ExportPDF generates a printable HTML byte slice for the given report type.
-// The client opens this in a browser; Ctrl+P → Save as PDF produces the document.
+// ExportPDF generates a true PDF byte slice for the given report type.
 // report must be one of: "sales", "inventory", "profit".
 //
 //nolint:cyclop,funlen // switch over report types is inherently multi-branch and long
@@ -242,7 +267,7 @@ func (s *ReportService) ExportPDF(ctx context.Context, report string, filter dto
 			fmtF(data.TotalCost), fmtF(data.GrossProfit),
 			fmtF(data.TotalExpense), fmtF(data.NetProfit),
 		}
-		return renderPDFHTML(pdfData{
+		return renderPDF(pdfData{
 			Title: "Laporan Penjualan", Period: period,
 			ExportedAt: exportedAt, Headers: headers,
 			Rows: rows, TotalRow: totalRow,
@@ -261,7 +286,7 @@ func (s *ReportService) ExportPDF(ctx context.Context, report string, filter dto
 				fmtF(r.CostPrice), fmtF(r.Quantity), fmtF(r.TotalValue),
 			})
 		}
-		return renderPDFHTML(pdfData{
+		return renderPDF(pdfData{
 			Title: "Audit Inventaris", Period: period,
 			ExportedAt: exportedAt, Headers: headers,
 			Rows:     rows,
@@ -291,7 +316,7 @@ func (s *ReportService) ExportPDF(ctx context.Context, report string, filter dto
 			fmtF(data.GrossProfit), fmtF(data.TotalExpense),
 			fmtF(data.NetProfit), fmtF(data.ProfitMargin),
 		}
-		return renderPDFHTML(pdfData{
+		return renderPDF(pdfData{
 			Title: "Laporan Laba Rugi", Period: period,
 			ExportedAt: exportedAt, Headers: headers,
 			Rows: rows, TotalRow: totalRow,

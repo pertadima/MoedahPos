@@ -222,10 +222,14 @@ export const reportsApi = {
       throw new Error(json?.error ?? `Export failed: HTTP ${res.status}`);
     }
 
-    const blob = await res.blob();
+    const rawBlob = await res.blob();
+    const blobType = type === 'pdf' ? 'application/pdf' : 'text/csv;charset=utf-8;';
+    const blob = new Blob([rawBlob], { type: blobType });
+
+    // Trigger standard file download for both CSV and PDF
     const disposition = res.headers.get('Content-Disposition') ?? '';
     const match = /filename="([^"]+)"/.exec(disposition);
-    const filename = match?.[1] ?? `laporan-${report}.${type === 'csv' ? 'csv' : 'html'}`;
+    const filename = match?.[1] ?? `laporan-${report}.${type === 'csv' ? 'csv' : 'pdf'}`;
 
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
