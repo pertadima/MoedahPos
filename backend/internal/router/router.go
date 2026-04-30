@@ -280,6 +280,9 @@ func New(deps *Dependencies) http.Handler { //nolint:funlen // route wiring is i
 							r.Get("/profit", withPerm(deps, "keuangan:read", deps.ReportHandler.ProfitSummary))
 							r.Get("/cash-flow", withPerm(deps, "keuangan:read", deps.ReportHandler.CashFlow))
 							r.Get("/cash-flow/detail", withPerm(deps, "keuangan:read", deps.ReportHandler.CashFlowDetail))
+							// Export: GET /reports/export?type=csv|pdf&report=sales|inventory|profit
+							// Minimum permission: penjualan:read (profit export requires keuangan:read — enforced per-report in handler)
+							r.Get("/export", withPerm(deps, "penjualan:read", deps.ReportHandler.ExportReport))
 						})
 
 						// Expenses

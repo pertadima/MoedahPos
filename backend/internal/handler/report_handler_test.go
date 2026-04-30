@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -113,5 +114,101 @@ func TestReportHandler(t *testing.T) {
 		svc.On("CashFlowDetail", mock.Anything, "s1", "2024-01-01").Return([]dto.CashFlowDetailEntry{}, nil).Once()
 		h.CashFlowDetail(w, req)
 		assert.Equal(t, http.StatusOK, w.Code)
+	})
+}
+
+// ── ExportReport handler tests ────────────────────────────────────────────────
+
+//nolint:funlen
+func TestExportReportHandler(t *testing.T) {
+	makeReq := func(t *testing.T, query string) (*http.Request, *httptest.ResponseRecorder) {
+		t.Helper()
+		req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet,
+			"/stores/s1/reports/export"+query, nil)
+		w := httptest.NewRecorder()
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("storeId", "s1")
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+		return req, w
+	}
+
+	t.Run("CSV sales success", func(t *testing.T) {
+		svc := new(mocks.ReportServiceInterface)
+		h := NewReportHandler(svc, zerolog.Nop())
+
+		csvBytes := []byte("Tanggal,Jml Transaksi\n2024-01-01,5\n")
+		svc.On("ExportCSV", mock.Anything, "sales", mock.Anything).Return(csvBytes, nil).Once()
+
+		req, w := makeReq(t, "?type=csv&report=sales&date_from=2024-01-01")
+		h.ExportReport(w, req)
+
+		assert.Equal(t, http.StatusOK, w.Code)
+		assert.Contains(t, w.Header().Get("Content-Type"), "text/csv")
+		assert.Contains(t, w.Header().Get("Content-Disposition"), "laporan-sales")
+		svc.AssertExpectations(t)
+	})
+
+	t.Run("PDF inventory success", func(t *testing.T) {
+		svc := new(mocks.ReportServiceInterface)
+		h := NewReportHandler(svc, zerolog.Nop())
+
+		htmlBytes := []byte("<!DOCTYPE html><html><body>Inventory</body></html>")
+		svc.On("ExportPDF", mock.Anything, "inventory", mock.Anything).Return(htmlBytes, nil).Once()
+
+		req, w := makeReq(t, "?type=pdf&report=inventory")
+		h.ExportReport(w, req)
+
+		assert.Equal(t, http.StatusOK, w.Code)
+		assert.Contains(t, w.Header().Get("Content-Type"), "text/html")
+		svc.AssertExpectations(t)
+	})
+
+	t.Run("invalid type returns 400", func(t *testing.T) {
+		svc := new(mocks.ReportServiceInterface)
+		h := NewReportHandler(svc, zerolog.Nop())
+
+		req, w := makeReq(t, "?type=xlsx&report=sales")
+		h.ExportReport(w, req)
+
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+	})
+
+	t.Run("invalid report returns 400", func(t *testing.T) {
+		svc := new(mocks.ReportServiceInterface)
+		h := NewReportHandler(svc, zerolog.Nop())
+
+		req, w := makeReq(t, "?type=csv&report=unknown")
+		h.ExportReport(w, req)
+
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+	})
+
+	t.Run("service error returns 500", func(t *testing.T) {
+		svc := new(mocks.ReportServiceInterface)
+		h := NewReportHandler(svc, zerolog.Nop())
+
+		svc.On("ExportCSV", mock.Anything, "profit", mock.Anything).
+			Return(nil, fmt.Errorf("db error")).Once()
+
+		req, w := makeReq(t, "?type=csv&report=profit")
+		h.ExportReport(w, req)
+
+		assert.Equal(t, http.StatusInternalServerError, w.Code)
+		svc.AssertExpectations(t)
+	})
+
+	t.Run("PDF profit with date_from in filename", func(t *testing.T) {
+		svc := new(mocks.ReportServiceInterface)
+		h := NewReportHandler(svc, zerolog.Nop())
+
+		htmlBytes := []byte("<!DOCTYPE html><html></html>")
+		svc.On("ExportPDF", mock.Anything, "profit", mock.Anything).Return(htmlBytes, nil).Once()
+
+		req, w := makeReq(t, "?type=pdf&report=profit&date_from=2024-06-01")
+		h.ExportReport(w, req)
+
+		assert.Equal(t, http.StatusOK, w.Code)
+		assert.Contains(t, w.Header().Get("Content-Disposition"), "2024-06-01")
+		svc.AssertExpectations(t)
 	})
 }

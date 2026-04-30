@@ -20,6 +20,7 @@ import {
   Warehouse,
 } from 'lucide-react';
 import DatePicker from '@/components/ui/DatePicker';
+import ExportButton, { type ExportReportType } from '@/components/ui/ExportButton';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { reportsApi } from '@/lib/api/store-apis';
 import { transactionsApi } from '@/lib/api/transactions';
@@ -366,6 +367,7 @@ export default function UnifiedReportsPage() {
     Record<string, CashFlowDetailEntry[]>
   >({});
   const [loadingCfDetail, setLoadingCfDetail] = useState<Set<string>>(new Set());
+  const [exportError, setExportError] = useState<string | null>(null);
 
   const loadDataset = useCallback(
     async (dataset: ReportDataset, force = false) => {
@@ -592,8 +594,44 @@ export default function UnifiedReportsPage() {
           >
             {isActiveTabLoading ? <Loader2 size={16} className="loading-spin" /> : 'Update Laporan'}
           </button>
+          {/* Export buttons — shown only for exportable tabs */}
+          {storeId && (tab === 'sales' || tab === 'profit' || tab === 'valuation') && (
+            <div className="flex items-center gap-1.5">
+              <ExportButton
+                storeId={storeId}
+                report={tab === 'valuation' ? 'inventory' : (tab as ExportReportType)}
+                fileType="csv"
+                dateFrom={dateFrom}
+                dateTo={dateTo}
+                onError={err => setExportError(err.message)}
+                onSuccess={() => setExportError(null)}
+              />
+              <ExportButton
+                storeId={storeId}
+                report={tab === 'valuation' ? 'inventory' : (tab as ExportReportType)}
+                fileType="pdf"
+                dateFrom={dateFrom}
+                dateTo={dateTo}
+                onError={err => setExportError(err.message)}
+                onSuccess={() => setExportError(null)}
+              />
+            </div>
+          )}
         </div>
       </div>
+
+      {exportError && (
+        <div className="mb-4 px-4 py-2 rounded-lg text-xs text-red-400 border border-red-500/20 bg-red-500/10 flex items-center justify-between">
+          <span>Export gagal: {exportError}</span>
+          <button
+            type="button"
+            onClick={() => setExportError(null)}
+            className="ml-4 opacity-60 hover:opacity-100 text-xs"
+          >
+            ✕
+          </button>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
         {showTabLoader ? (

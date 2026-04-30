@@ -1,4 +1,4 @@
-import { api } from './client';
+import { api, getAccessToken } from './client';
 import type {
   Category,
   Store,
@@ -187,6 +187,54 @@ export const reportsApi = {
     const q = new URLSearchParams();
     if (date) q.set('date', date);
     return api.get<any>(`/stores/${storeId}/reports/cash-flow/detail?${q}`);
+  },
+
+  /**
+   * Download a CSV or printable-HTML export for a given report type.
+   * Triggers a browser file download.
+   *
+   * @param storeId  - the store UUID
+   * @param type     - "csv" | "pdf"
+   * @param report   - "sales" | "inventory" | "profit"
+   * @param dateFrom - optional YYYY-MM-DD
+   * @param dateTo   - optional YYYY-MM-DD
+   */
+  exportReport: async (
+    storeId: string,
+    type: 'csv' | 'pdf',
+    report: 'sales' | 'inventory' | 'profit',
+    dateFrom?: string,
+    dateTo?: string
+  ): Promise<void> => {
+    const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080/api/v1';
+    const q = new URLSearchParams({ type, report });
+    if (dateFrom) q.set('date_from', dateFrom);
+    if (dateTo) q.set('date_to', dateTo);
+
+    const token = getAccessToken();
+    const res = await fetch(`${BASE_URL}/stores/${storeId}/reports/export?${q}`, {
+      method: 'GET',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+
+    if (!res.ok) {
+      const json = await res.json().catch(() => ({}));
+      throw new Error(json?.error ?? `Export failed: HTTP ${res.status}`);
+    }
+
+    const blob = await res.blob();
+    const disposition = res.headers.get('Content-Disposition') ?? '';
+    const match = /filename="([^"]+)"/.exec(disposition);
+    const filename = match?.[1] ?? `laporan-${report}.${type === 'csv' ? 'csv' : 'html'}`;
+
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
   },
 };
 
