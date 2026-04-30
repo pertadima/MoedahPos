@@ -122,6 +122,89 @@ func (_m *LoyaltyServiceInterface) GetHistory(ctx context.Context, customerID st
 	return r0, r1
 }
 
+// GetHistoryPaginated provides a mock function with given fields: ctx, customerID, page, perPage
+func (_m *LoyaltyServiceInterface) GetHistoryPaginated(ctx context.Context, customerID string, page int, perPage int) ([]*dto.LoyaltyLedgerResponse, dto.PaginationMeta, error) {
+	ret := _m.Called(ctx, customerID, page, perPage)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetHistoryPaginated")
+	}
+
+	var r0 []*dto.LoyaltyLedgerResponse
+	var r1 dto.PaginationMeta
+	var r2 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, int, int) ([]*dto.LoyaltyLedgerResponse, dto.PaginationMeta, error)); ok {
+		return rf(ctx, customerID, page, perPage)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, int, int) []*dto.LoyaltyLedgerResponse); ok {
+		r0 = rf(ctx, customerID, page, perPage)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*dto.LoyaltyLedgerResponse)
+		}
+	}
+	if rf, ok := ret.Get(1).(func(context.Context, string, int, int) dto.PaginationMeta); ok {
+		r1 = rf(ctx, customerID, page, perPage)
+	} else {
+		r1 = ret.Get(1).(dto.PaginationMeta)
+	}
+	if rf, ok := ret.Get(2).(func(context.Context, string, int, int) error); ok {
+		r2 = rf(ctx, customerID, page, perPage)
+	} else {
+		r2 = ret.Error(2)
+	}
+
+	return r0, r1, r2
+}
+
+// VoidTransactionPoints provides a mock function with given fields: ctx, customerID, transactionID, originalPoints
+func (_m *LoyaltyServiceInterface) VoidTransactionPoints(ctx context.Context, customerID string, transactionID *string, originalPoints float64) error {
+	ret := _m.Called(ctx, customerID, transactionID, originalPoints)
+
+	if len(ret) == 0 {
+		panic("no return value specified for VoidTransactionPoints")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, *string, float64) error); ok {
+		r0 = rf(ctx, customerID, transactionID, originalPoints)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// AdjustPoints provides a mock function with given fields: ctx, customerID, delta, note
+func (_m *LoyaltyServiceInterface) AdjustPoints(ctx context.Context, customerID string, delta float64, note string) (*dto.LoyaltyLedgerResponse, error) {
+	ret := _m.Called(ctx, customerID, delta, note)
+
+	if len(ret) == 0 {
+		panic("no return value specified for AdjustPoints")
+	}
+
+	var r0 *dto.LoyaltyLedgerResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, float64, string) (*dto.LoyaltyLedgerResponse, error)); ok {
+		return rf(ctx, customerID, delta, note)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, float64, string) *dto.LoyaltyLedgerResponse); ok {
+		r0 = rf(ctx, customerID, delta, note)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*dto.LoyaltyLedgerResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, float64, string) error); ok {
+		r1 = rf(ctx, customerID, delta, note)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // ListTiers provides a mock function with given fields: ctx
 func (_m *LoyaltyServiceInterface) ListTiers(ctx context.Context) ([]*dto.MembershipTierResponse, error) {
 	ret := _m.Called(ctx)
@@ -175,6 +258,36 @@ func (_m *LoyaltyServiceInterface) RedeemPoints(ctx context.Context, customerID 
 
 	if rf, ok := ret.Get(1).(func(context.Context, string, *string, float64) error); ok {
 		r1 = rf(ctx, customerID, transactionID, points)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetLoyaltySummary provides a mock function with given fields: ctx, storeID
+func (_m *LoyaltyServiceInterface) GetLoyaltySummary(ctx context.Context, storeID string) (*dto.LoyaltySummaryResponse, error) {
+	ret := _m.Called(ctx, storeID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetLoyaltySummary")
+	}
+
+	var r0 *dto.LoyaltySummaryResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*dto.LoyaltySummaryResponse, error)); ok {
+		return rf(ctx, storeID)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) *dto.LoyaltySummaryResponse); ok {
+		r0 = rf(ctx, storeID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*dto.LoyaltySummaryResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, storeID)
 	} else {
 		r1 = ret.Error(1)
 	}

@@ -15,6 +15,37 @@ export interface LoyaltyLedgerEntry {
   customer_id: string;
   points_delta: number;
   transaction_id?: string;
-  type: 'EARN' | 'SPEND';
+  type: 'EARN' | 'SPEND' | 'VOID' | 'ADJUST';
+  balance_snapshot?: number;
   created_at: string;
+}
+
+export interface LoyaltyHistoryPage {
+  data: LoyaltyLedgerEntry[];
+  meta: {
+    total: number;
+    page: number;
+    per_page: number;
+    total_pages: number;
+  };
+}
+
+export interface TopCustomerLoyalty {
+  customer_id: string;
+  customer_name: string;
+  balance: number;
+  tier_name?: string;
+  tier_multiplier?: number;
+}
+
+export interface LoyaltyPointsSummary {
+  period: 'today' | 'week' | 'month';
+  earned: number;
+  used: number;
+  net_change: number;
+}
+
+export interface LoyaltySummary {
+  top_customers: TopCustomerLoyalty[];
+  periods: LoyaltyPointsSummary[];
 }

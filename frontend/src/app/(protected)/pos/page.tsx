@@ -10,16 +10,18 @@ import {
   Minus,
   Plus,
   Loader2,
-  CheckCircle2,
+  Check,
   UtensilsCrossed,
   ShoppingBag,
-  UserRound,
+  User,
   ArrowLeft,
-  Clock,
+  Bookmark,
   Users,
   Tag,
   ChevronDown,
-  Star,
+  Sparkles,
+  Package,
+  Layers,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { useOfflineTransaction } from '@/hooks/useOfflineTransaction';
@@ -28,7 +30,7 @@ import { productsApi } from '@/lib/api/products';
 import { menuItemsApi, customersApi, tablesApi } from '@/lib/api/store-apis';
 import { transactionsApi } from '@/lib/api/transactions';
 import Portal from '@/components/ui/Portal';
-import { formatRp, productEmoji } from '@/lib/utils';
+import { formatRp } from '@/lib/utils';
 import type {
   Product,
   Category,
@@ -156,11 +158,13 @@ function makeFromMenu(item: MenuItem, qty = 1): PosCartItem {
 function cartReducer(state: PosCartItem[], action: CartAction): PosCartItem[] {
   switch (action.type) {
     case 'ADD_PRODUCT': {
+      const stock = action.product.stock_qty;
       const idx = state.findIndex(i => i.product.id === action.product.id && !i.menuItemId);
-      if (idx >= 0)
-        return state.map((item, i) =>
-          i === idx ? makeFromProduct(item.product, item.quantity + 1) : item
-        );
+      if (idx >= 0) {
+        const newQty = state[idx].quantity + 1;
+        if (stock !== undefined && newQty > stock) return state; // at stock limit
+        return state.map((item, i) => (i === idx ? makeFromProduct(item.product, newQty) : item));
+      }
       return [...state, makeFromProduct(action.product)];
     }
     case 'ADD_MENU': {
@@ -177,14 +181,17 @@ function cartReducer(state: PosCartItem[], action: CartAction): PosCartItem[] {
       if (action.qty < 1) return state.filter(i => i.product.id !== action.id);
       return state.map(i => {
         if (i.product.id !== action.id) return i;
+        // Cap at stock for non-menu (retail) items
+        const stock = i.menuItemId ? undefined : i.product.stock_qty;
+        const safeQty = stock !== undefined ? Math.min(action.qty, stock) : action.qty;
         const { unitPrice, subtotal, taxAmt } = applyDiscount(
           i.originalPrice,
-          action.qty,
+          safeQty,
           i.product.tax_rate,
           i.discountType,
           i.discountValue
         );
-        return { ...i, quantity: action.qty, unitPrice, subtotal, taxAmt };
+        return { ...i, quantity: safeQty, unitPrice, subtotal, taxAmt };
       });
     }
     case 'SET_DISCOUNT': {
@@ -280,7 +287,7 @@ function PaymentModal({
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <Star size={14} style={{ color: '#f59e0b' }} />
+              <Sparkles size={14} style={{ color: '#f59e0b' }} />
               <span style={{ fontSize: '0.82rem', color: 'var(--text-2)' }}>
                 Diskon Poin Loyalitas
               </span>
@@ -423,7 +430,7 @@ function PaymentModal({
           disabled={!canConfirm || loading}
           onClick={() => onConfirm(method, method === 'cash' ? amount : total)}
         >
-          {loading ? <Loader2 size={18} className="loading-spin" /> : <CheckCircle2 size={18} />}
+          {loading ? <Loader2 size={18} className="loading-spin" /> : <Check size={18} />}
           {loading ? 'Memproses...' : 'Konfirmasi Pembayaran'}
         </button>
       </div>
@@ -1440,13 +1447,18 @@ export default function POSPage() {
                         {inCart.quantity}
                       </div>
                     )}
-                    <div className="product-icon">🍽️</div>
+                    <div className="product-icon">
+                      <UtensilsCrossed size={20} strokeWidth={1.5} />
+                    </div>
                     <div className="product-name">{m.name}</div>
                     {m.category_name && <div className="product-sku">{m.category_name}</div>}
                     <div className="product-price">{formatRp(m.sell_price)}</div>
                     {m.ingredients && m.ingredients.length > 0 && (
-                      <div className="product-sku" style={{ marginTop: 2 }}>
-                        🧂 {m.ingredients.length} bahan
+                      <div
+                        className="product-sku"
+                        style={{ marginTop: 2, display: 'flex', alignItems: 'center', gap: 3 }}
+                      >
+                        <Layers size={10} /> {m.ingredients.length} bahan
                       </div>
                     )}
                     {/* Add to cart button */}
@@ -1482,11 +1494,15 @@ export default function POSPage() {
             {filteredProducts.map((p, i) => {
               const inCart = cart.find(i => i.product.id === p.id && !i.menuItemId);
               const outOfStock = (p.stock_qty ?? 1) <= 0;
+              const atStockLimit =
+                !outOfStock && p.stock_qty !== undefined && (inCart?.quantity ?? 0) >= p.stock_qty;
               return (
                 <div
                   key={p.id}
                   className={`product-card ${outOfStock ? 'out-of-stock' : ''} reveal-animate`}
-                  onClick={() => !outOfStock && dispatch({ type: 'ADD_PRODUCT', product: p })}
+                  onClick={() =>
+                    !outOfStock && !atStockLimit && dispatch({ type: 'ADD_PRODUCT', product: p })
+                  }
                   style={{ animationDelay: `${0.2 + i * 0.012}s` }}
                 >
                   {/* In-cart quantity badge */}
@@ -1512,7 +1528,9 @@ export default function POSPage() {
                       {inCart.quantity}
                     </div>
                   )}
-                  <div className="product-icon">{productEmoji(p.name)}</div>
+                  <div className="product-icon">
+                    <Package size={20} strokeWidth={1.5} />
+                  </div>
                   <div className="product-name">{p.name}</div>
                   <div className="product-sku">{p.sku}</div>
                   <div className="product-price">{formatRp(p.sell_price)}</div>
@@ -1538,14 +1556,18 @@ export default function POSPage() {
                         width: '100%',
                         justifyContent: 'center',
                         fontSize: '0.75rem',
+                        opacity: atStockLimit ? 0.45 : 1,
+                        cursor: atStockLimit ? 'not-allowed' : 'pointer',
                       }}
+                      disabled={atStockLimit}
+                      title={atStockLimit ? `Stok tersisa ${p.stock_qty} ${p.unit}` : undefined}
                       onClick={e => {
                         e.stopPropagation();
-                        dispatch({ type: 'ADD_PRODUCT', product: p });
+                        if (!atStockLimit) dispatch({ type: 'ADD_PRODUCT', product: p });
                       }}
                     >
                       <Plus size={13} />
-                      Tambah
+                      {atStockLimit ? `Maks. ${p.stock_qty} ${p.unit}` : 'Tambah'}
                     </button>
                   )}
                 </div>
@@ -1633,7 +1655,7 @@ export default function POSPage() {
               gap: 4,
             }}
           >
-            <UserRound size={11} /> Customer
+            <User size={11} /> Customer
           </div>
           {selectedCustomer ? (
             <div
@@ -1690,7 +1712,7 @@ export default function POSPage() {
                       color: '#f59e0b',
                     }}
                   >
-                    <Star size={10} style={{ fill: '#f59e0b', color: '#f59e0b' }} />
+                    <Sparkles size={10} style={{ fill: '#f59e0b', color: '#f59e0b' }} />
                     {loyalty.balance.balance.toLocaleString('id-ID')} pts
                     {loyalty.balance.tier && (
                       <span style={{ fontWeight: 400, color: 'var(--text-3)', marginLeft: 3 }}>
@@ -1722,7 +1744,7 @@ export default function POSPage() {
             </div>
           ) : (
             <div style={{ position: 'relative' }}>
-              <UserRound
+              <User
                 size={13}
                 style={{
                   position: 'absolute',
@@ -1835,7 +1857,7 @@ export default function POSPage() {
                 gap: 4,
               }}
             >
-              <Star size={11} style={{ color: '#f59e0b' }} />
+              <Sparkles size={11} style={{ color: '#f59e0b' }} />
               Tukar Poin Loyalitas
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -1880,7 +1902,7 @@ export default function POSPage() {
                   gap: 4,
                 }}
               >
-                <Star size={10} style={{ fill: '#f59e0b', color: '#f59e0b' }} />
+                <Sparkles size={10} style={{ fill: '#f59e0b', color: '#f59e0b' }} />
                 {pointsToRedeem.toLocaleString('id-ID')} poin = diskon {formatRp(pointsDiscount)}
               </p>
             ) : (
@@ -1998,9 +2020,15 @@ export default function POSPage() {
                   <div className="cart-item-header">
                     <div className="cart-item-name">
                       {item.menuItemId && (
-                        <span style={{ fontSize: '0.7rem', color: '#fb923c', marginRight: 5 }}>
-                          🍽
-                        </span>
+                        <UtensilsCrossed
+                          size={11}
+                          style={{
+                            color: '#fb923c',
+                            marginRight: 5,
+                            display: 'inline',
+                            verticalAlign: 'middle',
+                          }}
+                        />
                       )}
                       {item.product.name}
                     </div>
@@ -2040,6 +2068,18 @@ export default function POSPage() {
                       <span className="qty-val">{item.quantity}</span>
                       <button
                         className="qty-btn"
+                        disabled={
+                          !item.menuItemId &&
+                          item.product.stock_qty !== undefined &&
+                          item.quantity >= item.product.stock_qty
+                        }
+                        title={
+                          !item.menuItemId &&
+                          item.product.stock_qty !== undefined &&
+                          item.quantity >= item.product.stock_qty
+                            ? `Stok tersisa ${item.product.stock_qty} ${item.product.unit}`
+                            : undefined
+                        }
                         onClick={() =>
                           dispatch({
                             type: 'SET_QTY',
@@ -2555,7 +2595,7 @@ export default function POSPage() {
               <span
                 style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.8125rem' }}
               >
-                <Star size={12} style={{ fill: '#f59e0b', color: '#f59e0b' }} />
+                <Sparkles size={12} style={{ fill: '#f59e0b', color: '#f59e0b' }} />
                 Diskon Poin
               </span>
               <span style={{ fontWeight: 700 }}>-{formatRp(pointsDiscount)}</span>
@@ -2628,7 +2668,7 @@ export default function POSPage() {
                   color: '#f59e0b',
                 }}
               >
-                <Star size={12} style={{ fill: '#f59e0b', color: '#f59e0b' }} />
+                <Sparkles size={12} style={{ fill: '#f59e0b', color: '#f59e0b' }} />
                 Poin yang akan didapat
               </div>
               <span style={{ fontWeight: 700, fontSize: '0.82rem', color: '#f59e0b' }}>
@@ -2650,7 +2690,11 @@ export default function POSPage() {
                 disabled={cart.length === 0 || holdLoading}
                 onClick={handleHoldOrder}
               >
-                {holdLoading ? <Loader2 size={14} className="loading-spin" /> : <Clock size={14} />}
+                {holdLoading ? (
+                  <Loader2 size={14} className="loading-spin" />
+                ) : (
+                  <Bookmark size={14} />
+                )}
                 {activeDraft ? 'Perbarui' : 'Tahan'}
               </button>
               <button
@@ -2659,7 +2703,7 @@ export default function POSPage() {
                 disabled={cart.length === 0}
                 onClick={() => setShowPayment(true)}
               >
-                <CheckCircle2 size={16} />
+                <Check size={16} />
                 Bayar {cart.length > 0 ? formatRp(total) : ''}
               </button>
             </div>
@@ -2670,7 +2714,7 @@ export default function POSPage() {
               disabled={cart.length === 0}
               onClick={() => setShowPayment(true)}
             >
-              <CheckCircle2 size={18} />
+              <Check size={18} />
               {isRestaurant ? 'Proses Pesanan' : 'Bayar'} {cart.length > 0 ? formatRp(total) : ''}
             </button>
           )}

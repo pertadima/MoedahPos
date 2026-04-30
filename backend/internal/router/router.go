@@ -206,12 +206,16 @@ func New(deps *Dependencies) http.Handler { //nolint:funlen // route wiring is i
 							r.Post("/{customerId}/loyalty/earn", withPerm(deps, "kasir:write", deps.LoyaltyHandler.EarnPoints))
 							r.Post("/{customerId}/loyalty/redeem", withPerm(deps, "kasir:write", deps.LoyaltyHandler.RedeemPoints))
 							r.Get("/{customerId}/loyalty/history", withPerm(deps, "kasir:read", deps.LoyaltyHandler.GetHistory))
+							r.Get("/{customerId}/loyalty/history/paged", withPerm(deps, "kasir:read", deps.LoyaltyHandler.GetHistoryPaginated))
+							r.Post("/{customerId}/loyalty/void", withPerm(deps, "kasir:write", deps.LoyaltyHandler.VoidTransactionPoints))
+							r.Post("/{customerId}/loyalty/adjust", withPerm(deps, "admin:write", deps.LoyaltyHandler.AdjustPoints))
 							r.Put("/{customerId}/loyalty/tier", withPerm(deps, "kasir:update", deps.LoyaltyHandler.AssignTier))
 						})
 
 						// Loyalty tiers (store-scoped read)
 						r.Route("/loyalty", func(r chi.Router) {
 							r.Get("/tiers", withPerm(deps, "kasir:read", deps.LoyaltyHandler.ListTiers))
+							r.Get("/summary", withPerm(deps, "kasir:read", deps.LoyaltyHandler.GetLoyaltySummary))
 						})
 
 						// Stock

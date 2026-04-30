@@ -30,7 +30,7 @@ func TestTransactionService_LoyaltyRedemption(t *testing.T) {
 		req := &dto.PayDraftRequest{
 			CustomerID:     cid,
 			PointsRedeemed: 10,
-			PaymentAmount:  90,
+			PaymentAmount:  49990, // 50000 - 10 point discount (1pt=1IDR)
 			PaymentMethod:  "cash",
 		}
 
@@ -38,13 +38,14 @@ func TestTransactionService_LoyaltyRedemption(t *testing.T) {
 			ID:      tid,
 			StoreID: "s1",
 			Status:  "draft",
-			Total:   100,
+			Total:   50000, // enough to earn points: floor(50000/1000)*1.0 = 50 pts
 		}, nil)
 
 		lRepo.On("GetBalance", ctx, cid).Return(20.0, nil)
 		sRepo.On("FindByID", ctx, "s1").Return(&domain.Store{
-			ID:                    "s1",
-			LoyaltyRupiahPerPoint: 1,
+			ID:                     "s1",
+			LoyaltyRupiahPerPoint:  1,
+			LoyaltyPointsPerRupiah: 1000,
 		}, nil)
 
 		tRepo.On("PayDraft", ctx, mock.MatchedBy(func(in domain.PayDraftInput) bool {
@@ -52,6 +53,9 @@ func TestTransactionService_LoyaltyRedemption(t *testing.T) {
 		}), "s1", "u1").Return(&domain.Transaction{ID: tid, Status: "completed"}, nil)
 
 		lRepo.On("SpendPoints", ctx, cid, mock.Anything, 10.0).Return(&domain.LoyaltyLedger{ID: "lt1"}, nil)
+		// New: earn points hook after PayDraft
+		lRepo.On("GetCustomerTier", ctx, cid).Return(&domain.MembershipTier{Multiplier: 1.0}, nil)
+		lRepo.On("EarnPoints", ctx, cid, mock.Anything, mock.AnythingOfType("float64")).Return(&domain.LoyaltyLedger{ID: "lt2"}, nil)
 		aSvc.On("LogActivity", ctx, "u1", "s1", mock.Anything, mock.Anything, tid, mock.Anything).Return()
 
 		s := NewTransactionService(tRepo, nil, nil, nil, nil, aSvc, sRepo, lRepo, log)
