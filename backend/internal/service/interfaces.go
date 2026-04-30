@@ -70,6 +70,9 @@ type ReportServiceInterface interface {
 	ProfitSummary(ctx context.Context, filter dto.ReportFilter, groupBy string) (*dto.ProfitSummaryResponse, error)
 	CashFlow(ctx context.Context, filter dto.ReportFilter) (*dto.CashFlowResponse, error)
 	CashFlowDetail(ctx context.Context, storeID string, dateStr string) ([]dto.CashFlowDetailEntry, error)
+	// Export
+	ExportCSV(ctx context.Context, report string, filter dto.ReportFilter) ([]byte, error)
+	ExportPDF(ctx context.Context, report string, filter dto.ReportFilter) ([]byte, error)
 }
 
 type StockServiceInterface interface {

@@ -64,6 +64,7 @@ export default function DatePicker({
 
   const [viewDate, setViewDate] = useState(initialDate);
   const containerRef = useRef<HTMLDivElement>(null);
+  const popoverRef = useRef<HTMLDivElement>(null);
 
   const handleOpen = () => {
     const nextState = !isOpen;
@@ -84,7 +85,10 @@ export default function DatePicker({
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      const insideTrigger = containerRef.current?.contains(target);
+      const insidePopover = popoverRef.current?.contains(target);
+      if (!insideTrigger && !insidePopover) {
         setIsOpen(false);
       }
     };
@@ -177,6 +181,7 @@ export default function DatePicker({
       {isOpen && (
         <Portal>
           <div
+            ref={popoverRef}
             className={`flex shadow-2xl rounded-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150`}
             style={{
               position: 'fixed',
