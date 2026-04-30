@@ -17,12 +17,12 @@ import (
 
 // PurchaseOrderHandler handles purchase-order lifecycle endpoints.
 type PurchaseOrderHandler struct {
-	poSvc     *service.PurchaseOrderService
+	poSvc     service.PurchaseOrderServiceInterface
 	validator *validator.Validator
 	log       zerolog.Logger
 }
 
-func NewPurchaseOrderHandler(poSvc *service.PurchaseOrderService, v *validator.Validator, log zerolog.Logger) *PurchaseOrderHandler {
+func NewPurchaseOrderHandler(poSvc service.PurchaseOrderServiceInterface, v *validator.Validator, log zerolog.Logger) *PurchaseOrderHandler {
 	return &PurchaseOrderHandler{poSvc: poSvc, validator: v, log: log}
 }
 

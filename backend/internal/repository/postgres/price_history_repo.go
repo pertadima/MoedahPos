@@ -2,18 +2,23 @@ package postgres
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 
 	"github.com/jmoiron/sqlx"
 
 	"github.com/moedahpos/backend/internal/domain"
 	"github.com/moedahpos/backend/internal/dto"
+	"github.com/moedahpos/backend/internal/repository"
 )
 
 // PriceHistoryRepo is the PostgreSQL implementation of PriceHistoryRepository.
 type PriceHistoryRepo struct{ db *sqlx.DB }
 
-func NewPriceHistoryRepo(db *sqlx.DB) *PriceHistoryRepo { return &PriceHistoryRepo{db: db} }
+// NewPriceHistoryRepository creates a new PriceHistoryRepository.
+func NewPriceHistoryRepository(db *sql.DB) repository.PriceHistoryRepository {
+	return &PriceHistoryRepo{db: sqlx.NewDb(db, "postgres")}
+}
 
 // Record inserts one price-change audit row.
 func (r *PriceHistoryRepo) Record(ctx context.Context, h domain.PriceHistory) error {

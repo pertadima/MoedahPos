@@ -140,15 +140,27 @@ func (s *CustomerService) Search(ctx context.Context, f dto.CustomerListFilter) 
 }
 
 func toCustomerResponse(c *domain.Customer) *dto.CustomerResponse {
-	return &dto.CustomerResponse{
-		ID:        c.ID,
-		StoreID:   c.StoreID,
-		Name:      c.Name,
-		Phone:     c.Phone,
-		Email:     c.Email,
-		Address:   c.Address,
-		Notes:     c.Notes,
-		CreatedAt: c.CreatedAt.Format(time.RFC3339),
-		UpdatedAt: c.UpdatedAt.Format(time.RFC3339),
+	res := &dto.CustomerResponse{
+		ID:             c.ID,
+		StoreID:        c.StoreID,
+		Name:           c.Name,
+		Phone:          c.Phone,
+		Email:          c.Email,
+		Address:        c.Address,
+		Notes:          c.Notes,
+		CreatedAt:      c.CreatedAt.Format(time.RFC3339),
+		UpdatedAt:      c.UpdatedAt.Format(time.RFC3339),
+		LoyaltyBalance: c.LoyaltyBalance,
 	}
+
+	if c.LoyaltyTierID != nil && c.LoyaltyTierName != nil && c.LoyaltyTierMult != nil {
+		res.LoyaltyTierID = c.LoyaltyTierID
+		res.LoyaltyTier = &dto.MembershipTierResponse{
+			ID:         *c.LoyaltyTierID,
+			Name:       *c.LoyaltyTierName,
+			Multiplier: *c.LoyaltyTierMult,
+		}
+	}
+
+	return res
 }

@@ -10,6 +10,7 @@ import (
 
 	"github.com/moedahpos/backend/internal/domain"
 	"github.com/moedahpos/backend/internal/dto"
+	"github.com/moedahpos/backend/internal/repository"
 )
 
 // ErrIncomeNotFound is returned when an income record does not exist.
@@ -31,12 +32,12 @@ type incomeRepo interface {
 
 // IncomeService implements business logic for non-POS income entries.
 type IncomeService struct {
-	repo        incomeRepo
-	activitySvc *ActivityLogService
+	repo        repository.IncomeRepository
+	activitySvc ActivityLogServiceInterface
 	log         zerolog.Logger
 }
 
-func NewIncomeService(repo incomeRepo, activitySvc *ActivityLogService, log zerolog.Logger) *IncomeService {
+func NewIncomeService(repo repository.IncomeRepository, activitySvc ActivityLogServiceInterface, log zerolog.Logger) *IncomeService {
 	return &IncomeService{repo: repo, activitySvc: activitySvc, log: log}
 }
 

@@ -18,12 +18,12 @@ import (
 
 // StoreHandler handles HTTP requests for store and member endpoints.
 type StoreHandler struct {
-	storeSvc  *service.StoreService
+	storeSvc  service.StoreServiceInterface
 	validator *validator.Validator
 	log       zerolog.Logger
 }
 
-func NewStoreHandler(storeSvc *service.StoreService, v *validator.Validator, log zerolog.Logger) *StoreHandler {
+func NewStoreHandler(storeSvc service.StoreServiceInterface, v *validator.Validator, log zerolog.Logger) *StoreHandler {
 	return &StoreHandler{storeSvc: storeSvc, validator: v, log: log}
 }
 

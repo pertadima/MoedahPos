@@ -4,9 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/rs/zerolog"
+
+	"github.com/google/uuid"
 
 	"github.com/moedahpos/backend/internal/domain"
 	"github.com/moedahpos/backend/internal/dto"
@@ -139,8 +142,10 @@ type TransactionService struct {
 	productRepo  repository.ProductRepository
 	stockRepo    repository.StockRepository
 	menuItemRepo repository.MenuItemRepository
-	batchSvc     *BatchStockService // FIFO deduction
-	activitySvc  *ActivityLogService
+	batchSvc     BatchStockServiceInterface // FIFO deduction
+	activitySvc  ActivityLogServiceInterface
+	storeRepo    repository.StoreRepository
+	loyaltyRepo  repository.LoyaltyRepository
 	log          zerolog.Logger
 }
 
@@ -149,8 +154,10 @@ func NewTransactionService(
 	productRepo repository.ProductRepository,
 	stockRepo repository.StockRepository,
 	menuItemRepo repository.MenuItemRepository,
-	batchSvc *BatchStockService,
-	activitySvc *ActivityLogService,
+	batchSvc BatchStockServiceInterface,
+	activitySvc ActivityLogServiceInterface,
+	storeRepo repository.StoreRepository,
+	loyaltyRepo repository.LoyaltyRepository,
 	log zerolog.Logger,
 ) *TransactionService {
 	return &TransactionService{
@@ -160,12 +167,27 @@ func NewTransactionService(
 		menuItemRepo: menuItemRepo,
 		batchSvc:     batchSvc,
 		activitySvc:  activitySvc,
+		storeRepo:    storeRepo,
+		loyaltyRepo:  loyaltyRepo,
 		log:          log,
 	}
 }
 
 // Checkout processes a sale: validates stock, calculates totals, persists atomically.
 func (s *TransactionService) Checkout(ctx context.Context, storeID string, req *dto.CreateTransactionRequest, cashierID string) (*dto.TransactionResponse, error) { //nolint:gocognit,cyclop,funlen // retail+restaurant dual path
+	if req.ID != "" {
+		existing, err := s.txnRepo.FindByID(ctx, req.ID)
+		if err == nil && existing != nil {
+			s.log.Info().Str("txn_id", req.ID).Msg("Idempotent Checkout: returning existing transaction")
+			return toTransactionResponse(existing), nil
+		}
+	}
+
+	txnID := req.ID
+	if txnID == "" {
+		txnID = uuid.New().String()
+	}
+
 	var (
 		inputItems  []domain.CreateTransactionItemInput
 		subtotal    float64
@@ -312,15 +334,47 @@ func (s *TransactionService) Checkout(ctx context.Context, storeID string, req *
 		_ = cartDiscAmt // absorbed into discountAmt above
 	}
 
-	total := subtotal + taxAmt
+	var pointsDiscount float64
+	var cid *string
+	if req.CustomerID != "" {
+		cid = &req.CustomerID
+	}
+
+	if req.PointsRedeemed > 0 && req.CustomerID != "" {
+		balance, err := s.loyaltyRepo.GetBalance(ctx, req.CustomerID)
+		if err != nil {
+			return nil, fmt.Errorf("getting customer loyalty balance: %w", err)
+		}
+		if balance < req.PointsRedeemed {
+			return nil, fmt.Errorf("insufficient loyalty points: have %.2f, trying to redeem %.2f", balance, req.PointsRedeemed)
+		}
+
+		store, err := s.storeRepo.FindByID(ctx, storeID)
+		if err != nil {
+			return nil, fmt.Errorf("getting store for loyalty rate: %w", err)
+		}
+
+		rate := store.LoyaltyRupiahPerPoint
+		if rate <= 0 {
+			rate = 1 // default safe rate
+		}
+		pointsDiscount = req.PointsRedeemed * rate
+	}
+
+	total := subtotal + taxAmt - pointsDiscount
+	if total < 0 {
+		total = 0
+	}
 	if req.PaymentAmount < total {
 		return nil, ErrInsuficientPayment
 	}
 
 	txn, err := s.txnRepo.Create(ctx, domain.CreateTransactionInput{
+		ID:                txnID,
 		StoreID:           storeID,
 		CashierID:         cashierID,
 		Status:            "completed",
+		CustomerID:        cid,
 		CustomerName:      req.CustomerName,
 		CustomerPhone:     req.CustomerPhone,
 		PaymentMethod:     req.PaymentMethod,
@@ -333,11 +387,48 @@ func (s *TransactionService) Checkout(ctx context.Context, storeID string, req *
 		Total:             total,
 		CartDiscountType:  cartDiscType,
 		CartDiscountValue: req.CartDiscountValue,
+		PointsRedeemed:    req.PointsRedeemed,
+		PointsDiscount:    pointsDiscount,
 		Items:             inputItems,
 	})
 
 	if err != nil {
+		if strings.Contains(err.Error(), "unique constraint") || strings.Contains(err.Error(), "duplicate key") {
+			existing, dbErr := s.txnRepo.FindByID(ctx, txnID)
+			if dbErr == nil && existing != nil {
+				s.log.Info().Str("txn_id", txnID).Msg("Idempotent Checkout: returning existing transaction after duplicate key collision")
+				return toTransactionResponse(existing), nil
+			}
+		}
 		return nil, fmt.Errorf("creating transaction: %w", err)
+	}
+
+	// ── Post-commit: deduct loyalty points if redeemed ───────────────────────
+	if req.PointsRedeemed > 0 && req.CustomerID != "" {
+		if _, err := s.loyaltyRepo.SpendPoints(ctx, req.CustomerID, &txn.ID, req.PointsRedeemed); err != nil {
+			s.log.Error().Err(err).Str("txn_id", txn.ID).Float64("points", req.PointsRedeemed).Msg("Failed to deduct loyalty points after checkout")
+			// We don't fail the transaction here since payment succeeded and txn is committed, but log it loudly.
+		}
+	}
+
+	// ── Post-commit: earn loyalty points for completed transaction ────────────
+	if req.CustomerID != "" && s.storeRepo != nil {
+		store, storeErr := s.storeRepo.FindByID(ctx, storeID)
+		pointsPerRupiah := 1000.0
+		if storeErr == nil && store != nil && store.LoyaltyPointsPerRupiah > 0 {
+			pointsPerRupiah = store.LoyaltyPointsPerRupiah
+		}
+		tier, _ := s.loyaltyRepo.GetCustomerTier(ctx, req.CustomerID)
+		multiplier := 1.0
+		if tier != nil {
+			multiplier = tier.Multiplier
+		}
+		earnPoints := CalculatePoints(total, multiplier, pointsPerRupiah)
+		if earnPoints > 0 {
+			if _, earnErr := s.loyaltyRepo.EarnPoints(ctx, req.CustomerID, &txn.ID, earnPoints); earnErr != nil {
+				s.log.Error().Err(earnErr).Str("txn_id", txn.ID).Float64("points", earnPoints).Msg("Failed to earn loyalty points after checkout")
+			}
+		}
 	}
 
 	// ── Post-commit: deduct ingredient stocks for menu items ─────────────────
@@ -440,7 +531,7 @@ func (s *TransactionService) GetTransaction(ctx context.Context, id string) (*dt
 }
 
 // VoidTransaction reverses a completed transaction and restores stock.
-func (s *TransactionService) VoidTransaction(ctx context.Context, id, userID string) error {
+func (s *TransactionService) VoidTransaction(ctx context.Context, id, userID string) error { //nolint:funlen
 	txn, err := s.txnRepo.FindByID(ctx, id)
 	if err != nil {
 		return fmt.Errorf("finding transaction: %w", err)
@@ -485,13 +576,17 @@ func (s *TransactionService) processMenuItem(ctx context.Context, _ string, item
 		}
 	}
 
+	skuID := item.MenuItemID
+	if len(skuID) > 8 {
+		skuID = skuID[:8]
+	}
+
 	mid := item.MenuItemID
 	discountAmt := (menuItem.SellPrice - finalPrice) * item.Quantity
-
 	return domain.CreateTransactionItemInput{
 		MenuItemID:    &mid,
 		ProductName:   menuItem.Name,
-		SKU:           "MENU-" + item.MenuItemID[:8],
+		SKU:           "MENU-" + skuID,
 		Quantity:      item.Quantity,
 		OriginalPrice: menuItem.SellPrice,
 		UnitPrice:     finalPrice,
@@ -673,7 +768,7 @@ func (s *TransactionService) UpdateDraftItems(ctx context.Context, storeID, txnI
 }
 
 // PayDraft finalizes a held order: validates payment, deducts stock, marks completed.
-func (s *TransactionService) PayDraft(ctx context.Context, storeID, txnID, cashierID string, req *dto.PayDraftRequest) (*dto.TransactionResponse, error) {
+func (s *TransactionService) PayDraft(ctx context.Context, storeID, txnID, cashierID string, req *dto.PayDraftRequest) (*dto.TransactionResponse, error) { //nolint:gocognit,cyclop,funlen // loyalty+payment+draft logic is inherently complex
 	existing, err := s.txnRepo.FindByID(ctx, txnID)
 	if err != nil || existing == nil {
 		return nil, ErrDraftNotFound
@@ -681,20 +776,82 @@ func (s *TransactionService) PayDraft(ctx context.Context, storeID, txnID, cashi
 	if existing.StoreID != storeID || existing.Status != statusDraft {
 		return nil, ErrDraftNotFound
 	}
-	if req.PaymentAmount < existing.Total {
+	var pointsDiscount float64
+	var cid *string
+	if req.CustomerID != "" {
+		cid = &req.CustomerID
+	}
+
+	if req.PointsRedeemed > 0 && req.CustomerID != "" {
+		balance, err := s.loyaltyRepo.GetBalance(ctx, req.CustomerID)
+		if err != nil {
+			return nil, fmt.Errorf("getting customer loyalty balance: %w", err)
+		}
+		if balance < req.PointsRedeemed {
+			return nil, fmt.Errorf("insufficient loyalty points: have %.2f, trying to redeem %.2f", balance, req.PointsRedeemed)
+		}
+
+		store, err := s.storeRepo.FindByID(ctx, storeID)
+		if err != nil {
+			return nil, fmt.Errorf("getting store for loyalty rate: %w", err)
+		}
+
+		rate := store.LoyaltyRupiahPerPoint
+		if rate <= 0 {
+			rate = 1 // default safe rate
+		}
+		pointsDiscount = req.PointsRedeemed * rate
+	}
+
+	total := existing.Total - pointsDiscount
+	if total < 0 {
+		total = 0
+	}
+
+	if req.PaymentAmount < total {
 		return nil, ErrInsuficientPayment
 	}
 
 	txn, err := s.txnRepo.PayDraft(ctx, domain.PayDraftInput{
-		TransactionID: txnID,
-		PaymentMethod: req.PaymentMethod,
-		PaymentAmount: req.PaymentAmount,
-		ChangeAmount:  req.PaymentAmount - existing.Total,
-		CustomerName:  req.CustomerName,
-		CustomerPhone: req.CustomerPhone,
+		TransactionID:  txnID,
+		PaymentMethod:  req.PaymentMethod,
+		PaymentAmount:  req.PaymentAmount,
+		ChangeAmount:   req.PaymentAmount - total,
+		CustomerID:     cid,
+		CustomerName:   req.CustomerName,
+		CustomerPhone:  req.CustomerPhone,
+		PointsRedeemed: req.PointsRedeemed,
+		PointsDiscount: pointsDiscount,
 	}, storeID, cashierID)
 	if err != nil {
 		return nil, fmt.Errorf("paying draft: %w", err)
+	}
+
+	// ── Post-commit: deduct loyalty points if redeemed ───────────────────────
+	if req.PointsRedeemed > 0 && req.CustomerID != "" {
+		if _, err := s.loyaltyRepo.SpendPoints(ctx, req.CustomerID, &txn.ID, req.PointsRedeemed); err != nil {
+			s.log.Error().Err(err).Str("txn_id", txn.ID).Float64("points", req.PointsRedeemed).Msg("Failed to deduct loyalty points after draft payment")
+		}
+	}
+
+	// ── Post-commit: earn loyalty points for paid draft ───────────────────────
+	if req.CustomerID != "" && s.storeRepo != nil {
+		store, storeErr := s.storeRepo.FindByID(ctx, storeID)
+		pointsPerRupiah := 1000.0
+		if storeErr == nil && store != nil && store.LoyaltyPointsPerRupiah > 0 {
+			pointsPerRupiah = store.LoyaltyPointsPerRupiah
+		}
+		tier, _ := s.loyaltyRepo.GetCustomerTier(ctx, req.CustomerID)
+		multiplier := 1.0
+		if tier != nil {
+			multiplier = tier.Multiplier
+		}
+		earnPoints := CalculatePoints(existing.Total, multiplier, pointsPerRupiah)
+		if earnPoints > 0 {
+			if _, earnErr := s.loyaltyRepo.EarnPoints(ctx, req.CustomerID, &txn.ID, earnPoints); earnErr != nil {
+				s.log.Error().Err(earnErr).Str("txn_id", txn.ID).Float64("points", earnPoints).Msg("Failed to earn loyalty points after draft payment")
+			}
+		}
 	}
 
 	// Post-commit: deduct ingredient stock for menu items
@@ -791,6 +948,8 @@ func toTransactionResponse(t *domain.Transaction) *dto.TransactionResponse {
 		Notes:             t.Notes,
 		CartDiscountType:  t.CartDiscountType,
 		CartDiscountValue: t.CartDiscountValue,
+		PointsRedeemed:    t.PointsRedeemed,
+		PointsDiscount:    t.PointsDiscount,
 		Items:             items,
 		CreatedAt:         t.CreatedAt.Format(time.RFC3339),
 		UpdatedAt:         t.UpdatedAt.Format(time.RFC3339),

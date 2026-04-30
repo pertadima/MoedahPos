@@ -41,6 +41,8 @@ export interface Transaction {
   notes: string;
   cart_discount_type: string;
   cart_discount_value: number;
+  points_redeemed?: number;
+  points_discount?: number;
   items: TransactionItem[];
   created_at: string;
   updated_at: string;

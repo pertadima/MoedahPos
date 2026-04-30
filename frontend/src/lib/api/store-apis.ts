@@ -1,4 +1,4 @@
-import { api } from './client';
+import { api, getAccessToken } from './client';
 import type {
   Category,
   Store,
@@ -7,6 +7,11 @@ import type {
   StockLevel,
   StockMovement,
   PaginatedData,
+  MembershipTier,
+  LoyaltyBalance,
+  LoyaltyLedgerEntry,
+  LoyaltyHistoryPage,
+  LoyaltySummary,
 } from '@/types';
 
 export const storesApi = {
@@ -26,6 +31,8 @@ export const storesApi = {
     currency?: string;
     store_type: string;
     default_tax_percentage?: number;
+    loyalty_points_per_rupiah?: number;
+    loyalty_rupiah_per_point?: number;
   }) => api.post<Store>('/stores', payload),
   update: (
     id: string,
@@ -37,6 +44,8 @@ export const storesApi = {
       currency?: string;
       store_type: string;
       default_tax_percentage?: number;
+      loyalty_points_per_rupiah?: number;
+      loyalty_rupiah_per_point?: number;
       is_active?: boolean;
     }
   ) => api.put<Store>(`/stores/${id}`, payload),
@@ -179,6 +188,58 @@ export const reportsApi = {
     if (date) q.set('date', date);
     return api.get<any>(`/stores/${storeId}/reports/cash-flow/detail?${q}`);
   },
+
+  /**
+   * Download a CSV or printable-HTML export for a given report type.
+   * Triggers a browser file download.
+   *
+   * @param storeId  - the store UUID
+   * @param type     - "csv" | "pdf"
+   * @param report   - "sales" | "inventory" | "profit"
+   * @param dateFrom - optional YYYY-MM-DD
+   * @param dateTo   - optional YYYY-MM-DD
+   */
+  exportReport: async (
+    storeId: string,
+    type: 'csv' | 'pdf',
+    report: 'sales' | 'inventory' | 'profit',
+    dateFrom?: string,
+    dateTo?: string
+  ): Promise<void> => {
+    const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080/api/v1';
+    const q = new URLSearchParams({ type, report });
+    if (dateFrom) q.set('date_from', dateFrom);
+    if (dateTo) q.set('date_to', dateTo);
+
+    const token = getAccessToken();
+    const res = await fetch(`${BASE_URL}/stores/${storeId}/reports/export?${q}`, {
+      method: 'GET',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+
+    if (!res.ok) {
+      const json = await res.json().catch(() => ({}));
+      throw new Error(json?.error ?? `Export failed: HTTP ${res.status}`);
+    }
+
+    const rawBlob = await res.blob();
+    const blobType = type === 'pdf' ? 'application/pdf' : 'text/csv;charset=utf-8;';
+    const blob = new Blob([rawBlob], { type: blobType });
+
+    // Trigger standard file download for both CSV and PDF
+    const disposition = res.headers.get('Content-Disposition') ?? '';
+    const match = /filename="([^"]+)"/.exec(disposition);
+    const filename = match?.[1] ?? `laporan-${report}.${type === 'csv' ? 'csv' : 'pdf'}`;
+
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  },
 };
 
 export const priceHistoryApi = {
@@ -256,6 +317,11 @@ export const usersAdminApi = {
 
 export const rolesApi = {
   list: () => api.get<any>('/admin/roles'),
+  get: (id: string) => api.get<any>(`/admin/roles/${id}`),
+  create: (body: any) => api.post<any>('/admin/roles', body),
+  update: (id: string, body: any) => api.put<any>(`/admin/roles/${id}`, body),
+  delete: (id: string) => api.delete<any>(`/admin/roles/${id}`),
+  listPermissions: () => api.get<any>('/admin/permissions'),
 };
 
 export const expensesApi = {
@@ -343,4 +409,84 @@ export const incomesApi = {
   update: (storeId: string, id: string, body: object) =>
     api.put<any>(`/stores/${storeId}/incomes/${id}`, body),
   delete: (storeId: string, id: string) => api.delete<any>(`/stores/${storeId}/incomes/${id}`),
+};
+
+export const loyaltyApi = {
+  /** List all membership tiers for a store. */
+  listTiers: async (storeId: string): Promise<MembershipTier[]> => {
+    const res = await api.get<MembershipTier[]>(`/stores/${storeId}/loyalty/tiers`);
+    return res.data;
+  },
+
+  /** Get a customer's current point balance and tier. */
+  getBalance: async (storeId: string, customerId: string): Promise<LoyaltyBalance> => {
+    const res = await api.get<LoyaltyBalance>(`/stores/${storeId}/customers/${customerId}/loyalty`);
+    return res.data;
+  },
+
+  /** Credit points after a completed transaction. */
+  earnPoints: async (
+    storeId: string,
+    customerId: string,
+    body: { transaction_id: string; total: number }
+  ): Promise<LoyaltyLedgerEntry> => {
+    const res = await api.post<LoyaltyLedgerEntry>(
+      `/stores/${storeId}/customers/${customerId}/loyalty/earn`,
+      body
+    );
+    return res.data;
+  },
+
+  /** Redeem points during checkout. */
+  redeemPoints: async (
+    storeId: string,
+    customerId: string,
+    body: { points: number }
+  ): Promise<LoyaltyLedgerEntry> => {
+    const res = await api.post<LoyaltyLedgerEntry>(
+      `/stores/${storeId}/customers/${customerId}/loyalty/redeem`,
+      body
+    );
+    return res.data;
+  },
+
+  /** Get the full point ledger history for a customer. */
+  getHistory: async (storeId: string, customerId: string): Promise<LoyaltyLedgerEntry[]> => {
+    const res = await api.get<LoyaltyLedgerEntry[]>(
+      `/stores/${storeId}/customers/${customerId}/loyalty/history`
+    );
+    return res.data;
+  },
+
+  /** Get paginated point ledger history for a customer. */
+  getHistoryPaginated: async (
+    storeId: string,
+    customerId: string,
+    page = 1,
+    perPage = 20
+  ): Promise<LoyaltyHistoryPage> => {
+    const res = await api.get<LoyaltyHistoryPage>(
+      `/stores/${storeId}/customers/${customerId}/loyalty/history/paged?page=${page}&per_page=${perPage}`
+    );
+    return res.data;
+  },
+
+  /** Get loyalty dashboard summary: top customers + points earned/used per period. */
+  getSummary: async (storeId: string): Promise<LoyaltySummary> => {
+    const res = await api.get<LoyaltySummary>(`/stores/${storeId}/loyalty/summary`);
+    return res.data;
+  },
+
+  /** Assign a tier to a customer. */
+  assignTier: async (
+    storeId: string,
+    customerId: string,
+    body: { tier_id: string }
+  ): Promise<{ status: string }> => {
+    const res = await api.put<{ status: string }>(
+      `/stores/${storeId}/customers/${customerId}/loyalty/tier`,
+      body
+    );
+    return res.data;
+  },
 };

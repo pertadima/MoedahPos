@@ -28,6 +28,7 @@ export const transactionsApi = {
   checkout: (
     storeId: string,
     payload: {
+      customer_id?: string;
       customer_name?: string;
       customer_phone?: string;
       payment_method: string;
@@ -36,11 +37,16 @@ export const transactionsApi = {
       items: TxItemInput[];
       cart_discount_type?: 'PERCENTAGE' | 'FIXED';
       cart_discount_value?: number;
+      points_redeemed?: number;
     }
   ) => api.post<Transaction>(`/stores/${storeId}/transactions`, payload),
 
   void: (storeId: string, txnId: string) =>
     api.post(`/stores/${storeId}/transactions/${txnId}/void`, {}),
+
+  // ── Offline Sync ────────────────────────────────────────────────────────────
+  syncOffline: (storeId: string, payload: any) =>
+    api.post<Transaction>(`/stores/${storeId}/transactions`, payload),
 
   // ── Draft / Table Order (restaurant) ──────────────────────────────────────
 
@@ -81,8 +87,10 @@ export const transactionsApi = {
     payload: {
       payment_method: string;
       payment_amount: number;
+      customer_id?: string;
       customer_name?: string;
       customer_phone?: string;
+      points_redeemed?: number;
     }
   ) => api.post<Transaction>(`/stores/${storeId}/transactions/${txnId}/pay`, payload),
 };

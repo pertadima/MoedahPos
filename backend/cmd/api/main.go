@@ -19,7 +19,6 @@ import (
 	"github.com/moedahpos/backend/pkg/db"
 	"github.com/moedahpos/backend/pkg/jwt"
 	"github.com/moedahpos/backend/pkg/logger"
-	"github.com/moedahpos/backend/pkg/rbac"
 )
 
 //nolint:gocognit,funlen // bootstrap wiring is inherently long
@@ -53,41 +52,37 @@ func main() {
 		}
 	}
 
-	// ── RBAC (loaded once at startup) ─────────────────────────────────────────
-	roleStore, err := rbac.New(sqlxDB)
-	if err != nil {
-		log.Fatal().Err(err).Msg("failed to load RBAC role store")
-	}
-	log.Info().Msg("RBAC role store loaded")
-
 	// ── Shared Utilities ──────────────────────────────────────────────────────
 	jwtMgr := jwt.New(cfg.JWT.Secret, cfg.JWT.AccessTTL, cfg.JWT.RefreshTTL)
 	validate := validator.New()
 
 	// ── Repositories ──────────────────────────────────────────────────────────
-	userRepo := postgres.NewUserRepo(sqlxDB)
-	refreshTokenRepo := postgres.NewRefreshTokenRepo(sqlxDB)
-	storeRepo := postgres.NewStoreRepo(sqlxDB)
-	categoryRepo := postgres.NewCategoryRepo(sqlxDB)
-	productRepo := postgres.NewProductRepo(sqlxDB)
-	stockRepo := postgres.NewStockRepo(sqlxDB)
-	transactionRepo := postgres.NewTransactionRepo(sqlxDB)
-	poRepo := postgres.NewPORepo(sqlxDB)
-	supplierRepo := postgres.NewSupplierRepo(sqlxDB)
-	reportRepo := postgres.NewReportRepo(sqlxDB)
-	tableRepo := postgres.NewTableRepo(sqlxDB)
-	menuItemRepo := postgres.NewMenuItemRepo(sqlxDB)
-	priceHistoryRepo := postgres.NewPriceHistoryRepo(sqlxDB)
-	poPaymentRepo := postgres.NewPOPaymentRepo(sqlxDB)
-	customerRepo := postgres.NewCustomerRepo(sqlxDB)
-	roleRepo := postgres.NewRoleRepo(sqlxDB)
-	batchRepo := postgres.NewBatchRepo(sqlxDB)                 // FIFO batch inventory
-	terminRepo := postgres.NewTerminRepo(sqlxDB)               // PO installment schedule
-	paymentRecordRepo := postgres.NewPaymentRecordRepo(sqlxDB) // PO payment records
-	expenseRepo := postgres.NewExpenseRepo(sqlxDB)
-	stockAdjustmentRepo := postgres.NewStockAdjustmentRepo(sqlxDB)
-	incomeRepo := postgres.NewIncomeRepo(sqlxDB)
-	activityLogRepo := postgres.NewActivityLogRepo(sqlxDB)
+	dbRaw := sqlxDB.DB
+	userRepo := postgres.NewUserRepository(dbRaw)
+	refreshTokenRepo := postgres.NewRefreshTokenRepository(dbRaw)
+	storeRepo := postgres.NewStoreRepository(dbRaw)
+	categoryRepo := postgres.NewCategoryRepository(dbRaw)
+	productRepo := postgres.NewProductRepository(dbRaw)
+	stockRepo := postgres.NewStockRepository(dbRaw)
+	transactionRepo := postgres.NewTransactionRepository(dbRaw)
+	poRepo := postgres.NewPurchaseOrderRepository(dbRaw)
+	supplierRepo := postgres.NewSupplierRepository(dbRaw)
+	reportRepo := postgres.NewReportRepository(dbRaw)
+	tableRepo := postgres.NewTableRepository(dbRaw)
+	menuItemRepo := postgres.NewMenuItemRepository(dbRaw)
+	priceHistoryRepo := postgres.NewPriceHistoryRepository(dbRaw)
+	poPaymentRepo := postgres.NewPOPaymentRepository(dbRaw)
+	customerRepo := postgres.NewCustomerRepository(dbRaw)
+	roleRepo := postgres.NewRoleRepository(dbRaw)
+	batchRepo := postgres.NewBatchRepository(dbRaw)                 // FIFO batch inventory
+	terminRepo := postgres.NewTerminRepository(dbRaw)               // PO installment schedule
+	paymentRecordRepo := postgres.NewPaymentRecordRepository(dbRaw) // PO payment records
+	expenseRepo := postgres.NewExpenseRepository(dbRaw)
+	stockAdjustmentRepo := postgres.NewStockAdjustmentRepository(dbRaw)
+	incomeRepo := postgres.NewIncomeRepository(dbRaw)
+	activityLogRepo := postgres.NewActivityLogRepository(dbRaw)
+	loyaltyRepo := postgres.NewLoyaltyRepository(dbRaw)
+	tierRepo := postgres.NewMembershipTierRepository(dbRaw)
 
 	// ── Services ──────────────────────────────────────────────────────────────
 	batchSvc := service.NewBatchStockService(batchRepo, log) // FIFO batch inventory
@@ -97,7 +92,7 @@ func main() {
 	priceHistorySvc := service.NewPriceHistoryService(priceHistoryRepo, log)
 	productSvc := service.NewProductService(productRepo, categoryRepo, stockRepo, priceHistorySvc, log)
 	stockSvc := service.NewStockService(stockRepo, productRepo, log)
-	transactionSvc := service.NewTransactionService(transactionRepo, productRepo, stockRepo, menuItemRepo, batchSvc, activityLogSvc, log)
+	transactionSvc := service.NewTransactionService(transactionRepo, productRepo, stockRepo, menuItemRepo, batchSvc, activityLogSvc, storeRepo, loyaltyRepo, log)
 	poSvc := service.NewPurchaseOrderService(poRepo, productRepo, poPaymentRepo, terminRepo, paymentRecordRepo, priceHistorySvc, activityLogSvc, log)
 	supplierSvc := service.NewSupplierService(supplierRepo, log)
 	reportSvc := service.NewReportService(reportRepo, log)
@@ -109,6 +104,8 @@ func main() {
 	expenseSvc := service.NewExpenseService(expenseRepo, activityLogSvc, log)
 	stockAdjustmentSvc := service.NewStockAdjustmentService(stockAdjustmentRepo, activityLogSvc)
 	incomeSvc := service.NewIncomeService(incomeRepo, activityLogSvc, log)
+	syncSvc := service.NewSyncService(categoryRepo, productRepo, stockRepo, transactionRepo, customerRepo, log)
+	loyaltySvc := service.NewLoyaltyService(loyaltyRepo, tierRepo, customerRepo, storeRepo, log)
 
 	// ── Handlers ──────────────────────────────────────────────────────────────
 	authHandler := handler.NewAuthHandler(authSvc, validate, log)
@@ -129,6 +126,8 @@ func main() {
 	stockAdjustmentHandler := handler.NewStockAdjustmentHandler(stockAdjustmentSvc, validate, &log)
 	incomeHandler := handler.NewIncomeHandler(incomeSvc, validate, log)
 	activityLogHandler := handler.NewActivityLogHandler(activityLogSvc, log)
+	syncHandler := handler.NewSyncHandler(syncSvc, log)
+	loyaltyHandler := handler.NewLoyaltyHandler(loyaltySvc, validate, log)
 
 	// ── Router ────────────────────────────────────────────────────────────────
 	r := router.New(&router.Dependencies{
@@ -151,7 +150,8 @@ func main() {
 		StockAdjustmentHandler: stockAdjustmentHandler,
 		IncomeHandler:          incomeHandler,
 		ActivityLogHandler:     activityLogHandler,
-		RoleStore:              roleStore,
+		SyncHandler:            syncHandler,
+		LoyaltyHandler:         loyaltyHandler,
 		DB:                     sqlxDB,
 		Log:                    log,
 	})

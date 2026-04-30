@@ -9,16 +9,16 @@ import (
 
 	"github.com/moedahpos/backend/internal/domain"
 	"github.com/moedahpos/backend/internal/dto"
-	"github.com/moedahpos/backend/internal/repository/postgres"
+	"github.com/moedahpos/backend/internal/repository"
 )
 
 type ExpenseService struct {
-	expenseRepo *postgres.ExpenseRepo
-	activitySvc *ActivityLogService
+	expenseRepo repository.ExpenseRepository
+	activitySvc ActivityLogServiceInterface
 	log         zerolog.Logger
 }
 
-func NewExpenseService(expenseRepo *postgres.ExpenseRepo, activitySvc *ActivityLogService, log zerolog.Logger) *ExpenseService {
+func NewExpenseService(expenseRepo repository.ExpenseRepository, activitySvc ActivityLogServiceInterface, log zerolog.Logger) *ExpenseService {
 	return &ExpenseService{expenseRepo: expenseRepo, activitySvc: activitySvc, log: log}
 }
 

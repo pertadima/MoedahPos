@@ -18,12 +18,12 @@ import (
 
 //nolint:goconst // Magic strings are okay here
 type ExpenseHandler struct {
-	expenseSvc *service.ExpenseService
+	expenseSvc service.ExpenseServiceInterface
 	validate   *validator.Validator
 	log        zerolog.Logger
 }
 
-func NewExpenseHandler(expenseSvc *service.ExpenseService, validate *validator.Validator, log zerolog.Logger) *ExpenseHandler {
+func NewExpenseHandler(expenseSvc service.ExpenseServiceInterface, validate *validator.Validator, log zerolog.Logger) *ExpenseHandler {
 	return &ExpenseHandler{expenseSvc: expenseSvc, validate: validate, log: log}
 }
 

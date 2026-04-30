@@ -7,6 +7,7 @@ export * from './inventory';
 export * from './transaction';
 export * from './purchase-order';
 export * from './supplier';
+export * from './loyalty';
 export * from './customer';
 export * from './finance';
 export * from './report';

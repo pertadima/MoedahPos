@@ -2,18 +2,22 @@ package postgres
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 
 	"github.com/jmoiron/sqlx"
 
 	"github.com/moedahpos/backend/internal/domain"
+	"github.com/moedahpos/backend/internal/repository"
 )
 
 // PaymentRecordRepo is the PostgreSQL implementation of repository.PaymentRecordRepository.
 type PaymentRecordRepo struct{ db *sqlx.DB }
 
-// NewPaymentRecordRepo creates a PaymentRecordRepo backed by the given database.
-func NewPaymentRecordRepo(db *sqlx.DB) *PaymentRecordRepo { return &PaymentRecordRepo{db: db} }
+// NewPaymentRecordRepository creates a PaymentRecordRepository.
+func NewPaymentRecordRepository(db *sql.DB) repository.PaymentRecordRepository {
+	return &PaymentRecordRepo{db: sqlx.NewDb(db, "postgres")}
+}
 
 // Create inserts one payment record and returns the persisted row with recorded_by_name joined.
 func (r *PaymentRecordRepo) Create(ctx context.Context, rec domain.PaymentRecord) (*domain.PaymentRecord, error) {

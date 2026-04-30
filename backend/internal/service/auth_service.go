@@ -27,7 +27,7 @@ var (
 type AuthService struct {
 	userRepo    repository.UserRepository
 	tokenRepo   repository.RefreshTokenRepository
-	activitySvc *ActivityLogService
+	activitySvc ActivityLogServiceInterface
 	jwtMgr      *jwt.Manager
 	bcryptCost  int
 	log         zerolog.Logger
@@ -37,7 +37,7 @@ type AuthService struct {
 func NewAuthService(
 	userRepo repository.UserRepository,
 	tokenRepo repository.RefreshTokenRepository,
-	activitySvc *ActivityLogService,
+	activitySvc ActivityLogServiceInterface,
 	jwtMgr *jwt.Manager,
 	bcryptCost int,
 	log zerolog.Logger,
@@ -214,10 +214,12 @@ func (s *AuthService) Me(ctx context.Context, userID string) (*dto.MeResponse, e
 	storeInfos := make([]dto.StoreRoleInfo, 0, len(stores))
 	for _, us := range stores {
 		storeInfos = append(storeInfos, dto.StoreRoleInfo{
-			StoreID:   us.StoreID,
-			StoreName: us.StoreName,
-			StoreType: us.StoreType,
-			Role:      us.RoleName,
+			StoreID:                us.StoreID,
+			StoreName:              us.StoreName,
+			StoreType:              us.StoreType,
+			Role:                   us.RoleName,
+			LoyaltyPointsPerRupiah: us.LoyaltyPointsPerRupiah,
+			LoyaltyRupiahPerPoint:  us.LoyaltyRupiahPerPoint,
 		})
 	}
 

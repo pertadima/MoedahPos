@@ -17,12 +17,12 @@ import (
 
 // ProductHandler handles HTTP requests for categories and products.
 type ProductHandler struct {
-	productSvc *service.ProductService
+	productSvc service.ProductServiceInterface
 	validator  *validator.Validator
 	log        zerolog.Logger
 }
 
-func NewProductHandler(productSvc *service.ProductService, v *validator.Validator, log zerolog.Logger) *ProductHandler {
+func NewProductHandler(productSvc service.ProductServiceInterface, v *validator.Validator, log zerolog.Logger) *ProductHandler {
 	return &ProductHandler{productSvc: productSvc, validator: v, log: log}
 }
 

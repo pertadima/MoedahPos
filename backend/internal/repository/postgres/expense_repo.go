@@ -11,11 +11,15 @@ import (
 
 	"github.com/moedahpos/backend/internal/domain"
 	"github.com/moedahpos/backend/internal/dto"
+	"github.com/moedahpos/backend/internal/repository"
 )
 
 type ExpenseRepo struct{ db *sqlx.DB }
 
-func NewExpenseRepo(db *sqlx.DB) *ExpenseRepo { return &ExpenseRepo{db: db} }
+// NewExpenseRepository creates a new ExpenseRepository.
+func NewExpenseRepository(db *sql.DB) repository.ExpenseRepository {
+	return &ExpenseRepo{db: sqlx.NewDb(db, "postgres")}
+}
 
 // ── Categories ────────────────────────────────────────────────────────────────
 

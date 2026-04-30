@@ -8,7 +8,7 @@ This is the modern, responsive web interface for the Moedah POS system. Built wi
 - **Dynamic POS Interface**: Fast and intuitive checkout process for both retail and restaurant modes.
 - **Real-time Reports**: Visual data representation using Recharts for sales, expenses, and cash flow.
 - **Inventory Management**: Comprehensive tools for tracking stock, batches, and movements.
-- **Store Settings**: Easy configuration for tax, currencies, and multi-store roles.
+- **Store Settings**: Easy configuration for tax, currencies, and granular modular roles/permissions.
 - **Theme Support**: Premium look and feel with full responsiveness across all devices.
 
 ## 🛠 Tech Stack
@@ -53,13 +53,32 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the application.
 
-## 📁 Project Structure
+## 🏛 Architecture & Project Structure
 
-- `src/app/`: Next.js App Router pages and layouts.
-- `src/components/`: Reusable UI components.
-- `src/hooks/`: Custom React hooks for state and logic.
-- `src/lib/`: Utility functions and shared constants.
-- `src/types/`: TypeScript interfaces and types.
+The frontend strictly adheres to a modular, decoupled architecture leveraging the Next.js App Router for optimal performance, layout compounding, and client/server logic separation.
+
+### 1. 📂 Core Directory Layout
+
+- `src/app/`: Handles all routing logic. Built using Next.js layout patterns and cleanly divided into public routes (e.g., login) and `(protected)` authenticated application modules.
+- `src/components/ui/`: Contains stateless, highly reusable primitive visualization components (Buttons, Modals, Form Elements, Sync Widgets).
+- `src/lib/api/`: The dedicated API Network Layer. Houses the centralized HTTP client wrapper (`client.ts`) and specific domain route abstractions (e.g., `transactionsApi`, `productsApi`).
+- `src/hooks/`: Custom React hooks (e.g., `useOfflineTransaction`) encapsulating complex behaviors or lifecycle state independent of visual logic.
+- `src/types/`: Centralized TypeScript schema definitions perfectly mirroring backend entity structs.
+
+### 2. 🔌 External Data & Rendering
+
+- Our infrastructure dynamically shifts between static optimization boundaries and powerful Interactive Client Components (`"use client"`) exactly where dashboard grids or the POS registers demand stateful interactivity.
+- Communication with the backend executes securely via strict typed class wrappers in `src/lib/api`, unifying error handling and JWT injections.
+
+### 3. 🌐 Offline-First Sync Engine
+
+- **IndexedDB**: Powered by `Dexie.js` (`src/lib/dexie.ts`) to locally cache POS transactions and preserve data resiliency when Wi-Fi unexpectedly drops.
+- **Optimistic UI**: Transactions utilize the `useOfflineTransaction` orchestrator to instantly process operations locally—ensuring a 0-latency checkout experience—while asynchronously syncing and resolving issues through the `SyncStatusWidget` background polling queues.
+
+### 4. 🎨 Design System
+
+- Standardized via **Tailwind CSS 4** for lightning-fast responsive grids.
+- All styles enforce comprehensive thematic support relying structurally on `dark:` variants, prioritizing precise micro-animations and "glass" aesthetic standards across high-density elements.
 
 ## 🧹 Quality Control
 

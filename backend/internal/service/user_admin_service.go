@@ -176,6 +176,84 @@ func (s *UserAdminService) ListRoles(ctx context.Context) ([]*domain.Role, error
 	return s.roleRepo.ListRoles(ctx)
 }
 
+func (s *UserAdminService) CreateRole(ctx context.Context, req *dto.CreateRoleRequest) (*dto.RoleResponse, error) {
+	role := &domain.Role{
+		Name:        req.Name,
+		Description: req.Description,
+	}
+
+	created, err := s.roleRepo.CreateRole(ctx, role, req.PermissionIDs)
+	if err != nil {
+		return nil, fmt.Errorf("CreateRole: %w", err)
+	}
+
+	// Fetch fresh permissions to return full name not just IDs
+	roles, err := s.roleRepo.ListRoles(ctx)
+	if err != nil {
+		return nil, err
+	}
+	for _, r := range roles {
+		if r.ID == created.ID {
+			return &dto.RoleResponse{
+				ID:          r.ID,
+				Name:        r.Name,
+				Description: r.Description,
+				Permissions: r.Permissions,
+			}, nil
+		}
+	}
+	return nil, fmt.Errorf("role created but not found")
+}
+
+func (s *UserAdminService) UpdateRole(ctx context.Context, id string, req *dto.UpdateRoleRequest) (*dto.RoleResponse, error) {
+	role := &domain.Role{
+		ID:          id,
+		Name:        req.Name,
+		Description: req.Description,
+	}
+
+	updated, err := s.roleRepo.UpdateRole(ctx, role, req.PermissionIDs)
+	if err != nil {
+		return nil, fmt.Errorf("UpdateRole: %w", err)
+	}
+
+	roles, err := s.roleRepo.ListRoles(ctx)
+	if err != nil {
+		return nil, err
+	}
+	for _, r := range roles {
+		if r.ID == updated.ID {
+			return &dto.RoleResponse{
+				ID:          r.ID,
+				Name:        r.Name,
+				Description: r.Description,
+				Permissions: r.Permissions,
+			}, nil
+		}
+	}
+	return nil, fmt.Errorf("role updated but not found")
+}
+
+func (s *UserAdminService) DeleteRole(ctx context.Context, id string) error {
+	return s.roleRepo.DeleteRole(ctx, id)
+}
+
+func (s *UserAdminService) ListPermissions(ctx context.Context) ([]dto.PermissionResponse, error) {
+	perms, err := s.roleRepo.ListPermissions(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("ListPermissions: %w", err)
+	}
+	resp := make([]dto.PermissionResponse, 0, len(perms))
+	for _, p := range perms {
+		resp = append(resp, dto.PermissionResponse{
+			ID:          p.ID,
+			Name:        p.Name,
+			Description: p.Description,
+		})
+	}
+	return resp, nil
+}
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 func toUserResponse(u *domain.User, stores []domain.UserStore) dto.UserResponse {

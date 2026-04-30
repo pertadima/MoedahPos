@@ -10,6 +10,8 @@ export interface UserStore {
   store_name: string;
   role: string;
   store_type?: 'retail' | 'restaurant';
+  loyalty_points_per_rupiah?: number;
+  loyalty_rupiah_per_point?: number;
 }
 export interface LoginResponse {
   access_token: string;
@@ -36,9 +38,15 @@ export interface UserAdmin {
   store_count: number;
   stores?: UserStoreAssignment[];
 }
+export interface Permission {
+  id: string;
+  name: string;
+  description: string;
+}
+
 export interface Role {
   id: string;
   name: string;
   description: string;
-  permissions: string[];
+  permissions: Permission[];
 }

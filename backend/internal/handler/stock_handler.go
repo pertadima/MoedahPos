@@ -17,12 +17,12 @@ import (
 
 // StockHandler handles HTTP requests for stock management endpoints.
 type StockHandler struct {
-	stockSvc  *service.StockService
+	stockSvc  service.StockServiceInterface
 	validator *validator.Validator
 	log       zerolog.Logger
 }
 
-func NewStockHandler(stockSvc *service.StockService, v *validator.Validator, log zerolog.Logger) *StockHandler {
+func NewStockHandler(stockSvc service.StockServiceInterface, v *validator.Validator, log zerolog.Logger) *StockHandler {
 	return &StockHandler{stockSvc: stockSvc, validator: v, log: log}
 }
 

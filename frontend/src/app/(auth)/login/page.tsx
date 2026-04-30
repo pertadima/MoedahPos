@@ -139,7 +139,7 @@ export default function LoginPage() {
             width: '400px',
             height: '400px',
             background: 'var(--brand)',
-            opacity: isDark ? 0.03 : 0.02,
+            opacity: mounted ? (isDark ? 0.03 : 0.02) : 0.03,
             filter: 'blur(100px)',
             borderRadius: '50%',
             pointerEvents: 'none',

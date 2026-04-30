@@ -2,8 +2,6 @@ package middleware
 
 import (
 	"context"
-	"database/sql"
-	"errors"
 	"fmt"
 	"net/http"
 
@@ -16,14 +14,15 @@ import (
 type storeContextKey string
 
 const (
-	storeIDContextKey   storeContextKey = "store_id"
-	storeRoleContextKey storeContextKey = "store_role"
+	storeIDContextKey          storeContextKey = "store_id"
+	storeRolesContextKey       storeContextKey = "store_roles"
+	storePermissionsContextKey storeContextKey = "store_permissions"
 )
 
 // StoreContext is middleware that:
 //  1. Reads :storeId from the URL.
 //  2. Validates the authenticated user has an active membership in that store.
-//  3. Injects store_id and the user's role name into the request context.
+//  3. Injects store_id, the user's role names, and permissions into the request context.
 //
 // It must be used AFTER the Authenticate middleware.
 func StoreContext(db *sqlx.DB) func(http.Handler) http.Handler {
@@ -41,14 +40,15 @@ func StoreContext(db *sqlx.DB) func(http.Handler) http.Handler {
 				return
 			}
 
-			roleName, err := getUserRoleInStore(r.Context(), db, userID, storeID)
+			roles, permissions, err := getUserRolesAndPermissionsInStore(r.Context(), db, userID, storeID)
 			if err != nil {
 				response.Forbidden(w)
 				return
 			}
 
 			ctx := context.WithValue(r.Context(), storeIDContextKey, storeID)
-			ctx = context.WithValue(ctx, storeRoleContextKey, roleName)
+			ctx = context.WithValue(ctx, storeRolesContextKey, roles)
+			ctx = context.WithValue(ctx, storePermissionsContextKey, permissions)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
@@ -60,25 +60,47 @@ func StoreIDFromContext(ctx context.Context) string {
 	return v
 }
 
-// StoreRoleFromContext extracts the user's role name in the current store from context.
-func StoreRoleFromContext(ctx context.Context) string {
-	v, _ := ctx.Value(storeRoleContextKey).(string)
+// StoreRolesFromContext extracts the user's role names in the current store from context.
+func StoreRolesFromContext(ctx context.Context) []string {
+	v, _ := ctx.Value(storeRolesContextKey).([]string)
 	return v
 }
 
-// getUserRoleInStore queries the user_stores + roles tables to get the user's role name.
-func getUserRoleInStore(ctx context.Context, db *sqlx.DB, userID, storeID string) (string, error) {
-	const q = `
+// StorePermissionsFromContext extracts the user's permissions in the current store from context.
+func StorePermissionsFromContext(ctx context.Context) []string {
+	v, _ := ctx.Value(storePermissionsContextKey).([]string)
+	return v
+}
+
+// getUserRolesAndPermissionsInStore queries the user_stores + roles + role_permissions to get the user's roles and permissions.
+func getUserRolesAndPermissionsInStore(ctx context.Context, db *sqlx.DB, userID, storeID string) ([]string, []string, error) {
+	// 1. Get roles
+	const roleQuery = `
 		SELECT r.name
 		FROM user_stores us
 		JOIN roles r ON r.id = us.role_id
 		WHERE us.user_id = $1 AND us.store_id = $2 AND us.is_active = true`
-	var roleName string
-	if err := db.QueryRowxContext(ctx, q, userID, storeID).Scan(&roleName); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return "", fmt.Errorf("user has no access to store")
-		}
-		return "", err
+
+	var roles []string
+	if err := db.SelectContext(ctx, &roles, roleQuery, userID, storeID); err != nil {
+		return nil, nil, err
 	}
-	return roleName, nil
+	if len(roles) == 0 {
+		return nil, nil, fmt.Errorf("user has no active access to store")
+	}
+
+	// 2. Get distinct permissions for those roles
+	const permQuery = `
+		SELECT DISTINCT p.name
+		FROM user_stores us
+		JOIN role_permissions rp ON rp.role_id = us.role_id
+		JOIN permissions p ON p.id = rp.permission_id
+		WHERE us.user_id = $1 AND us.store_id = $2 AND us.is_active = true`
+
+	var permissions []string
+	if err := db.SelectContext(ctx, &permissions, permQuery, userID, storeID); err != nil {
+		return nil, nil, err
+	}
+
+	return roles, permissions, nil
 }

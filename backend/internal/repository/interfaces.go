@@ -27,6 +27,10 @@ type UserRepository interface {
 
 type RoleRepository interface {
 	ListRoles(ctx context.Context) ([]*domain.Role, error)
+	CreateRole(ctx context.Context, role *domain.Role, permissionIDs []string) (*domain.Role, error)
+	UpdateRole(ctx context.Context, role *domain.Role, permissionIDs []string) (*domain.Role, error)
+	DeleteRole(ctx context.Context, id string) error
+	ListPermissions(ctx context.Context) ([]*domain.Permission, error)
 }
 
 type RefreshTokenRepository interface {
@@ -58,6 +62,7 @@ type CategoryRepository interface {
 	FindByID(ctx context.Context, id string) (*domain.Category, error)
 	Update(ctx context.Context, cat *domain.Category) (*domain.Category, error)
 	SoftDelete(ctx context.Context, id string) error
+	GetModifiedSince(ctx context.Context, storeID string, since time.Time) ([]*domain.Category, error)
 }
 
 type ProductRepository interface {
@@ -68,6 +73,7 @@ type ProductRepository interface {
 	ExistsBySKU(ctx context.Context, storeID, sku string, excludeID string) (bool, error)
 	Update(ctx context.Context, p *domain.Product) (*domain.Product, error)
 	SoftDelete(ctx context.Context, id string) error
+	GetModifiedSince(ctx context.Context, storeID string, since time.Time) ([]*domain.Product, error)
 }
 
 type StockRepository interface {
@@ -78,12 +84,27 @@ type StockRepository interface {
 	FindMovements(ctx context.Context, filter dto.StockMovementFilter) ([]*domain.StockMovement, int, error)
 	// DeductStock subtracts qty from stock_levels and records a stock_movement.
 	DeductStock(ctx context.Context, productID, storeID string, qty float64, refID, cashierID string) error
+	GetModifiedSince(ctx context.Context, storeID string, since time.Time) ([]*domain.StockLevel, error)
 }
 
-// MenuItemRepository handles menu item retrieval for restaurant checkouts.
+// TableRepository manages physical tables in a restaurant.
+type TableRepository interface {
+	FindAllByStore(ctx context.Context, storeID string) ([]*domain.RestaurantTable, error)
+	FindByID(ctx context.Context, id string) (*domain.RestaurantTable, error)
+	Create(ctx context.Context, t *domain.RestaurantTable) (*domain.RestaurantTable, error)
+	Update(ctx context.Context, t *domain.RestaurantTable) (*domain.RestaurantTable, error)
+	UpdateStatus(ctx context.Context, id string, status domain.TableStatus) error
+	SoftDelete(ctx context.Context, id string) error
+}
+
+// MenuItemRepository handles menu item retrieval and management.
 type MenuItemRepository interface {
 	FindByID(ctx context.Context, id string) (*domain.MenuItem, error)
 	FindAllByStore(ctx context.Context, storeID string) ([]*domain.MenuItem, error)
+	Create(ctx context.Context, item *domain.MenuItem) (*domain.MenuItem, error)
+	Update(ctx context.Context, item *domain.MenuItem) (*domain.MenuItem, error)
+	ReplaceIngredients(ctx context.Context, menuItemID string, ings []domain.MenuItemIngredient) error
+	SoftDelete(ctx context.Context, id string) error
 }
 
 // ─── Phase 3 ──────────────────────────────────────────────────────────────────
@@ -109,6 +130,7 @@ type TransactionRepository interface {
 	GetKDSTickets(ctx context.Context, storeID string) ([]*domain.Transaction, error)
 	// UpdateKDSItemStatus updates the completion status of a specific KDS ticket item.
 	UpdateKDSItemStatus(ctx context.Context, itemID, status string) error
+	GetModifiedSince(ctx context.Context, storeID string, since time.Time) ([]*domain.Transaction, error)
 }
 
 // PurchaseOrderRepository handles PO lifecycle and stock updates on receive.
@@ -167,6 +189,12 @@ type CustomerRepository interface {
 	Update(ctx context.Context, c *domain.Customer) (*domain.Customer, error)
 	SoftDelete(ctx context.Context, id string) error
 	SearchByPhone(ctx context.Context, storeID, phone string) ([]*domain.Customer, error)
+	GetModifiedSince(ctx context.Context, storeID string, since time.Time) ([]*domain.Customer, error)
+}
+
+type StockAdjustmentRepository interface {
+	CreateAdjustment(ctx context.Context, storeID, userID string, input domain.CreateAdjustmentInput) error
+	GetStockAdjustmentHistory(ctx context.Context, storeID string, productID *string) ([]*domain.StockAdjustment, error)
 }
 
 // ─── FIFO Batch Inventory ──────────────────────────────────────────────────────
@@ -219,4 +247,77 @@ type PaymentRecordRepository interface {
 
 	// FindByTermin returns all payment records for a termin, newest first.
 	FindByTermin(ctx context.Context, terminID string) ([]*domain.PaymentRecord, error)
+}
+
+type ExpenseRepository interface {
+	ListCategories(ctx context.Context, includeDeleted bool) ([]*domain.ExpenseCategory, error)
+	CreateCategory(ctx context.Context, c *domain.ExpenseCategory) (*domain.ExpenseCategory, error)
+	GetCategoryByID(ctx context.Context, id string) (*domain.ExpenseCategory, error)
+	UpdateCategory(ctx context.Context, id string, name, desc string, isActive bool) (*domain.ExpenseCategory, error)
+	SoftDeleteCategory(ctx context.Context, id string) error
+
+	CreateExpense(ctx context.Context, e *domain.Expense) (*domain.Expense, error)
+	FindAll(ctx context.Context, f dto.ExpenseListFilter) ([]*domain.Expense, int, error)
+	GetByID(ctx context.Context, id, storeID string) (*domain.Expense, error)
+	Update(ctx context.Context, e *domain.Expense) (*domain.Expense, error)
+	Delete(ctx context.Context, id, storeID string) error
+	UpdatePaymentStatus(ctx context.Context, id, storeID, status string) (*domain.Expense, error)
+
+	CreateRecurringExpense(ctx context.Context, e *domain.RecurringExpense) (*domain.RecurringExpense, error)
+	FindAllRecurring(ctx context.Context, f dto.ExpenseListFilter) ([]*domain.RecurringExpense, int, error)
+	GetRecurringByID(ctx context.Context, id, storeID string) (*domain.RecurringExpense, error)
+	UpdateRecurring(ctx context.Context, e *domain.RecurringExpense) (*domain.RecurringExpense, error)
+	DeleteRecurring(ctx context.Context, id, storeID string) error
+	GetDueRecurringExpenses(ctx context.Context) ([]*domain.RecurringExpense, error)
+	BumpRecurringNextRun(ctx context.Context, id string, nextRun string) error
+}
+
+type IncomeRepository interface {
+	ListCategories(ctx context.Context, includeDeleted bool) ([]*domain.IncomeCategory, error)
+	GetCategoryByID(ctx context.Context, id string) (*domain.IncomeCategory, error)
+	CreateCategory(ctx context.Context, cat *domain.IncomeCategory) (*domain.IncomeCategory, error)
+	UpdateCategory(ctx context.Context, id string, name, desc string, isActive bool) (*domain.IncomeCategory, error)
+	SoftDeleteCategory(ctx context.Context, id string) error
+	Create(ctx context.Context, inc *domain.Income) (*domain.Income, error)
+	FindAll(ctx context.Context, f dto.IncomeListFilter) ([]*domain.Income, int, error)
+	FindByID(ctx context.Context, id string) (*domain.Income, error)
+	Update(ctx context.Context, inc *domain.Income) (*domain.Income, error)
+	Delete(ctx context.Context, id, storeID string) error
+	SumByDateRange(ctx context.Context, storeID string, from, to time.Time) (float64, error)
+}
+
+// ─── Loyalty System ───────────────────────────────────────────────────────────
+
+// MembershipTierRepository manages loyalty tier configuration records.
+type MembershipTierRepository interface {
+	// FindAll returns all configured membership tiers.
+	FindAll(ctx context.Context) ([]*domain.MembershipTier, error)
+	// FindByID returns a single tier by its UUID.
+	FindByID(ctx context.Context, id string) (*domain.MembershipTier, error)
+}
+
+// LoyaltyRepository manages the immutable loyalty ledger for customers.
+type LoyaltyRepository interface {
+	// GetBalance returns the sum of all point deltas for a customer (current balance).
+	GetBalance(ctx context.Context, customerID string) (float64, error)
+	// EarnPoints appends a positive EARN entry to the ledger.
+	EarnPoints(ctx context.Context, customerID string, transactionID *string, points float64) (*domain.LoyaltyLedger, error)
+	// SpendPoints appends a negative SPEND entry to the ledger.
+	SpendPoints(ctx context.Context, customerID string, transactionID *string, points float64) (*domain.LoyaltyLedger, error)
+	// VoidPoints revokes points earned by a specific transaction (inserts a VOID entry).
+	VoidPoints(ctx context.Context, customerID string, transactionID *string, points float64) (*domain.LoyaltyLedger, error)
+	// AdjustPoints inserts a manual ADJUST entry (positive or negative delta).
+	AdjustPoints(ctx context.Context, customerID string, delta float64, note string) (*domain.LoyaltyLedger, error)
+	// GetHistory returns all ledger entries for a customer, newest first.
+	GetHistory(ctx context.Context, customerID string) ([]*domain.LoyaltyLedger, error)
+	// GetHistoryPaginated returns a page of ledger entries for a customer.
+	GetHistoryPaginated(ctx context.Context, customerID string, page, perPage int) ([]*domain.LoyaltyLedger, int, error)
+	// AssignTier updates the customer's loyalty_tier_id.
+	AssignTier(ctx context.Context, customerID, tierID string) error
+	// GetCustomerTier returns the tier for a customer (nil if unassigned).
+	GetCustomerTier(ctx context.Context, customerID string) (*domain.MembershipTier, error)
+	// GetTopCustomersByBalance returns top N customers by total point balance for a store.
+	GetTopCustomersByBalance(ctx context.Context, storeID string, limit int) ([]dto.TopCustomerLoyalty, error)
+	// GetPointsSummary returns total points earned and used within [from, to) for a store.
+	GetPointsSummary(ctx context.Context, storeID string, from, to time.Time) (earned, used float64, err error)
 }

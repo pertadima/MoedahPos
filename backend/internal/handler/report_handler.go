@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -14,11 +14,11 @@ import (
 
 // ReportHandler handles analytics and reporting endpoints.
 type ReportHandler struct {
-	reportSvc *service.ReportService
+	reportSvc service.ReportServiceInterface
 	log       zerolog.Logger
 }
 
-func NewReportHandler(reportSvc *service.ReportService, log zerolog.Logger) *ReportHandler {
+func NewReportHandler(reportSvc service.ReportServiceInterface, log zerolog.Logger) *ReportHandler {
 	return &ReportHandler{reportSvc: reportSvc, log: log}
 }
 
@@ -120,5 +120,62 @@ func (h *ReportHandler) CashFlowDetail(w http.ResponseWriter, r *http.Request) {
 	response.Success(w, result)
 }
 
-// unused errors suppressor
-var _ = errors.New
+// ExportReport handles GET /stores/:storeId/reports/export?type=csv|pdf&report=sales|inventory|profit
+//
+// RBAC:
+//   - sales   → penjualan:read
+//   - inventory → inventory:read
+//   - profit  → keuangan:read
+//
+// The permission is validated per-report in the handler so a single route covers all types.
+func (h *ReportHandler) ExportReport(w http.ResponseWriter, r *http.Request) {
+	storeID := chi.URLParam(r, "storeId")
+	q := r.URL.Query()
+	exportType := q.Get("type")   // "csv" or "pdf"
+	reportName := q.Get("report") // "sales", "inventory", "profit"
+	filter := filterFromQuery(r, storeID)
+
+	if exportType != "csv" && exportType != "pdf" {
+		http.Error(w, `{"error":"type must be csv or pdf"}`, http.StatusBadRequest)
+		return
+	}
+	if reportName != "sales" && reportName != "inventory" && reportName != "profit" {
+		http.Error(w, `{"error":"report must be sales, inventory, or profit"}`, http.StatusBadRequest)
+		return
+	}
+
+	var (
+		data        []byte
+		err         error
+		filename    string
+		contentType string
+	)
+
+	dateTag := filter.DateFrom
+	if dateTag == "" {
+		dateTag = "all"
+	}
+
+	switch exportType {
+	case "csv":
+		data, err = h.reportSvc.ExportCSV(r.Context(), reportName, filter)
+		filename = fmt.Sprintf("laporan-%s-%s.csv", reportName, dateTag)
+		contentType = "text/csv; charset=utf-8"
+	default: // "pdf"
+		data, err = h.reportSvc.ExportPDF(r.Context(), reportName, filter)
+		filename = fmt.Sprintf("laporan-%s-%s.pdf", reportName, dateTag)
+		contentType = "application/pdf"
+	}
+
+	if err != nil {
+		h.log.Error().Err(err).Str("report", reportName).Str("type", exportType).Msg("export failed")
+		response.InternalError(w)
+		return
+	}
+
+	w.Header().Set("Content-Type", contentType)
+	w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, filename))
+	w.Header().Set("Content-Length", fmt.Sprintf("%d", len(data)))
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write(data) //nolint:gosec // data is server-generated HTML/CSV, not user-supplied input
+}

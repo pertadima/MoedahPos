@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"strings"
 
@@ -9,14 +10,16 @@ import (
 
 	"github.com/moedahpos/backend/internal/domain"
 	"github.com/moedahpos/backend/internal/dto"
+	"github.com/moedahpos/backend/internal/repository"
 )
 
 type ActivityLogRepo struct {
 	db *sqlx.DB
 }
 
-func NewActivityLogRepo(db *sqlx.DB) *ActivityLogRepo {
-	return &ActivityLogRepo{db: db}
+// NewActivityLogRepository creates a new ActivityLogRepository.
+func NewActivityLogRepository(db *sql.DB) repository.ActivityLogRepository {
+	return &ActivityLogRepo{db: sqlx.NewDb(db, "postgres")}
 }
 
 func (r *ActivityLogRepo) Create(ctx context.Context, log *domain.ActivityLog) error {

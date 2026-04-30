@@ -66,10 +66,12 @@ type MeResponse struct {
 
 // StoreRoleInfo is a store membership entry in /me.
 type StoreRoleInfo struct {
-	StoreID   string `json:"store_id"`
-	StoreName string `json:"store_name"`
-	StoreType string `json:"store_type"`
-	Role      string `json:"role"`
+	StoreID                string  `json:"store_id"`
+	StoreName              string  `json:"store_name"`
+	StoreType              string  `json:"store_type"`
+	Role                   string  `json:"role"`
+	LoyaltyPointsPerRupiah float64 `json:"loyalty_points_per_rupiah"`
+	LoyaltyRupiahPerPoint  float64 `json:"loyalty_rupiah_per_point"`
 }
 
 // ─── Validation Error ─────────────────────────────────────────────────────────

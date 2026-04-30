@@ -8,6 +8,7 @@ type Transaction struct {
 	StoreID           string    `db:"store_id"`
 	CashierID         string    `db:"cashier_id"`
 	TableID           *string   `db:"table_id"` // nil for retail; set for restaurant draft orders
+	CustomerID        *string   `db:"customer_id"`
 	CustomerName      string    `db:"customer_name"`
 	CustomerPhone     string    `db:"customer_phone"`
 	Subtotal          float64   `db:"subtotal"`
@@ -23,6 +24,10 @@ type Transaction struct {
 	CartDiscountValue float64   `db:"cart_discount_value"` // the cart-level discount amount
 	CreatedAt         time.Time `db:"created_at"`
 	UpdatedAt         time.Time `db:"updated_at"`
+	ServerUpdatedAt   time.Time `db:"server_updated_at"`
+	SyncVersion       int       `db:"sync_version"`
+	PointsRedeemed    float64   `db:"points_redeemed"`
+	PointsDiscount    float64   `db:"points_discount"`
 
 	// Populated via JOIN
 	CashierName string            `db:"cashier_name"`
@@ -55,10 +60,12 @@ type TransactionItem struct {
 // CreateTransactionInput carries service-calculated values to the repository.
 // The service resolves products and calculates all amounts before calling the repo.
 type CreateTransactionInput struct {
+	ID                string
 	StoreID           string
 	CashierID         string
 	TableID           *string // nil = retail
 	Status            string  // "draft" or "completed"
+	CustomerID        *string
 	CustomerName      string
 	CustomerPhone     string
 	PaymentMethod     string
@@ -71,17 +78,22 @@ type CreateTransactionInput struct {
 	Total             float64
 	CartDiscountType  string  // PERCENTAGE | FIXED
 	CartDiscountValue float64 // audit: raw value entered by cashier
+	PointsRedeemed    float64
+	PointsDiscount    float64
 	Items             []CreateTransactionItemInput
 }
 
 // PayDraftInput is what the service passes to the repo when finalizing a held order.
 type PayDraftInput struct {
-	TransactionID string
-	PaymentMethod string
-	PaymentAmount float64
-	ChangeAmount  float64
-	CustomerName  string
-	CustomerPhone string
+	TransactionID  string
+	PaymentMethod  string
+	PaymentAmount  float64
+	ChangeAmount   float64
+	CustomerID     *string
+	CustomerName   string
+	CustomerPhone  string
+	PointsRedeemed float64
+	PointsDiscount float64
 }
 
 // CreateTransactionItemInput is a pre-calculated item ready for DB insertion.

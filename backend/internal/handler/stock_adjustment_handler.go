@@ -15,12 +15,12 @@ import (
 )
 
 type StockAdjustmentHandler struct {
-	svc      *service.StockAdjustmentService
+	svc      service.StockAdjustmentServiceInterface
 	validate *validator.Validator
 	log      *zerolog.Logger
 }
 
-func NewStockAdjustmentHandler(svc *service.StockAdjustmentService, validate *validator.Validator, log *zerolog.Logger) *StockAdjustmentHandler {
+func NewStockAdjustmentHandler(svc service.StockAdjustmentServiceInterface, validate *validator.Validator, log *zerolog.Logger) *StockAdjustmentHandler {
 	return &StockAdjustmentHandler{
 		svc:      svc,
 		validate: validate,
