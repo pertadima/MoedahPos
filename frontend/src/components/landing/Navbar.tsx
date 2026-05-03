@@ -1,9 +1,14 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { motion } from 'framer-motion';
+import { useTheme } from '@/lib/theme/ThemeContext';
+import { Sun, Moon } from 'lucide-react';
 
 export default function Navbar() {
+  const { theme, toggleTheme } = useTheme();
+
   return (
     <motion.header
       initial={{ y: -20, opacity: 0 }}
@@ -12,21 +17,25 @@ export default function Navbar() {
       className="fixed top-0 left-0 right-0 z-50 bg-white/80 dark:bg-black/50 backdrop-blur-md border-b border-gray-200 dark:border-gray-800"
     >
       <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded bg-[#0070F3] flex items-center justify-center text-white font-bold text-lg">
-            M
-          </div>
-          <span className="font-bold text-xl tracking-tight text-gray-900 dark:text-white">
-            Moedah POS
-          </span>
+        <Link href="/" className="flex items-center gap-3">
+          <Image
+            src={theme === 'dark' ? '/logo-dashboard-dark.svg' : '/logo-dashboard-light.svg'}
+            alt="Moedah Logo"
+            width={120}
+            height={32}
+            className="h-8 w-auto"
+            priority
+          />
         </Link>
         <nav className="flex items-center gap-4">
-          <Link
-            href="/login"
-            className="text-sm font-medium text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors"
+          <button
+            type="button"
+            onClick={toggleTheme}
+            className="p-2 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors rounded-full hover:bg-gray-100 dark:hover:bg-gray-800"
+            aria-label="Toggle dark mode"
           >
-            Masuk
-          </Link>
+            {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+          </button>
           <Link
             href="/dashboard"
             className="text-sm font-medium bg-[#0070F3] text-white px-4 py-2 rounded-full hover:bg-blue-600 transition-colors shadow-sm"

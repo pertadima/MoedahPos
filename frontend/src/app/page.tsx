@@ -3,6 +3,7 @@ import Navbar from '@/components/landing/Navbar';
 import Hero from '@/components/landing/Hero';
 import BentoGrid from '@/components/landing/BentoGrid';
 import TrustSection from '@/components/landing/TrustSection';
+import Footer from '@/components/landing/Footer';
 
 export const metadata: Metadata = {
   title: 'Moedah POS - Aplikasi Kasir & Akuntansi No. 1 di Indonesia',
@@ -26,23 +27,7 @@ export default function LandingPage() {
         <BentoGrid />
         <TrustSection />
       </main>
-
-      {/* Simple Footer */}
-      <footer className="py-12 bg-white dark:bg-black border-t border-gray-200 dark:border-gray-800">
-        <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded bg-[#0070F3] flex items-center justify-center text-white font-bold text-xs">
-              M
-            </div>
-            <span className="font-bold text-gray-900 dark:text-white tracking-tight">
-              Moedah POS
-            </span>
-          </div>
-          <p className="text-sm text-gray-500">
-            &copy; {new Date().getFullYear()} Moedah POS. Seluruh hak cipta dilindungi.
-          </p>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }
