@@ -35,20 +35,28 @@ const SLIDES = [
   },
   {
     id: 3,
+    light: '/image-rbac-light.png',
+    dark: '/image-rbac-dark.png',
+    title: 'Akses Terkontrol (RBAC)',
+    subtitle:
+      'Lindungi bisnis Anda dengan mengatur peran dan hak akses spesifik untuk kasir dan admin.',
+  },
+  {
+    id: 4,
     light: '/order-purchase-light.png',
     dark: '/order-purchase-dark.png',
     title: 'Manajemen Purchase Order',
     subtitle: 'Pantau stok masuk dan kelola pesanan ke supplier dalam satu dashboard.',
   },
   {
-    id: 4,
+    id: 5,
     light: '/order-report-light.png',
     dark: '/order-report-dark.png',
     title: 'Laporan Bisnis Real-time',
     subtitle: 'Dapatkan wawasan mendalam tentang performa bisnis Anda kapan saja, di mana saja.',
   },
   {
-    id: 5,
+    id: 6,
     light: '/order-cashflow-light.png',
     dark: '/order-cashflow-dark.png',
     title: 'Catatan Arus Kas',
