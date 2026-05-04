@@ -17,8 +17,8 @@ import Link from 'next/link';
 const SLIDES = [
   {
     id: 1,
-    light: '/order-pos-light.png',
-    dark: '/order-pos-dark.png',
+    light: '/order-pos-light.webp',
+    dark: '/order-pos-dark.webp',
     icon: ShoppingCart,
     tab: 'Kasir',
     title: 'Point of Sale',
@@ -26,8 +26,8 @@ const SLIDES = [
   },
   {
     id: 2,
-    light: '/order-hpp-light.png',
-    dark: '/order-hpp-dark.png',
+    light: '/order-hpp-light.webp',
+    dark: '/order-hpp-dark.webp',
     icon: BarChart3,
     tab: 'HPP',
     title: 'Kalkulator HPP',
@@ -35,8 +35,8 @@ const SLIDES = [
   },
   {
     id: 3,
-    light: '/image-rbac-light.png',
-    dark: '/image-rbac-dark.png',
+    light: '/image-rbac-light.webp',
+    dark: '/image-rbac-dark.webp',
     icon: ShieldCheck,
     tab: 'RBAC',
     title: 'Kontrol Akses',
@@ -44,8 +44,8 @@ const SLIDES = [
   },
   {
     id: 4,
-    light: '/order-purchase-light.png',
-    dark: '/order-purchase-dark.png',
+    light: '/order-purchase-light.webp',
+    dark: '/order-purchase-dark.webp',
     icon: Package,
     tab: 'Purchase',
     title: 'Purchase Order',
@@ -53,8 +53,8 @@ const SLIDES = [
   },
   {
     id: 5,
-    light: '/order-report-light.png',
-    dark: '/order-report-dark.png',
+    light: '/order-report-light.webp',
+    dark: '/order-report-dark.webp',
     icon: FileText,
     tab: 'Laporan',
     title: 'Laporan Bisnis',
@@ -62,8 +62,8 @@ const SLIDES = [
   },
   {
     id: 6,
-    light: '/order-cashflow-light.png',
-    dark: '/order-cashflow-dark.png',
+    light: '/order-cashflow-light.webp',
+    dark: '/order-cashflow-dark.webp',
     icon: Banknote,
     tab: 'Arus Kas',
     title: 'Arus Kas',

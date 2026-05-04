@@ -148,14 +148,14 @@ export default function Hero() {
               >
                 <div className="aspect-[1/2] relative rounded-lg transition-transform duration-500 hover:scale-[1.05] hover:z-30">
                   <Image
-                    src={`/mockuplight-${i}.png`}
+                    src={`/mockuplight-${i}.webp`}
                     alt={`POS ${i}`}
                     fill
                     className="object-contain dark:hidden"
                     sizes="(max-width: 1280px) 33vw, 500px"
                   />
                   <Image
-                    src={`/mockupdark-${i}.png`}
+                    src={`/mockupdark-${i}.webp`}
                     alt={`POS ${i}`}
                     fill
                     className="object-contain hidden dark:block"
