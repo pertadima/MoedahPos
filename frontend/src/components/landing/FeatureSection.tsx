@@ -131,7 +131,7 @@ export default function FeatureSection() {
             </div>
           </div>
 
-          <div className="relative aspect-[16/9] bg-gray-100 dark:bg-[#000]">
+          <div className="relative aspect-[16/9] bg-gray-100 dark:bg-[#000] p-4 sm:p-8">
             <AnimatePresence mode="wait">
               <motion.div
                 key={active}
@@ -139,20 +139,20 @@ export default function FeatureSection() {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.4 }}
-                className="absolute inset-0"
+                className="absolute inset-0 p-4 sm:p-8"
               >
                 <Image
                   src={SLIDES[active].light}
                   alt={SLIDES[active].title}
                   fill
-                  className="object-cover object-top dark:hidden"
+                  className="object-contain object-center dark:hidden"
                   priority
                 />
                 <Image
                   src={SLIDES[active].dark}
                   alt={SLIDES[active].title}
                   fill
-                  className="object-cover object-top hidden dark:block"
+                  className="object-contain object-center hidden dark:block"
                   priority
                 />
               </motion.div>

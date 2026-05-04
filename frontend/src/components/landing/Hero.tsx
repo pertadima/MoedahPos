@@ -22,26 +22,10 @@ export default function Hero() {
     <section className="relative min-h-[92vh] flex flex-col justify-center bg-[#f8f9fb] dark:bg-[#09090b] overflow-hidden transition-colors duration-700">
       {/* ── BACKGROUND ARTILLERY ─────────────────────────────────────────── */}
 
-      {/* 1. Animated Gradient Mesh Orbs */}
+      {/* 1. Static Gradient Mesh Orbs (Removed animation for performance) */}
       <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
-        <motion.div
-          animate={{
-            x: [0, 40, 0],
-            y: [0, -30, 0],
-            scale: [1, 1.1, 1],
-          }}
-          transition={{ duration: 15, repeat: Infinity, ease: 'easeInOut' }}
-          className="absolute -top-[10%] -right-[5%] w-[60%] h-[60%] bg-[#4f6ef7]/[0.08] dark:bg-[#4f6ef7]/[0.15] blur-[120px] rounded-full"
-        />
-        <motion.div
-          animate={{
-            x: [0, -50, 0],
-            y: [0, 40, 0],
-            scale: [1, 1.2, 1],
-          }}
-          transition={{ duration: 18, repeat: Infinity, ease: 'easeInOut', delay: 2 }}
-          className="absolute -bottom-[20%] -left-[10%] w-[70%] h-[70%] bg-cyan-400/[0.05] dark:bg-cyan-500/[0.08] blur-[140px] rounded-full"
-        />
+        <div className="absolute -top-[10%] -right-[5%] w-[60%] h-[60%] bg-[#4f6ef7]/[0.05] dark:bg-[#4f6ef7]/[0.1] blur-[80px] rounded-full" />
+        <div className="absolute -bottom-[20%] -left-[10%] w-[70%] h-[70%] bg-cyan-400/[0.03] dark:bg-cyan-500/[0.05] blur-[100px] rounded-full" />
       </div>
 
       {/* 2. Geometric Grid with Masking */}
@@ -78,8 +62,8 @@ export default function Hero() {
 
       {/* ── CONTENT ─────────────────────────────────────────────────────── */}
 
-      <div className="relative z-10 max-w-7xl mx-auto px-6 pt-20 pb-20 w-full">
-        <div className="max-w-5xl">
+      <div className="relative z-10 max-w-7xl mx-auto px-6 pt-20 pb-20 w-full flex flex-col lg:flex-row items-center lg:items-stretch gap-4">
+        <div className="flex-1 max-w-2xl text-left lg:text-left py-8 flex flex-col justify-center shrink-0">
           <motion.div
             initial={{ opacity: 0, x: -30 }}
             animate={{ opacity: 1, x: 0 }}
@@ -101,10 +85,10 @@ export default function Hero() {
             {/* Robust Kinetic Headline */}
             <h1
               className="
-                text-6xl sm:text-7xl lg:text-[6.5rem]
-                leading-[0.95] tracking-tight
+                text-5xl sm:text-6xl lg:text-[4.5rem]
+                leading-[1.0] tracking-tight
                 text-gray-900 dark:text-white
-                font-black mb-10
+                font-black mb-8
               "
             >
               Kelola Bisnis
@@ -118,19 +102,19 @@ export default function Hero() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
-              className="text-lg sm:text-xl text-gray-500 dark:text-slate-400 leading-relaxed max-w-xl mb-12 font-medium"
+              className="text-lg text-gray-500 dark:text-slate-400 leading-relaxed mb-10 font-medium max-w-lg"
             >
               Tingkatkan efisiensi dengan sistem POS offline-first yang secara otomatis
               menyinkronkan akuntansi, inventaris, dan loyalitas pelanggan Anda ke cloud.
             </motion.p>
 
             {/* Vibrant Action Area */}
-            <div className="flex items-center gap-8 flex-wrap">
+            <div className="flex items-center gap-6 flex-wrap">
               <Link
                 href="/login"
                 className="
                   group relative inline-flex items-center gap-3
-                  h-16 px-10 rounded-2xl text-lg font-bold text-white
+                  h-14 px-10 rounded-2xl text-base font-bold text-white
                   bg-[#4f6ef7] hover:bg-[#3d56d4]
                   transition-all duration-300
                   shadow-[0_20px_40px_-10px_rgba(79,110,247,0.4)]
@@ -139,7 +123,6 @@ export default function Hero() {
                   overflow-hidden
                 "
               >
-                {/* Gloss effect */}
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
                 Mulai Sekarang
                 <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
@@ -153,21 +136,80 @@ export default function Hero() {
                       className="w-10 h-10 rounded-full border-2 border-white dark:border-[#09090b] bg-gray-200 dark:bg-gray-800"
                     />
                   ))}
-                  <div className="w-10 h-10 rounded-full border-2 border-white dark:border-[#09090b] bg-[#4f6ef7] flex items-center justify-center text-[10px] font-bold text-white">
-                    +600
-                  </div>
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-sm font-bold text-gray-900 dark:text-white leading-none mb-1">
+                  <span className="text-xs font-bold text-gray-900 dark:text-white leading-none mb-1">
                     Terpercaya
                   </span>
-                  <span className="text-[11px] text-gray-500 uppercase tracking-widest font-semibold opacity-80">
-                    Bisnis Indonesia
+                  <span className="text-[10px] text-gray-500 uppercase tracking-widest font-semibold opacity-80">
+                    600+ Bisnis
                   </span>
                 </div>
               </div>
             </div>
           </motion.div>
+        </div>
+
+        {/* ── MOCKUP AREA ── */}
+        <div className="flex-1 w-full flex items-center justify-center lg:justify-start pt-12 lg:pt-0">
+          <div className="grid grid-cols-3 gap-3 w-full max-w-[550px]">
+            {/* Mockup 1 */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+              className="rounded-lg overflow-hidden border border-gray-200/50 dark:border-white/[0.08] shadow-xl bg-white dark:bg-[#0c0c0e]"
+            >
+              <img
+                src="/mockuplight-1.png"
+                className="w-full h-auto dark:hidden block"
+                alt="POS 1"
+              />
+              <img
+                src="/mockupdark-1.png"
+                className="w-full h-auto hidden dark:block"
+                alt="POS 1"
+              />
+            </motion.div>
+
+            {/* Mockup 2 */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.4 }}
+              className="rounded-lg overflow-hidden border border-gray-200/50 dark:border-white/[0.08] shadow-xl bg-white dark:bg-[#0c0c0e]"
+            >
+              <img
+                src="/mockuplight-2.png"
+                className="w-full h-auto dark:hidden block"
+                alt="POS 2"
+              />
+              <img
+                src="/mockupdark-2.png"
+                className="w-full h-auto hidden dark:block"
+                alt="POS 2"
+              />
+            </motion.div>
+
+            {/* Mockup 3 */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.5 }}
+              className="rounded-lg overflow-hidden border border-gray-200/50 dark:border-white/[0.08] shadow-xl bg-white dark:bg-[#0c0c0e]"
+            >
+              <img
+                src="/mockuplight-3.png"
+                className="w-full h-auto dark:hidden block"
+                alt="POS 3"
+              />
+              <img
+                src="/mockupdark-3.png"
+                className="w-full h-auto hidden dark:block"
+                alt="POS 3"
+              />
+            </motion.div>
+          </div>
         </div>
       </div>
 
