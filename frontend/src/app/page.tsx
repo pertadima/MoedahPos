@@ -20,7 +20,7 @@ export const metadata: Metadata = {
 
 export default function LandingPage() {
   return (
-    <div className="bg-[#f8f9fb] dark:bg-[#09090b] selection:bg-[#4f6ef7]/30 selection:text-white transition-colors duration-500">
+    <div className="bg-[#f8f9fb] selection:bg-[#4f6ef7]/30 selection:text-white">
       <Navbar />
       <main>
         <Hero />

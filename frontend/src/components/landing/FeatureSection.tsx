@@ -18,7 +18,6 @@ const SLIDES = [
   {
     id: 1,
     light: '/order-pos-light.webp',
-    dark: '/order-pos-dark.webp',
     icon: ShoppingCart,
     tab: 'Kasir',
     title: 'Point of Sale',
@@ -27,7 +26,6 @@ const SLIDES = [
   {
     id: 2,
     light: '/order-hpp-light.webp',
-    dark: '/order-hpp-dark.webp',
     icon: BarChart3,
     tab: 'HPP',
     title: 'Kalkulator HPP',
@@ -36,7 +34,6 @@ const SLIDES = [
   {
     id: 3,
     light: '/image-rbac-light.webp',
-    dark: '/image-rbac-dark.webp',
     icon: ShieldCheck,
     tab: 'RBAC',
     title: 'Kontrol Akses',
@@ -45,7 +42,6 @@ const SLIDES = [
   {
     id: 4,
     light: '/order-purchase-light.webp',
-    dark: '/order-purchase-dark.webp',
     icon: Package,
     tab: 'Purchase',
     title: 'Purchase Order',
@@ -54,7 +50,6 @@ const SLIDES = [
   {
     id: 5,
     light: '/order-report-light.webp',
-    dark: '/order-report-dark.webp',
     icon: FileText,
     tab: 'Laporan',
     title: 'Laporan Bisnis',
@@ -63,7 +58,6 @@ const SLIDES = [
   {
     id: 6,
     light: '/order-cashflow-light.webp',
-    dark: '/order-cashflow-dark.webp',
     icon: Banknote,
     tab: 'Arus Kas',
     title: 'Arus Kas',
@@ -87,7 +81,7 @@ export default function FeatureSection() {
 
   return (
     <section
-      className="py-24 bg-[#f1f3f7] dark:bg-[#0c0c0e] border-t border-gray-200 dark:border-white/[0.05] transition-colors duration-500"
+      className="py-24 bg-[#f1f3f7] border-t border-gray-200"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >
@@ -97,32 +91,32 @@ export default function FeatureSection() {
           <p className="text-xs font-bold tracking-[0.2em] uppercase text-[#0884F6] mb-4">
             Powerful Modules
           </p>
-          <h2 className="text-3xl sm:text-5xl font-extrabold text-gray-900 dark:text-white tracking-tight">
+          <h2 className="text-3xl sm:text-5xl font-extrabold text-gray-900 tracking-tight">
             Satu platform,
             <br />
-            <span className="text-gray-500 dark:text-gray-400 font-normal underline decoration-[#0884F6]/30">
+            <span className="text-gray-500 font-normal underline decoration-[#0884F6]/30">
               semua yang Anda butuhkan.
             </span>
           </h2>
         </div>
 
         {/* Browser mockup */}
-        <div className="rounded-2xl overflow-hidden border border-gray-200 dark:border-white/[0.08] bg-white dark:bg-[#13131a] shadow-2xl">
-          <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-100 dark:border-white/[0.06] bg-gray-50/50 dark:bg-[#09090b]">
+        <div className="rounded-2xl overflow-hidden border border-gray-200 bg-white shadow-2xl">
+          <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-100 bg-gray-50">
             <div className="flex gap-1.5">
               <div className="w-3 h-3 rounded-full bg-[#ff5f56]" />
               <div className="w-3 h-3 rounded-full bg-[#ffbd2e]" />
               <div className="w-3 h-3 rounded-full bg-[#27c93f]" />
             </div>
             <div className="flex-1 flex justify-center">
-              <div className="h-7 w-64 flex items-center justify-center bg-white dark:bg-[#13131a] border border-gray-200 dark:border-white/[0.07] rounded-md px-3">
+              <div className="h-7 w-64 flex items-center justify-center bg-white border border-gray-200 rounded-md px-3">
                 <AnimatePresence mode="wait">
                   <motion.span
                     key={active}
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    className="text-[11px] text-gray-400 dark:text-gray-500 font-medium tracking-tight"
+                    className="text-[11px] text-gray-400 font-medium tracking-tight"
                   >
                     moedah.com/app/{SLIDES[active].tab.toLowerCase()}
                   </motion.span>
@@ -131,7 +125,7 @@ export default function FeatureSection() {
             </div>
           </div>
 
-          <div className="relative aspect-[16/9] bg-gray-100 dark:bg-[#000] p-4 sm:p-8 text-center">
+          <div className="relative aspect-[16/9] bg-gray-100 p-4 sm:p-8 text-center">
             <AnimatePresence mode="wait">
               <motion.div
                 key={active}
@@ -145,14 +139,7 @@ export default function FeatureSection() {
                   src={SLIDES[active].light}
                   alt={SLIDES[active].title}
                   fill
-                  className="object-contain object-center dark:hidden"
-                  priority
-                />
-                <Image
-                  src={SLIDES[active].dark}
-                  alt={SLIDES[active].title}
-                  fill
-                  className="object-contain object-center hidden dark:block"
+                  className="object-contain object-center"
                   priority
                 />
               </motion.div>
@@ -174,8 +161,8 @@ export default function FeatureSection() {
                   border transition-all duration-300 group
                   ${
                     isActive
-                      ? 'bg-white dark:bg-[#1c1c24] border-[#0884F6]/50 shadow-lg scale-[1.02] z-10'
-                      : 'bg-white/40 dark:bg-white/[0.02] border-gray-200 dark:border-white/[0.05] hover:border-gray-300 dark:hover:border-white/[0.1]'
+                      ? 'bg-white border-[#0884F6]/50 shadow-lg scale-[1.02] z-10'
+                      : 'bg-white/40 border-gray-200 hover:border-gray-300'
                   }
                 `}
               >
@@ -184,20 +171,20 @@ export default function FeatureSection() {
                     ${
                       isActive
                         ? 'bg-[#0884F6] text-white shadow-md shadow-[#0884F6]/30'
-                        : 'bg-gray-100 dark:bg-white/[0.05] text-gray-400 dark:text-gray-500 group-hover:text-gray-600 dark:group-hover:text-gray-300'
+                        : 'bg-gray-100 text-gray-400 group-hover:text-gray-600'
                     }`}
                 >
                   <Icon size={18} />
                 </div>
                 <p
                   className={`text-xs font-bold uppercase tracking-wider leading-none mb-1
-                  ${isActive ? 'text-[#0884F6]' : 'text-gray-400 dark:text-gray-600'}`}
+                  ${isActive ? 'text-[#0884F6]' : 'text-gray-400'}`}
                 >
                   {s.tab}
                 </p>
                 <p
                   className={`text-[13px] font-semibold leading-tight
-                  ${isActive ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-500'}`}
+                  ${isActive ? 'text-gray-900' : 'text-gray-500'}`}
                 >
                   {s.title}
                 </p>
@@ -216,7 +203,7 @@ export default function FeatureSection() {
         </div>
 
         {/* Feature detail */}
-        <div className="mt-8 p-6 rounded-2xl bg-[#0884F6]/[0.03] dark:bg-[#0884F6]/[0.05] border border-[#0884F6]/10 flex items-center justify-between gap-8">
+        <div className="mt-8 p-6 rounded-2xl bg-[#0884F6]/[0.03] border border-[#0884F6]/10 flex items-center justify-between gap-8">
           <div className="flex-1">
             <AnimatePresence mode="wait">
               <motion.div
@@ -230,10 +217,8 @@ export default function FeatureSection() {
                   <ActiveIcon size={20} />
                 </div>
                 <div>
-                  <h4 className="font-bold text-gray-900 dark:text-white">
-                    {SLIDES[active].title}
-                  </h4>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">{SLIDES[active].desc}</p>
+                  <h4 className="font-bold text-gray-900">{SLIDES[active].title}</h4>
+                  <p className="text-sm text-gray-600">{SLIDES[active].desc}</p>
                 </div>
               </motion.div>
             </AnimatePresence>

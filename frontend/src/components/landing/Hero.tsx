@@ -19,7 +19,7 @@ export default function Hero() {
   const particles = useMemo(() => PARTICLES, []);
 
   return (
-    <section className="relative h-screen flex flex-col justify-center bg-[#0884F6] text-white overflow-hidden transition-colors duration-700">
+    <section className="relative h-screen flex flex-col justify-center bg-[#0884F6] text-white overflow-hidden">
       {/* ── BACKGROUND ARTILLERY ─────────────────────────────────────────── */}
 
       <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
@@ -151,14 +151,7 @@ export default function Hero() {
                     src={`/mockuplight-${i}.webp`}
                     alt={`POS ${i}`}
                     fill
-                    className="object-contain dark:hidden"
-                    sizes="(max-width: 1280px) 33vw, 500px"
-                  />
-                  <Image
-                    src={`/mockupdark-${i}.webp`}
-                    alt={`POS ${i}`}
-                    fill
-                    className="object-contain hidden dark:block"
+                    className="object-contain"
                     sizes="(max-width: 1280px) 33vw, 500px"
                   />
                 </div>
