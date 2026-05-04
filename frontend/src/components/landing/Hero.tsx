@@ -70,23 +70,18 @@ export default function Hero() {
             transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
           >
             {/* Professional Eyebrow with Sparkle */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.2 }}
-              className="inline-flex items-center gap-2 mb-8 px-4 py-1.5 rounded-full bg-white dark:bg-white/[0.05] border border-gray-200 dark:border-white/[0.1] shadow-sm backdrop-blur-md"
-            >
+            <div className="inline-flex items-center gap-2 mb-8 px-4 py-1.5 rounded-full bg-white dark:bg-white/[0.05] border border-gray-200 dark:border-white/[0.1] shadow-sm backdrop-blur-md">
               <Sparkles size={14} className="text-[#4f6ef7] animate-pulse" />
               <span className="text-[11px] font-bold tracking-[0.15em] uppercase text-gray-600 dark:text-gray-300">
                 Next-Gen POS for Modern Business
               </span>
-            </motion.div>
+            </div>
 
             {/* Robust Kinetic Headline */}
             <h1
               className="
                 text-5xl sm:text-6xl lg:text-[4.5rem]
-                leading-[1.0] tracking-tight
+                leading-[0.95] tracking-tight
                 text-gray-900 dark:text-white
                 font-black mb-8
               "
@@ -158,7 +153,6 @@ export default function Hero() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.3 }}
-              className="rounded-lg overflow-hidden border border-gray-200/50 dark:border-white/[0.08] shadow-xl bg-white dark:bg-[#0c0c0e]"
             >
               <img
                 src="/mockuplight-1.png"
@@ -177,7 +171,6 @@ export default function Hero() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.4 }}
-              className="rounded-lg overflow-hidden border border-gray-200/50 dark:border-white/[0.08] shadow-xl bg-white dark:bg-[#0c0c0e]"
             >
               <img
                 src="/mockuplight-2.png"
@@ -196,7 +189,6 @@ export default function Hero() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.5 }}
-              className="rounded-lg overflow-hidden border border-gray-200/50 dark:border-white/[0.08] shadow-xl bg-white dark:bg-[#0c0c0e]"
             >
               <img
                 src="/mockuplight-3.png"
