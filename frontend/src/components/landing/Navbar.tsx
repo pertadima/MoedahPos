@@ -43,10 +43,7 @@ export default function Navbar() {
             {isDark ? <Sun size={18} /> : <Moon size={18} />}
           </button>
 
-          <Link
-            href="/login"
-            className="text-sm font-semibold text-blue-50 hover:text-white px-3"
-          >
+          <Link href="/login" className="text-sm font-semibold text-blue-50 hover:text-white px-3">
             Masuk
           </Link>
 

@@ -19,7 +19,7 @@ export default function Hero() {
   const particles = useMemo(() => PARTICLES, []);
 
   return (
-    <section className="relative min-h-[92vh] flex flex-col justify-center bg-[#0884F6] text-white overflow-hidden transition-colors duration-700">
+    <section className="relative h-screen flex flex-col justify-center bg-[#0884F6] text-white overflow-hidden transition-colors duration-700">
       {/* ── BACKGROUND ARTILLERY ─────────────────────────────────────────── */}
 
       <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
@@ -55,8 +55,8 @@ export default function Hero() {
 
       {/* ── CONTENT ─────────────────────────────────────────────────────── */}
 
-      <div className="relative z-10 max-w-7xl mx-auto px-6 pt-20 pb-20 w-full flex flex-col lg:flex-row items-center lg:items-stretch gap-12">
-        <div className="flex-1 max-w-2xl text-left py-8 flex flex-col justify-center shrink-0">
+      <div className="relative z-10 max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-12 items-center gap-12 w-full">
+        <div className="lg:col-span-7 text-left py-8 flex flex-col justify-center">
           <motion.div
             initial={{ opacity: 0, x: -30 }}
             animate={{ opacity: 1, x: 0 }}
@@ -126,8 +126,8 @@ export default function Hero() {
         </div>
 
         {/* ── MOCKUP AREA ── */}
-        <div className="flex-1 w-full flex items-center justify-center lg:justify-start pt-12 lg:pt-0">
-          <div className="grid grid-cols-3 gap-4 w-full max-w-[800px]">
+        <div className="lg:col-span-5 w-full flex items-center justify-center lg:justify-start pt-12 lg:pt-0">
+          <div className="grid grid-cols-3 gap-4 w-full">
             {[1, 2, 3].map(i => (
               <motion.div
                 key={i}

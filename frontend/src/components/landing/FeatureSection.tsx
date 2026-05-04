@@ -230,7 +230,9 @@ export default function FeatureSection() {
                   <ActiveIcon size={20} />
                 </div>
                 <div>
-                  <h4 className="font-bold text-gray-900 dark:text-white">{SLIDES[active].title}</h4>
+                  <h4 className="font-bold text-gray-900 dark:text-white">
+                    {SLIDES[active].title}
+                  </h4>
                   <p className="text-sm text-gray-600 dark:text-gray-400">{SLIDES[active].desc}</p>
                 </div>
               </motion.div>
