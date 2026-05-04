@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
 import Navbar from '@/components/landing/Navbar';
 import Hero from '@/components/landing/Hero';
-import TrustSection from '@/components/landing/TrustSection';
+import FeatureSection from '@/components/landing/FeatureSection';
+import PricingSection from '@/components/landing/PricingSection';
 import Footer from '@/components/landing/Footer';
 
 export const metadata: Metadata = {
@@ -19,11 +20,12 @@ export const metadata: Metadata = {
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-[#050505] selection:bg-[#0070F3] selection:text-white transition-colors duration-500">
+    <div className="bg-[#f8f9fb] dark:bg-[#09090b] selection:bg-[#4f6ef7]/30 selection:text-white transition-colors duration-500">
       <Navbar />
       <main>
         <Hero />
-        <TrustSection />
+        <FeatureSection />
+        <PricingSection />
       </main>
       <Footer />
     </div>

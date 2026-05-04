@@ -1,23 +1,43 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
+import { Inter, DM_Sans, DM_Serif_Display, Syne, Instrument_Sans } from 'next/font/google';
 import './globals.css';
 import { AuthProvider } from '@/lib/auth/AuthContext';
 import { ThemeProvider } from '@/lib/theme/ThemeContext';
 
-/**
- * Inter — variable font loaded via next/font/google.
- * Subsets: latin (covers all Indonesian characters).
- * display: swap prevents invisible text during load.
- * Variable font gives us the full weight axis (100–900)
- * without extra requests.
- */
 const inter = Inter({
   subsets: ['latin'],
   display: 'swap',
   variable: '--font-inter',
-  // Pre-load only the weights actually used:
-  // 400 (body), 500 (medium/nav), 600 (semibold/headings), 700 (bold/values)
   weight: ['400', '500', '600', '700'],
+});
+
+const dmSans = DM_Sans({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-dm-sans',
+  weight: ['300', '400', '500', '600'],
+});
+
+const dmSerif = DM_Serif_Display({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-dm-serif',
+  weight: ['400'],
+  style: ['normal', 'italic'],
+});
+
+const syne = Syne({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-syne',
+  weight: ['400', '500', '600', '700', '800'],
+});
+
+const instrumentSans = Instrument_Sans({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-instrument',
+  weight: ['400', '500', '600'],
 });
 
 export const metadata: Metadata = {
@@ -27,7 +47,11 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="id" suppressHydrationWarning className={inter.variable}>
+    <html
+      lang="id"
+      suppressHydrationWarning
+      className={`${inter.variable} ${dmSans.variable} ${dmSerif.variable} ${syne.variable} ${instrumentSans.variable}`}
+    >
       <head>
         <script
           dangerouslySetInnerHTML={{

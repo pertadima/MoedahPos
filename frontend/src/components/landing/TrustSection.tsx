@@ -1,93 +1,158 @@
 'use client';
 
-import { motion } from 'framer-motion';
-import { Receipt, Percent, FileText, CheckCircle2 } from 'lucide-react';
+import { motion, type Variants } from 'framer-motion';
+import { WifiOff, Receipt, ShieldCheck, Star } from 'lucide-react';
 
-const trustItems = [
+const pillars = [
+  {
+    icon: WifiOff,
+    title: 'Offline First',
+    desc: 'Bertransaksi tanpa internet. Semua data tersinkron otomatis saat koneksi kembali.',
+  },
   {
     icon: Receipt,
-    title: 'Terima Semua Pembayaran',
-    desc: 'Catat pembayaran Tunai, QRIS, GoPay, OVO, dan Transfer Bank dengan mudah.',
+    title: 'Patuh Pajak',
+    desc: 'PPN/PB1 dikalkulasi dan dicetak di setiap struk. Siap audit kapan saja.',
   },
   {
-    icon: Percent,
-    title: 'Patuh Pajak Otomatis',
-    desc: 'Kalkulasi PPN/PB1 otomatis di setiap struk sesuai dengan persentase default toko Anda.',
+    icon: ShieldCheck,
+    title: 'Akses Aman',
+    desc: 'RBAC per-modul. Kasir, Manager, Finance — masing-masing hanya melihat yang perlu.',
   },
   {
-    icon: FileText,
-    title: 'Struk Digital & Cetak',
-    desc: 'Kirim struk via WhatsApp atau cetak dengan printer kasir bluetooth.',
+    icon: Star,
+    title: 'Loyalitas',
+    desc: 'Program poin dan tier keanggotaan terintegrasi langsung ke setiap transaksi.',
   },
 ];
 
+const methods = ['Tunai', 'QRIS', 'GoPay', 'OVO', 'Dana', 'Transfer Bank'];
+
+const containerVariants: Variants = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.08 } },
+};
+
+const itemVariants: Variants = {
+  hidden: { opacity: 0, y: 16 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.5, ease: 'easeOut' },
+  },
+};
+
 export default function TrustSection() {
   return (
-    <section className="py-24 bg-[#000000] text-white">
-      <div className="max-w-7xl mx-auto px-6">
-        <div className="grid lg:grid-cols-2 gap-16 items-center">
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-          >
-            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight mb-6">
-              Sesuai dengan Standar Bisnis Indonesia
-            </h2>
-            <p className="text-lg text-gray-400 mb-8 leading-relaxed">
-              Dari pengelolaan pajak daerah hingga integrasi metode pembayaran lokal yang familiar,
-              Moedah POS dirancang untuk mempermudah operasional harian Anda tanpa perlu setup yang
-              rumit.
-            </p>
+    <section
+      className="
+        py-32 bg-[#0d0d12]
+        font-[family-name:var(--font-instrument)]
+        border-t border-white/[0.06]
+        relative overflow-hidden
+      "
+    >
+      {/* Bottom section glow */}
+      <div className="absolute bottom-0 right-0 w-[500px] h-[400px] bg-[#4f6ef7]/[0.05] blur-[100px] rounded-full pointer-events-none" />
 
-            <ul className="space-y-6">
-              {trustItems.map((item, idx) => (
-                <li key={idx} className="flex items-start gap-4">
-                  <div className="w-10 h-10 rounded-lg bg-[#111] border border-gray-800 flex items-center justify-center shrink-0 text-[#0070F3]">
-                    <item.icon size={20} />
-                  </div>
-                  <div>
-                    <h4 className="text-lg font-bold mb-1 text-gray-100">{item.title}</h4>
-                    <p className="text-gray-400 leading-relaxed">{item.desc}</p>
-                  </div>
-                </li>
-              ))}
-            </ul>
+      <div className="relative z-10 max-w-7xl mx-auto px-6">
+        {/* Section heading */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, ease: 'easeOut' }}
+          className="mb-16"
+        >
+          <p className="text-xs font-semibold tracking-[0.2em] uppercase text-[#4f6ef7] mb-4">
+            Dirancang untuk Indonesia
+          </p>
+          <h2 className="font-[family-name:var(--font-syne)] text-3xl sm:text-4xl font-bold text-white tracking-tight leading-tight">
+            Semua yang dibutuhkan
+            <br />
+            <span className="text-slate-400 font-normal">bisnis modern.</span>
+          </h2>
+        </motion.div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-12 items-start">
+          {/* Feature pillar cards — 3 cols */}
+          <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            className="lg:col-span-3 grid grid-cols-1 sm:grid-cols-2 gap-4"
+          >
+            {pillars.map(p => (
+              <motion.div
+                key={p.title}
+                variants={itemVariants}
+                className="
+                  group p-5 rounded-2xl
+                  bg-[#13131a] border border-white/[0.07]
+                  hover:border-[#4f6ef7]/30 hover:bg-[#14141e]
+                  transition-all duration-300
+                "
+              >
+                <div className="w-9 h-9 rounded-xl bg-[#4f6ef7]/[0.12] border border-[#4f6ef7]/20 flex items-center justify-center mb-4">
+                  <p.icon size={15} className="text-[#4f6ef7]" />
+                </div>
+                <h3 className="font-[family-name:var(--font-syne)] text-sm font-semibold text-white mb-2">
+                  {p.title}
+                </h3>
+                <p className="text-xs text-slate-500 leading-relaxed">{p.desc}</p>
+              </motion.div>
+            ))}
           </motion.div>
 
+          {/* Right column — payments + tax — 2 cols */}
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="relative"
+            transition={{ duration: 0.6, delay: 0.2, ease: 'easeOut' }}
+            className="lg:col-span-2 space-y-6"
           >
-            <div className="aspect-square max-w-md mx-auto rounded-2xl bg-[#111] border border-gray-800 shadow-2xl p-8 relative flex flex-col">
-              <div className="flex-1 flex flex-col justify-center">
-                <div className="text-center mb-10 pb-8 border-b border-gray-800">
-                  <h3 className="text-xl font-medium text-gray-400 mb-2">Total Tagihan</h3>
-                  <div className="text-5xl font-extrabold text-white">Rp 150.000</div>
-                  <div className="text-sm font-medium text-gray-500 mt-3 inline-flex items-center gap-1.5 bg-gray-900 px-3 py-1 rounded-full border border-gray-800">
-                    Termasuk PPN 11%
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  <div className="p-4 rounded-xl border border-gray-800 bg-[#0a0a0a] flex items-center justify-between">
-                    <span className="font-medium text-gray-300">QRIS</span>
-                    <CheckCircle2 size={20} className="text-gray-700" />
-                  </div>
-                  <div className="p-4 rounded-xl border border-[#0070F3] bg-[#0070F3]/10 flex items-center justify-between">
-                    <span className="font-bold text-[#0070F3]">Tunai</span>
-                    <CheckCircle2 size={20} className="text-[#0070F3]" />
-                  </div>
-                  <div className="p-4 rounded-xl border border-gray-800 bg-[#0a0a0a] flex items-center justify-between">
-                    <span className="font-medium text-gray-300">Transfer Bank</span>
-                    <CheckCircle2 size={20} className="text-gray-700" />
-                  </div>
-                </div>
+            {/* Payment methods */}
+            <div className="p-6 rounded-2xl bg-[#13131a] border border-white/[0.07]">
+              <p className="text-[10px] font-semibold tracking-[0.18em] uppercase text-slate-600 mb-5">
+                Metode Pembayaran
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {methods.map(m => (
+                  <span
+                    key={m}
+                    className="h-8 px-3.5 flex items-center text-xs font-medium
+                      rounded-full border border-white/[0.08] bg-white/[0.04]
+                      text-slate-300"
+                  >
+                    {m}
+                  </span>
+                ))}
               </div>
+            </div>
+
+            {/* Tax compliance */}
+            <div className="p-6 rounded-2xl bg-[#13131a] border border-white/[0.07]">
+              <p className="text-[10px] font-semibold tracking-[0.18em] uppercase text-slate-600 mb-3">
+                Pajak Otomatis
+              </p>
+              <p className="text-sm text-slate-400 leading-relaxed">
+                PPN & PB1 dikalkulasi dan ditampilkan di setiap struk berdasarkan persentase yang
+                Anda atur per toko. Siap untuk kebutuhan pelaporan pajak.
+              </p>
+            </div>
+
+            {/* Export CTA highlight */}
+            <div className="p-6 rounded-2xl bg-[#4f6ef7]/[0.08] border border-[#4f6ef7]/20">
+              <p className="text-[10px] font-semibold tracking-[0.18em] uppercase text-[#4f6ef7] mb-3">
+                Export Laporan
+              </p>
+              <p className="text-sm text-slate-400 leading-relaxed">
+                Unduh laporan keuangan dalam format{' '}
+                <span className="text-white font-medium">PDF</span> atau{' '}
+                <span className="text-white font-medium">CSV</span> langsung dari dashboard.
+              </p>
             </div>
           </motion.div>
         </div>
