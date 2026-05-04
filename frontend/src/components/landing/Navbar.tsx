@@ -51,13 +51,13 @@ export default function Navbar() {
           </Link>
 
           <Link
-            href="/login"
+            href="/dashboard"
             className="
               h-10 px-5 flex items-center
               text-sm font-bold text-white
-              bg-[#4f6ef7] hover:bg-[#3d56d4]
+              bg-[#0884F6] hover:bg-[#0672d6]
               rounded-lg transition-all duration-200
-              shadow-md shadow-[#4f6ef7]/20
+              shadow-md shadow-[#0884F6]/20
             "
           >
             Mulai Sekarang

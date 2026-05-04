@@ -24,8 +24,8 @@ export default function Hero() {
 
       {/* 1. Static Gradient Mesh Orbs (Removed animation for performance) */}
       <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
-        <div className="absolute -top-[10%] -right-[5%] w-[60%] h-[60%] bg-[#4f6ef7]/[0.05] dark:bg-[#4f6ef7]/[0.1] blur-[80px] rounded-full" />
-        <div className="absolute -bottom-[20%] -left-[10%] w-[70%] h-[70%] bg-cyan-400/[0.03] dark:bg-cyan-500/[0.05] blur-[100px] rounded-full" />
+        <div className="absolute -top-[10%] -right-[5%] w-[60%] h-[60%] bg-[#0884F6]/[0.05] dark:bg-[#0884F6]/[0.1] blur-[80px] rounded-full" />
+        <div className="absolute -bottom-[20%] -left-[10%] w-[70%] h-[70%] bg-[#FFA724]/[0.03] dark:bg-[#FFA724]/[0.05] blur-[100px] rounded-full" />
       </div>
 
       {/* 2. Geometric Grid with Masking */}
@@ -33,8 +33,8 @@ export default function Hero() {
         className="absolute inset-0 z-0 opacity-[0.4] dark:opacity-[0.6] pointer-events-none [mask-image:radial-gradient(ellipse_at_center,black,transparent_75%)]"
         style={{
           backgroundImage: `
-            linear-gradient(to right, #4f6ef710 1px, transparent 1px),
-            linear-gradient(to bottom, #4f6ef710 1px, transparent 1px)
+            linear-gradient(to right, #0884F610 1px, transparent 1px),
+            linear-gradient(to bottom, #0884F610 1px, transparent 1px)
           `,
           backgroundSize: '64px 64px',
         }}
@@ -45,7 +45,7 @@ export default function Hero() {
         {particles.map((p, i) => (
           <motion.div
             key={i}
-            className="absolute w-1 h-1 bg-[#4f6ef7]/40 rounded-full"
+            className="absolute w-1 h-1 bg-[#0884F6]/40 rounded-full"
             style={{ left: p.x, top: p.y }}
             animate={{
               y: [0, -40, 0],
@@ -71,7 +71,7 @@ export default function Hero() {
           >
             {/* Professional Eyebrow with Sparkle */}
             <div className="inline-flex items-center gap-2 mb-8 px-4 py-1.5 rounded-full bg-white dark:bg-white/[0.05] border border-gray-200 dark:border-white/[0.1] shadow-sm backdrop-blur-md">
-              <Sparkles size={14} className="text-[#4f6ef7] animate-pulse" />
+              <Sparkles size={14} className="text-[#FFA724] animate-pulse" />
               <span className="text-[11px] font-bold tracking-[0.15em] uppercase text-gray-600 dark:text-gray-300">
                 Next-Gen POS for Modern Business
               </span>
@@ -88,7 +88,7 @@ export default function Hero() {
             >
               Kelola Bisnis
               <br />
-              <span className="relative inline-block text-transparent bg-clip-text bg-gradient-to-r from-[#4f6ef7] via-[#7c8fff] to-[#4f6ef7] bg-[length:200%_auto] animate-gradient-flow">
+              <span className="relative inline-block text-transparent bg-clip-text bg-gradient-to-r from-[#0884F6] via-[#FFA724] to-[#0884F6] bg-[length:200%_auto] animate-gradient-flow">
                 Tanpa Henti.
               </span>
             </h1>
@@ -110,10 +110,10 @@ export default function Hero() {
                 className="
                   group relative inline-flex items-center gap-3
                   h-14 px-10 rounded-2xl text-base font-bold text-white
-                  bg-[#4f6ef7] hover:bg-[#3d56d4]
+                  bg-[#0884F6] hover:bg-[#0672d6]
                   transition-all duration-300
-                  shadow-[0_20px_40px_-10px_rgba(79,110,247,0.4)]
-                  hover:shadow-[0_25px_50px_-12px_rgba(79,110,247,0.5)]
+                  shadow-[0_20px_40px_-10px_rgba(8,132,246,0.4)]
+                  hover:shadow-[0_25px_50px_-12px_rgba(8,132,246,0.5)]
                   hover:-translate-y-1
                   overflow-hidden
                 "
@@ -202,6 +202,9 @@ export default function Hero() {
               />
             </motion.div>
           </div>
+
+          {/* Ambient Background Glow */}
+          <div className="absolute right-0 top-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-[#0884F6]/10 dark:bg-[#0884F6]/20 blur-[120px] -z-10" />
         </div>
       </div>
 
