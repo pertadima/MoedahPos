@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import Link from 'next/link';
+import Image from 'next/image';
 import { ArrowRight, Sparkles } from 'lucide-react';
 import { useMemo } from 'react';
 
@@ -131,19 +132,34 @@ export default function Hero() {
               <motion.div
                 key={i}
                 initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.3 + i * 0.1 }}
+                animate={{
+                  opacity: 1,
+                  y: [0, -15, 0],
+                }}
+                transition={{
+                  opacity: { duration: 0.6, delay: 0.3 + i * 0.1 },
+                  y: {
+                    duration: 4 + i * 0.5,
+                    repeat: Infinity,
+                    ease: 'easeInOut',
+                    delay: 0.3 + i * 0.1,
+                  },
+                }}
               >
-                <div className="aspect-[1/2] relative">
-                  <img
+                <div className="aspect-[1/2] relative rounded-lg transition-transform duration-500 hover:scale-[1.05] hover:z-30">
+                  <Image
                     src={`/mockuplight-${i}.png`}
-                    className="w-full h-full object-contain dark:hidden"
                     alt={`POS ${i}`}
+                    fill
+                    className="object-contain dark:hidden"
+                    sizes="(max-width: 1024px) 33vw, 300px"
                   />
-                  <img
+                  <Image
                     src={`/mockupdark-${i}.png`}
-                    className="w-full h-full object-contain hidden dark:block"
                     alt={`POS ${i}`}
+                    fill
+                    className="object-contain hidden dark:block"
+                    sizes="(max-width: 1024px) 33vw, 300px"
                   />
                 </div>
               </motion.div>
