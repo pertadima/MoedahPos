@@ -7,7 +7,7 @@ export default function Footer() {
   const { theme } = useTheme();
 
   return (
-    <footer className="py-12 bg-white dark:bg-black border-t border-gray-200 dark:border-gray-800">
+    <footer className="py-12 bg-white dark:bg-black border-t border-gray-200 dark:border-white/10">
       <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-2">
           <Image
@@ -15,7 +15,7 @@ export default function Footer() {
             alt="Moedah Logo"
             width={120}
             height={32}
-            className="h-6 w-auto opacity-70 grayscale"
+            className="h-6 w-auto opacity-50 hover:opacity-100 transition-opacity grayscale hover:grayscale-0"
             priority
           />
         </div>

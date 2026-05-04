@@ -1,143 +1,232 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
-import { Play, ArrowRight, CheckCircle2 } from 'lucide-react';
+import Image from 'next/image';
+import { ArrowRight, CheckCircle2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+
+const SLIDES = [
+  {
+    id: 1,
+    light: '/order-pos-light.png',
+    dark: '/order-pos-dark.png',
+    tab: 'Kasir Pintar',
+    title: 'Point of Sale yang Mudah',
+    subtitle: 'Kelola pesanan dan transaksi toko Anda dengan cepat (Offline Ready).',
+  },
+  {
+    id: 2,
+    light: '/order-hpp-light.png',
+    dark: '/order-hpp-dark.png',
+    tab: 'Auto HPP',
+    title: 'Kalkulator HPP Otomatis',
+    subtitle: 'Hitung Harga Pokok Penjualan secara instan untuk margin akurat.',
+  },
+  {
+    id: 3,
+    light: '/image-rbac-light.png',
+    dark: '/image-rbac-dark.png',
+    tab: 'Keamanan (RBAC)',
+    title: 'Akses Terkontrol (RBAC)',
+    subtitle: 'Atur peran spesifik kasir dan admin untuk cegah kecurangan.',
+  },
+  {
+    id: 4,
+    light: '/order-cashflow-light.png',
+    dark: '/order-cashflow-dark.png',
+    tab: 'Arus Kas',
+    title: 'Catatan Arus Kas',
+    subtitle: 'Lacak setiap uang masuk dan keluar operasional dengan transparan.',
+  },
+];
+
+const AUTOPLAY_INTERVAL = 6000;
 
 export default function Hero() {
-  return (
-    <section className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden">
-      {/* Background decoration */}
-      <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-blue-100 via-white to-white dark:from-blue-900/20 dark:via-black dark:to-black" />
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
 
-      <div className="max-w-7xl mx-auto px-6">
-        <div className="grid lg:grid-cols-2 gap-12 lg:gap-8 items-center">
-          {/* Text Content */}
+  useEffect(() => {
+    if (isPaused) return;
+    const timer = setInterval(() => {
+      setCurrentSlide(prev => (prev + 1) % SLIDES.length);
+    }, AUTOPLAY_INTERVAL);
+    return () => clearInterval(timer);
+  }, [isPaused]);
+
+  return (
+    <section className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 bg-gray-50 dark:bg-[#050505] overflow-hidden text-gray-900 dark:text-white transition-colors duration-500">
+      {/* Light Mode Grid Pattern */}
+      <div
+        className="absolute inset-0 z-0 opacity-[0.04] dark:hidden"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+        }}
+      />
+      {/* Dark Mode Grid Pattern */}
+      <div
+        className="absolute inset-0 z-0 opacity-[0.05] hidden dark:block"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+        }}
+      />
+
+      {/* Subtle Glows */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-[#0070F3]/10 dark:bg-[#0070F3]/20 blur-[120px] rounded-full pointer-events-none" />
+
+      <div className="max-w-7xl mx-auto px-6 relative z-10">
+        <div className="flex flex-col items-center text-center">
+          {/* Badge */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="max-w-2xl"
           >
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 text-sm font-medium mb-6">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-300 text-sm font-medium mb-8 shadow-sm backdrop-blur-sm">
               <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500" />
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#0070F3] opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#0070F3]" />
               </span>
               Sistem POS & Akuntansi #1 di Indonesia
             </div>
+          </motion.div>
 
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-gray-900 dark:text-white tracking-tight mb-6 leading-[1.1]">
-              Kelola Bisnis Tanpa Henti,{' '}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#0070F3] to-cyan-500">
-                Akuntansi Tanpa Pusing.
-              </span>
+          {/* Headline */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+            className="max-w-4xl flex flex-col items-center"
+          >
+            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight mb-8 leading-[1.05] text-gray-900 dark:text-white">
+              Kelola Bisnis Tanpa Henti,
+              <br />
+              <span className="text-[#0070F3]">Akuntansi Tanpa Pusing.</span>
             </h1>
 
-            <p className="text-lg sm:text-xl text-gray-600 dark:text-gray-400 mb-8 leading-relaxed max-w-xl">
-              POS modern dengan mode offline otomatis dan sistem akuntansi terpadu. Jualan tetap
-              jalan meski internet mati, laporan keuangan beres seketika.
+            <p className="text-lg sm:text-xl text-gray-600 dark:text-gray-400 mb-10 leading-relaxed max-w-2xl">
+              Tinggalkan cara lama. POS modern kami dirancang khusus agar jualan Anda tetap jalan
+              meski internet terputus, dengan laporan keuangan yang beres seketika.
             </p>
 
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
               <Link
                 href="/login"
-                className="inline-flex items-center justify-center gap-2 bg-[#0070F3] text-white px-8 py-3.5 rounded-full text-base font-semibold hover:bg-blue-600 transition-all shadow-lg hover:shadow-xl hover:shadow-blue-500/20 w-full sm:w-auto"
+                className="inline-flex items-center justify-center gap-2 bg-[#0070F3] text-white px-8 py-4 rounded-full text-base font-semibold hover:bg-blue-500 transition-all shadow-[0_0_20px_rgba(0,112,243,0.3)] hover:shadow-[0_0_40px_rgba(0,112,243,0.5)] hover:-translate-y-0.5 w-full sm:w-auto"
               >
                 Mulai Gratis Sekarang
                 <ArrowRight size={18} />
               </Link>
-              <button
-                type="button"
-                className="inline-flex items-center justify-center gap-2 bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white px-8 py-3.5 rounded-full text-base font-semibold hover:bg-gray-50 dark:hover:bg-white/10 transition-all w-full sm:w-auto"
-              >
-                <Play size={18} className="text-[#0070F3]" fill="currentColor" />
-                Lihat Demo
-              </button>
             </div>
 
-            <div className="mt-8 flex items-center gap-6 text-sm text-gray-500 dark:text-gray-400">
-              <span className="flex items-center gap-1.5">
-                <CheckCircle2 size={16} className="text-green-500" /> Tanpa Kartu Kredit
+            <div className="mt-10 flex items-center justify-center gap-8 text-sm text-gray-500 dark:text-gray-400 font-medium">
+              <span className="flex items-center gap-2">
+                <CheckCircle2 size={18} className="text-[#0070F3]" /> Tanpa Kartu Kredit
               </span>
-              <span className="flex items-center gap-1.5">
-                <CheckCircle2 size={16} className="text-green-500" /> Setup 5 Menit
+              <span className="flex items-center gap-2">
+                <CheckCircle2 size={18} className="text-[#0070F3]" /> Setup 5 Menit
               </span>
             </div>
           </motion.div>
 
-          {/* Hero Image / Glass UI */}
+          {/* Interactive Feature Slider */}
           <motion.div
-            initial={{ opacity: 0, x: 20, rotateY: 5 }}
-            animate={{ opacity: 1, x: 0, rotateY: 0 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-            className="relative lg:h-[600px] flex items-center justify-center perspective-[1000px]"
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.3 }}
+            className="w-full mt-24"
+            onMouseEnter={() => setIsPaused(true)}
+            onMouseLeave={() => setIsPaused(false)}
           >
-            {/* Abstract blobs behind the UI */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-gradient-to-br from-blue-400/20 to-purple-400/20 blur-3xl rounded-full -z-10" />
+            {/* Interactive Tabs */}
+            <div className="flex flex-wrap justify-center gap-2 mb-8">
+              {SLIDES.map((slide, idx) => (
+                <button
+                  key={slide.id}
+                  onClick={() => setCurrentSlide(idx)}
+                  className={`relative px-5 py-3 rounded-xl transition-all duration-300 flex flex-col text-left overflow-hidden min-w-[200px] ${
+                    currentSlide === idx
+                      ? 'bg-white dark:bg-white/10 border border-gray-200 dark:border-white/20 shadow-sm'
+                      : 'bg-transparent border border-transparent hover:bg-gray-100 dark:hover:bg-white/5 text-gray-500 dark:text-gray-500'
+                  }`}
+                >
+                  <span
+                    className={`text-sm font-bold mb-1 ${currentSlide === idx ? 'text-gray-900 dark:text-white' : ''}`}
+                  >
+                    {slide.tab}
+                  </span>
+                  <span
+                    className={`text-xs ${currentSlide === idx ? 'text-gray-500 dark:text-gray-300' : 'opacity-0 h-0'}`}
+                  >
+                    {slide.subtitle.substring(0, 45)}...
+                  </span>
 
-            {/* Glassmorphism POS Mockup */}
-            <div className="w-full max-w-lg aspect-[4/3] bg-white/40 dark:bg-black/40 backdrop-blur-xl border border-white/40 dark:border-white/10 rounded-2xl shadow-2xl p-4 sm:p-6 transform rotate-y-[-5deg] rotate-x-[5deg]">
-              {/* Header mockup */}
-              <div className="flex items-center justify-between border-b border-gray-200/50 dark:border-gray-700/50 pb-4 mb-4">
-                <div className="flex gap-2">
-                  <div className="w-3 h-3 rounded-full bg-red-400" />
-                  <div className="w-3 h-3 rounded-full bg-amber-400" />
-                  <div className="w-3 h-3 rounded-full bg-green-400" />
-                </div>
-                <div className="text-xs font-medium text-gray-500">Kasir - Offline Ready</div>
-              </div>
+                  {/* Animated Progress Bar */}
+                  {currentSlide === idx && !isPaused && (
+                    <motion.div
+                      className="absolute bottom-0 left-0 h-[2px] bg-[#0070F3]"
+                      initial={{ width: 0 }}
+                      animate={{ width: '100%' }}
+                      transition={{ duration: AUTOPLAY_INTERVAL / 1000, ease: 'linear' }}
+                      key={`progress-${idx}`}
+                    />
+                  )}
+                  {/* Static bar if paused */}
+                  {currentSlide === idx && isPaused && (
+                    <div className="absolute bottom-0 left-0 h-[2px] bg-[#0070F3] w-full" />
+                  )}
+                </button>
+              ))}
+            </div>
 
-              {/* Grid mockup */}
-              <div className="grid grid-cols-3 gap-4 h-[calc(100%-3rem)]">
-                <div className="col-span-2 flex flex-col gap-3">
-                  <div className="h-24 rounded-xl bg-gradient-to-r from-blue-500 to-[#0070F3] p-4 text-white flex flex-col justify-end shadow-inner">
-                    <div className="text-xs opacity-80">Total Penjualan</div>
-                    <div className="text-2xl font-bold">Rp 12.450.000</div>
+            {/* Browser Window Mockup Container */}
+            <div className="max-w-5xl mx-auto">
+              <div className="relative rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#111] shadow-2xl dark:shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
+                {/* macOS Browser Header */}
+                <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-[#161616]">
+                  <div className="flex gap-1.5">
+                    <div className="w-3 h-3 rounded-full bg-[#ff5f56]" />
+                    <div className="w-3 h-3 rounded-full bg-[#ffbd2e]" />
+                    <div className="w-3 h-3 rounded-full bg-[#27c93f]" />
                   </div>
-                  <div className="flex-1 rounded-xl bg-white/60 dark:bg-white/5 border border-white/20 p-4">
-                    <div className="h-4 w-1/3 bg-gray-200 dark:bg-gray-700 rounded mb-4" />
-                    <div className="space-y-2">
-                      {[1, 2, 3].map(i => (
-                        <div key={i} className="flex justify-between items-center">
-                          <div className="h-3 w-1/2 bg-gray-200 dark:bg-gray-700 rounded" />
-                          <div className="h-3 w-1/4 bg-gray-200 dark:bg-gray-700 rounded" />
-                        </div>
-                      ))}
-                    </div>
+                  <div className="mx-auto bg-white dark:bg-black border border-gray-200 dark:border-gray-800 rounded-md px-4 py-1 text-xs text-gray-500 font-mono w-64 text-center truncate">
+                    app.moedah.com/dashboard
                   </div>
+                  <div className="w-12" /> {/* Spacer to balance dots */}
                 </div>
-                <div className="col-span-1 flex flex-col gap-3">
-                  <div className="flex-1 rounded-xl bg-white/60 dark:bg-white/5 border border-white/20 p-4 flex flex-col justify-between">
-                    <div>
-                      <div className="h-3 w-2/3 bg-gray-200 dark:bg-gray-700 rounded mb-2" />
-                      <div className="h-8 w-full bg-gray-200 dark:bg-gray-700 rounded" />
-                    </div>
-                    <div className="h-10 w-full bg-[#0070F3] rounded-lg mt-4 opacity-90" />
-                  </div>
+
+                {/* Slides Container */}
+                <div className="relative aspect-[16/10] bg-gray-100 dark:bg-black">
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={currentSlide}
+                      initial={{ opacity: 0, scale: 0.98 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.5 }}
+                      className="absolute inset-0"
+                    >
+                      {/* Using CSS to toggle dark/light images instantly */}
+                      <Image
+                        src={SLIDES[currentSlide].light}
+                        alt={SLIDES[currentSlide].title}
+                        fill
+                        className="object-cover object-top dark:hidden"
+                        priority={true}
+                      />
+                      <Image
+                        src={SLIDES[currentSlide].dark}
+                        alt={SLIDES[currentSlide].title}
+                        fill
+                        className="object-cover object-top hidden dark:block"
+                        priority={true}
+                      />
+                    </motion.div>
+                  </AnimatePresence>
                 </div>
               </div>
             </div>
-
-            {/* Floating badge */}
-            <motion.div
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.8, duration: 0.5 }}
-              className="absolute -bottom-6 -left-6 sm:bottom-10 sm:-left-10 bg-white dark:bg-gray-800 p-4 rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 flex items-center gap-3"
-            >
-              <div className="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-green-600 dark:text-green-400">
-                <CheckCircle2 size={20} />
-              </div>
-              <div>
-                <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
-                  Status Sinkronisasi
-                </p>
-                <p className="text-sm font-bold text-gray-900 dark:text-white">
-                  Online & Tersinkron
-                </p>
-              </div>
-            </motion.div>
           </motion.div>
         </div>
       </div>
