@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import Link from 'next/link';
+import Image from 'next/image';
 import { ArrowRight, Sparkles } from 'lucide-react';
 import { useMemo } from 'react';
 
@@ -62,7 +63,7 @@ export default function Hero() {
 
       {/* ── CONTENT ─────────────────────────────────────────────────────── */}
 
-      <div className="relative z-10 max-w-7xl mx-auto px-6 pt-20 pb-20 w-full flex flex-col lg:flex-row items-center lg:items-stretch gap-4">
+      <div className="relative z-10 max-w-7xl mx-auto px-6 pt-20 pb-20 w-full flex flex-col lg:flex-row items-center lg:items-stretch gap-12">
         <div className="flex-1 max-w-2xl text-left lg:text-left py-8 flex flex-col justify-center shrink-0">
           <motion.div
             initial={{ opacity: 0, x: -30 }}
@@ -112,8 +113,8 @@ export default function Hero() {
                   h-14 px-10 rounded-2xl text-base font-bold text-white
                   bg-[#0884F6] hover:bg-[#0672d6]
                   transition-all duration-300
-                  shadow-[0_20px_40px_-10px_rgba(8,132,246,0.4)]
-                  hover:shadow-[0_25px_50px_-12px_rgba(8,132,246,0.5)]
+                  shadow-[0_20px_40px_-10px_rgba(8, 132, 246, 0.4)]
+                  hover:shadow-[0_25px_50px_-12px_rgba(8, 132, 246, 0.5)]
                   hover:-translate-y-1
                   overflow-hidden
                 "
@@ -147,23 +148,29 @@ export default function Hero() {
 
         {/* ── MOCKUP AREA ── */}
         <div className="flex-1 w-full flex items-center justify-center lg:justify-start pt-12 lg:pt-0">
-          <div className="grid grid-cols-3 gap-3 w-full max-w-[550px]">
+          <div className="grid grid-cols-3 gap-4 w-full max-w-[800px]">
             {/* Mockup 1 */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.3 }}
             >
-              <img
-                src="/mockuplight-1.png"
-                className="w-full h-auto dark:hidden block"
-                alt="POS 1"
-              />
-              <img
-                src="/mockupdark-1.png"
-                className="w-full h-auto hidden dark:block"
-                alt="POS 1"
-              />
+              <div className="aspect-[1/2] relative">
+                <Image
+                  src="/mockuplight-1.png"
+                  alt="POS 1"
+                  fill
+                  className="object-contain dark:hidden"
+                  sizes="(max-width: 1024px) 33vw, 300px"
+                />
+                <Image
+                  src="/mockupdark-1.png"
+                  alt="POS 1"
+                  fill
+                  className="object-contain hidden dark:block"
+                  sizes="(max-width: 1024px) 33vw, 300px"
+                />
+              </div>
             </motion.div>
 
             {/* Mockup 2 */}
@@ -172,16 +179,22 @@ export default function Hero() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.4 }}
             >
-              <img
-                src="/mockuplight-2.png"
-                className="w-full h-auto dark:hidden block"
-                alt="POS 2"
-              />
-              <img
-                src="/mockupdark-2.png"
-                className="w-full h-auto hidden dark:block"
-                alt="POS 2"
-              />
+              <div className="aspect-[1/2] relative">
+                <Image
+                  src="/mockuplight-2.png"
+                  alt="POS 2"
+                  fill
+                  className="object-contain dark:hidden"
+                  sizes="(max-width: 1024px) 33vw, 300px"
+                />
+                <Image
+                  src="/mockupdark-2.png"
+                  alt="POS 2"
+                  fill
+                  className="object-contain hidden dark:block"
+                  sizes="(max-width: 1024px) 33vw, 300px"
+                />
+              </div>
             </motion.div>
 
             {/* Mockup 3 */}
@@ -190,16 +203,22 @@ export default function Hero() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.5 }}
             >
-              <img
-                src="/mockuplight-3.png"
-                className="w-full h-auto dark:hidden block"
-                alt="POS 3"
-              />
-              <img
-                src="/mockupdark-3.png"
-                className="w-full h-auto hidden dark:block"
-                alt="POS 3"
-              />
+              <div className="aspect-[1/2] relative">
+                <Image
+                  src="/mockuplight-3.png"
+                  alt="POS 3"
+                  fill
+                  className="object-contain dark:hidden"
+                  sizes="(max-width: 1024px) 33vw, 300px"
+                />
+                <Image
+                  src="/mockupdark-3.png"
+                  alt="POS 3"
+                  fill
+                  className="object-contain hidden dark:block"
+                  sizes="(max-width: 1024px) 33vw, 300px"
+                />
+              </div>
             </motion.div>
           </div>
 
