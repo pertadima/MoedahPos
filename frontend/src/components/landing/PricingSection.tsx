@@ -28,6 +28,12 @@ const enterpriseFeatures = [
 ];
 
 export default function PricingSection() {
+  const waNumber = process.env.NEXT_PUBLIC_WA_NUMBER;
+  const waMessage = process.env.NEXT_PUBLIC_WA_MESSAGE;
+  const waLink = waNumber
+    ? `https://wa.me/${waNumber}?text=${encodeURIComponent(waMessage || '')}`
+    : '#';
+
   return (
     <section className="py-32 bg-gray-50">
       <div className="max-w-7xl mx-auto px-6 text-center">
@@ -140,7 +146,9 @@ export default function PricingSection() {
             </div>
 
             <Link
-              href="/login"
+              href={waLink}
+              target="_blank"
+              rel="noopener noreferrer"
               className="w-full flex items-center justify-center gap-2 h-11 rounded-xl bg-[#FFA724] text-white text-sm font-bold transition-all duration-200 hover:bg-[#e69520] hover:shadow-lg"
             >
               <MessageCircle size={18} />
