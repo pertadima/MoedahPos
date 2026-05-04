@@ -14,16 +14,16 @@ export default function Navbar() {
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className="fixed top-0 left-0 right-0 z-50 h-16 bg-white/80 dark:bg-[#09090b]/80 backdrop-blur-md border-b border-gray-200 dark:border-white/[0.08]"
+      className="fixed top-0 left-0 right-0 z-50 h-16 bg-[#0884F6] border-b border-white/10"
     >
       <div className="max-w-7xl mx-auto px-6 h-full flex items-center justify-between">
         <Link href="/" className="flex items-center gap-3">
           <Image
-            src={isDark ? '/logo-dashboard-dark.svg' : '/logo-dashboard-light.svg'}
+            src="/logo-dashboard-dark.svg"
             alt="Moedah Logo"
             width={120}
             height={32}
-            className="h-8 w-auto"
+            className="h-8 w-auto transition-opacity"
             priority
           />
         </Link>
@@ -34,8 +34,8 @@ export default function Navbar() {
             onClick={toggleTheme}
             className="
               w-10 h-10 flex items-center justify-center rounded-lg
-              text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white
-              hover:bg-gray-100 dark:hover:bg-white/[0.08]
+              text-blue-100 hover:text-white
+              hover:bg-white/10
               transition-all duration-200
             "
             aria-label="Toggle theme"
@@ -45,7 +45,7 @@ export default function Navbar() {
 
           <Link
             href="/login"
-            className="text-sm font-semibold text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white px-3"
+            className="text-sm font-semibold text-blue-50 hover:text-white px-3"
           >
             Masuk
           </Link>
@@ -54,10 +54,10 @@ export default function Navbar() {
             href="/dashboard"
             className="
               h-10 px-5 flex items-center
-              text-sm font-bold text-white
-              bg-[#0884F6] hover:bg-[#0672d6]
+              text-sm font-bold text-[#0884F6]
+              bg-white hover:bg-blue-50
               rounded-lg transition-all duration-200
-              shadow-md shadow-[#0884F6]/20
+              shadow-lg shadow-black/5
             "
           >
             Mulai Sekarang

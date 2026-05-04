@@ -93,14 +93,14 @@ export default function FeatureSection() {
     >
       <div className="max-w-7xl mx-auto px-6">
         {/* Section header */}
-        <div className="mb-16">
-          <p className="text-xs font-bold tracking-[0.2em] uppercase text-[#4f6ef7] mb-4">
+        <div className="mb-16 text-center">
+          <p className="text-xs font-bold tracking-[0.2em] uppercase text-[#0884F6] mb-4">
             Powerful Modules
           </p>
           <h2 className="text-3xl sm:text-5xl font-extrabold text-gray-900 dark:text-white tracking-tight">
             Satu platform,
             <br />
-            <span className="text-gray-500 dark:text-gray-400 font-normal underline decoration-[#4f6ef7]/30">
+            <span className="text-gray-500 dark:text-gray-400 font-normal underline decoration-[#0884F6]/30">
               semua yang Anda butuhkan.
             </span>
           </h2>
@@ -131,7 +131,7 @@ export default function FeatureSection() {
             </div>
           </div>
 
-          <div className="relative aspect-[16/9] bg-gray-100 dark:bg-[#000] p-4 sm:p-8">
+          <div className="relative aspect-[16/9] bg-gray-100 dark:bg-[#000] p-4 sm:p-8 text-center">
             <AnimatePresence mode="wait">
               <motion.div
                 key={active}
@@ -174,7 +174,7 @@ export default function FeatureSection() {
                   border transition-all duration-300 group
                   ${
                     isActive
-                      ? 'bg-white dark:bg-[#1c1c24] border-[#4f6ef7]/50 shadow-lg scale-[1.02] z-10'
+                      ? 'bg-white dark:bg-[#1c1c24] border-[#0884F6]/50 shadow-lg scale-[1.02] z-10'
                       : 'bg-white/40 dark:bg-white/[0.02] border-gray-200 dark:border-white/[0.05] hover:border-gray-300 dark:hover:border-white/[0.1]'
                   }
                 `}
@@ -183,7 +183,7 @@ export default function FeatureSection() {
                   className={`w-10 h-10 rounded-lg flex items-center justify-center mb-4 transition-colors
                     ${
                       isActive
-                        ? 'bg-[#4f6ef7] text-white shadow-md shadow-[#4f6ef7]/30'
+                        ? 'bg-[#0884F6] text-white shadow-md shadow-[#0884F6]/30'
                         : 'bg-gray-100 dark:bg-white/[0.05] text-gray-400 dark:text-gray-500 group-hover:text-gray-600 dark:group-hover:text-gray-300'
                     }`}
                 >
@@ -191,7 +191,7 @@ export default function FeatureSection() {
                 </div>
                 <p
                   className={`text-xs font-bold uppercase tracking-wider leading-none mb-1
-                  ${isActive ? 'text-[#4f6ef7]' : 'text-gray-400 dark:text-gray-600'}`}
+                  ${isActive ? 'text-[#0884F6]' : 'text-gray-400 dark:text-gray-600'}`}
                 >
                   {s.tab}
                 </p>
@@ -203,7 +203,7 @@ export default function FeatureSection() {
                 </p>
                 {isActive && !paused && (
                   <motion.div
-                    className="absolute bottom-0 left-0 h-1 bg-[#4f6ef7]"
+                    className="absolute bottom-0 left-0 h-1 bg-[#0884F6]"
                     initial={{ width: 0 }}
                     animate={{ width: '100%' }}
                     transition={{ duration: DURATION / 1000, ease: 'linear' }}
@@ -216,7 +216,7 @@ export default function FeatureSection() {
         </div>
 
         {/* Feature detail */}
-        <div className="mt-8 p-6 rounded-2xl bg-[#4f6ef7]/[0.03] dark:bg-[#4f6ef7]/[0.05] border border-[#4f6ef7]/10 flex items-center justify-between gap-8">
+        <div className="mt-8 p-6 rounded-2xl bg-[#0884F6]/[0.03] dark:bg-[#0884F6]/[0.05] border border-[#0884F6]/10 flex items-center justify-between gap-8">
           <div className="flex-1">
             <AnimatePresence mode="wait">
               <motion.div
@@ -226,13 +226,11 @@ export default function FeatureSection() {
                 exit={{ opacity: 0, x: 10 }}
                 className="flex items-center gap-4"
               >
-                <div className="w-10 h-10 rounded-full bg-[#4f6ef7] text-white flex items-center justify-center shadow-lg shadow-[#4f6ef7]/20">
+                <div className="w-10 h-10 rounded-full bg-[#0884F6] text-white flex items-center justify-center shadow-lg shadow-[#0884F6]/20">
                   <ActiveIcon size={20} />
                 </div>
                 <div>
-                  <h4 className="font-bold text-gray-900 dark:text-white">
-                    {SLIDES[active].title}
-                  </h4>
+                  <h4 className="font-bold text-gray-900 dark:text-white">{SLIDES[active].title}</h4>
                   <p className="text-sm text-gray-600 dark:text-gray-400">{SLIDES[active].desc}</p>
                 </div>
               </motion.div>
@@ -240,7 +238,7 @@ export default function FeatureSection() {
           </div>
           <Link
             href="/login"
-            className="hidden sm:flex items-center gap-2 text-sm font-bold text-[#4f6ef7] hover:underline whitespace-nowrap"
+            className="hidden sm:flex items-center gap-2 text-sm font-bold text-[#0884F6] hover:underline whitespace-nowrap"
           >
             Coba Modul {SLIDES[active].tab} <ArrowRight size={16} />
           </Link>
