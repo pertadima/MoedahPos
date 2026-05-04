@@ -21,6 +21,9 @@ const enterpriseFeatures = [
   'Update & Maintenance Rutin',
   'Training Staf Kasir & Admin',
   'Priority WhatsApp Support',
+  'Integrasi WhatsApp untuk Laporan',
+  'Konektivitas Printer Bluetooth Thermal',
+  'Fitur Kustom Sesuai Kebutuhan',
   'Keamanan Data Terjamin',
 ];
 
