@@ -56,7 +56,7 @@ export default function Hero() {
       {/* ── CONTENT ─────────────────────────────────────────────────────── */}
 
       <div className="relative z-10 max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-12 items-center gap-12 w-full">
-        <div className="lg:col-span-7 text-left py-8 flex flex-col justify-center">
+        <div className="lg:col-span-6 text-left py-8 flex flex-col justify-center">
           <motion.div
             initial={{ opacity: 0, x: -30 }}
             animate={{ opacity: 1, x: 0 }}
@@ -126,8 +126,8 @@ export default function Hero() {
         </div>
 
         {/* ── MOCKUP AREA ── */}
-        <div className="lg:col-span-5 w-full flex items-center justify-center lg:justify-start pt-12 lg:pt-0">
-          <div className="grid grid-cols-3 gap-4 w-full">
+        <div className="lg:col-span-6 w-full flex items-center justify-center lg:justify-start pt-12 lg:pt-0">
+          <div className="grid grid-cols-3 gap-6 w-full">
             {[1, 2, 3].map(i => (
               <motion.div
                 key={i}
@@ -152,14 +152,14 @@ export default function Hero() {
                     alt={`POS ${i}`}
                     fill
                     className="object-contain dark:hidden"
-                    sizes="(max-width: 1024px) 33vw, 300px"
+                    sizes="(max-width: 1280px) 33vw, 500px"
                   />
                   <Image
                     src={`/mockupdark-${i}.png`}
                     alt={`POS ${i}`}
                     fill
                     className="object-contain hidden dark:block"
-                    sizes="(max-width: 1024px) 33vw, 300px"
+                    sizes="(max-width: 1280px) 33vw, 500px"
                   />
                 </div>
               </motion.div>
