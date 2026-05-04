@@ -3,7 +3,7 @@
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowRight, Sparkles } from 'lucide-react';
+import { ArrowRight, Sparkles, Check } from 'lucide-react';
 import { useMemo } from 'react';
 
 const PARTICLES = [
@@ -86,6 +86,25 @@ export default function Hero() {
               Tingkatkan efisiensi dengan sistem POS offline-first yang secara otomatis
               menyinkronkan akuntansi, inventaris, dan loyalitas pelanggan Anda ke cloud.
             </motion.p>
+
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+              className="flex flex-col gap-3 mb-10"
+            >
+              <div className="flex flex-wrap gap-3">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-full bg-white/15 border border-white/20">
+                  <Check size={12} />
+                  Retail
+                </span>
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-full bg-white/15 border border-white/20">
+                  <Check size={12} />
+                  Restoran
+                </span>
+              </div>
+              <p className="text-sm text-blue-100">Multi-purpose POS untuk semua jenis bisnis</p>
+            </motion.div>
 
             <div className="flex items-center gap-6 flex-wrap">
               <Link

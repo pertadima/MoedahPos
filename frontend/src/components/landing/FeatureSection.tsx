@@ -10,6 +10,8 @@ import {
   FileText,
   Banknote,
   ArrowRight,
+  LayoutGrid,
+  ChefHat,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -33,6 +35,22 @@ const SLIDES = [
   },
   {
     id: 3,
+    light: '/image-table-light.webp',
+    icon: LayoutGrid,
+    tab: 'Meja',
+    title: 'Manajemen Meja',
+    desc: 'Kelola meja restoran, reservasi, dan pesanan makan di tempat dengan mudah.',
+  },
+  {
+    id: 4,
+    light: '/image-kitchen-light.webp',
+    icon: ChefHat,
+    tab: 'Dapur',
+    title: 'Kitchen Display',
+    desc: 'Tampilkan pesanan di dapur secara real-time untuk layanan lebih cepat.',
+  },
+  {
+    id: 5,
     light: '/image-rbac-light.webp',
     icon: ShieldCheck,
     tab: 'RBAC',
@@ -40,7 +58,7 @@ const SLIDES = [
     desc: 'Peran dan izin per modul untuk setiap anggota tim. Cegah kecurangan sejak awal.',
   },
   {
-    id: 4,
+    id: 6,
     light: '/order-purchase-light.webp',
     icon: Package,
     tab: 'Purchase',
@@ -48,7 +66,7 @@ const SLIDES = [
     desc: 'Kelola pengadaan stok dan supplier. Termin pembayaran, FIFO batch, dan lebih banyak lagi.',
   },
   {
-    id: 5,
+    id: 7,
     light: '/order-report-light.webp',
     icon: FileText,
     tab: 'Laporan',
@@ -56,7 +74,7 @@ const SLIDES = [
     desc: 'P&L, arus kas, dan valuasi stok real-time. Export PDF & CSV dalam satu klik.',
   },
   {
-    id: 6,
+    id: 8,
     light: '/order-cashflow-light.webp',
     icon: Banknote,
     tab: 'Arus Kas',
@@ -160,7 +178,7 @@ export default function FeatureSection() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5, delay: 0.25 }}
-          className="mt-8 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3"
+          className="mt-8 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3"
         >
           {SLIDES.map((s, i) => {
             const Icon = s.icon;
