@@ -10,12 +10,15 @@ export default function FaqSection({ pageKey }: FaqSectionProps) {
 
   return (
     <section className="mt-10">
-      <h2 className="text-2xl font-semibold text-gray-900">FAQ</h2>
+      <h2 className="text-2xl font-semibold text-[#0b3f6f]">FAQ</h2>
       <div className="mt-4 space-y-4">
         {items.map(item => (
-          <article key={item.q} className="rounded-lg border border-gray-200 p-4">
-            <h3 className="font-semibold text-gray-900">{item.q}</h3>
-            <p className="mt-1 text-gray-700">{item.a}</p>
+          <article
+            key={item.q}
+            className="rounded-xl border border-[#0884F6]/15 bg-white p-4 shadow-sm shadow-[#0884F6]/5"
+          >
+            <h3 className="font-semibold text-[#0f3f6a]">{item.q}</h3>
+            <p className="mt-1 text-[#325b7f]">{item.a}</p>
           </article>
         ))}
       </div>

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import FaqSection from '@/components/seo/FaqSection';
 import RelatedPages from '@/components/seo/RelatedPages';
+import SeoPageShell from '@/components/seo/SeoPageShell';
 import SeoJsonLd from '@/components/seo/SeoJsonLd';
 import WaCta from '@/components/seo/WaCta';
 import { buildMetadata } from '@/lib/seo';
@@ -10,19 +11,21 @@ export const metadata: Metadata = buildMetadata(seoPages['harga-aplikasi-pos']);
 
 export default function HargaAplikasiPosPage() {
   return (
-    <main className="mx-auto max-w-4xl px-4 py-12">
+    <SeoPageShell>
       <h1 className="text-3xl font-bold">
         Harga Aplikasi POS: Cara Hitung yang Tepat untuk Bisnis Anda
       </h1>
-      <p className="mt-4 text-base text-gray-700">
+      <p className="mt-4 text-base text-[#2f5c84]">
         Pahami komponen biaya dan pilih paket yang sesuai tahap pertumbuhan bisnis.
       </p>
-      <section className="mt-8 space-y-4 text-gray-700">
-        <h2 className="text-2xl font-semibold text-gray-900">Komponen biaya yang perlu dipahami</h2>
+      <section className="mt-8 space-y-4 text-[#2f5c84]">
+        <h2 className="text-2xl font-semibold text-[#0b3f6f]">
+          Komponen biaya yang perlu dipahami
+        </h2>
         <p>
           Evaluasi biaya software, perangkat, dan onboarding agar investasi sesuai kapasitas bisnis.
         </p>
-        <h3 className="text-xl font-semibold text-gray-900">
+        <h3 className="text-xl font-semibold text-[#0b3f6f]">
           Fokus ke nilai, bukan hanya harga termurah
         </h3>
         <p>
@@ -39,6 +42,6 @@ export default function HargaAplikasiPosPage() {
         waMessage="Halo Moedah POS, saya ingin konsultasi harga aplikasi POS."
       />
       <SeoJsonLd pageKey="harga-aplikasi-pos" />
-    </main>
+    </SeoPageShell>
   );
 }

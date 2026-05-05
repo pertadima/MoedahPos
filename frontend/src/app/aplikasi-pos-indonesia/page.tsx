@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import SeoPageShell from '@/components/seo/SeoPageShell';
 import WaCta from '@/components/seo/WaCta';
 import { buildMetadata } from '@/lib/seo';
 
@@ -71,15 +72,17 @@ export default function AplikasiPosIndonesiaPage() {
   };
 
   return (
-    <main className="mx-auto max-w-5xl px-4 py-12">
-      <h1 className="text-3xl font-bold">Aplikasi POS Indonesia untuk UMKM dan Restoran</h1>
-      <p className="mt-4 text-gray-700">
+    <SeoPageShell maxWidth="5xl">
+      <h1 className="text-3xl font-bold text-[#0b3f6f]">
+        Aplikasi POS Indonesia untuk UMKM dan Restoran
+      </h1>
+      <p className="mt-4 text-[#2f5c84]">
         Halaman hub ini merangkum pilihan konten utama Moedah POS agar Anda bisa memilih materi
         sesuai kebutuhan bisnis, tahap pertumbuhan, dan prioritas operasional.
       </p>
 
-      <section className="mt-8 space-y-4 text-gray-700">
-        <h2 className="text-2xl font-semibold text-gray-900">Cara memakai halaman ini</h2>
+      <section className="mt-8 space-y-4 text-[#2f5c84]">
+        <h2 className="text-2xl font-semibold text-[#0b3f6f]">Cara memakai halaman ini</h2>
         <p>
           Jika Anda butuh overview, mulai dari halaman aplikasi POS utama. Jika kebutuhan Anda lebih
           spesifik, lanjut ke halaman restoran, UMKM, perbandingan alternatif, atau panduan harga.
@@ -88,13 +91,16 @@ export default function AplikasiPosIndonesiaPage() {
 
       <section className="mt-10 grid gap-4 md:grid-cols-2">
         {links.map(link => (
-          <article key={link.href} className="rounded-lg border border-gray-200 p-5">
-            <h3 className="text-lg font-semibold text-gray-900">
-              <Link href={link.href} className="hover:underline">
+          <article
+            key={link.href}
+            className="rounded-xl border border-[#0884F6]/15 bg-white p-5 shadow-sm shadow-[#0884F6]/5"
+          >
+            <h3 className="text-lg font-semibold text-[#0b3f6f]">
+              <Link href={link.href} className="hover:text-[#0884F6] hover:underline">
                 {link.title}
               </Link>
             </h3>
-            <p className="mt-2 text-gray-700">{link.desc}</p>
+            <p className="mt-2 text-[#2f5c84]">{link.desc}</p>
           </article>
         ))}
       </section>
@@ -110,6 +116,6 @@ export default function AplikasiPosIndonesiaPage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
       />
-    </main>
+    </SeoPageShell>
   );
 }

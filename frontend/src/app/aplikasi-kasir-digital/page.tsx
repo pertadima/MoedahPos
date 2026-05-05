@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import FaqSection from '@/components/seo/FaqSection';
 import RelatedPages from '@/components/seo/RelatedPages';
+import SeoPageShell from '@/components/seo/SeoPageShell';
 import SeoJsonLd from '@/components/seo/SeoJsonLd';
 import WaCta from '@/components/seo/WaCta';
 import { buildMetadata } from '@/lib/seo';
@@ -10,20 +11,20 @@ export const metadata: Metadata = buildMetadata(seoPages['aplikasi-kasir-digital
 
 export default function AplikasiKasirDigitalPage() {
   return (
-    <main className="mx-auto max-w-4xl px-4 py-12">
+    <SeoPageShell>
       <h1 className="text-3xl font-bold">
         Aplikasi Kasir Digital untuk Bisnis yang Ingin Serba Praktis
       </h1>
-      <p className="mt-4 text-base text-gray-700">
+      <p className="mt-4 text-base text-[#2f5c84]">
         Tinggalkan pencatatan manual dengan alur kasir digital yang cepat dan mudah.
       </p>
-      <section className="mt-8 space-y-4 text-gray-700">
-        <h2 className="text-2xl font-semibold text-gray-900">Kendala kasir manual di lapangan</h2>
+      <section className="mt-8 space-y-4 text-[#2f5c84]">
+        <h2 className="text-2xl font-semibold text-[#0b3f6f]">Kendala kasir manual di lapangan</h2>
         <p>
           Antrian menumpuk saat jam sibuk, rekap tutup kas sering molor, dan data penjualan
           tersebar.
         </p>
-        <h3 className="text-xl font-semibold text-gray-900">
+        <h3 className="text-xl font-semibold text-[#0b3f6f]">
           Solusi kasir digital untuk operasional harian
         </h3>
         <p>
@@ -40,6 +41,6 @@ export default function AplikasiKasirDigitalPage() {
         waMessage="Halo Moedah POS, saya ingin konsultasi aplikasi kasir digital."
       />
       <SeoJsonLd pageKey="aplikasi-kasir-digital" />
-    </main>
+    </SeoPageShell>
   );
 }

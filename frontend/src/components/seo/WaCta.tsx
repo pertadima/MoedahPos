@@ -19,14 +19,14 @@ export default function WaCta({
   const href = `https://wa.me/${resolvedNumber}?text=${encodeURIComponent(waMessage)}`;
 
   return (
-    <section className="mt-10 rounded-xl border border-emerald-200 bg-emerald-50 p-6">
-      <h2 className="text-2xl font-semibold text-emerald-900">{title}</h2>
-      <p className="mt-2 text-emerald-800">{description}</p>
+    <section className="mt-10 rounded-2xl border border-[#0884F6]/20 bg-gradient-to-br from-[#0884F6]/10 via-white to-[#FFA724]/10 p-6">
+      <h2 className="text-2xl font-semibold text-[#0b3f6f]">{title}</h2>
+      <p className="mt-2 text-[#1f4f7a]">{description}</p>
       <a
         href={href}
         target="_blank"
         rel="noopener noreferrer"
-        className="mt-4 inline-flex rounded-lg bg-emerald-600 px-4 py-2 font-semibold text-white hover:bg-emerald-700"
+        className="mt-4 inline-flex rounded-xl bg-[#0884F6] px-4 py-2 font-semibold text-white shadow-md shadow-[#0884F6]/20 hover:bg-[#0776dc]"
       >
         {buttonText}
       </a>

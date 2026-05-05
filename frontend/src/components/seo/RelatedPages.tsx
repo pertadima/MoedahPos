@@ -49,12 +49,22 @@ export default function RelatedPages({ current, title = 'Halaman terkait' }: Rel
   const links = relatedMap[current];
 
   return (
-    <section aria-labelledby="related-pages-title">
-      <h2 id="related-pages-title">{title}</h2>
-      <ul>
+    <section
+      aria-labelledby="related-pages-title"
+      className="mt-10 rounded-2xl border border-[#0884F6]/15 bg-[#f8fbff] p-6"
+    >
+      <h2 id="related-pages-title" className="text-2xl font-semibold text-[#0b3f6f]">
+        {title}
+      </h2>
+      <ul className="mt-4 grid gap-3 md:grid-cols-2">
         {links.map(link => (
           <li key={link.href}>
-            <Link href={link.href}>{link.anchor}</Link>
+            <Link
+              href={link.href}
+              className="block rounded-lg border border-[#0884F6]/10 bg-white px-3 py-2 font-medium text-[#0884F6] hover:border-[#0884F6]/30"
+            >
+              {link.anchor}
+            </Link>
           </li>
         ))}
       </ul>

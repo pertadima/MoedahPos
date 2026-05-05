@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import FaqSection from '@/components/seo/FaqSection';
 import RelatedPages from '@/components/seo/RelatedPages';
+import SeoPageShell from '@/components/seo/SeoPageShell';
 import SeoJsonLd from '@/components/seo/SeoJsonLd';
 import WaCta from '@/components/seo/WaCta';
 import { buildMetadata } from '@/lib/seo';
@@ -10,14 +11,14 @@ export const metadata: Metadata = buildMetadata(seoPages['aplikasi-pos-restoran'
 
 export default function AplikasiPosRestoranPage() {
   return (
-    <main className="mx-auto max-w-4xl px-4 py-12">
+    <SeoPageShell>
       <h1 className="text-3xl font-bold">
         Aplikasi POS Restoran untuk Layanan Cepat dan Minim Error
       </h1>
-      <p className="mt-4 text-base text-gray-700">
+      <p className="mt-4 text-base text-[#2f5c84]">
         Kelola menu, order, dan pembayaran restoran dengan alur operasional yang lebih rapi.
       </p>
-      <section className="mt-8 space-y-4 text-gray-700">
+      <section className="mt-8 space-y-4 text-[#2f5c84]">
         <h2 className="text-2xl font-semibold text-gray-900">
           Tantangan operasional restoran sehari-hari
         </h2>
@@ -25,7 +26,7 @@ export default function AplikasiPosRestoranPage() {
           Pesanan rawan salah saat ramai, sinkronisasi tim kasir-dapur kurang mulus, dan kontrol
           menu sulit.
         </p>
-        <h3 className="text-xl font-semibold text-gray-900">Alur restoran yang lebih stabil</h3>
+        <h3 className="text-xl font-semibold text-[#0b3f6f]">Alur restoran yang lebih stabil</h3>
         <p>
           Pengelolaan menu, catatan pesanan, dan ringkasan penjualan harian jadi lebih terstruktur.
         </p>
@@ -39,6 +40,6 @@ export default function AplikasiPosRestoranPage() {
         waMessage="Halo Moedah POS, saya ingin demo aplikasi POS restoran."
       />
       <SeoJsonLd pageKey="aplikasi-pos-restoran" />
-    </main>
+    </SeoPageShell>
   );
 }
