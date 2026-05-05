@@ -83,7 +83,7 @@ export default function IncomesPage() {
   const loadCategories = useCallback(async () => {
     try {
       const res = await incomesApi.listCategories();
-      setCategories(res.data || []);
+      setCategories((res.data as IncomeCategory[]) || []);
     } catch (err) {
       console.error(err);
     }
@@ -98,8 +98,8 @@ export default function IncomesPage() {
         page: meta.page,
         per_page: meta.per_page,
       });
-      setIncomes(res.data.data ?? []);
-      setMeta(res.data.meta);
+      setIncomes((res.data as { data: Income[]; meta: typeof meta }).data ?? []);
+      setMeta((res.data as { data: Income[]; meta: typeof meta }).meta);
     } catch (err) {
       console.error(err);
     } finally {

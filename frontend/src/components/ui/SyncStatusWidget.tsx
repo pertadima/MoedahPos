@@ -79,9 +79,9 @@ export default function SyncStatusWidget() {
 
         // Artificial delay to allow visual feedback of the sync progress
         await new Promise(resolve => setTimeout(resolve, 800));
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error('Network or API failure during background sync', err);
-        if (err.name === 'ApiError') {
+        if (err instanceof Error && err.name === 'ApiError') {
           let errorMsg = err.message;
           if (errorMsg.toLowerCase().includes('insufficient stock')) {
             const match = errorMsg.match(

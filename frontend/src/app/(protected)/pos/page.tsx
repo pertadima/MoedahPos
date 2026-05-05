@@ -1067,7 +1067,7 @@ export default function POSPage() {
             cart_discount_type: cartDiscountType,
             cart_discount_value: cartDiscountValue,
             points_redeemed: pointsToRedeem > 0 ? pointsToRedeem : undefined,
-            items: txItems as any,
+            items: txItems,
           };
 
           const result = await saveTransaction(payloadData);
@@ -1122,6 +1122,14 @@ export default function POSPage() {
       cartDiscountType,
       cartDiscountValue,
       pointsToRedeem,
+      cartDiscountAmt,
+      loyalty,
+      saveTransaction,
+      subtotalAfterItems,
+      taxAmt,
+      total,
+      user?.id,
+      user?.name,
     ]
   );
 

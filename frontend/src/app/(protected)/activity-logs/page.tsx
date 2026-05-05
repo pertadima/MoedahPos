@@ -73,27 +73,27 @@ function formatRp(val: number) {
 }
 
 function getReadableDescription(log: ActivityLog): string | null {
-  const meta: any = log.metadata || {};
+  const meta = (log.metadata ?? {}) as Record<string, unknown>;
   switch (log.action_type) {
     case 'PURCHASE_ORDER_CREATE':
-      return `Membuat Purchase Order ${meta.po_number || ''} supplier ${meta.supplier_name || '-'} (${meta.total_amount ? formatRp(meta.total_amount) : ''})`;
+      return `Membuat Purchase Order ${String(meta.po_number ?? '')} supplier ${String(meta.supplier_name ?? '-')} (${typeof meta.total_amount === 'number' ? formatRp(meta.total_amount) : ''})`;
     case 'PURCHASE_ORDER_PAYMENT':
-      return `Mencatat pembayaran ${meta.payment_amount ? formatRp(meta.payment_amount) : ''} untuk PO ${meta.po_number || ''}`;
+      return `Mencatat pembayaran ${typeof meta.payment_amount === 'number' ? formatRp(meta.payment_amount) : ''} untuk PO ${String(meta.po_number ?? '')}`;
     case 'INCOME_CREATE':
-      return `Menambah pemasukan ${meta.amount ? formatRp(meta.amount) : ''} (${meta.category || ''})`;
+      return `Menambah pemasukan ${typeof meta.amount === 'number' ? formatRp(meta.amount) : ''} (${String(meta.category ?? '')})`;
     case 'EXPENSE_CREATE':
-      return `Mencatat pengeluaran ${meta.amount ? formatRp(meta.amount) : ''} (${meta.category || ''})`;
+      return `Mencatat pengeluaran ${typeof meta.amount === 'number' ? formatRp(meta.amount) : ''} (${String(meta.category ?? '')})`;
     case 'INCOME_DELETE':
-      return `Menghapus pemasukan ${meta.amount ? formatRp(meta.amount) : ''} (${meta.category || ''})`;
+      return `Menghapus pemasukan ${typeof meta.amount === 'number' ? formatRp(meta.amount) : ''} (${String(meta.category ?? '')})`;
     case 'EXPENSE_DELETE':
-      return `Menghapus pengeluaran ${meta.amount ? formatRp(meta.amount) : ''} (${meta.category || ''})`;
+      return `Menghapus pengeluaran ${typeof meta.amount === 'number' ? formatRp(meta.amount) : ''} (${String(meta.category ?? '')})`;
   }
   return null;
 }
 
 // ── Components ───────────────────────────────────────────────────────────────
 
-function MetadataViewer({ data }: { data: any }) {
+function MetadataViewer({ data }: { data: unknown }) {
   if (!data)
     return <span style={{ color: 'var(--text-3)', fontStyle: 'italic' }}>No metadata</span>;
   return (
@@ -308,7 +308,7 @@ export default function ActivityLogPage() {
     if (!storeId) return;
     try {
       const res = await storesApi.listMembers(storeId);
-      setUsers(res.data?.data || []);
+      setUsers((res.data?.data as User[]) || []);
     } catch (e) {
       console.error('Failed to fetch users', e);
     }
