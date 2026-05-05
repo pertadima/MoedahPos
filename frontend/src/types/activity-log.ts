@@ -6,7 +6,7 @@ export interface ActivityLog {
   action_type: string;
   module: string;
   reference_id: string | null;
-  metadata: any;
+  metadata: Record<string, unknown> | null;
   created_at: string;
 }
 

@@ -50,7 +50,7 @@ export const storesApi = {
     }
   ) => api.put<Store>(`/stores/${id}`, payload),
   softDelete: (id: string) => api.delete(`/stores/${id}`),
-  listMembers: (storeId: string) => api.get<PaginatedData<any>>(`/stores/${storeId}/members`),
+  listMembers: (storeId: string) => api.get<PaginatedData<unknown>>(`/stores/${storeId}/members`),
 };
 
 export const categoriesApi = {
@@ -110,14 +110,14 @@ export const purchaseOrdersApi = {
     if (params?.page) q.set('page', String(params.page));
     if (params?.per_page) q.set('per_page', String(params.per_page));
     if (params?.status) q.set('status', params.status);
-    return api.get<any>(`/stores/${storeId}/purchase-orders?${q}`);
+    return api.get<unknown>(`/stores/${storeId}/purchase-orders?${q}`);
   },
   get: (storeId: string, poId: string) =>
-    api.get<any>(`/stores/${storeId}/purchase-orders/${poId}`),
+    api.get<unknown>(`/stores/${storeId}/purchase-orders/${poId}`),
   create: (storeId: string, payload: object) =>
-    api.post<any>(`/stores/${storeId}/purchase-orders`, payload),
+    api.post<unknown>(`/stores/${storeId}/purchase-orders`, payload),
   update: (storeId: string, poId: string, payload: object) =>
-    api.put<any>(`/stores/${storeId}/purchase-orders/${poId}`, payload),
+    api.put<unknown>(`/stores/${storeId}/purchase-orders/${poId}`, payload),
   submit: (storeId: string, poId: string) =>
     api.post(`/stores/${storeId}/purchase-orders/${poId}/submit`, {}),
   receive: (storeId: string, poId: string) =>
@@ -125,11 +125,12 @@ export const purchaseOrdersApi = {
   cancel: (storeId: string, poId: string) =>
     api.delete(`/stores/${storeId}/purchase-orders/${poId}`),
   // Accounts Payable
-  payableSummary: (storeId: string) => api.get<any>(`/stores/${storeId}/purchase-orders/payables`),
+  payableSummary: (storeId: string) =>
+    api.get<unknown>(`/stores/${storeId}/purchase-orders/payables`),
   listPayments: (storeId: string, poId: string) =>
-    api.get<any>(`/stores/${storeId}/purchase-orders/${poId}/payments`),
+    api.get<unknown>(`/stores/${storeId}/purchase-orders/${poId}/payments`),
   createPayment: (storeId: string, poId: string, body: { amount: number; note?: string }) =>
-    api.post<any>(`/stores/${storeId}/purchase-orders/${poId}/payments`, body),
+    api.post<unknown>(`/stores/${storeId}/purchase-orders/${poId}/payments`, body),
 };
 
 export const suppliersApi = {
@@ -138,11 +139,11 @@ export const suppliersApi = {
     if (params?.page) q.set('page', String(params.page));
     if (params?.per_page) q.set('per_page', String(params.per_page));
     if (params?.search) q.set('search', params.search);
-    return api.get<any>(`/suppliers?${q}`);
+    return api.get<unknown>(`/suppliers?${q}`);
   },
-  get: (id: string) => api.get<any>(`/suppliers/${id}`),
-  create: (payload: object) => api.post<any>('/suppliers', payload),
-  update: (id: string, payload: object) => api.put<any>(`/suppliers/${id}`, payload),
+  get: (id: string) => api.get<unknown>(`/suppliers/${id}`),
+  create: (payload: object) => api.post<unknown>('/suppliers', payload),
+  update: (id: string, payload: object) => api.put<unknown>(`/suppliers/${id}`, payload),
   delete: (id: string) => api.delete(`/suppliers/${id}`),
 };
 
@@ -151,21 +152,22 @@ export const reportsApi = {
     const q = new URLSearchParams();
     if (dateFrom) q.set('date_from', dateFrom);
     if (dateTo) q.set('date_to', dateTo);
-    return api.get<any>(`/stores/${storeId}/reports/sales?${q}`);
+    return api.get<unknown>(`/stores/${storeId}/reports/sales?${q}`);
   },
   byProduct: (storeId: string, dateFrom?: string, dateTo?: string) => {
     const q = new URLSearchParams();
     if (dateFrom) q.set('date_from', dateFrom);
     if (dateTo) q.set('date_to', dateTo);
-    return api.get<any>(`/stores/${storeId}/reports/sales/by-product?${q}`);
+    return api.get<unknown>(`/stores/${storeId}/reports/sales/by-product?${q}`);
   },
   byCashier: (storeId: string, dateFrom?: string, dateTo?: string) => {
     const q = new URLSearchParams();
     if (dateFrom) q.set('date_from', dateFrom);
     if (dateTo) q.set('date_to', dateTo);
-    return api.get<any>(`/stores/${storeId}/reports/sales/by-cashier?${q}`);
+    return api.get<unknown>(`/stores/${storeId}/reports/sales/by-cashier?${q}`);
   },
-  stockValuation: (storeId: string) => api.get<any>(`/stores/${storeId}/reports/stock-valuation`),
+  stockValuation: (storeId: string) =>
+    api.get<unknown>(`/stores/${storeId}/reports/stock-valuation`),
   profit: (
     storeId: string,
     dateFrom?: string,
@@ -175,18 +177,18 @@ export const reportsApi = {
     const q = new URLSearchParams({ group_by: groupBy });
     if (dateFrom) q.set('date_from', dateFrom);
     if (dateTo) q.set('date_to', dateTo);
-    return api.get<any>(`/stores/${storeId}/reports/profit?${q}`);
+    return api.get<unknown>(`/stores/${storeId}/reports/profit?${q}`);
   },
   cashFlow: (storeId: string, dateFrom?: string, dateTo?: string) => {
     const q = new URLSearchParams();
     if (dateFrom) q.set('date_from', dateFrom);
     if (dateTo) q.set('date_to', dateTo);
-    return api.get<any>(`/stores/${storeId}/reports/cash-flow?${q}`);
+    return api.get<unknown>(`/stores/${storeId}/reports/cash-flow?${q}`);
   },
   cashFlowDetail: (storeId: string, date?: string) => {
     const q = new URLSearchParams();
     if (date) q.set('date', date);
-    return api.get<any>(`/stores/${storeId}/reports/cash-flow/detail?${q}`);
+    return api.get<unknown>(`/stores/${storeId}/reports/cash-flow/detail?${q}`);
   },
 
   /**
@@ -252,7 +254,7 @@ export const priceHistoryApi = {
     if (params?.source) q.set('source', params.source);
     if (params?.page) q.set('page', String(params.page));
     if (params?.per_page) q.set('per_page', String(params.per_page));
-    return api.get<any>(`/stores/${storeId}/price-history?${q}`);
+    return api.get<unknown>(`/stores/${storeId}/price-history?${q}`);
   },
   listByProduct: (
     storeId: string,
@@ -262,7 +264,7 @@ export const priceHistoryApi = {
     const q = new URLSearchParams();
     if (params?.page) q.set('page', String(params.page));
     if (params?.per_page) q.set('per_page', String(params.per_page));
-    return api.get<any>(`/stores/${storeId}/products/${productId}/price-history?${q}`);
+    return api.get<unknown>(`/stores/${storeId}/products/${productId}/price-history?${q}`);
   },
 };
 
@@ -272,19 +274,21 @@ export const customersApi = {
     if (params?.page) q.set('page', String(params.page));
     if (params?.per_page) q.set('per_page', String(params.per_page));
     if (params?.search) q.set('search', params.search);
-    return api.get<any>(`/stores/${storeId}/customers?${q}`);
+    return api.get<unknown>(`/stores/${storeId}/customers?${q}`);
   },
   search: (storeId: string, query: string) =>
-    api.get<any>(`/stores/${storeId}/customers/search?q=${encodeURIComponent(query)}`),
-  get: (storeId: string, id: string) => api.get<any>(`/stores/${storeId}/customers/${id}`),
-  create: (storeId: string, body: object) => api.post<any>(`/stores/${storeId}/customers`, body),
+    api.get<unknown>(`/stores/${storeId}/customers/search?q=${encodeURIComponent(query)}`),
+  get: (storeId: string, id: string) => api.get<unknown>(`/stores/${storeId}/customers/${id}`),
+  create: (storeId: string, body: object) =>
+    api.post<unknown>(`/stores/${storeId}/customers`, body),
   update: (storeId: string, id: string, body: object) =>
-    api.put<any>(`/stores/${storeId}/customers/${id}`, body),
-  delete: (storeId: string, id: string) => api.delete<any>(`/stores/${storeId}/customers/${id}`),
+    api.put<unknown>(`/stores/${storeId}/customers/${id}`, body),
+  delete: (storeId: string, id: string) =>
+    api.delete<unknown>(`/stores/${storeId}/customers/${id}`),
 };
 
 export const kdsApi = {
-  getTickets: (storeId: string) => api.get<any>(`/stores/${storeId}/kds/tickets`),
+  getTickets: (storeId: string) => api.get<unknown>(`/stores/${storeId}/kds/tickets`),
   markItemAsDone: (storeId: string, itemId: string) =>
     api.put(`/stores/${storeId}/kds/items/${itemId}`, { status: 'completed' }),
   markItemAsPending: (storeId: string, itemId: string) =>
@@ -303,36 +307,36 @@ export const usersAdminApi = {
     if (params?.include_inactive) q.set('include_inactive', 'true');
     if (params?.page) q.set('page', String(params.page));
     if (params?.per_page) q.set('per_page', String(params.per_page));
-    return api.get<any>(`/admin/users?${q}`);
+    return api.get<unknown>(`/admin/users?${q}`);
   },
-  get: (id: string) => api.get<any>(`/admin/users/${id}`),
-  create: (body: object) => api.post<any>('/admin/users', body),
-  update: (id: string, body: object) => api.put<any>(`/admin/users/${id}`, body),
-  deactivate: (id: string) => api.post<any>(`/admin/users/${id}/deactivate`, {}),
+  get: (id: string) => api.get<unknown>(`/admin/users/${id}`),
+  create: (body: object) => api.post<unknown>('/admin/users', body),
+  update: (id: string, body: object) => api.put<unknown>(`/admin/users/${id}`, body),
+  deactivate: (id: string) => api.post<unknown>(`/admin/users/${id}/deactivate`, {}),
   resetPassword: (id: string, body: { password: string }) =>
-    api.post<any>(`/admin/users/${id}/reset-password`, body),
+    api.post<unknown>(`/admin/users/${id}/reset-password`, body),
   setStores: (id: string, stores: { store_id: string; role_id: string }[]) =>
-    api.put<any>(`/admin/users/${id}/stores`, { stores }),
+    api.put<unknown>(`/admin/users/${id}/stores`, { stores }),
 };
 
 export const rolesApi = {
-  list: () => api.get<any>('/admin/roles'),
-  get: (id: string) => api.get<any>(`/admin/roles/${id}`),
-  create: (body: any) => api.post<any>('/admin/roles', body),
-  update: (id: string, body: any) => api.put<any>(`/admin/roles/${id}`, body),
-  delete: (id: string) => api.delete<any>(`/admin/roles/${id}`),
-  listPermissions: () => api.get<any>('/admin/permissions'),
+  list: () => api.get<unknown>('/admin/roles'),
+  get: (id: string) => api.get<unknown>(`/admin/roles/${id}`),
+  create: (body: unknown) => api.post<unknown>('/admin/roles', body),
+  update: (id: string, body: unknown) => api.put<unknown>(`/admin/roles/${id}`, body),
+  delete: (id: string) => api.delete<unknown>(`/admin/roles/${id}`),
+  listPermissions: () => api.get<unknown>('/admin/permissions'),
 };
 
 export const expensesApi = {
   listCategories: (params?: { include_deleted?: boolean }) => {
     const q = new URLSearchParams();
     if (params?.include_deleted) q.set('include_deleted', 'true');
-    return api.get<any>(`/expense-categories?${q}`);
+    return api.get<unknown>(`/expense-categories?${q}`);
   },
-  createCategory: (body: object) => api.post<any>('/expense-categories', body),
-  updateCategory: (id: string, body: object) => api.put<any>(`/expense-categories/${id}`, body),
-  deleteCategory: (id: string) => api.delete<any>(`/expense-categories/${id}`),
+  createCategory: (body: object) => api.post<unknown>('/expense-categories', body),
+  updateCategory: (id: string, body: object) => api.put<unknown>(`/expense-categories/${id}`, body),
+  deleteCategory: (id: string) => api.delete<unknown>(`/expense-categories/${id}`),
   list: (
     storeId: string,
     params?: {
@@ -349,17 +353,17 @@ export const expensesApi = {
     if (params?.date_to) q.set('date_to', params.date_to);
     if (params?.page) q.set('page', String(params.page));
     if (params?.per_page) q.set('per_page', String(params.per_page));
-    return api.get<any>(`/stores/${storeId}/expenses?${q}`);
+    return api.get<unknown>(`/stores/${storeId}/expenses?${q}`);
   },
-  create: (storeId: string, body: object) => api.post<any>(`/stores/${storeId}/expenses`, body),
+  create: (storeId: string, body: object) => api.post<unknown>(`/stores/${storeId}/expenses`, body),
   update: (storeId: string, id: string, body: object) =>
-    api.put<any>(`/stores/${storeId}/expenses/${id}`, body),
+    api.put<unknown>(`/stores/${storeId}/expenses/${id}`, body),
   updateStatus: (
     storeId: string,
     id: string,
     body: { payment_status: 'paid' | 'unpaid' | 'cancelled' }
-  ) => api.patch<any>(`/stores/${storeId}/expenses/${id}/status`, body),
-  delete: (storeId: string, id: string) => api.delete<any>(`/stores/${storeId}/expenses/${id}`),
+  ) => api.patch<unknown>(`/stores/${storeId}/expenses/${id}/status`, body),
+  delete: (storeId: string, id: string) => api.delete<unknown>(`/stores/${storeId}/expenses/${id}`),
 };
 
 export const recurringExpensesApi = {
@@ -368,25 +372,25 @@ export const recurringExpensesApi = {
     if (params?.category_id) q.set('category_id', params.category_id);
     if (params?.page) q.set('page', String(params.page));
     if (params?.per_page) q.set('per_page', String(params.per_page));
-    return api.get<any>(`/stores/${storeId}/recurring-expenses?${q}`);
+    return api.get<unknown>(`/stores/${storeId}/recurring-expenses?${q}`);
   },
   create: (storeId: string, body: object) =>
-    api.post<any>(`/stores/${storeId}/recurring-expenses`, body),
+    api.post<unknown>(`/stores/${storeId}/recurring-expenses`, body),
   update: (storeId: string, id: string, body: object) =>
-    api.put<any>(`/stores/${storeId}/recurring-expenses/${id}`, body),
+    api.put<unknown>(`/stores/${storeId}/recurring-expenses/${id}`, body),
   delete: (storeId: string, id: string) =>
-    api.delete<any>(`/stores/${storeId}/recurring-expenses/${id}`),
+    api.delete<unknown>(`/stores/${storeId}/recurring-expenses/${id}`),
 };
 
 export const incomesApi = {
   listCategories: (params?: { include_deleted?: boolean }) => {
     const q = new URLSearchParams();
     if (params?.include_deleted) q.set('include_deleted', 'true');
-    return api.get<any>(`/income-categories?${q}`);
+    return api.get<unknown>(`/income-categories?${q}`);
   },
-  createCategory: (body: object) => api.post<any>('/income-categories', body),
-  updateCategory: (id: string, body: object) => api.put<any>(`/income-categories/${id}`, body),
-  deleteCategory: (id: string) => api.delete<any>(`/income-categories/${id}`),
+  createCategory: (body: object) => api.post<unknown>('/income-categories', body),
+  updateCategory: (id: string, body: object) => api.put<unknown>(`/income-categories/${id}`, body),
+  deleteCategory: (id: string) => api.delete<unknown>(`/income-categories/${id}`),
   list: (
     storeId: string,
     params?: {
@@ -403,12 +407,12 @@ export const incomesApi = {
     if (params?.date_to) q.set('date_to', params.date_to);
     if (params?.page) q.set('page', String(params.page));
     if (params?.per_page) q.set('per_page', String(params.per_page));
-    return api.get<any>(`/stores/${storeId}/incomes?${q}`);
+    return api.get<unknown>(`/stores/${storeId}/incomes?${q}`);
   },
-  create: (storeId: string, body: object) => api.post<any>(`/stores/${storeId}/incomes`, body),
+  create: (storeId: string, body: object) => api.post<unknown>(`/stores/${storeId}/incomes`, body),
   update: (storeId: string, id: string, body: object) =>
-    api.put<any>(`/stores/${storeId}/incomes/${id}`, body),
-  delete: (storeId: string, id: string) => api.delete<any>(`/stores/${storeId}/incomes/${id}`),
+    api.put<unknown>(`/stores/${storeId}/incomes/${id}`, body),
+  delete: (storeId: string, id: string) => api.delete<unknown>(`/stores/${storeId}/incomes/${id}`),
 };
 
 export const loyaltyApi = {

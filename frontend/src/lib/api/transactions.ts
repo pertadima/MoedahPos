@@ -45,7 +45,7 @@ export const transactionsApi = {
     api.post(`/stores/${storeId}/transactions/${txnId}/void`, {}),
 
   // ── Offline Sync ────────────────────────────────────────────────────────────
-  syncOffline: (storeId: string, payload: any) =>
+  syncOffline: (storeId: string, payload: unknown) =>
     api.post<Transaction>(`/stores/${storeId}/transactions`, payload),
 
   // ── Draft / Table Order (restaurant) ──────────────────────────────────────

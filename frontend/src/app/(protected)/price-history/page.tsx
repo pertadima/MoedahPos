@@ -116,8 +116,9 @@ export default function PriceHistoryPage() {
           page: p,
           per_page: PER_PAGE,
         });
-        setRows(res.data?.data ?? []);
-        setTotal(res.data?.meta?.total ?? 0);
+        const payload = res.data as { data?: PriceHistoryRow[]; meta?: { total?: number } };
+        setRows(payload.data ?? []);
+        setTotal(payload.meta?.total ?? 0);
         setPage(p);
       } catch (e) {
         console.error(e);

@@ -89,7 +89,7 @@ export default function DashboardPage() {
 
     reportsApi
       .byCashier(sid, dFrom, todayStr())
-      .then(res => setCashierRevenue(res.data || []))
+      .then(res => setCashierRevenue((res.data as CashierRevenueRow[]) || []))
       .catch(console.error);
   }, [selectedStore, cashierFilter]);
 
@@ -107,7 +107,7 @@ export default function DashboardPage() {
 
     reportsApi
       .byProduct(sid, dFrom, todayStr())
-      .then(res => setProductData(res.data || []))
+      .then(res => setProductData((res.data as SalesByProductRow[]) || []))
       .catch(console.error);
   }, [selectedStore, productFilter]);
 

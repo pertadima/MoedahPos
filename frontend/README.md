@@ -41,6 +41,7 @@ Create a `.env.local` file in the root of the `frontend` directory:
 
 ```bash
 NEXT_PUBLIC_API_URL=http://localhost:8080/api/v1
+NEXT_PUBLIC_WA_NUMBER=628xxxxxxxxxx
 ```
 
 ### 3. Development Server
@@ -93,6 +94,26 @@ npm run type-check   # TypeScript validation
 npm run lint         # ESLint checking
 npm run format:check # Prettier formatting check
 ```
+
+## 🔎 Programmatic SEO Routes
+
+The frontend includes dedicated public SEO landing pages for acquisition:
+
+- `/aplikasi-pos-indonesia/`
+- `/aplikasi-pos/`
+- `/aplikasi-kasir-digital/`
+- `/aplikasi-pos-restoran/`
+- `/aplikasi-pos-umkm/`
+- `/moka-pos-alternatif/`
+- `/harga-aplikasi-pos/`
+
+SEO utilities and schema/linking helpers:
+
+- `src/lib/seo.ts`
+- `src/lib/seo-pages.ts`
+- `src/lib/schema-pages.ts`
+- `src/components/seo/RelatedPages.tsx`
+- `src/app/sitemap.ts`
 
 ---
 

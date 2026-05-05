@@ -34,8 +34,8 @@ function ExpensesPage() {
         page: meta.page,
         per_page: meta.per_page,
       });
-      setExpenses(res.data.data);
-      setMeta(res.data.meta);
+      setExpenses((res.data as { data: Expense[]; meta: typeof meta }).data);
+      setMeta((res.data as { data: Expense[]; meta: typeof meta }).meta);
     } catch (err) {
       console.error(err);
     } finally {
@@ -46,7 +46,7 @@ function ExpensesPage() {
   const loadCategories = useCallback(async () => {
     try {
       const res = await expensesApi.listCategories();
-      setCategories(res.data || []);
+      setCategories((res.data as ExpenseCategory[]) || []);
     } catch (err) {
       console.error(err);
     }
@@ -644,7 +644,7 @@ function RecurringExpensesView({ categories }: { categories: ExpenseCategory[] }
     setLoading(true);
     try {
       const res = await recurringExpensesApi.list(selectedStore.store_id);
-      setRoutines(res.data.data);
+      setRoutines((res.data as { data: RecurringExpense[] }).data);
     } catch (err) {
       console.error(err);
     } finally {

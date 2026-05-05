@@ -40,13 +40,13 @@ export async function recordPayment(
     `${base(storeId, poId)}/termins/${terminId}/payments`,
     data
   );
-  return (res as ApiResponse<PaymentRecord>).data!;
+  return (res as ApiResponse<PaymentRecord>).data ?? ({} as PaymentRecord);
 }
 
 /** GET /debt — aggregated debt summary for a PO */
 export async function getPODebtSummary(storeId: string, poId: string): Promise<PODebtSummary> {
   const res = await api.get<PODebtSummary>(`${base(storeId, poId)}/debt`);
-  return (res as ApiResponse<PODebtSummary>).data!;
+  return (res as ApiResponse<PODebtSummary>).data ?? ({} as PODebtSummary);
 }
 
 /** GET /document?type=... — data for printable document */
@@ -56,5 +56,5 @@ export async function getPODocument(
   type: 'invoice' | 'receipt' | 'termin_agreement'
 ): Promise<PODocumentData> {
   const res = await api.get<PODocumentData>(`${base(storeId, poId)}/document?type=${type}`);
-  return (res as ApiResponse<PODocumentData>).data!;
+  return (res as ApiResponse<PODocumentData>).data ?? ({} as PODocumentData);
 }

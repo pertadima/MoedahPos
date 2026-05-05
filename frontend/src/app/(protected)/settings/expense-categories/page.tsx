@@ -246,7 +246,7 @@ export default function ExpenseCategoriesPage() {
     setLoading(true);
     expensesApi
       .listCategories({ include_deleted: true })
-      .then(r => setCategories(r.data))
+      .then(r => setCategories((r.data as FullCategory[]) ?? []))
       .catch(console.error)
       .finally(() => setLoading(false));
   }, []);

@@ -136,7 +136,7 @@ function RoleFormDrawer({
     const initialPerms = new Set<string>();
     const rolePerms = role?.permissions || [];
 
-    rolePerms.forEach((rp: any) => {
+    rolePerms.forEach((rp: string | Permission) => {
       if (typeof rp === 'object' && rp !== null) {
         if (rp.id) initialPerms.add(rp.id);
       } else {
@@ -559,8 +559,8 @@ export default function RolesPage() {
     setLoading(true);
     try {
       const [rolesRes, permsRes] = await Promise.all([rolesApi.list(), rolesApi.listPermissions()]);
-      setRoles(rolesRes.data ?? []);
-      setPermissions(permsRes.data ?? []);
+      setRoles((rolesRes.data as Role[]) ?? []);
+      setPermissions((permsRes.data as Permission[]) ?? []);
     } catch (e) {
       console.error(e);
     } finally {

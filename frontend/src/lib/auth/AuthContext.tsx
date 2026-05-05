@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useState, useCallback } from 'react';
 import { authApi } from '@/lib/api/auth';
 import { setTokens, clearTokens, getAccessToken, getRefreshToken } from '@/lib/api/client';
 import type { User, UserStore } from '@/types';
@@ -24,7 +24,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedStore, setSelectedStore] = useState<UserStore | null>(null);
 
-  const stores = user?.stores ?? [];
+  const stores = useMemo(() => user?.stores ?? [], [user?.stores]);
 
   // On mount: try to restore session from stored refresh token
   useEffect(() => {

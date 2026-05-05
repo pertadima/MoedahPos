@@ -225,7 +225,7 @@ function AnimatedCounter({
 
     animationFrameId = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(animationFrameId);
-  }, [value, duration]);
+  }, [value, duration, displayValue]);
 
   if (isCurrency) {
     const isNeg = displayValue < 0;
@@ -490,7 +490,7 @@ export default function UnifiedReportsPage() {
             const response = await reportsApi.cashFlowDetail(storeId || '', date);
             setCashFlowDetailByDate(prev => ({
               ...prev,
-              [date]: response.data || [],
+              [date]: (response.data as CashFlowDetailEntry[]) || [],
             }));
           } catch (err) {
             console.error(`Failed to load cash flow detail for ${date}:`, err);
