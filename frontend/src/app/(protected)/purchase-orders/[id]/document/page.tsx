@@ -42,7 +42,7 @@ const DOC_TITLES: Record<string, string> = {
 export default function PODocumentPage() {
   const params = useParams();
   const searchParams = useSearchParams();
-  const { selectedStore } = useAuth();
+  const { selectedStore, user } = useAuth();
 
   const poId = params?.id as string;
   const docType = (searchParams?.get('type') ?? 'invoice') as
@@ -52,13 +52,30 @@ export default function PODocumentPage() {
 
   const [data, setData] = useState<PODocumentData | null>(null);
   const [error, setError] = useState('');
+  const [docLogs, setDocLogs] = useState<Array<{ at: string; by: string; type: string }>>([]);
 
   useEffect(() => {
     if (!selectedStore || !poId) return;
     getPODocument(selectedStore.store_id, poId, docType)
-      .then(setData)
+      .then(res => {
+        setData(res);
+        const key = `po_doc_logs_${selectedStore.store_id}_${poId}`;
+        const by = user?.name || user?.email || 'User';
+        const nextEntry = { at: new Date().toISOString(), by, type: docType };
+        try {
+          const existingRaw = localStorage.getItem(key);
+          const existing = existingRaw
+            ? (JSON.parse(existingRaw) as Array<{ at: string; by: string; type: string }>)
+            : [];
+          const next = [nextEntry, ...existing].slice(0, 20);
+          localStorage.setItem(key, JSON.stringify(next));
+          setDocLogs(next);
+        } catch {
+          setDocLogs([nextEntry]);
+        }
+      })
       .catch(() => setError('Gagal memuat data dokumen.'));
-  }, [selectedStore, poId, docType]);
+  }, [selectedStore, poId, docType, user]);
 
   if (error) {
     return (
@@ -76,6 +93,8 @@ export default function PODocumentPage() {
 
   const { po, debt_summary, termins, supplier_name } = data;
   const docTitle = DOC_TITLES[docType] ?? 'DOKUMEN';
+  const isReceipt = docType === 'receipt';
+  const isAgreement = docType === 'termin_agreement';
 
   return (
     <>
@@ -196,23 +215,30 @@ export default function PODocumentPage() {
         {/* Debt Summary */}
         <div
           style={{
-            background: '#fff',
-            border: '2px solid #000',
+            background: isReceipt ? '#f9fafb' : '#fff',
+            border: isAgreement ? '3px double #000' : '2px solid #000',
             borderRadius: 6,
             padding: '16px 20px',
             marginBottom: 28,
             display: 'grid',
-            gridTemplateColumns: 'repeat(4, 1fr)',
+            gridTemplateColumns: isReceipt ? 'repeat(3, 1fr)' : 'repeat(4, 1fr)',
             gap: 12,
             color: '#000',
           }}
         >
-          {[
-            ['Total PO', formatIDR(po.total_amount)],
-            ['Total Termin', formatIDR(debt_summary.total_termin)],
-            ['Total Dibayar', formatIDR(debt_summary.total_paid)],
-            ['Sisa Hutang', formatIDR(debt_summary.remaining_debt)],
-          ].map(([label, value]) => (
+          {(isReceipt
+            ? [
+                ['Total Dibayar', formatIDR(debt_summary.total_paid)],
+                ['Sisa Hutang', formatIDR(debt_summary.remaining_debt)],
+                ['Status', debt_summary.remaining_debt > 0 ? 'Belum Lunas' : 'Lunas'],
+              ]
+            : [
+                ['Total PO', formatIDR(po.total_amount)],
+                ['Total Termin', formatIDR(debt_summary.total_termin)],
+                ['Total Dibayar', formatIDR(debt_summary.total_paid)],
+                ['Sisa Hutang', formatIDR(debt_summary.remaining_debt)],
+              ]
+          ).map(([label, value]) => (
             <div key={label}>
               <div style={{ fontSize: 11, fontWeight: 700, marginBottom: 2 }}>{label}</div>
               <div style={{ fontWeight: 700, fontSize: 15 }}>{value}</div>
@@ -223,7 +249,7 @@ export default function PODocumentPage() {
         {/* Termin Table */}
         <div style={{ marginBottom: 32 }}>
           <div style={{ fontWeight: 700, fontSize: 14, color: '#000', marginBottom: 10 }}>
-            Jadwal Termin Pembayaran
+            {isAgreement ? 'Pasal Termin Pembayaran' : 'Jadwal Termin Pembayaran'}
           </div>
           <table>
             <thead>
@@ -269,10 +295,10 @@ export default function PODocumentPage() {
         </div>
 
         {/* Payment History (receipt & invoice) */}
-        {docType !== 'termin_agreement' && termins.some(t => t.payments.length > 0) && (
+        {!isAgreement && termins.some(t => t.payments.length > 0) && (
           <div style={{ marginBottom: 32 }}>
             <div style={{ fontWeight: 700, fontSize: 14, color: '#000', marginBottom: 10 }}>
-              Riwayat Pembayaran
+              {isReceipt ? 'Detail Pembayaran Diterima' : 'Riwayat Pembayaran'}
             </div>
             <table>
               <thead>
@@ -304,6 +330,55 @@ export default function PODocumentPage() {
             </table>
           </div>
         )}
+
+        {isAgreement && (
+          <div
+            style={{
+              marginBottom: 32,
+              border: '1px solid #000',
+              padding: 14,
+              fontSize: 13,
+              lineHeight: 1.7,
+            }}
+          >
+            <div style={{ fontWeight: 700, marginBottom: 8 }}>Ketentuan Perjanjian</div>
+            <div>1. Pihak pembeli wajib melunasi setiap termin sesuai tanggal jatuh tempo.</div>
+            <div>
+              2. Keterlambatan pembayaran dapat dikenakan kebijakan tambahan sesuai kesepakatan.
+            </div>
+            <div>
+              3. Dokumen ini berlaku sebagai bukti kesepakatan pembayaran bertahap atas PO ini.
+            </div>
+          </div>
+        )}
+
+        <div style={{ marginBottom: 24 }}>
+          <div style={{ fontWeight: 700, fontSize: 14, color: '#000', marginBottom: 8 }}>
+            Log Generate Dokumen
+          </div>
+          {docLogs.length === 0 ? (
+            <div style={{ fontSize: 12, color: '#000' }}>Belum ada log.</div>
+          ) : (
+            <table>
+              <thead>
+                <tr>
+                  <th>Waktu</th>
+                  <th>Tipe</th>
+                  <th>User</th>
+                </tr>
+              </thead>
+              <tbody>
+                {docLogs.map((l, idx) => (
+                  <tr key={`${l.at}-${idx}`}>
+                    <td>{formatDate(l.at)}</td>
+                    <td>{DOC_TITLES[l.type] ?? l.type}</td>
+                    <td>{l.by}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
 
         {/* Signature Block */}
         <div
