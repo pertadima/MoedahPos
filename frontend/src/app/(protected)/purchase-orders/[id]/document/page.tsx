@@ -225,7 +225,8 @@ export default function PODocumentPage() {
           <table>
             <thead>
               <tr>
-                <th>Item</th>
+                <th style={{ width: '40%' }}>Item</th>
+                <th style={{ textAlign: 'right' }}>SKU</th>
                 <th style={{ textAlign: 'right' }}>Qty</th>
                 <th style={{ textAlign: 'right' }}>Harga</th>
                 <th style={{ textAlign: 'right' }}>Subtotal</th>
@@ -234,14 +235,72 @@ export default function PODocumentPage() {
             <tbody>
               {po.items?.map(item => (
                 <tr key={item.id}>
-                  <td>{item.product_name}</td>
-                  <td style={{ textAlign: 'right' }}>
+                  <td style={{ borderBottom: '1px solid #e5e7eb', padding: '6px 8px' }}>
+                    {item.product_name}
+                  </td>
+                  <td
+                    style={{
+                      textAlign: 'right',
+                      fontSize: 12,
+                      color: '#666',
+                      borderBottom: '1px solid #e5e7eb',
+                      padding: '6px 8px',
+                    }}
+                  >
+                    {item.product_sku || '—'}
+                  </td>
+                  <td
+                    style={{
+                      textAlign: 'right',
+                      borderBottom: '1px solid #e5e7eb',
+                      padding: '6px 8px',
+                    }}
+                  >
                     {item.quantity} {item.unit}
                   </td>
-                  <td style={{ textAlign: 'right' }}>{formatIDR(item.unit_cost)}</td>
-                  <td style={{ textAlign: 'right' }}>{formatIDR(item.subtotal)}</td>
+                  <td
+                    style={{
+                      textAlign: 'right',
+                      borderBottom: '1px solid #e5e7eb',
+                      padding: '6px 8px',
+                    }}
+                  >
+                    {formatIDR(item.unit_cost)}
+                  </td>
+                  <td
+                    style={{
+                      textAlign: 'right',
+                      borderBottom: '1px solid #e5e7eb',
+                      padding: '6px 8px',
+                    }}
+                  >
+                    {formatIDR(item.subtotal)}
+                  </td>
                 </tr>
               ))}
+              <tr>
+                <td
+                  colSpan={4}
+                  style={{
+                    textAlign: 'right',
+                    fontWeight: 700,
+                    padding: '8px 8px',
+                    borderTop: '2px solid #000',
+                  }}
+                >
+                  Total
+                </td>
+                <td
+                  style={{
+                    textAlign: 'right',
+                    fontWeight: 700,
+                    padding: '8px 8px',
+                    borderTop: '2px solid #000',
+                  }}
+                >
+                  {formatIDR(po.total_amount)}
+                </td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -432,7 +491,8 @@ export default function PODocumentPage() {
             color: '#000',
           }}
         >
-          Dokumen ini dibuat secara otomatis oleh sistem MoedahPOS · {po.po_number}
+          Halaman 1 dari 1 · Dokumen ini dibuat secara otomatis oleh sistem MoedahPOS ·{' '}
+          {po.po_number}
         </div>
       </div>
     </>
