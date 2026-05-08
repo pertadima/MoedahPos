@@ -74,9 +74,9 @@ func (_m *TerminServiceInterface) CreateTerminSchedule(ctx context.Context, poID
 	return r0, r1
 }
 
-// GenerateDocumentData provides a mock function with given fields: ctx, poID, docType
-func (_m *TerminServiceInterface) GenerateDocumentData(ctx context.Context, poID string, docType string) (*dto.PODocumentData, error) {
-	ret := _m.Called(ctx, poID, docType)
+// GenerateDocumentData provides a mock function with given fields: ctx, poID, docType, userID
+func (_m *TerminServiceInterface) GenerateDocumentData(ctx context.Context, poID string, docType string, userID string) (*dto.PODocumentData, error) {
+	ret := _m.Called(ctx, poID, docType, userID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GenerateDocumentData")
@@ -84,19 +84,19 @@ func (_m *TerminServiceInterface) GenerateDocumentData(ctx context.Context, poID
 
 	var r0 *dto.PODocumentData
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) (*dto.PODocumentData, error)); ok {
-		return rf(ctx, poID, docType)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) (*dto.PODocumentData, error)); ok {
+		return rf(ctx, poID, docType, userID)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) *dto.PODocumentData); ok {
-		r0 = rf(ctx, poID, docType)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) *dto.PODocumentData); ok {
+		r0 = rf(ctx, poID, docType, userID)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*dto.PODocumentData)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
-		r1 = rf(ctx, poID, docType)
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, string) error); ok {
+		r1 = rf(ctx, poID, docType, userID)
 	} else {
 		r1 = ret.Error(1)
 	}

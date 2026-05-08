@@ -24,6 +24,7 @@ import {
   Trash2,
   FileText,
   Eye,
+  History,
 } from 'lucide-react';
 import DatePicker from '@/components/ui/DatePicker';
 import Portal from '@/components/ui/Portal';
@@ -38,9 +39,12 @@ import type {
   Store,
   Termin,
   RecordPaymentRequest,
+  ActivityLog,
+  PaginatedData,
 } from '@/types';
 import { ApiError } from '@/lib/api/client';
 import { listTermins, createTerminSchedule, recordPayment } from '@/lib/api/termins';
+import { activityLogsApi } from '@/lib/api/activity-logs';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 const STATUS_BADGE: Record<string, string> = {
@@ -1990,6 +1994,89 @@ function PODetailDrawer({
   );
 }
 
+interface DocumentLogModalProps {
+  po: PurchaseOrder;
+  storeId: string;
+  onClose: () => void;
+}
+
+function DocumentLogModal({ po, storeId, onClose }: DocumentLogModalProps) {
+  const [loading, setLoading] = useState(true);
+  const [rows, setRows] = useState<ActivityLog[]>([]);
+
+  useEffect(() => {
+    let mounted = true;
+    activityLogsApi
+      .list(storeId, {
+        per_page: 100,
+        module: 'PURCHASE',
+        action_type: 'PURCHASE_ORDER_DOCUMENT_GENERATE',
+      })
+      .then(res => {
+        if (!mounted) return;
+        const data = ((res.data as PaginatedData<ActivityLog>).data ?? []).filter(
+          l => l.reference_id === po.id
+        );
+        setRows(data);
+      })
+      .finally(() => {
+        if (mounted) setLoading(false);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [storeId, po.id]);
+
+  return (
+    <Portal>
+      <div className="modal-overlay" style={{ zIndex: 5000 }} onClick={onClose}>
+        <div className="modal-box" style={{ maxWidth: 760 }} onClick={e => e.stopPropagation()}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
+            <h2 className="type-subheading">Log Generate Dokumen · {po.po_number}</h2>
+            <button className="btn btn-ghost btn-sm" onClick={onClose}>
+              <X size={14} />
+            </button>
+          </div>
+          {loading ? (
+            <div style={{ display: 'flex', justifyContent: 'center', padding: 26 }}>
+              <Loader2 size={20} className="loading-spin" />
+            </div>
+          ) : rows.length === 0 ? (
+            <div className="empty-state" style={{ padding: 20 }}>
+              Belum ada log generate dokumen
+            </div>
+          ) : (
+            <div className="tbl-container">
+              <table className="tbl">
+                <thead>
+                  <tr>
+                    <th>Waktu</th>
+                    <th>User</th>
+                    <th>Tipe Dokumen</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map(r => {
+                    const metadata = r.metadata as { document_type?: string } | null;
+                    return (
+                      <tr key={r.id}>
+                        <td>{formatDate(r.created_at)}</td>
+                        <td>{r.user_name}</td>
+                        <td>{metadata?.document_type ?? '-'}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </div>
+    </Portal>
+  );
+}
+
 // ── Main Page ─────────────────────────────────────────────────────────────────
 export default function PurchaseOrdersPage() {
   const { selectedStore } = useAuth();
@@ -1999,6 +2086,7 @@ export default function PurchaseOrdersPage() {
   const [showModal, setShowModal] = useState(false);
   const [detailPO, setDetailPO] = useState<PurchaseOrder | null>(null);
   const [invoicePO, setInvoicePO] = useState<PurchaseOrder | null>(null);
+  const [docLogPO, setDocLogPO] = useState<PurchaseOrder | null>(null);
   const [payingPO, setPayingPO] = useState<PurchaseOrder | null>(null);
   const [storeDetail, setStoreDetail] = useState<Store | null>(null);
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
@@ -2606,6 +2694,16 @@ export default function PurchaseOrdersPage() {
                                 >
                                   <Printer size={13} />
                                 </button>
+                                <button
+                                  className="btn btn-ghost btn-sm"
+                                  onClick={e => {
+                                    e.stopPropagation();
+                                    setDocLogPO(po);
+                                  }}
+                                  title="Lihat log dokumen"
+                                >
+                                  <History size={13} />
+                                </button>
                               </div>
                             </td>
                           </tr>
@@ -2665,6 +2763,9 @@ export default function PurchaseOrdersPage() {
         <Portal>
           <InvoiceModal po={invoicePO} store={storeDetail} onClose={() => setInvoicePO(null)} />
         </Portal>
+      )}
+      {docLogPO && storeId && (
+        <DocumentLogModal po={docLogPO} storeId={storeId} onClose={() => setDocLogPO(null)} />
       )}
       {payingPO && (
         <Portal>

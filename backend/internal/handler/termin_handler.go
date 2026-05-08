@@ -112,7 +112,7 @@ func (h *TerminHandler) GetDocument(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data, err := h.terminSvc.GenerateDocumentData(r.Context(), poID, docType)
+	data, err := h.terminSvc.GenerateDocumentData(r.Context(), poID, docType, userIDFromCtx(r))
 	if err != nil {
 		h.handleErr(w, err)
 		return

@@ -42,7 +42,7 @@ const DOC_TITLES: Record<string, string> = {
 export default function PODocumentPage() {
   const params = useParams();
   const searchParams = useSearchParams();
-  const { selectedStore, user } = useAuth();
+  const { selectedStore } = useAuth();
 
   const poId = params?.id as string;
   const docType = (searchParams?.get('type') ?? 'invoice') as
@@ -52,30 +52,13 @@ export default function PODocumentPage() {
 
   const [data, setData] = useState<PODocumentData | null>(null);
   const [error, setError] = useState('');
-  const [docLogs, setDocLogs] = useState<Array<{ at: string; by: string; type: string }>>([]);
 
   useEffect(() => {
     if (!selectedStore || !poId) return;
     getPODocument(selectedStore.store_id, poId, docType)
-      .then(res => {
-        setData(res);
-        const key = `po_doc_logs_${selectedStore.store_id}_${poId}`;
-        const by = user?.name || user?.email || 'User';
-        const nextEntry = { at: new Date().toISOString(), by, type: docType };
-        try {
-          const existingRaw = localStorage.getItem(key);
-          const existing = existingRaw
-            ? (JSON.parse(existingRaw) as Array<{ at: string; by: string; type: string }>)
-            : [];
-          const next = [nextEntry, ...existing].slice(0, 20);
-          localStorage.setItem(key, JSON.stringify(next));
-          setDocLogs(next);
-        } catch {
-          setDocLogs([nextEntry]);
-        }
-      })
+      .then(setData)
       .catch(() => setError('Gagal memuat data dokumen.'));
-  }, [selectedStore, poId, docType, user]);
+  }, [selectedStore, poId, docType]);
 
   if (error) {
     return (
@@ -351,34 +334,6 @@ export default function PODocumentPage() {
             </div>
           </div>
         )}
-
-        <div style={{ marginBottom: 24 }}>
-          <div style={{ fontWeight: 700, fontSize: 14, color: '#000', marginBottom: 8 }}>
-            Log Generate Dokumen
-          </div>
-          {docLogs.length === 0 ? (
-            <div style={{ fontSize: 12, color: '#000' }}>Belum ada log.</div>
-          ) : (
-            <table>
-              <thead>
-                <tr>
-                  <th>Waktu</th>
-                  <th>Tipe</th>
-                  <th>User</th>
-                </tr>
-              </thead>
-              <tbody>
-                {docLogs.map((l, idx) => (
-                  <tr key={`${l.at}-${idx}`}>
-                    <td>{formatDate(l.at)}</td>
-                    <td>{DOC_TITLES[l.type] ?? l.type}</td>
-                    <td>{l.by}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
 
         {/* Signature Block */}
         <div

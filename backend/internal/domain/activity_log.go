@@ -18,9 +18,10 @@ const (
 	ActionStockAdjustment   ActionType = "STOCK_ADJUSTMENT"
 
 	// Financial Activities
-	ActionPurchaseOrderCreate  ActionType = "PURCHASE_ORDER_CREATE"
-	ActionPurchaseOrderUpdate  ActionType = "PURCHASE_ORDER_UPDATE"
-	ActionPurchaseOrderPayment ActionType = "PURCHASE_ORDER_PAYMENT"
+	ActionPurchaseOrderCreate           ActionType = "PURCHASE_ORDER_CREATE"
+	ActionPurchaseOrderUpdate           ActionType = "PURCHASE_ORDER_UPDATE"
+	ActionPurchaseOrderPayment          ActionType = "PURCHASE_ORDER_PAYMENT"
+	ActionPurchaseOrderDocumentGenerate ActionType = "PURCHASE_ORDER_DOCUMENT_GENERATE"
 
 	ActionIncomeCreate ActionType = "INCOME_CREATE"
 	ActionIncomeUpdate ActionType = "INCOME_UPDATE"
