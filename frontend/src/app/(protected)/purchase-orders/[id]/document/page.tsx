@@ -348,14 +348,18 @@ export default function PODocumentPage() {
           }}
         >
           <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 64 }}>Pihak Supplier / Pemberi Barang</div>
+            <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 64 }}>
+              Pihak Supplier / Pemberi Barang
+            </div>
             <div style={{ borderTop: '1px solid #000', paddingTop: 6, fontSize: 12 }}>
               Tanda Tangan &amp; Nama
             </div>
           </div>
 
           <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 4 }}>Pihak Pembeli / Penerima</div>
+            <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 4 }}>
+              Pihak Pembeli / Penerima
+            </div>
             <div
               style={{
                 border: '2px solid #16a34a',
@@ -369,7 +373,9 @@ export default function PODocumentPage() {
                 minWidth: 160,
               }}
             >
-              <div style={{ fontSize: '0.6rem', color: '#16a34a', fontWeight: 700, letterSpacing: 1 }}>
+              <div
+                style={{ fontSize: '0.6rem', color: '#16a34a', fontWeight: 700, letterSpacing: 1 }}
+              >
                 VERIFIED
               </div>
               <div style={{ fontSize: '0.85rem', fontWeight: 800, color: '#15803d' }}>

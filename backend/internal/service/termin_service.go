@@ -250,6 +250,12 @@ func (s *TerminService) GenerateDocumentData(ctx context.Context, poID, docType 
 		supplierName = *po.SupplierName
 	}
 
+	storeName := ""
+	store, err := s.storeRepo.FindByID(ctx, po.StoreID)
+	if err == nil && store != nil {
+		storeName = store.Name
+	}
+
 	// Map PO to POResponse for consistency with existing API shape.
 	poResp := dto.POResponse{
 		ID:           po.ID,
@@ -271,6 +277,7 @@ func (s *TerminService) GenerateDocumentData(ctx context.Context, poID, docType 
 		DebtSummary:  *debt,
 		Termins:      termins,
 		SupplierName: supplierName,
+		StoreName:    storeName,
 	}, nil
 }
 
