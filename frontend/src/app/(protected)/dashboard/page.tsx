@@ -141,14 +141,20 @@ export default function DashboardPage() {
 
   const handleCreatePO = () => {
     if (!selectedStore || lowStock.length === 0) return;
-    const items = lowStock.map(s => ({
-      product_id: s.product_id,
-      product_name: s.product_name,
-      product_sku: s.product_sku,
-      unit: s.unit,
-      quantity: s.min_quantity > 0 ? s.min_quantity : 1,
-      unit_cost: s.cost_price || 0,
-    }));
+    const items = lowStock.map(s => {
+      const targetStock = (s.min_quantity > 0 ? s.min_quantity : 1) + 1;
+      const currentStock = s.quantity > 0 ? s.quantity : 0;
+      const quantityToOrder = Math.max(targetStock - currentStock, 1);
+
+      return {
+        product_id: s.product_id,
+        product_name: s.product_name,
+        product_sku: s.product_sku,
+        unit: s.unit,
+        quantity: quantityToOrder,
+        unit_cost: s.cost_price || 0,
+      };
+    });
     sessionStorage.setItem('openCreatePOWithItems', JSON.stringify(items));
     router.push('/purchase-orders');
   };
