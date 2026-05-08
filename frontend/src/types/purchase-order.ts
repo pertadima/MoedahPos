@@ -36,11 +36,16 @@ export interface PurchaseOrder {
 export interface PaymentRecord {
   id: string;
   termin_id: string;
-  amount_paid: number;
-  payment_date: string;
-  payment_method: 'cash' | 'transfer' | 'check' | 'other';
-  notes: string;
-  recorded_by_name: string;
+  amount: number;
+  paid_at: string;
+  paid_by: string;
+  paid_by_name: string;
+  note?: string;
+  payment_method?: string;
+  amount_paid?: number;
+  payment_date?: string;
+  notes?: string;
+  recorded_by_name?: string;
   created_at: string;
 }
 
@@ -82,6 +87,7 @@ export interface PODocumentData {
     status: string;
     notes: string;
     created_at: string;
+    items?: POItem[];
   };
   debt_summary: PODebtSummary;
   termins: Termin[];

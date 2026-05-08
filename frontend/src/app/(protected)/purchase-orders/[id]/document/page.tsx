@@ -6,8 +6,6 @@ import { getPODocument } from '@/lib/api/termins';
 import type { PODocumentData, Termin } from '@/types';
 import { useAuth } from '@/lib/auth/AuthContext';
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
 function formatIDR(n: number) {
   return new Intl.NumberFormat('id-ID', {
     style: 'currency',
@@ -36,8 +34,6 @@ const DOC_TITLES: Record<string, string> = {
   receipt: 'BUKTI PEMBAYARAN',
   termin_agreement: 'PERJANJIAN TERMIN PEMBAYARAN',
 };
-
-// ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function PODocumentPage() {
   const params = useParams();
@@ -79,9 +75,18 @@ export default function PODocumentPage() {
   const isReceipt = docType === 'receipt';
   const isAgreement = docType === 'termin_agreement';
 
+  const stampDate = new Date().toLocaleDateString('id-ID', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  });
+  const stampTime = new Date().toLocaleTimeString('id-ID', {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+
   return (
     <>
-      {/* Print-specific global styles */}
       <style>{`
         @media print {
           .no-print { display: none !important; }
@@ -91,11 +96,10 @@ export default function PODocumentPage() {
         .page { max-width: 800px; margin: 0 auto; background: white; padding: 48px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); }
         table { width: 100%; border-collapse: collapse; }
         th, td { padding: 8px 12px; text-align: left; border-bottom: 1px solid #e5e7eb; font-size: 13px; color: #000; }
-        th { background: #f9fafb; font-weight: 600; color: #000; border-top: 2px solid #000; border-bottom: 2px solid #000; }
+        th { background: #f9fafb; fontWeight: 600; color: #000; border-top: 2px solid #000; border-bottom: 2px solid #000; }
         .badge { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; border: 1px solid #ccc; background: #f9fafb; }
       `}</style>
 
-      {/* Print button — hidden when printing */}
       <div
         className="no-print"
         style={{
@@ -142,7 +146,6 @@ export default function PODocumentPage() {
       </div>
 
       <div className="page">
-        {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 32 }}>
           <div>
             <div
@@ -170,10 +173,8 @@ export default function PODocumentPage() {
           </div>
         </div>
 
-        {/* Divider */}
         <div style={{ borderTop: '3px solid #000', marginBottom: 24 }} />
 
-        {/* PO + Supplier Info */}
         <div
           style={{
             display: 'grid',
@@ -195,117 +196,78 @@ export default function PODocumentPage() {
           </div>
         </div>
 
-        {/* Debt Summary */}
         <div
           style={{
             background: isReceipt ? '#f9fafb' : '#fff',
-            border: isAgreement ? '3px double #000' : '2px solid #000',
-            borderRadius: 6,
-            padding: '16px 20px',
+            border: '1px solid #e5e7eb',
+            borderRadius: 8,
+            padding: '12px 16px',
             marginBottom: 28,
-            display: 'grid',
-            gridTemplateColumns: isReceipt ? 'repeat(3, 1fr)' : 'repeat(4, 1fr)',
-            gap: 12,
             color: '#000',
           }}
         >
-          {(isReceipt
-            ? [
-                ['Total Dibayar', formatIDR(debt_summary.total_paid)],
-                ['Sisa Hutang', formatIDR(debt_summary.remaining_debt)],
-                ['Status', debt_summary.remaining_debt > 0 ? 'Belum Lunas' : 'Lunas'],
-              ]
-            : [
-                ['Total PO', formatIDR(po.total_amount)],
-                ['Total Termin', formatIDR(debt_summary.total_termin)],
-                ['Total Dibayar', formatIDR(debt_summary.total_paid)],
-                ['Sisa Hutang', formatIDR(debt_summary.remaining_debt)],
-              ]
-          ).map(([label, value]) => (
-            <div key={label}>
-              <div style={{ fontSize: 11, fontWeight: 700, marginBottom: 2 }}>{label}</div>
-              <div style={{ fontWeight: 700, fontSize: 15 }}>{value}</div>
+          {[
+            { label: 'Total Tagihan', value: formatIDR(po.total_amount) },
+            { label: 'Sudah Dibayar', value: formatIDR(debt_summary.total_paid) },
+            { label: 'Sisa Hutang', value: formatIDR(debt_summary.remaining_debt) },
+          ].map(label => (
+            <div key={label.label} style={{ fontSize: 13, marginBottom: 4 }}>
+              <span>{label.label}: </span>
+              <strong>{label.value}</strong>
             </div>
           ))}
         </div>
 
-        {/* Termin Table */}
         <div style={{ marginBottom: 32 }}>
           <div style={{ fontWeight: 700, fontSize: 14, color: '#000', marginBottom: 10 }}>
-            {isAgreement ? 'Pasal Termin Pembayaran' : 'Jadwal Termin Pembayaran'}
+            Rincian Item
           </div>
           <table>
             <thead>
               <tr>
-                <th>Termin</th>
-                <th>Jatuh Tempo</th>
-                <th style={{ textAlign: 'right' }}>Jumlah</th>
-                <th style={{ textAlign: 'right' }}>Dibayar</th>
-                <th style={{ textAlign: 'right' }}>Sisa</th>
-                <th>Status</th>
-                <th>Catatan</th>
+                <th>Item</th>
+                <th style={{ textAlign: 'right' }}>Qty</th>
+                <th style={{ textAlign: 'right' }}>Harga</th>
+                <th style={{ textAlign: 'right' }}>Subtotal</th>
               </tr>
             </thead>
             <tbody>
-              {termins.map(t => {
-                const { label } = statusLabel(t);
-                return (
-                  <tr key={t.id}>
-                    <td style={{ fontWeight: 600 }}>Termin {t.termin_number}</td>
-                    <td>{formatDate(t.due_date)}</td>
-                    <td style={{ textAlign: 'right' }}>{formatIDR(t.amount)}</td>
-                    <td style={{ textAlign: 'right' }}>{formatIDR(t.amount_paid)}</td>
-                    <td style={{ textAlign: 'right', fontWeight: 600 }}>
-                      {formatIDR(t.amount_due)}
-                    </td>
-                    <td>
-                      <span className="badge">{label}</span>
-                    </td>
-                    <td style={{ fontSize: 12 }}>{t.notes || '—'}</td>
-                  </tr>
-                );
-              })}
-              {/* Total row */}
-              <tr style={{ background: '#f9fafb', fontWeight: 700 }}>
-                <td colSpan={2}>Total</td>
-                <td style={{ textAlign: 'right' }}>{formatIDR(debt_summary.total_termin)}</td>
-                <td style={{ textAlign: 'right' }}>{formatIDR(debt_summary.total_paid)}</td>
-                <td style={{ textAlign: 'right' }}>{formatIDR(debt_summary.remaining_debt)}</td>
-                <td colSpan={2} />
-              </tr>
+              {po.items?.map(item => (
+                <tr key={item.id}>
+                  <td>{item.product_name}</td>
+                  <td style={{ textAlign: 'right' }}>
+                    {item.quantity} {item.unit}
+                  </td>
+                  <td style={{ textAlign: 'right' }}>{formatIDR(item.unit_cost)}</td>
+                  <td style={{ textAlign: 'right' }}>{formatIDR(item.subtotal)}</td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
 
-        {/* Payment History (receipt & invoice) */}
-        {!isAgreement && termins.some(t => t.payments.length > 0) && (
+        {isReceipt && (
           <div style={{ marginBottom: 32 }}>
             <div style={{ fontWeight: 700, fontSize: 14, color: '#000', marginBottom: 10 }}>
-              {isReceipt ? 'Detail Pembayaran Diterima' : 'Riwayat Pembayaran'}
+              Riwayat Pembayaran
             </div>
             <table>
               <thead>
                 <tr>
-                  <th>Termin</th>
-                  <th>Tanggal Bayar</th>
-                  <th>Metode</th>
+                  <th>Tanggal</th>
+                  <th>Oleh</th>
                   <th style={{ textAlign: 'right' }}>Jumlah</th>
-                  <th>Catatan</th>
-                  <th>Dicatat Oleh</th>
                 </tr>
               </thead>
               <tbody>
-                {termins.flatMap(t =>
-                  t.payments.map(p => (
-                    <tr key={p.id}>
-                      <td>Termin {t.termin_number}</td>
-                      <td>{formatDate(p.payment_date)}</td>
-                      <td style={{ textTransform: 'capitalize' }}>{p.payment_method}</td>
-                      <td style={{ textAlign: 'right', fontWeight: 600 }}>
-                        {formatIDR(p.amount_paid)}
+                {termins.map(t =>
+                  t.payments.map(r => (
+                    <tr key={r.id}>
+                      <td>{formatDate(r.paid_at ?? r.payment_date ?? '')}</td>
+                      <td>{r.paid_by_name || r.recorded_by_name || '—'}</td>
+                      <td style={{ textAlign: 'right' }}>
+                        {formatIDR(r.amount ?? r.amount_paid ?? 0)}
                       </td>
-                      <td style={{ fontSize: 12 }}>{p.notes || '—'}</td>
-                      <td style={{ fontSize: 12 }}>{p.recorded_by_name}</td>
                     </tr>
                   ))
                 )}
@@ -315,13 +277,43 @@ export default function PODocumentPage() {
         )}
 
         {isAgreement && (
+          <div style={{ marginBottom: 32 }}>
+            <div style={{ fontWeight: 700, fontSize: 14, color: '#000', marginBottom: 10 }}>
+              Jadwal Termin
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Termin</th>
+                  <th>Jatuh Tempo</th>
+                  <th style={{ textAlign: 'right' }}>Jumlah</th>
+                  <th style={{ textAlign: 'center' }}>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {termins.map(t => (
+                  <tr key={t.id}>
+                    <td>Termin {t.termin_number}</td>
+                    <td>{formatDate(t.due_date)}</td>
+                    <td style={{ textAlign: 'right' }}>{formatIDR(t.amount)}</td>
+                    <td style={{ textAlign: 'center' }}>
+                      <span className="badge">{statusLabel(t).label}</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {isAgreement && (
           <div
             style={{
+              border: '1px solid #e5e7eb',
+              borderRadius: 8,
+              padding: '16px 20px',
               marginBottom: 32,
-              border: '1px solid #000',
-              padding: 14,
-              fontSize: 13,
-              lineHeight: 1.7,
+              color: '#000',
             }}
           >
             <div style={{ fontWeight: 700, marginBottom: 8 }}>Ketentuan Perjanjian</div>
@@ -335,7 +327,6 @@ export default function PODocumentPage() {
           </div>
         )}
 
-        {/* Signature Block */}
         <div
           style={{
             display: 'grid',
@@ -360,25 +351,18 @@ export default function PODocumentPage() {
             <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 4 }}>
               Pihak Pembeli / Penerima
             </div>
-            <div
-              style={{
-                position: 'relative',
-                width: 148,
-                height: 148,
-                margin: '0 auto',
-              }}
-            >
+            <div style={{ position: 'relative', width: 148, height: 148, margin: '0 auto' }}>
               <svg width="148" height="148" style={{ position: 'absolute', top: 0, left: 0 }}>
+                <circle cx="74" cy="74" r="70" fill="none" stroke="#ef4444" strokeWidth="2.5" />
                 <circle
                   cx="74"
                   cy="74"
-                  r="70"
+                  r="64"
                   fill="none"
-                  stroke="#dc2626"
-                  strokeWidth="2.5"
-                  strokeDasharray="0"
+                  stroke="#ef4444"
+                  strokeWidth="0.5"
+                  strokeDasharray="3,3"
                 />
-                <circle cx="74" cy="74" r="64" fill="none" stroke="#dc2626" strokeWidth="0.5" />
               </svg>
               <div
                 style={{
@@ -396,72 +380,71 @@ export default function PODocumentPage() {
               >
                 <div
                   style={{
-                    position: 'absolute',
-                    top: 6,
-                    left: 0,
-                    width: '100%',
-                    textAlign: 'center',
-                    fontSize: '0.55rem',
-                    fontWeight: 700,
-                    color: '#dc2626',
-                    letterSpacing: 2,
-                  }}
-                >
-                  DOKUMEN RESMI
-                </div>
-                <div
-                  style={{
                     fontSize: '0.85rem',
                     fontWeight: 800,
-                    color: '#dc2626',
+                    color: '#ef4444',
                     textAlign: 'center',
                     lineHeight: 1.2,
-                    marginTop: 20,
+                    opacity: 0.75,
                   }}
                 >
                   {data.store_name || 'MoedahPOS'}
                 </div>
-                <div style={{ width: 80, height: 1, background: '#dc2626', margin: '2px 0' }} />
+                <div
+                  style={{
+                    width: 80,
+                    height: 1,
+                    background: '#ef4444',
+                    opacity: 0.75,
+                    margin: '2px 0',
+                  }}
+                />
                 <div
                   style={{
                     fontSize: '0.6rem',
                     fontWeight: 700,
-                    color: '#dc2626',
+                    color: '#ef4444',
                     textAlign: 'center',
                     letterSpacing: 1,
+                    opacity: 0.75,
                   }}
                 >
                   MOEDAH POS
                 </div>
-                <div style={{ width: 60, height: 1, background: '#dc2626', margin: '2px 0' }} />
+                <div
+                  style={{
+                    width: 60,
+                    height: 1,
+                    background: '#ef4444',
+                    opacity: 0.75,
+                    margin: '2px 0',
+                  }}
+                />
                 <div
                   style={{
                     fontSize: '0.58rem',
-                    color: '#dc2626',
+                    color: '#ef4444',
                     textAlign: 'center',
+                    opacity: 0.75,
                   }}
                 >
-                  {new Date().toLocaleDateString('id-ID', {
-                    day: '2-digit',
-                    month: 'short',
-                    year: 'numeric',
-                  })}
+                  {stampDate}
                 </div>
                 <div
                   style={{
                     fontSize: '0.58rem',
-                    color: '#dc2626',
+                    color: '#ef4444',
                     textAlign: 'center',
+                    opacity: 0.75,
                   }}
                 >
-                  {new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                  {stampTime}
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Footer */}
         <div
           style={{
             marginTop: 32,

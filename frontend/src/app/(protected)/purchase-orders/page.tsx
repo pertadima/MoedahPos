@@ -720,15 +720,17 @@ function TerminPanel({ po, storeId, onOpenDoc, onUpdate }: TerminPanelProps) {
                           style={{ background: 'rgba(59,130,246,0.04)', fontSize: '0.78rem' }}
                         >
                           <td colSpan={2} style={{ paddingLeft: 28, color: 'var(--text-3)' }}>
-                            {formatDate(p.payment_date)} · {p.payment_method}
+                            {formatDate(p.payment_date ?? p.paid_at ?? '')} · {p.payment_method}
                           </td>
                           <td colSpan={2} style={{ color: '#16a34a', fontWeight: 600 }}>
-                            +{formatIDR(p.amount_paid)}
+                            +{formatIDR(p.amount_paid ?? p.amount ?? 0)}
                           </td>
                           <td colSpan={2} style={{ color: 'var(--text-3)' }}>
-                            {p.notes || '—'}
+                            {p.notes || p.note || '—'}
                           </td>
-                          <td style={{ color: 'var(--text-3)' }}>{p.recorded_by_name}</td>
+                          <td style={{ color: 'var(--text-3)' }}>
+                            {p.recorded_by_name || p.paid_by_name || '—'}
+                          </td>
                         </tr>
                       ))}
                   </Fragment>

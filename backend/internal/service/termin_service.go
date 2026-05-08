@@ -266,8 +266,25 @@ func (s *TerminService) GenerateDocumentData(ctx context.Context, poID, docType 
 		Status:       po.Status,
 		TotalAmount:  po.TotalAmount,
 		Notes:        ptrToString(po.Notes),
-		CreatedAt:    po.CreatedAt.Format(time.RFC3339),
-		UpdatedAt:    po.UpdatedAt.Format(time.RFC3339),
+		Items: func() []dto.POItemResponse {
+			items := make([]dto.POItemResponse, 0, len(po.Items))
+			for _, it := range po.Items {
+				items = append(items, dto.POItemResponse{
+					ID:          it.ID,
+					ProductID:   it.ProductID,
+					ProductName: it.ProductName,
+					ProductSKU:  it.ProductSKU,
+					Unit:        it.Unit,
+					Quantity:    it.Quantity,
+					UnitCost:    it.UnitCost,
+					ReceivedQty: it.ReceivedQty,
+					Subtotal:    it.Subtotal,
+				})
+			}
+			return items
+		}(),
+		CreatedAt: po.CreatedAt.Format(time.RFC3339),
+		UpdatedAt: po.UpdatedAt.Format(time.RFC3339),
 	}
 
 	return &dto.PODocumentData{
