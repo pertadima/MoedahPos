@@ -29,10 +29,6 @@ export interface PurchaseOrder {
   payment_status?: string;
   notes: string;
   items: POItem[];
-  supplier_signature?: string;
-  buyer_signature?: string;
-  supplier_signed_at?: string;
-  buyer_signed_at?: string;
   created_at: string;
   updated_at: string;
 }
@@ -86,10 +82,6 @@ export interface PODocumentData {
     status: string;
     notes: string;
     created_at: string;
-    supplier_signature?: string;
-    buyer_signature?: string;
-    supplier_signed_at?: string;
-    buyer_signed_at?: string;
   };
   debt_summary: PODebtSummary;
   termins: Termin[];

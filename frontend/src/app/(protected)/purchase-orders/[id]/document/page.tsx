@@ -347,55 +347,66 @@ export default function PODocumentPage() {
             color: '#000',
           }}
         >
-          {[
-            {
-              label: 'Pihak Supplier',
-              sig: po.supplier_signature,
-              signedAt: po.supplier_signed_at,
-            },
-            { label: 'Pihak Pembeli', sig: po.buyer_signature, signedAt: po.buyer_signed_at },
-          ].map(({ label, sig, signedAt }) => (
-            <div key={label} style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 4 }}>{label}</div>
-              {sig ? (
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                  <img
-                    src={sig}
-                    alt={label}
-                    style={{ height: 80, maxWidth: 200, objectFit: 'contain' }}
-                  />
-                  {signedAt && (
-                    <div style={{ fontSize: 10, color: '#666', marginTop: 4 }}>
-                      {formatDate(signedAt)}
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div
-                  style={{
-                    height: 80,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: 11,
-                    color: '#999',
-                  }}
-                >
-                  (belum ditandatangani)
-                </div>
-              )}
-              <div
-                style={{
-                  borderTop: '1px solid #000',
-                  paddingTop: 6,
-                  fontSize: 12,
-                  marginTop: 4,
-                }}
-              >
-                Tanda Tangan &amp; Nama
-              </div>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 64 }}>Pihak Supplier / Pemberi Barang</div>
+            <div style={{ borderTop: '1px solid #000', paddingTop: 6, fontSize: 12 }}>
+              Tanda Tangan &amp; Nama
             </div>
-          ))}
+          </div>
+
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 4 }}>Pihak Pembeli / Penerima</div>
+            <div
+              style={{
+                border: '2px solid #16a34a',
+                borderRadius: 4,
+                padding: '8px 12px',
+                background: '#f0fdf4',
+                display: 'inline-flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: 2,
+                minWidth: 160,
+              }}
+            >
+              <div style={{ fontSize: '0.6rem', color: '#16a34a', fontWeight: 700, letterSpacing: 1 }}>
+                VERIFIED
+              </div>
+              <div style={{ fontSize: '0.85rem', fontWeight: 800, color: '#15803d' }}>
+                Penerima / Toko
+              </div>
+              <div style={{ width: 100, height: 1, background: '#16a34a' }} />
+              <div style={{ fontSize: '0.6rem', color: '#166534', textAlign: 'center' }}>
+                Dokumen ini dibuat secara otomatis oleh sistem
+              </div>
+              <div style={{ fontSize: '0.65rem', fontWeight: 700, color: '#14532d' }}>
+                MoedahPOS
+              </div>
+              <div style={{ width: 80, height: 1, background: '#16a34a' }} />
+              <div style={{ fontSize: '0.6rem', color: '#166534' }}>Tanggal</div>
+              <div style={{ fontSize: '0.65rem', fontWeight: 600, color: '#14532d' }}>
+                {new Date().toLocaleString('id-ID', {
+                  day: '2-digit',
+                  month: 'short',
+                  year: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
+              </div>
+              <div style={{ fontSize: '0.6rem', color: '#166534' }}>No. PO</div>
+              <div style={{ fontSize: '0.65rem', fontWeight: 600, color: '#14532d' }}>
+                {po.po_number}
+              </div>
+              {data.store_name && (
+                <>
+                  <div style={{ fontSize: '0.6rem', color: '#166534' }}>Toko</div>
+                  <div style={{ fontSize: '0.65rem', fontWeight: 600, color: '#14532d' }}>
+                    {data.store_name}
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Footer */}

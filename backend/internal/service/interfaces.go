@@ -156,7 +156,6 @@ type PurchaseOrderServiceInterface interface {
 	CreatePayment(ctx context.Context, poID, storeID, userID string, req dto.POPaymentRequest) (*dto.POPaymentResponse, error)
 	ListPayments(ctx context.Context, poID string) ([]*dto.POPaymentResponse, error)
 	PayableSummary(ctx context.Context, storeID string) (*dto.PayableSummary, error)
-	SaveSignatures(ctx context.Context, poID string, req dto.SaveSignaturesRequest) (*dto.POResponse, error)
 }
 
 type UserAdminServiceInterface interface {

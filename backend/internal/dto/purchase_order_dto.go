@@ -40,30 +40,26 @@ type POItemResponse struct {
 
 // POResponse is the full purchase order response.
 type POResponse struct {
-	ID                string           `json:"id"`
-	StoreID           string           `json:"store_id"`
-	SupplierID        *string          `json:"supplier_id,omitempty"`
-	SupplierName      *string          `json:"supplier_name,omitempty"`
-	PONumber          string           `json:"po_number"`
-	Status            string           `json:"status"`
-	TotalItems        int              `json:"total_items"`
-	TotalAmount       float64          `json:"total_amount"`
-	AmountPaid        float64          `json:"amount_paid"`
-	AmountDue         float64          `json:"amount_due"`
-	PaymentStatus     string           `json:"payment_status"` // unpaid | partial | paid
-	OrderedByName     string           `json:"ordered_by_name"`
-	ReceivedByName    *string          `json:"received_by_name,omitempty"`
-	OrderedAt         *string          `json:"ordered_at,omitempty"`
-	ReceivedAt        *string          `json:"received_at,omitempty"`
-	NextDeadline      *string          `json:"next_deadline,omitempty"`
-	Notes             string           `json:"notes,omitempty"`
-	Items             []POItemResponse `json:"items"`
-	SupplierSignature *string          `json:"supplier_signature,omitempty"`
-	BuyerSignature    *string          `json:"buyer_signature,omitempty"`
-	SupplierSignedAt  *string          `json:"supplier_signed_at,omitempty"`
-	BuyerSignedAt     *string          `json:"buyer_signed_at,omitempty"`
-	CreatedAt         string           `json:"created_at"`
-	UpdatedAt         string           `json:"updated_at"`
+	ID             string           `json:"id"`
+	StoreID        string           `json:"store_id"`
+	SupplierID     *string          `json:"supplier_id,omitempty"`
+	SupplierName   *string          `json:"supplier_name,omitempty"`
+	PONumber       string           `json:"po_number"`
+	Status         string           `json:"status"`
+	TotalItems     int              `json:"total_items"`
+	TotalAmount    float64          `json:"total_amount"`
+	AmountPaid     float64          `json:"amount_paid"`
+	AmountDue      float64          `json:"amount_due"`
+	PaymentStatus  string           `json:"payment_status"` // unpaid | partial | paid
+	OrderedByName  string           `json:"ordered_by_name"`
+	ReceivedByName *string          `json:"received_by_name,omitempty"`
+	OrderedAt      *string          `json:"ordered_at,omitempty"`
+	ReceivedAt     *string          `json:"received_at,omitempty"`
+	NextDeadline   *string          `json:"next_deadline,omitempty"`
+	Notes          string           `json:"notes,omitempty"`
+	Items          []POItemResponse `json:"items"`
+	CreatedAt      string           `json:"created_at"`
+	UpdatedAt      string           `json:"updated_at"`
 }
 
 // POListFilter holds list query params.
@@ -90,11 +86,6 @@ type POPaymentResponse struct {
 	PaidBy     string  `json:"paid_by"`
 	PaidByName string  `json:"paid_by_name"`
 	PaidAt     string  `json:"paid_at"`
-}
-
-type SaveSignaturesRequest struct {
-	SupplierSignature *string `json:"supplier_signature"`
-	BuyerSignature    *string `json:"buyer_signature"`
 }
 
 // PayableSummary aggregates outstanding debt per store.

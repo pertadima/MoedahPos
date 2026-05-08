@@ -28,7 +28,7 @@ import {
 } from 'lucide-react';
 import DatePicker from '@/components/ui/DatePicker';
 import Portal from '@/components/ui/Portal';
-import SignaturePad from '@/components/ui/SignaturePad';
+import SystemStamp from '@/components/ui/SystemStamp';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { purchaseOrdersApi, suppliersApi, storesApi } from '@/lib/api/store-apis';
 import { productsApi } from '@/lib/api/products';
@@ -1727,6 +1727,7 @@ function InvoiceModal({ po, store, onClose }: InvoiceModalProps) {
 interface PODetailDrawerProps {
   po: PurchaseOrder;
   storeId: string;
+  storeName: string;
   payments: POPayment[];
   onClose: () => void;
   onInvoice: () => void;
@@ -1738,6 +1739,7 @@ interface PODetailDrawerProps {
 function PODetailDrawer({
   po,
   storeId,
+  storeName,
   payments,
   onClose,
   onInvoice,
@@ -1970,37 +1972,13 @@ function PODetailDrawer({
               paddingTop: 14,
             }}
           >
-            <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>Tanda Tangan Digital</div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-              <SignaturePad
-                label="Supplier"
-                value={po.supplier_signature}
-                onSave={data => {
-                  purchaseOrdersApi
-                    .saveSignatures(storeId, po.id, data, po.buyer_signature)
-                    .then(() => onUpdate?.());
-                }}
-                onClear={() => {
-                  purchaseOrdersApi
-                    .saveSignatures(storeId, po.id, '', po.buyer_signature)
-                    .then(() => onUpdate?.());
-                }}
-              />
-              <SignaturePad
-                label="Pembeli / Toko"
-                value={po.buyer_signature}
-                onSave={data => {
-                  purchaseOrdersApi
-                    .saveSignatures(storeId, po.id, po.supplier_signature, data)
-                    .then(() => onUpdate?.());
-                }}
-                onClear={() => {
-                  purchaseOrdersApi
-                    .saveSignatures(storeId, po.id, po.supplier_signature, '')
-                    .then(() => onUpdate?.());
-                }}
-              />
-            </div>
+            <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>Stamp Verifikasi</div>
+            <SystemStamp
+              label="Penerima / Toko"
+              variant="buyer"
+              poNumber={po.po_number}
+              storeName={storeName}
+            />
           </div>
 
           {/* Action buttons */}
@@ -2795,6 +2773,7 @@ export default function PurchaseOrdersPage() {
         <PODetailDrawer
           po={detailPO}
           storeId={storeId ?? ''}
+          storeName={selectedStore?.store_name ?? ''}
           payments={payments}
           onClose={() => setDetailPO(null)}
           onInvoice={() => openInvoice(detailPO)}

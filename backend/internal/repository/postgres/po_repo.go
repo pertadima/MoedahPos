@@ -338,19 +338,3 @@ func (r *PORepo) populateJoins(ctx context.Context, po *domain.PurchaseOrder) {
 	po.SupplierName = row.SupplierName
 	po.ReceivedByName = row.ReceivedByName
 }
-
-func (r *PORepo) SaveSignatures(ctx context.Context, poID string, supplierSig, buyerSig *string) error {
-	q := `
-		UPDATE purchase_orders
-		SET supplier_signature = COALESCE($2, supplier_signature),
-		    buyer_signature = COALESCE($3, buyer_signature),
-		    supplier_signed_at = CASE WHEN $2::text IS NOT NULL THEN NOW() ELSE supplier_signed_at END,
-		    buyer_signed_at = CASE WHEN $3::text IS NOT NULL THEN NOW() ELSE buyer_signed_at END,
-		    updated_at = NOW()
-		WHERE id = $1`
-	_, err := r.db.ExecContext(ctx, q, poID, supplierSig, buyerSig)
-	if err != nil {
-		return fmt.Errorf("PORepo.SaveSignatures: %w", err)
-	}
-	return nil
-}

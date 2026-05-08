@@ -219,20 +219,3 @@ func (h *PurchaseOrderHandler) ListPayments(w http.ResponseWriter, r *http.Reque
 	}
 	response.Success(w, rows)
 }
-
-// POST /stores/:storeId/purchase-orders/:poId/signatures
-func (h *PurchaseOrderHandler) SaveSignatures(w http.ResponseWriter, r *http.Request) {
-	poID := chi.URLParam(r, "poId")
-	var req dto.SaveSignaturesRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		response.Error(w, http.StatusBadRequest, "Invalid JSON body")
-		return
-	}
-	poResp, err := h.poSvc.SaveSignatures(r.Context(), poID, req)
-	if err != nil {
-		h.log.Error().Err(err).Msg("save signatures failed")
-		response.InternalError(w)
-		return
-	}
-	response.Success(w, poResp)
-}

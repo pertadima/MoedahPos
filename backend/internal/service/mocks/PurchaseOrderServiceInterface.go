@@ -285,37 +285,7 @@ func (_m *PurchaseOrderServiceInterface) UpdatePO(ctx context.Context, id string
 	return r0, r1
 }
 
-// SaveSignatures provides a mock function with given fields: ctx, poID, req
-func (_m *PurchaseOrderServiceInterface) SaveSignatures(ctx context.Context, poID string, req dto.SaveSignaturesRequest) (*dto.POResponse, error) {
-	ret := _m.Called(ctx, poID, req)
-
-	if len(ret) == 0 {
-		panic("no return value specified for SaveSignatures")
-	}
-
-	var r0 *dto.POResponse
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, dto.SaveSignaturesRequest) (*dto.POResponse, error)); ok {
-		return rf(ctx, poID, req)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, dto.SaveSignaturesRequest) *dto.POResponse); ok {
-		r0 = rf(ctx, poID, req)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*dto.POResponse)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, string, dto.SaveSignaturesRequest) error); ok {
-		r1 = rf(ctx, poID, req)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// NewPurchaseOrderServiceInterface creates a new instance of PurchaseOrderServiceInterface. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
+// creates a new instance of PurchaseOrderServiceInterface. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewPurchaseOrderServiceInterface(t interface {
 	mock.TestingT
