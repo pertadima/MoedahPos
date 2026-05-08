@@ -104,3 +104,33 @@ export interface RecordPaymentRequest {
   payment_method: 'cash' | 'transfer' | 'check' | 'other';
   notes?: string;
 }
+
+export interface CreatePORequest {
+  supplier_id?: string;
+  notes?: string;
+  items: Array<{ product_id: string; quantity: number; unit_cost: number }>;
+}
+
+export interface POPayment {
+  id: string;
+  termin_id: string;
+  amount: number;
+  paid_by_name: string;
+  paid_at: string;
+  note?: string;
+}
+
+export interface PayableSummary {
+  total_debt: number;
+  total_paid: number;
+  total_outstanding: number;
+  unpaid_count: number;
+  partial_count: number;
+}
+
+export interface POListParams {
+  status?: string;
+  per_page?: number;
+  page?: number;
+  supplier_id?: string;
+}

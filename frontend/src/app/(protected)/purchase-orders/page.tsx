@@ -1324,7 +1324,12 @@ function PayModal({ po, storeId, onSuccess, onCancel }: PayModalProps) {
     setSaving(true);
     setError('');
     try {
-      await purchaseOrdersApi.createPayment(storeId, po.id, { amount: n, note: note || undefined });
+      await purchaseOrdersApi.createPayment(storeId, po.id, {
+        amount_paid: n,
+        payment_date: new Date().toISOString().slice(0, 10),
+        payment_method: 'cash',
+        notes: note || undefined,
+      });
       onSuccess();
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Gagal menyimpan pembayaran');
@@ -2717,12 +2722,14 @@ export default function PurchaseOrdersPage() {
                                   <TerminPanel
                                     po={po}
                                     storeId={storeId ?? ''}
-                                    onOpenDoc={type =>
+                                    onOpenDoc={type => {
+                                      if (storeId)
+                                        purchaseOrdersApi.logDocumentGenerate(storeId, po.id, type);
                                       window.open(
                                         `/purchase-orders/${po.id}/document?type=${type}`,
                                         '_blank'
-                                      )
-                                    }
+                                      );
+                                    }}
                                     onUpdate={load}
                                   />
                                 </div>
@@ -2750,9 +2757,10 @@ export default function PurchaseOrdersPage() {
           onInvoice={() => openInvoice(detailPO)}
           onAction={a => setConfirm({ po: detailPO, action: a })}
           onPay={() => setPayingPO(detailPO)}
-          onOpenDoc={type =>
-            window.open(`/purchase-orders/${detailPO.id}/document?type=${type}`, '_blank')
-          }
+          onOpenDoc={type => {
+            if (storeId) purchaseOrdersApi.logDocumentGenerate(storeId, detailPO.id, type);
+            window.open(`/purchase-orders/${detailPO.id}/document?type=${type}`, '_blank');
+          }}
           onUpdate={() => {
             load();
             openDetail(detailPO);

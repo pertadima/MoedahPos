@@ -12,6 +12,12 @@ import type {
   LoyaltyLedgerEntry,
   LoyaltyHistoryPage,
   LoyaltySummary,
+  PurchaseOrder,
+  CreatePORequest,
+  RecordPaymentRequest,
+  POPayment,
+  PayableSummary,
+  POListParams,
 } from '@/types';
 
 export const storesApi = {
@@ -105,32 +111,37 @@ export const stockApi = {
 };
 
 export const purchaseOrdersApi = {
-  list: (storeId: string, params?: { page?: number; per_page?: number; status?: string }) => {
-    const q = new URLSearchParams();
-    if (params?.page) q.set('page', String(params.page));
-    if (params?.per_page) q.set('per_page', String(params.per_page));
-    if (params?.status) q.set('status', params.status);
-    return api.get<unknown>(`/stores/${storeId}/purchase-orders?${q}`);
+  list: (storeId: string, params?: POListParams) => {
+    const sp = new URLSearchParams();
+    if (params) {
+      if (params.status) sp.set('status', params.status);
+      if (params.per_page) sp.set('per_page', String(params.per_page));
+      if (params.page) sp.set('page', String(params.page));
+      if (params.supplier_id) sp.set('supplier_id', params.supplier_id);
+    }
+    const qs = sp.toString();
+    return api.get<PaginatedData<PurchaseOrder>>(
+      `/stores/${storeId}/purchase-orders${qs ? `?${qs}` : ''}`
+    );
   },
-  get: (storeId: string, poId: string) =>
-    api.get<unknown>(`/stores/${storeId}/purchase-orders/${poId}`),
-  create: (storeId: string, payload: object) =>
-    api.post<unknown>(`/stores/${storeId}/purchase-orders`, payload),
-  update: (storeId: string, poId: string, payload: object) =>
-    api.put<unknown>(`/stores/${storeId}/purchase-orders/${poId}`, payload),
-  submit: (storeId: string, poId: string) =>
-    api.post(`/stores/${storeId}/purchase-orders/${poId}/submit`, {}),
-  receive: (storeId: string, poId: string) =>
-    api.post(`/stores/${storeId}/purchase-orders/${poId}/receive`, {}),
-  cancel: (storeId: string, poId: string) =>
-    api.delete(`/stores/${storeId}/purchase-orders/${poId}`),
-  // Accounts Payable
-  payableSummary: (storeId: string) =>
-    api.get<unknown>(`/stores/${storeId}/purchase-orders/payables`),
+  create: (storeId: string, body: CreatePORequest) =>
+    api.post<PurchaseOrder>(`/stores/${storeId}/purchase-orders`, body),
+  get: (storeId: string, id: string) =>
+    api.get<PurchaseOrder>(`/stores/${storeId}/purchase-orders/${id}`),
+  submit: (storeId: string, id: string) =>
+    api.post(`/stores/${storeId}/purchase-orders/${id}/submit`, {}),
+  receive: (storeId: string, id: string) =>
+    api.post(`/stores/${storeId}/purchase-orders/${id}/receive`, {}),
+  cancel: (storeId: string, id: string) =>
+    api.post(`/stores/${storeId}/purchase-orders/${id}/cancel`, {}),
+  createPayment: (storeId: string, poId: string, body: RecordPaymentRequest) =>
+    api.post(`/stores/${storeId}/purchase-orders/${poId}/payments`, body),
   listPayments: (storeId: string, poId: string) =>
-    api.get<unknown>(`/stores/${storeId}/purchase-orders/${poId}/payments`),
-  createPayment: (storeId: string, poId: string, body: { amount: number; note?: string }) =>
-    api.post<unknown>(`/stores/${storeId}/purchase-orders/${poId}/payments`, body),
+    api.get<POPayment[]>(`/stores/${storeId}/purchase-orders/${poId}/payments`),
+  payableSummary: (storeId: string) =>
+    api.get<PayableSummary>(`/stores/${storeId}/purchase-orders/payables`),
+  logDocumentGenerate: (storeId: string, poId: string, docType: string) =>
+    api.post(`/stores/${storeId}/purchase-orders/${poId}/document-log`, { document_type: docType }),
 };
 
 export const suppliersApi = {

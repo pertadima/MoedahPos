@@ -141,7 +141,8 @@ type TerminServiceInterface interface {
 	GetTerminSchedule(ctx context.Context, poID string) ([]dto.TerminResponse, error)
 	RecordPayment(ctx context.Context, terminID, userID string, req dto.RecordPaymentRequest) (*dto.PaymentRecordResponse, error)
 	CalculatePODebt(ctx context.Context, poID string) (*dto.PODebtSummaryResponse, error)
-	GenerateDocumentData(ctx context.Context, poID, docType, userID string) (*dto.PODocumentData, error)
+	GenerateDocumentData(ctx context.Context, poID, docType string) (*dto.PODocumentData, error)
+	LogDocumentGenerate(ctx context.Context, poID, storeID, userID, docType string) error
 }
 
 type PurchaseOrderServiceInterface interface {

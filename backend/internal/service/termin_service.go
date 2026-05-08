@@ -230,7 +230,7 @@ func (s *TerminService) CalculatePODebt(ctx context.Context, poID string) (*dto.
 // GenerateDocumentData assembles everything the frontend needs to render
 // a printable invoice, payment receipt, or termin agreement.
 // docType must be one of: "invoice", "receipt", "termin_agreement".
-func (s *TerminService) GenerateDocumentData(ctx context.Context, poID, docType, userID string) (*dto.PODocumentData, error) { //nolint:cyclop // data assembly is inherently branchy
+func (s *TerminService) GenerateDocumentData(ctx context.Context, poID, docType string) (*dto.PODocumentData, error) { //nolint:cyclop // data assembly is inherently branchy
 	po, err := s.poRepo.FindByID(ctx, poID)
 	if err != nil || po == nil {
 		return nil, fmt.Errorf("TerminService.GenerateDocumentData find PO: %w", err)
@@ -249,11 +249,6 @@ func (s *TerminService) GenerateDocumentData(ctx context.Context, poID, docType,
 	if po.SupplierName != nil {
 		supplierName = *po.SupplierName
 	}
-
-	s.activitySvc.LogActivity(ctx, userID, po.StoreID, domain.ActionPurchaseOrderDocumentGenerate, domain.ModulePurchase, po.ID, map[string]interface{}{
-		"po_number":     po.PONumber,
-		"document_type": docType,
-	})
 
 	// Map PO to POResponse for consistency with existing API shape.
 	poResp := dto.POResponse{
@@ -277,6 +272,18 @@ func (s *TerminService) GenerateDocumentData(ctx context.Context, poID, docType,
 		Termins:      termins,
 		SupplierName: supplierName,
 	}, nil
+}
+
+func (s *TerminService) LogDocumentGenerate(ctx context.Context, poID, storeID, userID, docType string) error {
+	po, err := s.poRepo.FindByID(ctx, poID)
+	if err != nil || po == nil {
+		return fmt.Errorf("LogDocumentGenerate find PO: %w", err)
+	}
+	s.activitySvc.LogActivity(ctx, userID, storeID, domain.ActionPurchaseOrderDocumentGenerate, domain.ModulePurchase, poID, map[string]interface{}{
+		"po_number":     po.PONumber,
+		"document_type": docType,
+	})
+	return nil
 }
 
 // ─── Mappers ─────────────────────────────────────────────────────────────────

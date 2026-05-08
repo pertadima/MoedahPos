@@ -92,7 +92,7 @@ func TestTerminHandler(t *testing.T) {
 	})
 
 	t.Run("Get Document Success", func(t *testing.T) {
-		tSvc.On("GenerateDocumentData", mock.Anything, "po1", "invoice", "u123").Return(&dto.PODocumentData{DocType: "invoice"}, nil)
+		tSvc.On("GenerateDocumentData", mock.Anything, "po1", "invoice").Return(&dto.PODocumentData{DocType: "invoice"}, nil)
 		req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "/stores/s1/purchase-orders/po1/document", nil)
 		req.Header.Set("Authorization", "Bearer "+token)
 		w := httptest.NewRecorder()

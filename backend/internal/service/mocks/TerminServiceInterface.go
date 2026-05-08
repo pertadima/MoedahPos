@@ -74,9 +74,9 @@ func (_m *TerminServiceInterface) CreateTerminSchedule(ctx context.Context, poID
 	return r0, r1
 }
 
-// GenerateDocumentData provides a mock function with given fields: ctx, poID, docType, userID
-func (_m *TerminServiceInterface) GenerateDocumentData(ctx context.Context, poID string, docType string, userID string) (*dto.PODocumentData, error) {
-	ret := _m.Called(ctx, poID, docType, userID)
+// GenerateDocumentData provides a mock function with given fields: ctx, poID, docType
+func (_m *TerminServiceInterface) GenerateDocumentData(ctx context.Context, poID string, docType string) (*dto.PODocumentData, error) {
+	ret := _m.Called(ctx, poID, docType)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GenerateDocumentData")
@@ -84,24 +84,39 @@ func (_m *TerminServiceInterface) GenerateDocumentData(ctx context.Context, poID
 
 	var r0 *dto.PODocumentData
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) (*dto.PODocumentData, error)); ok {
-		return rf(ctx, poID, docType, userID)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) (*dto.PODocumentData, error)); ok {
+		return rf(ctx, poID, docType)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) *dto.PODocumentData); ok {
-		r0 = rf(ctx, poID, docType, userID)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) *dto.PODocumentData); ok {
+		r0 = rf(ctx, poID, docType)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*dto.PODocumentData)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, string, string) error); ok {
-		r1 = rf(ctx, poID, docType, userID)
+	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = rf(ctx, poID, docType)
 	} else {
 		r1 = ret.Error(1)
 	}
 
 	return r0, r1
+}
+
+// LogDocumentGenerate provides a mock function with given fields: ctx, poID, storeID, userID, docType
+func (_m *TerminServiceInterface) LogDocumentGenerate(ctx context.Context, poID string, storeID string, userID string, docType string) error {
+	ret := _m.Called(ctx, poID, storeID, userID, docType)
+
+	if len(ret) == 0 {
+		panic("no return value specified for LogDocumentGenerate")
+	}
+
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string) error); ok {
+		return rf(ctx, poID, storeID, userID, docType)
+	}
+
+	return ret.Error(0)
 }
 
 // GetTerminSchedule provides a mock function with given fields: ctx, poID
