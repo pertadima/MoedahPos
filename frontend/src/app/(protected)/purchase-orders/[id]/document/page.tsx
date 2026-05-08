@@ -396,28 +396,7 @@ export default function PODocumentPage() {
                     height: 1,
                     background: '#ef4444',
                     opacity: 0.75,
-                    margin: '2px 0',
-                  }}
-                />
-                <div
-                  style={{
-                    fontSize: '0.6rem',
-                    fontWeight: 700,
-                    color: '#ef4444',
-                    textAlign: 'center',
-                    letterSpacing: 1,
-                    opacity: 0.75,
-                  }}
-                >
-                  MOEDAH POS
-                </div>
-                <div
-                  style={{
-                    width: 60,
-                    height: 1,
-                    background: '#ef4444',
-                    opacity: 0.75,
-                    margin: '2px 0',
+                    margin: '4px 0',
                   }}
                 />
                 <div
