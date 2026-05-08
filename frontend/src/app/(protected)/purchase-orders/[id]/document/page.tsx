@@ -1,12 +1,33 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
+import {
+  PDFDownloadLink,
+  PDFViewer,
+  Document,
+  Page,
+  View,
+  Text,
+  StyleSheet,
+  Font,
+} from '@react-pdf/renderer';
 import { getPODocument } from '@/lib/api/termins';
 import type { PODocumentData, Termin } from '@/types';
 import { useAuth } from '@/lib/auth/AuthContext';
+import { useEffect, useState } from 'react';
 
-function formatIDR(n: number) {
+Font.register({
+  family: 'Helvetica',
+  fonts: [
+    { src: 'https://fonts.gstatic.com/s/roboto/v30/KFOmCnqEu92Fr1Me5Q.ttf' },
+    {
+      src: 'https://fonts.gstatic.com/s/roboto/v30/KFOlCnqEu92Fr1MmEU9fBBc9.ttf',
+      fontWeight: 'bold',
+    },
+  ],
+});
+
+function fmtIDR(n: number) {
   return new Intl.NumberFormat('id-ID', {
     style: 'currency',
     currency: 'IDR',
@@ -14,7 +35,7 @@ function formatIDR(n: number) {
   }).format(n);
 }
 
-function formatDate(s: string) {
+function fmtDate(s: string) {
   return new Date(s).toLocaleDateString('id-ID', {
     day: '2-digit',
     month: 'long',
@@ -22,11 +43,11 @@ function formatDate(s: string) {
   });
 }
 
-function statusLabel(t: Termin) {
-  if (t.status === 'paid') return { label: 'Lunas' };
-  if (t.status === 'overdue' || t.is_overdue) return { label: 'Jatuh Tempo' };
-  if (t.status === 'partial') return { label: 'Sebagian' };
-  return { label: 'Belum Bayar' };
+function sLabel(t: Termin) {
+  if (t.status === 'paid') return 'Lunas';
+  if (t.status === 'overdue' || t.is_overdue) return 'Jatuh Tempo';
+  if (t.status === 'partial') return 'Sebagian';
+  return 'Belum Bayar';
 }
 
 const DOC_TITLES: Record<string, string> = {
@@ -35,454 +56,282 @@ const DOC_TITLES: Record<string, string> = {
   termin_agreement: 'PERJANJIAN TERMIN PEMBAYARAN',
 };
 
-function DocumentContent({ data }: { data: PODocumentData }) {
+const s = StyleSheet.create({
+  page: {
+    padding: 40,
+    fontFamily: 'Helvetica',
+    fontSize: 10,
+    color: '#000',
+    backgroundColor: '#fff',
+  },
+  header: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 14 },
+  docTitle: { fontSize: 16, fontWeight: 'bold' },
+  genDate: { fontSize: 9, color: '#666', marginTop: 2 },
+  poNumber: { fontSize: 12, fontWeight: 'bold', textAlign: 'right' },
+  poDate: { fontSize: 9, marginTop: 2, textAlign: 'right' },
+  divider: { borderTopWidth: 2, borderTopColor: '#000', marginBottom: 12 },
+  twoCol: { flexDirection: 'row', gap: 16, marginBottom: 10 },
+  col: { flex: 1 },
+  label: { fontSize: 8, fontWeight: 'bold', color: '#888', marginBottom: 1, letterSpacing: 0.5 },
+  value: { fontSize: 10, fontWeight: 'bold' },
+  summaryBox: {
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    borderRadius: 4,
+    padding: '8px 14px',
+    marginBottom: 12,
+    backgroundColor: '#f9fafb',
+  },
+  summaryRow: { fontSize: 9, marginBottom: 1 },
+  summaryVal: { fontWeight: 'bold' },
+  sectionTitle: { fontSize: 11, fontWeight: 'bold', marginBottom: 4 },
+  table: { width: '100%', marginBottom: 12 },
+  th: {
+    flexDirection: 'row',
+    borderBottomWidth: 1,
+    borderBottomColor: '#000',
+    paddingBottom: 2,
+    marginBottom: 2,
+  },
+  thItem: { flex: 1, fontSize: 8, fontWeight: 'bold' },
+  thRight: { width: 70, fontSize: 8, fontWeight: 'bold', textAlign: 'right' },
+  thCenter: { width: 50, fontSize: 8, fontWeight: 'bold', textAlign: 'center' },
+  tr: {
+    flexDirection: 'row',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+    paddingVertical: 2,
+  },
+  td: { flex: 1, fontSize: 9 },
+  tdRight: { width: 70, fontSize: 9, textAlign: 'right' },
+  tdCenter: { width: 50, fontSize: 9, textAlign: 'center' },
+  tdSku: { width: 70, fontSize: 8, color: '#888', textAlign: 'right' },
+  trTotal: {
+    flexDirection: 'row',
+    borderTopWidth: 1.5,
+    borderTopColor: '#000',
+    paddingVertical: 3,
+    marginTop: 2,
+  },
+  tdTotalLabel: { flex: 1, fontSize: 9, fontWeight: 'bold', textAlign: 'right' },
+  tdTotal: { width: 70, fontSize: 9, fontWeight: 'bold', textAlign: 'right' },
+  agreementBox: {
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    borderRadius: 4,
+    padding: '10px 14px',
+    marginBottom: 12,
+  },
+  agreeTitle: { fontSize: 9, fontWeight: 'bold', marginBottom: 4 },
+  agreeItem: { fontSize: 8, marginBottom: 2 },
+  signatureSection: {
+    flexDirection: 'row',
+    gap: 32,
+    marginTop: 20,
+    paddingTop: 10,
+    borderTopWidth: 2,
+    borderTopColor: '#000',
+  },
+  sigBox: { flex: 1, alignItems: 'center' },
+  sigLabel: { fontSize: 8, fontWeight: 'bold', color: '#888', marginBottom: 24 },
+  sigLine: {
+    borderTopWidth: 1,
+    borderTopColor: '#000',
+    paddingTop: 2,
+    fontSize: 8,
+    width: 120,
+    textAlign: 'center',
+  },
+  stamp: { alignItems: 'center', marginTop: -4 },
+  footer: {
+    position: 'absolute',
+    bottom: 20,
+    left: 40,
+    right: 40,
+    borderTopWidth: 1,
+    borderTopColor: '#e5e7eb',
+    paddingTop: 4,
+    alignItems: 'center',
+  },
+  footerText: { fontSize: 7, color: '#888' },
+});
+
+function PODocumentPDF({ data }: { data: PODocumentData }) {
   const { po, debt_summary, termins, supplier_name } = data;
   const docType = data.doc_type;
   const isReceipt = docType === 'receipt';
   const isAgreement = docType === 'termin_agreement';
   const docTitle = DOC_TITLES[docType] ?? 'DOKUMEN';
-  const stampDate = new Date().toLocaleDateString('id-ID', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-  });
-  const stampTime = new Date().toLocaleTimeString('id-ID', {
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+  const hasItems = (po.items ?? []).length > 0;
+  const hasPayments = termins.some(t => t.payments.length > 0);
+  const hasTermins = termins.length > 0;
+
+  const totalAmount =
+    po.items?.reduce((acc, item) => acc + item.subtotal, 0) ?? po.total_amount ?? 0;
 
   return (
-    <div
-      style={{
-        width: 595,
-        padding: 40,
-        background: '#fff',
-        fontFamily: "'Segoe UI', Arial, sans-serif",
-        color: '#000',
-        fontSize: 12,
-      }}
-    >
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24 }}>
-        <div>
-          <div style={{ fontSize: 18, fontWeight: 800, marginBottom: 4 }}>{docTitle}</div>
-          <div style={{ fontSize: 11 }}>Digenerate: {formatDate(data.generated_at)}</div>
-        </div>
-        <div style={{ textAlign: 'right' }}>
-          <div style={{ fontWeight: 700, fontSize: 13 }}>No. PO: {po.po_number}</div>
-          <div style={{ fontSize: 11, marginTop: 2 }}>Tanggal: {formatDate(po.created_at)}</div>
-        </div>
-      </div>
+    <Document>
+      <Page size="A4" style={s.page}>
+        <View style={s.header}>
+          <View>
+            <Text style={s.docTitle}>{docTitle}</Text>
+            <Text style={s.genDate}>Digenerate: {fmtDate(data.generated_at)}</Text>
+          </View>
+          <View>
+            <Text style={s.poNumber}>No. PO: {po.po_number}</Text>
+            <Text style={s.poDate}>Tanggal: {fmtDate(po.created_at)}</Text>
+          </View>
+        </View>
 
-      <div style={{ borderTop: '2px solid #000', marginBottom: 20 }} />
+        <View style={s.divider} />
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
-        <div>
-          <div style={{ fontSize: 9, fontWeight: 700, marginBottom: 2 }}>SUPPLIER</div>
-          <div style={{ fontWeight: 700 }}>{supplier_name || '—'}</div>
-        </div>
-        <div>
-          <div style={{ fontSize: 9, fontWeight: 700, marginBottom: 2 }}>TOKO</div>
-          <div style={{ fontWeight: 700 }}>{data.store_name || '—'}</div>
-        </div>
-      </div>
+        <View style={s.twoCol}>
+          <View style={s.col}>
+            <Text style={s.label}>SUPPLIER</Text>
+            <Text style={s.value}>{supplier_name || '—'}</Text>
+          </View>
+          <View style={s.col}>
+            <Text style={s.label}>TOKO</Text>
+            <Text style={s.value}>{data.store_name || '—'}</Text>
+          </View>
+        </View>
 
-      <div
-        style={{
-          background: isReceipt ? '#f9fafb' : '#fff',
-          border: '1px solid #e5e7eb',
-          borderRadius: 4,
-          padding: '10px 14px',
-          marginBottom: 20,
-        }}
-      >
-        {[
-          { label: 'Total Tagihan', value: formatIDR(po.total_amount) },
-          { label: 'Sudah Dibayar', value: formatIDR(debt_summary.total_paid) },
-          { label: 'Sisa Hutang', value: formatIDR(debt_summary.remaining_debt) },
-        ].map(item => (
-          <div key={item.label} style={{ fontSize: 11, marginBottom: 2 }}>
-            <span>{item.label}: </span>
-            <strong>{item.value}</strong>
-          </div>
-        ))}
-      </div>
+        <View style={s.summaryBox}>
+          <Text style={s.summaryRow}>
+            Total Tagihan:{' '}
+            <Text style={s.summaryVal}>{fmtIDR(po.total_amount ?? totalAmount)}</Text>
+          </Text>
+          <Text style={s.summaryRow}>
+            Sudah Dibayar: <Text style={s.summaryVal}>{fmtIDR(debt_summary.total_paid)}</Text>
+          </Text>
+          <Text style={s.summaryRow}>
+            Sisa Hutang: <Text style={s.summaryVal}>{fmtIDR(debt_summary.remaining_debt)}</Text>
+          </Text>
+        </View>
 
-      <div style={{ marginBottom: 20 }}>
-        <div style={{ fontWeight: 700, fontSize: 12, marginBottom: 6 }}>Rincian Item</div>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
-          <thead>
-            <tr>
-              <th
-                style={{
-                  textAlign: 'left',
-                  borderBottom: '1px solid #000',
-                  padding: '4px 6px',
-                  fontWeight: 700,
-                  fontSize: 9,
-                }}
-              >
-                Item
-              </th>
-              <th
-                style={{
-                  textAlign: 'right',
-                  borderBottom: '1px solid #000',
-                  padding: '4px 6px',
-                  fontWeight: 700,
-                  fontSize: 9,
-                }}
-              >
-                SKU
-              </th>
-              <th
-                style={{
-                  textAlign: 'right',
-                  borderBottom: '1px solid #000',
-                  padding: '4px 6px',
-                  fontWeight: 700,
-                  fontSize: 9,
-                }}
-              >
-                Qty
-              </th>
-              <th
-                style={{
-                  textAlign: 'right',
-                  borderBottom: '1px solid #000',
-                  padding: '4px 6px',
-                  fontWeight: 700,
-                  fontSize: 9,
-                }}
-              >
-                Harga
-              </th>
-              <th
-                style={{
-                  textAlign: 'right',
-                  borderBottom: '1px solid #000',
-                  padding: '4px 6px',
-                  fontWeight: 700,
-                  fontSize: 9,
-                }}
-              >
-                Subtotal
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {(po.items ?? []).map(item => (
-              <tr key={item.id}>
-                <td style={{ borderBottom: '1px solid #e5e7eb', padding: '4px 6px' }}>
-                  {item.product_name}
-                </td>
-                <td
-                  style={{
-                    textAlign: 'right',
-                    borderBottom: '1px solid #e5e7eb',
-                    padding: '4px 6px',
-                    fontSize: 10,
-                    color: '#666',
-                  }}
-                >
-                  {item.product_sku || '—'}
-                </td>
-                <td
-                  style={{
-                    textAlign: 'right',
-                    borderBottom: '1px solid #e5e7eb',
-                    padding: '4px 6px',
-                  }}
-                >
-                  {item.quantity} {item.unit}
-                </td>
-                <td
-                  style={{
-                    textAlign: 'right',
-                    borderBottom: '1px solid #e5e7eb',
-                    padding: '4px 6px',
-                  }}
-                >
-                  {formatIDR(item.unit_cost)}
-                </td>
-                <td
-                  style={{
-                    textAlign: 'right',
-                    borderBottom: '1px solid #e5e7eb',
-                    padding: '4px 6px',
-                  }}
-                >
-                  {formatIDR(item.subtotal)}
-                </td>
-              </tr>
-            ))}
-            <tr>
-              <td
-                colSpan={4}
-                style={{
-                  textAlign: 'right',
-                  fontWeight: 700,
-                  padding: '6px 6px 4px',
-                  borderTop: '1.5px solid #000',
-                }}
-              >
-                Total
-              </td>
-              <td
-                style={{
-                  textAlign: 'right',
-                  fontWeight: 700,
-                  padding: '6px 6px 4px',
-                  borderTop: '1.5px solid #000',
-                }}
-              >
-                {formatIDR(po.total_amount)}
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+        {hasItems && (
+          <>
+            <Text style={s.sectionTitle}>Rincian Item</Text>
+            <View style={s.table}>
+              <View style={s.th}>
+                <Text style={s.thItem}>Item</Text>
+                <Text style={{ width: 70, fontSize: 8, fontWeight: 'bold', textAlign: 'right' }}>
+                  SKU
+                </Text>
+                <Text style={s.thRight}>Qty</Text>
+                <Text style={s.thRight}>Harga</Text>
+                <Text style={s.thRight}>Subtotal</Text>
+              </View>
+              {(po.items ?? []).map(item => (
+                <View key={item.id} style={s.tr}>
+                  <Text style={s.td}>{item.product_name}</Text>
+                  <Text style={s.tdSku}>{item.product_sku || '—'}</Text>
+                  <Text style={s.tdRight}>
+                    {item.quantity} {item.unit}
+                  </Text>
+                  <Text style={s.tdRight}>{fmtIDR(item.unit_cost)}</Text>
+                  <Text style={s.tdRight}>{fmtIDR(item.subtotal)}</Text>
+                </View>
+              ))}
+              <View style={s.trTotal}>
+                <Text style={s.tdTotalLabel}>Total</Text>
+                <Text style={s.tdTotal}>{fmtIDR(totalAmount)}</Text>
+              </View>
+            </View>
+          </>
+        )}
 
-      {isReceipt && (
-        <div style={{ marginBottom: 20 }}>
-          <div style={{ fontWeight: 700, fontSize: 12, marginBottom: 6 }}>Riwayat Pembayaran</div>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
-            <thead>
-              <tr>
-                <th
-                  style={{
-                    textAlign: 'left',
-                    borderBottom: '1px solid #000',
-                    padding: '4px 6px',
-                    fontWeight: 700,
-                    fontSize: 9,
-                  }}
-                >
-                  Tanggal
-                </th>
-                <th
-                  style={{
-                    textAlign: 'left',
-                    borderBottom: '1px solid #000',
-                    padding: '4px 6px',
-                    fontWeight: 700,
-                    fontSize: 9,
-                  }}
-                >
-                  Oleh
-                </th>
-                <th
-                  style={{
-                    textAlign: 'right',
-                    borderBottom: '1px solid #000',
-                    padding: '4px 6px',
-                    fontWeight: 700,
-                    fontSize: 9,
-                  }}
-                >
-                  Jumlah
-                </th>
-              </tr>
-            </thead>
-            <tbody>
+        {isReceipt && hasPayments && (
+          <>
+            <Text style={s.sectionTitle}>Riwayat Pembayaran</Text>
+            <View style={s.table}>
+              <View style={s.th}>
+                <Text style={s.thItem}>Tanggal</Text>
+                <Text style={{ flex: 1, fontSize: 8, fontWeight: 'bold' }}>Oleh</Text>
+                <Text style={s.thRight}>Jumlah</Text>
+              </View>
               {termins.map(t =>
                 t.payments.map(r => (
-                  <tr key={r.id}>
-                    <td style={{ borderBottom: '1px solid #e5e7eb', padding: '4px 6px' }}>
-                      {formatDate(r.paid_at ?? r.payment_date ?? '')}
-                    </td>
-                    <td style={{ borderBottom: '1px solid #e5e7eb', padding: '4px 6px' }}>
+                  <View key={r.id} style={s.tr}>
+                    <Text style={s.td}>{fmtDate(r.paid_at ?? r.payment_date ?? '')}</Text>
+                    <Text style={{ flex: 1, fontSize: 9 }}>
                       {r.paid_by_name || r.recorded_by_name || '—'}
-                    </td>
-                    <td
-                      style={{
-                        textAlign: 'right',
-                        borderBottom: '1px solid #e5e7eb',
-                        padding: '4px 6px',
-                      }}
-                    >
-                      {formatIDR(r.amount ?? r.amount_paid ?? 0)}
-                    </td>
-                  </tr>
+                    </Text>
+                    <Text style={s.tdRight}>{fmtIDR(r.amount ?? r.amount_paid ?? 0)}</Text>
+                  </View>
                 ))
               )}
-            </tbody>
-          </table>
-        </div>
-      )}
+            </View>
+          </>
+        )}
 
-      {isAgreement && (
-        <div style={{ marginBottom: 20 }}>
-          <div style={{ fontWeight: 700, fontSize: 12, marginBottom: 6 }}>Jadwal Termin</div>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
-            <thead>
-              <tr>
-                <th
-                  style={{
-                    textAlign: 'left',
-                    borderBottom: '1px solid #000',
-                    padding: '4px 6px',
-                    fontWeight: 700,
-                    fontSize: 9,
-                  }}
-                >
-                  Termin
-                </th>
-                <th
-                  style={{
-                    textAlign: 'left',
-                    borderBottom: '1px solid #000',
-                    padding: '4px 6px',
-                    fontWeight: 700,
-                    fontSize: 9,
-                  }}
-                >
-                  Jatuh Tempo
-                </th>
-                <th
-                  style={{
-                    textAlign: 'right',
-                    borderBottom: '1px solid #000',
-                    padding: '4px 6px',
-                    fontWeight: 700,
-                    fontSize: 9,
-                  }}
-                >
-                  Jumlah
-                </th>
-                <th
-                  style={{
-                    textAlign: 'center',
-                    borderBottom: '1px solid #000',
-                    padding: '4px 6px',
-                    fontWeight: 700,
-                    fontSize: 9,
-                  }}
-                >
-                  Status
-                </th>
-              </tr>
-            </thead>
-            <tbody>
+        {isAgreement && hasTermins && (
+          <>
+            <Text style={s.sectionTitle}>Jadwal Termin</Text>
+            <View style={s.table}>
+              <View style={s.th}>
+                <Text style={s.thItem}>Termin</Text>
+                <Text style={{ flex: 1, fontSize: 8, fontWeight: 'bold' }}>Jatuh Tempo</Text>
+                <Text style={s.thRight}>Jumlah</Text>
+                <Text style={s.thCenter}>Status</Text>
+              </View>
               {termins.map(t => (
-                <tr key={t.id}>
-                  <td style={{ borderBottom: '1px solid #e5e7eb', padding: '4px 6px' }}>
-                    Termin {t.termin_number}
-                  </td>
-                  <td style={{ borderBottom: '1px solid #e5e7eb', padding: '4px 6px' }}>
-                    {formatDate(t.due_date)}
-                  </td>
-                  <td
-                    style={{
-                      textAlign: 'right',
-                      borderBottom: '1px solid #e5e7eb',
-                      padding: '4px 6px',
-                    }}
-                  >
-                    {formatIDR(t.amount)}
-                  </td>
-                  <td
-                    style={{
-                      textAlign: 'center',
-                      borderBottom: '1px solid #e5e7eb',
-                      padding: '4px 6px',
-                    }}
-                  >
-                    {statusLabel(t).label}
-                  </td>
-                </tr>
+                <View key={t.id} style={s.tr}>
+                  <Text style={s.td}>Termin {t.termin_number}</Text>
+                  <Text style={{ flex: 1, fontSize: 9 }}>{fmtDate(t.due_date)}</Text>
+                  <Text style={s.tdRight}>{fmtIDR(t.amount)}</Text>
+                  <Text style={s.tdCenter}>{sLabel(t)}</Text>
+                </View>
               ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+            </View>
+          </>
+        )}
 
-      {isAgreement && (
-        <div
-          style={{
-            border: '1px solid #e5e7eb',
-            borderRadius: 4,
-            padding: '12px 16px',
-            marginBottom: 20,
-          }}
-        >
-          <div style={{ fontWeight: 700, marginBottom: 6 }}>Ketentuan Perjanjian</div>
-          <div style={{ fontSize: 10, marginBottom: 2 }}>
-            1. Pihak pembeli wajib melunasi setiap termin sesuai tanggal jatuh tempo.
-          </div>
-          <div style={{ fontSize: 10, marginBottom: 2 }}>
-            2. Keterlambatan pembayaran dapat dikenakan kebijakan tambahan sesuai kesepakatan.
-          </div>
-          <div style={{ fontSize: 10 }}>
-            3. Dokumen ini berlaku sebagai bukti kesepakatan pembayaran bertahap atas PO ini.
-          </div>
-        </div>
-      )}
+        {isAgreement && (
+          <View style={s.agreementBox}>
+            <Text style={s.agreeTitle}>Ketentuan Perjanjian</Text>
+            <Text style={s.agreeItem}>
+              1. Pihak pembeli wajib melunasi setiap termin sesuai tanggal jatuh tempo.
+            </Text>
+            <Text style={s.agreeItem}>
+              2. Keterlambatan pembayaran dapat dikenakan kebijakan tambahan sesuai kesepakatan.
+            </Text>
+            <Text style={s.agreeItem}>
+              3. Dokumen ini berlaku sebagai bukti kesepakatan pembayaran bertahap atas PO ini.
+            </Text>
+          </View>
+        )}
 
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
-          gap: 32,
-          marginTop: 32,
-          paddingTop: 16,
-          borderTop: '2px solid #000',
-        }}
-      >
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 10, fontWeight: 700, marginBottom: 48 }}>
-            Pihak Supplier / Pemberi Barang
-          </div>
-          <div style={{ borderTop: '1px solid #000', paddingTop: 4, fontSize: 10 }}>
-            Tanda Tangan &amp; Nama
-          </div>
-        </div>
-
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 10, fontWeight: 700, marginBottom: 4 }}>
-            Pihak Pembeli / Penerima
-          </div>
-          <div style={{ position: 'relative', width: 120, height: 120, margin: '0 auto' }}>
-            <svg width="120" height="120" style={{ position: 'absolute', top: 0, left: 0 }}>
-              <circle cx="60" cy="60" r="56" fill="none" stroke="#ef4444" strokeWidth="2" />
-              <circle
-                cx="60"
-                cy="60"
-                r="50"
-                fill="none"
-                stroke="#ef4444"
-                strokeWidth="0.5"
-                strokeDasharray="2,2"
-              />
-            </svg>
-            <div
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 1,
-              }}
-            >
-              <div style={{ fontSize: 11, fontWeight: 800, color: '#ef4444', opacity: 0.8 }}>
+        <View style={s.signatureSection}>
+          <View style={s.sigBox}>
+            <Text style={s.sigLabel}>Pihak Supplier / Pemberi Barang</Text>
+            <Text style={s.sigLine}>Tanda Tangan &amp; Nama</Text>
+          </View>
+          <View style={s.sigBox}>
+            <Text style={s.sigLabel}>Pihak Pembeli / Penerima</Text>
+            <View style={s.stamp}>
+              <Text style={{ fontSize: 10, fontWeight: 'bold', color: '#ef4444' }}>
                 {data.store_name || 'MoedahPOS'}
-              </div>
-              <div style={{ width: 60, height: 1, background: '#ef4444', opacity: 0.8 }} />
-              <div style={{ fontSize: 9, color: '#ef4444', opacity: 0.8 }}>{stampDate}</div>
-              <div style={{ fontSize: 9, color: '#ef4444', opacity: 0.8 }}>{stampTime}</div>
-            </div>
-          </div>
-        </div>
-      </div>
+              </Text>
+              <Text style={{ fontSize: 8, color: '#ef4444' }}>
+                {new Date().toLocaleDateString('id-ID', {
+                  day: '2-digit',
+                  month: 'short',
+                  year: 'numeric',
+                })}{' '}
+                {new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+              </Text>
+            </View>
+          </View>
+        </View>
 
-      <div style={{ marginTop: 24, textAlign: 'center', fontSize: 9, color: '#666' }}>
-        Halaman 1 dari 1 · Dokumen ini dibuat secara otomatis oleh sistem MoedahPOS · {po.po_number}
-      </div>
-    </div>
+        <View style={s.footer}>
+          <Text style={s.footerText}>
+            Dokumen ini dibuat secara otomatis oleh sistem MoedahPOS · {po.po_number}
+          </Text>
+        </View>
+      </Page>
+    </Document>
   );
 }
 
@@ -490,9 +339,6 @@ export default function PODocumentPage() {
   const params = useParams();
   const searchParams = useSearchParams();
   const { selectedStore } = useAuth();
-  const docRef = useRef<HTMLDivElement>(null);
-  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
-  const [generating, setGenerating] = useState(false);
 
   const poId = params?.id as string;
   const docType = (searchParams?.get('type') ?? 'invoice') as
@@ -502,77 +348,32 @@ export default function PODocumentPage() {
 
   const [data, setData] = useState<PODocumentData | null>(null);
   const [error, setError] = useState('');
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
     if (!selectedStore || !poId) return;
     getPODocument(selectedStore.store_id, poId, docType)
-      .then(setData)
+      .then(d => {
+        setData(d);
+        setReady(true);
+      })
       .catch(() => setError('Gagal memuat data dokumen.'));
   }, [selectedStore, poId, docType]);
 
-  const generatePDF = async () => {
-    if (!docRef.current || !data) return;
-    setGenerating(true);
-    try {
-      const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
-        import('html2canvas'),
-        import('jspdf'),
-      ]);
-
-      const canvas = await html2canvas(docRef.current, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: '#ffffff',
-        logging: false,
-      } as unknown as Parameters<typeof html2canvas>[1]);
-
-      const pdf = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
-
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-      const canvasWidth = canvas.width;
-      const canvasHeight = canvas.height;
-      const ratio = pdfWidth / canvasWidth;
-      const sliceHeight = pdfHeight;
-      const totalPages = Math.ceil((canvasHeight * ratio) / sliceHeight);
-
-      for (let i = 0; i < totalPages; i++) {
-        if (i > 0) pdf.addPage();
-        const srcY = (i * sliceHeight) / ratio;
-        const srcH = Math.min(sliceHeight / ratio, canvasHeight - srcY);
-        const pageCanvas = document.createElement('canvas');
-        pageCanvas.width = canvasWidth;
-        pageCanvas.height = srcH;
-        const ctx = pageCanvas.getContext('2d');
-        if (!ctx) continue;
-        ctx.drawImage(canvas, 0, srcY, canvasWidth, srcH, 0, 0, canvasWidth, srcH);
-        const pageImg = pageCanvas.toDataURL('image/jpeg', 0.95);
-        pdf.addImage(pageImg, 'JPEG', 0, 0, pdfWidth, srcH * ratio);
-      }
-
-      const blob = pdf.output('blob');
-      const url = URL.createObjectURL(blob);
-      setPdfUrl(url);
-    } catch (err) {
-      console.error('PDF generation failed:', err);
-    } finally {
-      setGenerating(false);
-    }
-  };
-
-  if (error) {
+  if (error)
     return (
-      <div style={{ padding: 32, fontFamily: 'sans-serif', color: '#dc2626' }}>
+      <div style={{ padding: 32, color: '#dc2626', fontFamily: 'sans-serif' }}>
         <strong>Error:</strong> {error}
       </div>
     );
-  }
-
-  if (!data) {
+  if (!ready || !data)
     return (
-      <div style={{ padding: 32, fontFamily: 'sans-serif', color: '#6b7280' }}>Memuat dokumen…</div>
+      <div style={{ padding: 32, color: '#6b7280', fontFamily: 'sans-serif' }}>
+        Memuat dokumen...
+      </div>
     );
-  }
+
+  const docTitle = DOC_TITLES[docType] ?? 'Dokumen';
 
   return (
     <div
@@ -583,47 +384,45 @@ export default function PODocumentPage() {
         flexDirection: 'column',
         alignItems: 'center',
         padding: '24px 16px',
-        gap: 16,
+        gap: 12,
+        fontFamily: 'sans-serif',
       }}
     >
-      <div
-        style={{
-          display: 'flex',
-          gap: 10,
-          alignItems: 'center',
-          width: 675,
-        }}
-      >
-        <button
-          onClick={generatePDF}
-          disabled={generating}
-          style={{
-            padding: '9px 20px',
-            background: generating ? '#9ca3af' : '#2563eb',
-            color: '#fff',
-            border: 'none',
-            borderRadius: 8,
-            cursor: generating ? 'not-allowed' : 'pointer',
-            fontWeight: 600,
-            fontSize: 14,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
-          }}
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center', width: 675 }}>
+        <PDFDownloadLink
+          document={<PODocumentPDF data={data} />}
+          fileName={`${docTitle.replace(/\s+/g, '_')}_${data.po.po_number}.pdf`}
+          style={{ textDecoration: 'none' }}
         >
-          {generating ? 'Membuat PDF...' : '⬇ Download PDF'}
-        </button>
+          {({ loading }) => (
+            <button
+              disabled={loading}
+              style={{
+                padding: '8px 18px',
+                background: loading ? '#9ca3af' : '#2563eb',
+                color: '#fff',
+                border: 'none',
+                borderRadius: 8,
+                cursor: loading ? 'not-allowed' : 'pointer',
+                fontWeight: 600,
+                fontSize: 13,
+              }}
+            >
+              {loading ? 'Menyiapkan...' : '⬇ Download PDF'}
+            </button>
+          )}
+        </PDFDownloadLink>
         <button
           onClick={() => window.close()}
           style={{
-            padding: '9px 20px',
+            padding: '8px 18px',
             background: '#6b7280',
             color: '#fff',
             border: 'none',
             borderRadius: 8,
             cursor: 'pointer',
             fontWeight: 600,
-            fontSize: 14,
+            fontSize: 13,
           }}
         >
           Tutup
@@ -633,29 +432,15 @@ export default function PODocumentPage() {
       <div
         style={{
           background: '#fff',
-          boxShadow: '0 4px 24px rgba(0,0,0,0.08)',
+          boxShadow: '0 4px 24px rgba(0,0,0,0.10)',
           borderRadius: 4,
           overflow: 'hidden',
         }}
       >
-        <div ref={docRef}>
-          <DocumentContent data={data} />
-        </div>
+        <PDFViewer width={675} height={842} style={{ border: 'none' }}>
+          <PODocumentPDF data={data} />
+        </PDFViewer>
       </div>
-
-      {pdfUrl && (
-        <iframe
-          src={pdfUrl}
-          style={{
-            width: 675,
-            height: 900,
-            border: 'none',
-            borderRadius: 4,
-            boxShadow: '0 4px 24px rgba(0,0,0,0.12)',
-          }}
-          title="PDF Preview"
-        />
-      )}
     </div>
   );
 }
