@@ -64,6 +64,7 @@ const s = StyleSheet.create({
     color: '#000',
     backgroundColor: '#fff',
   },
+  headerWrap: { marginBottom: 14 },
   header: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 14 },
   docTitle: { fontSize: 16, fontWeight: 'bold' },
   genDate: { fontSize: 9, color: '#666', marginTop: 2 },
@@ -85,36 +86,41 @@ const s = StyleSheet.create({
   summaryRow: { fontSize: 9, marginBottom: 1 },
   summaryVal: { fontWeight: 'bold' },
   sectionTitle: { fontSize: 11, fontWeight: 'bold', marginBottom: 4 },
-  table: { width: '100%', marginBottom: 12 },
+  table: { width: '100%', marginBottom: 12, borderWidth: 1, borderColor: '#000' },
   th: {
     flexDirection: 'row',
+    backgroundColor: '#1e293b',
+    paddingVertical: 4,
+    paddingHorizontal: 5,
     borderBottomWidth: 1,
     borderBottomColor: '#000',
-    paddingBottom: 2,
-    marginBottom: 2,
   },
-  thItem: { flex: 1, fontSize: 8, fontWeight: 'bold' },
-  thRight: { width: 70, fontSize: 8, fontWeight: 'bold', textAlign: 'right' },
-  thCenter: { width: 50, fontSize: 8, fontWeight: 'bold', textAlign: 'center' },
+  thItem: { flex: 1, fontSize: 8, fontWeight: 'bold', color: '#fff' },
+  thRight: { width: 90, fontSize: 8, fontWeight: 'bold', color: '#fff', textAlign: 'right' },
+  thCenter: { width: 80, fontSize: 8, fontWeight: 'bold', color: '#fff', textAlign: 'center' },
   tr: {
     flexDirection: 'row',
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
-    paddingVertical: 2,
+    borderBottomColor: '#cbd5e1',
+    paddingVertical: 3,
+    paddingHorizontal: 5,
   },
   td: { flex: 1, fontSize: 9 },
-  tdRight: { width: 70, fontSize: 9, textAlign: 'right' },
-  tdCenter: { width: 50, fontSize: 9, textAlign: 'center' },
+  tdRight: { width: 90, fontSize: 9, textAlign: 'right' },
+  tdCenter: { width: 80, fontSize: 9, textAlign: 'center' },
   tdSku: { width: 70, fontSize: 8, color: '#888', textAlign: 'right' },
   trTotal: {
     flexDirection: 'row',
     borderTopWidth: 1.5,
     borderTopColor: '#000',
+    borderBottomWidth: 1,
+    borderBottomColor: '#000',
     paddingVertical: 3,
-    marginTop: 2,
+    paddingHorizontal: 5,
+    backgroundColor: '#f1f5f9',
   },
   tdTotalLabel: { flex: 1, fontSize: 9, fontWeight: 'bold', textAlign: 'right' },
-  tdTotal: { width: 70, fontSize: 9, fontWeight: 'bold', textAlign: 'right' },
+  tdTotal: { width: 90, fontSize: 9, fontWeight: 'bold', textAlign: 'right' },
   agreementBox: {
     borderWidth: 1,
     borderColor: '#e5e7eb',
@@ -165,167 +171,169 @@ function PODocumentPDF({ data }: { data: PODocumentData }) {
   const hasItems = (po.items ?? []).length > 0;
   const hasPayments = termins.some(t => t.payments.length > 0);
   const hasTermins = termins.length > 0;
-
   const totalAmount =
     po.items?.reduce((acc, item) => acc + item.subtotal, 0) ?? po.total_amount ?? 0;
 
   return (
     <Document>
       <Page size="A4" style={s.page}>
-        <View style={s.header}>
-          <View>
-            <Text style={s.docTitle}>{docTitle}</Text>
-            <Text style={s.genDate}>Digenerate: {fmtDate(data.generated_at)}</Text>
+        <View style={s.headerWrap} fixed>
+          <View style={s.header}>
+            <View>
+              <Text style={s.docTitle}>{docTitle}</Text>
+              <Text style={s.genDate}>Digenerate: {fmtDate(data.generated_at)}</Text>
+            </View>
+            <View>
+              <Text style={s.poNumber}>No. PO: {po.po_number}</Text>
+              <Text style={s.poDate}>Tanggal: {fmtDate(po.created_at)}</Text>
+            </View>
           </View>
-          <View>
-            <Text style={s.poNumber}>No. PO: {po.po_number}</Text>
-            <Text style={s.poDate}>Tanggal: {fmtDate(po.created_at)}</Text>
-          </View>
+          <View style={s.divider} />
         </View>
 
-        <View style={s.divider} />
-
-        <View style={s.twoCol}>
-          <View style={s.col}>
-            <Text style={s.label}>SUPPLIER</Text>
-            <Text style={s.value}>{supplier_name || '—'}</Text>
+        <View>
+          <View style={s.twoCol}>
+            <View style={s.col}>
+              <Text style={s.label}>SUPPLIER</Text>
+              <Text style={s.value}>{supplier_name || '—'}</Text>
+            </View>
+            <View style={s.col}>
+              <Text style={s.label}>TOKO</Text>
+              <Text style={s.value}>{data.store_name || '—'}</Text>
+            </View>
           </View>
-          <View style={s.col}>
-            <Text style={s.label}>TOKO</Text>
-            <Text style={s.value}>{data.store_name || '—'}</Text>
+
+          <View style={s.summaryBox}>
+            <Text style={s.summaryRow}>
+              Total Tagihan:{' '}
+              <Text style={s.summaryVal}>{fmtIDR(po.total_amount ?? totalAmount)}</Text>
+            </Text>
+            <Text style={s.summaryRow}>
+              Sudah Dibayar: <Text style={s.summaryVal}>{fmtIDR(debt_summary.total_paid)}</Text>
+            </Text>
+            <Text style={s.summaryRow}>
+              Sisa Hutang: <Text style={s.summaryVal}>{fmtIDR(debt_summary.remaining_debt)}</Text>
+            </Text>
           </View>
-        </View>
 
-        <View style={s.summaryBox}>
-          <Text style={s.summaryRow}>
-            Total Tagihan:{' '}
-            <Text style={s.summaryVal}>{fmtIDR(po.total_amount ?? totalAmount)}</Text>
-          </Text>
-          <Text style={s.summaryRow}>
-            Sudah Dibayar: <Text style={s.summaryVal}>{fmtIDR(debt_summary.total_paid)}</Text>
-          </Text>
-          <Text style={s.summaryRow}>
-            Sisa Hutang: <Text style={s.summaryVal}>{fmtIDR(debt_summary.remaining_debt)}</Text>
-          </Text>
-        </View>
-
-        {hasItems && (
-          <>
-            <Text style={s.sectionTitle}>Rincian Item</Text>
-            <View style={s.table}>
-              <View style={s.th}>
-                <Text style={s.thItem}>Item</Text>
-                <Text style={{ width: 70, fontSize: 8, fontWeight: 'bold', textAlign: 'right' }}>
-                  SKU
-                </Text>
-                <Text style={s.thRight}>Qty</Text>
-                <Text style={s.thRight}>Harga</Text>
-                <Text style={s.thRight}>Subtotal</Text>
-              </View>
-              {(po.items ?? []).map(item => (
-                <View key={item.id} style={s.tr}>
-                  <Text style={s.td}>{item.product_name}</Text>
-                  <Text style={s.tdSku}>{item.product_sku || '—'}</Text>
-                  <Text style={s.tdRight}>
-                    {item.quantity} {item.unit}
+          {hasItems && (
+            <>
+              <Text style={s.sectionTitle}>Rincian Item</Text>
+              <View style={s.table}>
+                <View style={s.th}>
+                  <Text style={s.thItem}>Item</Text>
+                  <Text style={{ width: 70, fontSize: 8, fontWeight: 'bold', textAlign: 'right' }}>
+                    SKU
                   </Text>
-                  <Text style={s.tdRight}>{fmtIDR(item.unit_cost)}</Text>
-                  <Text style={s.tdRight}>{fmtIDR(item.subtotal)}</Text>
+                  <Text style={s.thRight}>Qty</Text>
+                  <Text style={s.thRight}>Harga</Text>
+                  <Text style={s.thRight}>Subtotal</Text>
                 </View>
-              ))}
-              <View style={s.trTotal}>
-                <Text style={s.tdTotalLabel}>Total</Text>
-                <Text style={s.tdTotal}>{fmtIDR(totalAmount)}</Text>
-              </View>
-            </View>
-          </>
-        )}
-
-        {isReceipt && hasPayments && (
-          <>
-            <Text style={s.sectionTitle}>Riwayat Pembayaran</Text>
-            <View style={s.table}>
-              <View style={s.th}>
-                <Text style={s.thItem}>Tanggal</Text>
-                <Text style={{ flex: 1, fontSize: 8, fontWeight: 'bold' }}>Oleh</Text>
-                <Text style={s.thRight}>Jumlah</Text>
-              </View>
-              {termins.map(t =>
-                t.payments.map(r => (
-                  <View key={r.id} style={s.tr}>
-                    <Text style={s.td}>{fmtDate(r.paid_at ?? r.payment_date ?? '')}</Text>
-                    <Text style={{ flex: 1, fontSize: 9 }}>
-                      {r.paid_by_name || r.recorded_by_name || '—'}
+                {(po.items ?? []).map(item => (
+                  <View key={item.id} style={s.tr}>
+                    <Text style={s.td}>{item.product_name}</Text>
+                    <Text style={s.tdSku}>{item.product_sku || '—'}</Text>
+                    <Text style={s.tdRight}>
+                      {item.quantity} {item.unit}
                     </Text>
-                    <Text style={s.tdRight}>{fmtIDR(r.amount ?? r.amount_paid ?? 0)}</Text>
+                    <Text style={s.tdRight}>{fmtIDR(item.unit_cost)}</Text>
+                    <Text style={s.tdRight}>{fmtIDR(item.subtotal)}</Text>
                   </View>
-                ))
-              )}
-            </View>
-          </>
-        )}
-
-        {isAgreement && hasTermins && (
-          <>
-            <Text style={s.sectionTitle}>Jadwal Termin</Text>
-            <View style={s.table}>
-              <View style={s.th}>
-                <Text style={s.thItem}>Termin</Text>
-                <Text style={{ flex: 1, fontSize: 8, fontWeight: 'bold' }}>Jatuh Tempo</Text>
-                <Text style={s.thRight}>Jumlah</Text>
-                <Text style={s.thCenter}>Status</Text>
-              </View>
-              {termins.map(t => (
-                <View key={t.id} style={s.tr}>
-                  <Text style={s.td}>Termin {t.termin_number}</Text>
-                  <Text style={{ flex: 1, fontSize: 9 }}>{fmtDate(t.due_date)}</Text>
-                  <Text style={s.tdRight}>{fmtIDR(t.amount)}</Text>
-                  <Text style={s.tdCenter}>{sLabel(t)}</Text>
+                ))}
+                <View style={s.trTotal}>
+                  <Text style={s.tdTotalLabel}>Total</Text>
+                  <Text style={s.tdTotal}>{fmtIDR(totalAmount)}</Text>
                 </View>
-              ))}
+              </View>
+            </>
+          )}
+
+          {isReceipt && hasPayments && (
+            <>
+              <Text style={s.sectionTitle}>Riwayat Pembayaran</Text>
+              <View style={s.table}>
+                <View style={s.th}>
+                  <Text style={s.thItem}>Tanggal</Text>
+                  <Text style={{ flex: 1, fontSize: 8, fontWeight: 'bold' }}>Oleh</Text>
+                  <Text style={s.thRight}>Jumlah</Text>
+                </View>
+                {termins.map(t =>
+                  t.payments.map(r => (
+                    <View key={r.id} style={s.tr}>
+                      <Text style={s.td}>{fmtDate(r.paid_at ?? r.payment_date ?? '')}</Text>
+                      <Text style={{ flex: 1, fontSize: 9 }}>
+                        {r.paid_by_name || r.recorded_by_name || '—'}
+                      </Text>
+                      <Text style={s.tdRight}>{fmtIDR(r.amount ?? r.amount_paid ?? 0)}</Text>
+                    </View>
+                  ))
+                )}
+              </View>
+            </>
+          )}
+
+          {isAgreement && hasTermins && (
+            <>
+              <Text style={s.sectionTitle}>Jadwal Termin</Text>
+              <View style={s.table}>
+                <View style={s.th}>
+                  <Text style={s.thItem}>Termin</Text>
+                  <Text style={{ flex: 1, fontSize: 8, fontWeight: 'bold' }}>Jatuh Tempo</Text>
+                  <Text style={s.thRight}>Jumlah</Text>
+                  <Text style={s.thCenter}>Status</Text>
+                </View>
+                {termins.map(t => (
+                  <View key={t.id} style={s.tr}>
+                    <Text style={s.td}>Termin {t.termin_number}</Text>
+                    <Text style={{ flex: 1, fontSize: 9 }}>{fmtDate(t.due_date)}</Text>
+                    <Text style={s.tdRight}>{fmtIDR(t.amount)}</Text>
+                    <Text style={s.tdCenter}>{sLabel(t)}</Text>
+                  </View>
+                ))}
+              </View>
+            </>
+          )}
+
+          {isAgreement && (
+            <View style={s.agreementBox}>
+              <Text style={s.agreeTitle}>Ketentuan Perjanjian</Text>
+              <Text style={s.agreeItem}>
+                1. Pihak pembeli wajib melunasi setiap termin sesuai tanggal jatuh tempo.
+              </Text>
+              <Text style={s.agreeItem}>
+                2. Keterlambatan pembayaran dapat dikenakan kebijakan tambahan sesuai kesepakatan.
+              </Text>
+              <Text style={s.agreeItem}>
+                3. Dokumen ini berlaku sebagai bukti kesepakatan pembayaran bertahap atas PO ini.
+              </Text>
             </View>
-          </>
-        )}
+          )}
 
-        {isAgreement && (
-          <View style={s.agreementBox}>
-            <Text style={s.agreeTitle}>Ketentuan Perjanjian</Text>
-            <Text style={s.agreeItem}>
-              1. Pihak pembeli wajib melunasi setiap termin sesuai tanggal jatuh tempo.
-            </Text>
-            <Text style={s.agreeItem}>
-              2. Keterlambatan pembayaran dapat dikenakan kebijakan tambahan sesuai kesepakatan.
-            </Text>
-            <Text style={s.agreeItem}>
-              3. Dokumen ini berlaku sebagai bukti kesepakatan pembayaran bertahap atas PO ini.
-            </Text>
-          </View>
-        )}
-
-        <View style={s.signatureSection}>
-          <View style={s.sigBox}>
-            <Text style={s.sigLabel}>Pihak Supplier / Pemberi Barang</Text>
-            <Text style={s.sigLine}>Tanda Tangan &amp; Nama</Text>
-          </View>
-          <View style={s.sigBox}>
-            <Text style={s.sigLabel}>Pihak Pembeli / Penerima</Text>
-            <View style={s.stamp}>
-              <Text style={{ fontSize: 10, fontWeight: 'bold', color: '#ef4444' }}>
-                {data.store_name || 'MoedahPOS'}
-              </Text>
-              <Text style={{ fontSize: 8, color: '#ef4444' }}>
-                {new Date().toLocaleDateString('id-ID', {
-                  day: '2-digit',
-                  month: 'short',
-                  year: 'numeric',
-                })}{' '}
-                {new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
-              </Text>
+          <View style={s.signatureSection}>
+            <View style={s.sigBox}>
+              <Text style={s.sigLabel}>Pihak Supplier / Pemberi Barang</Text>
+              <Text style={s.sigLine}>Tanda Tangan &amp; Nama</Text>
+            </View>
+            <View style={s.sigBox}>
+              <Text style={s.sigLabel}>Pihak Pembeli / Penerima</Text>
+              <View style={s.stamp}>
+                <Text style={{ fontSize: 10, fontWeight: 'bold', color: '#ef4444' }}>
+                  {data.store_name || 'MoedahPOS'}
+                </Text>
+                <Text style={{ fontSize: 8, color: '#ef4444' }}>
+                  {new Date().toLocaleDateString('id-ID', {
+                    day: '2-digit',
+                    month: 'short',
+                    year: 'numeric',
+                  })}{' '}
+                  {new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                </Text>
+              </View>
             </View>
           </View>
         </View>
 
-        <View style={s.footer}>
+        <View style={s.footer} fixed>
           <Text style={s.footerText}>
             Dokumen ini dibuat secara otomatis oleh sistem MoedahPOS · {po.po_number}
           </Text>
