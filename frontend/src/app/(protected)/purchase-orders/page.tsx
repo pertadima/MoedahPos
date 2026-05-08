@@ -2010,7 +2010,14 @@ export default function PurchaseOrdersPage() {
   const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [actionToast, setActionToast] = useState<string | null>(null);
   const [showNotesPop, setShowNotesPop] = useState(false);
+
+  useEffect(() => {
+    if (!actionToast) return;
+    const timer = window.setTimeout(() => setActionToast(null), 3200);
+    return () => window.clearTimeout(timer);
+  }, [actionToast]);
 
   const storeId = selectedStore?.store_id;
   const groupedOrders = useMemo(() => {
@@ -2184,6 +2191,14 @@ export default function PurchaseOrdersPage() {
     };
     try {
       await fns[confirm.action]();
+      const itemCount = confirm.po.total_items ?? confirm.po.items?.length ?? 0;
+      const actionLabel =
+        confirm.action === 'submit'
+          ? 'dikirim ke supplier'
+          : confirm.action === 'receive'
+            ? 'diterima'
+            : 'dibatalkan';
+      setActionToast(`PO ${confirm.po.po_number} ${actionLabel} (${itemCount} item)`);
       setConfirm(null);
       load();
       if (detailPO?.id === confirm.po.id) openDetail({ ...detailPO });
@@ -2257,6 +2272,30 @@ export default function PurchaseOrdersPage() {
 
   return (
     <div className="w-full p-6">
+      {actionToast && (
+        <div
+          className="reveal-animate"
+          role="status"
+          aria-live="polite"
+          style={{
+            position: 'fixed',
+            top: 18,
+            right: 18,
+            zIndex: 1200,
+            background: '#0f172a',
+            color: '#f8fafc',
+            border: '1px solid rgba(148,163,184,0.35)',
+            borderRadius: 10,
+            padding: '10px 12px',
+            fontSize: '0.82rem',
+            fontWeight: 600,
+            boxShadow: '0 10px 30px rgba(2,6,23,0.35)',
+            maxWidth: 360,
+          }}
+        >
+          {actionToast}
+        </div>
+      )}
       {/* Header */}
       <div
         className="reveal-animate"
