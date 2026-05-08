@@ -362,55 +362,101 @@ export default function PODocumentPage() {
             </div>
             <div
               style={{
-                border: '2px solid #16a34a',
-                borderRadius: 4,
-                padding: '8px 12px',
-                background: '#f0fdf4',
-                display: 'inline-flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: 2,
-                minWidth: 160,
+                position: 'relative',
+                width: 148,
+                height: 148,
+                margin: '0 auto',
               }}
             >
+              <svg width="148" height="148" style={{ position: 'absolute', top: 0, left: 0 }}>
+                <circle
+                  cx="74"
+                  cy="74"
+                  r="70"
+                  fill="none"
+                  stroke="#dc2626"
+                  strokeWidth="2.5"
+                  strokeDasharray="0"
+                />
+                <circle cx="74" cy="74" r="64" fill="none" stroke="#dc2626" strokeWidth="0.5" />
+              </svg>
               <div
-                style={{ fontSize: '0.6rem', color: '#16a34a', fontWeight: 700, letterSpacing: 1 }}
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 2,
+                }}
               >
-                VERIFIED
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: 6,
+                    left: 0,
+                    width: '100%',
+                    textAlign: 'center',
+                    fontSize: '0.55rem',
+                    fontWeight: 700,
+                    color: '#dc2626',
+                    letterSpacing: 2,
+                  }}
+                >
+                  DOKUMEN RESMI
+                </div>
+                <div
+                  style={{
+                    fontSize: '0.85rem',
+                    fontWeight: 800,
+                    color: '#dc2626',
+                    textAlign: 'center',
+                    lineHeight: 1.2,
+                    marginTop: 20,
+                  }}
+                >
+                  {data.store_name || 'MoedahPOS'}
+                </div>
+                <div style={{ width: 80, height: 1, background: '#dc2626', margin: '2px 0' }} />
+                <div
+                  style={{
+                    fontSize: '0.6rem',
+                    fontWeight: 700,
+                    color: '#dc2626',
+                    textAlign: 'center',
+                    letterSpacing: 1,
+                  }}
+                >
+                  MOEDAH POS
+                </div>
+                <div style={{ width: 60, height: 1, background: '#dc2626', margin: '2px 0' }} />
+                <div
+                  style={{
+                    fontSize: '0.58rem',
+                    color: '#dc2626',
+                    textAlign: 'center',
+                  }}
+                >
+                  {new Date().toLocaleDateString('id-ID', {
+                    day: '2-digit',
+                    month: 'short',
+                    year: 'numeric',
+                  })}
+                </div>
+                <div
+                  style={{
+                    fontSize: '0.58rem',
+                    color: '#dc2626',
+                    textAlign: 'center',
+                  }}
+                >
+                  {new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                </div>
               </div>
-              <div style={{ fontSize: '0.85rem', fontWeight: 800, color: '#15803d' }}>
-                Penerima / Toko
-              </div>
-              <div style={{ width: 100, height: 1, background: '#16a34a' }} />
-              <div style={{ fontSize: '0.6rem', color: '#166534', textAlign: 'center' }}>
-                Dokumen ini dibuat secara otomatis oleh sistem
-              </div>
-              <div style={{ fontSize: '0.65rem', fontWeight: 700, color: '#14532d' }}>
-                MoedahPOS
-              </div>
-              <div style={{ width: 80, height: 1, background: '#16a34a' }} />
-              <div style={{ fontSize: '0.6rem', color: '#166534' }}>Tanggal</div>
-              <div style={{ fontSize: '0.65rem', fontWeight: 600, color: '#14532d' }}>
-                {new Date().toLocaleString('id-ID', {
-                  day: '2-digit',
-                  month: 'short',
-                  year: 'numeric',
-                  hour: '2-digit',
-                  minute: '2-digit',
-                })}
-              </div>
-              <div style={{ fontSize: '0.6rem', color: '#166534' }}>No. PO</div>
-              <div style={{ fontSize: '0.65rem', fontWeight: 600, color: '#14532d' }}>
-                {po.po_number}
-              </div>
-              {data.store_name && (
-                <>
-                  <div style={{ fontSize: '0.6rem', color: '#166534' }}>Toko</div>
-                  <div style={{ fontSize: '0.65rem', fontWeight: 600, color: '#14532d' }}>
-                    {data.store_name}
-                  </div>
-                </>
-              )}
             </div>
           </div>
         </div>
