@@ -10,6 +10,8 @@ import {
   Text,
   StyleSheet,
   Font,
+  Svg,
+  Rect,
 } from '@react-pdf/renderer';
 import { getPODocument } from '@/lib/api/termins';
 import type { PODocumentData, Termin } from '@/types';
@@ -138,8 +140,8 @@ const s = StyleSheet.create({
     borderTopWidth: 2,
     borderTopColor: '#000',
   },
-  sigBox: { flex: 1, alignItems: 'center' },
-  sigLabel: { fontSize: 8, fontWeight: 'bold', color: '#888', marginBottom: 24 },
+  sigBox: { flex: 1, alignItems: 'center', justifyContent: 'space-between' },
+  sigLabel: { fontSize: 8, fontWeight: 'bold', color: '#888', marginBottom: 36 },
   sigLine: {
     borderTopWidth: 1,
     borderTopColor: '#000',
@@ -148,7 +150,7 @@ const s = StyleSheet.create({
     width: 120,
     textAlign: 'center',
   },
-  stamp: { alignItems: 'center', marginTop: -4 },
+  stamp: { alignItems: 'center', marginBottom: 36 },
   footer: {
     position: 'absolute',
     bottom: 20,
@@ -167,6 +169,7 @@ function PODocumentPDF({ data }: { data: PODocumentData }) {
   const docType = data.doc_type;
   const isReceipt = docType === 'receipt';
   const isAgreement = docType === 'termin_agreement';
+  const isReceived = po.status === 'received';
   const docTitle = DOC_TITLES[docType] ?? 'DOKUMEN';
   const hasItems = (po.items ?? []).length > 0;
   const hasPayments = termins.some(t => t.payments.length > 0);
@@ -316,19 +319,23 @@ function PODocumentPDF({ data }: { data: PODocumentData }) {
             </View>
             <View style={s.sigBox}>
               <Text style={s.sigLabel}>Pihak Pembeli / Penerima</Text>
-              <View style={s.stamp}>
-                <Text style={{ fontSize: 10, fontWeight: 'bold', color: '#ef4444' }}>
-                  {data.store_name || 'MoedahPOS'}
-                </Text>
-                <Text style={{ fontSize: 8, color: '#ef4444' }}>
-                  {new Date().toLocaleDateString('id-ID', {
-                    day: '2-digit',
-                    month: 'short',
-                    year: 'numeric',
-                  })}{' '}
-                  {new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
-                </Text>
-              </View>
+              {isReceived && (
+                <View style={s.stamp}>
+                  <Svg width={90} height={50} viewBox="0 0 90 50">
+                    <Rect
+                      x={2}
+                      y={2}
+                      width={86}
+                      height={46}
+                      rx={6}
+                      fill="none"
+                      stroke="#ef4444"
+                      strokeWidth={1.5}
+                    />
+                  </Svg>
+                </View>
+              )}
+              <Text style={s.sigLine}>Tanda Tangan &amp; Nama</Text>
             </View>
           </View>
         </View>
