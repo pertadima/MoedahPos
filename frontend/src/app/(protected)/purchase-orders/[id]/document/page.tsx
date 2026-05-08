@@ -347,14 +347,49 @@ export default function PODocumentPage() {
             color: '#000',
           }}
         >
-          {['Pihak Supplier', 'Pihak Pembeli'].map(label => (
+          {[
+            {
+              label: 'Pihak Supplier',
+              sig: po.supplier_signature,
+              signedAt: po.supplier_signed_at,
+            },
+            { label: 'Pihak Pembeli', sig: po.buyer_signature, signedAt: po.buyer_signed_at },
+          ].map(({ label, sig, signedAt }) => (
             <div key={label} style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 64 }}>{label}</div>
+              <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 4 }}>{label}</div>
+              {sig ? (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                  <img
+                    src={sig}
+                    alt={label}
+                    style={{ height: 80, maxWidth: 200, objectFit: 'contain' }}
+                  />
+                  {signedAt && (
+                    <div style={{ fontSize: 10, color: '#666', marginTop: 4 }}>
+                      {formatDate(signedAt)}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div
+                  style={{
+                    height: 80,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: 11,
+                    color: '#999',
+                  }}
+                >
+                  (belum ditandatangani)
+                </div>
+              )}
               <div
                 style={{
                   borderTop: '1px solid #000',
                   paddingTop: 6,
                   fontSize: 12,
+                  marginTop: 4,
                 }}
               >
                 Tanda Tangan &amp; Nama

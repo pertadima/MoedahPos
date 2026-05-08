@@ -142,6 +142,11 @@ export const purchaseOrdersApi = {
     api.get<PayableSummary>(`/stores/${storeId}/purchase-orders/payables`),
   logDocumentGenerate: (storeId: string, poId: string, docType: string) =>
     api.post(`/stores/${storeId}/purchase-orders/${poId}/document-log`, { document_type: docType }),
+  saveSignatures: (storeId: string, poId: string, supplierSig?: string, buyerSig?: string) =>
+    api.post(`/stores/${storeId}/purchase-orders/${poId}/signatures`, {
+      supplier_signature: supplierSig,
+      buyer_signature: buyerSig,
+    }),
 };
 
 export const suppliersApi = {

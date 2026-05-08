@@ -256,6 +256,7 @@ func New(deps *Dependencies) http.Handler { //nolint:funlen // route wiring is i
 							r.Get("/", withPerm(deps, "pembelian:read", deps.PurchaseOrderHandler.List))
 							r.Post("/", withPerm(deps, "pembelian:write", deps.PurchaseOrderHandler.Create))
 							r.Get("/payables", withPerm(deps, "pembelian:read", deps.PurchaseOrderHandler.PayableSummary))
+							r.Post("/{poId}/signatures", withPerm(deps, "pembelian:write", deps.PurchaseOrderHandler.SaveSignatures))
 							r.Get("/{poId}", withPerm(deps, "pembelian:read", deps.PurchaseOrderHandler.Get))
 							r.Put("/{poId}", withPerm(deps, "pembelian:update", deps.PurchaseOrderHandler.Update))
 							r.Post("/{poId}/submit", withPerm(deps, "pembelian:update", deps.PurchaseOrderHandler.Submit))

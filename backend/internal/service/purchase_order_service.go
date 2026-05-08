@@ -308,6 +308,22 @@ func toPOResponse(po *domain.PurchaseOrder) *dto.POResponse {
 		d := po.NextDeadline.Format(time.RFC3339)
 		resp.NextDeadline = &d
 	}
+	if po.SupplierSignature != nil {
+		resp.SupplierSignature = po.SupplierSignature
+		t := ""
+		if po.SupplierSignedAt != nil {
+			t = po.SupplierSignedAt.Format(time.RFC3339)
+		}
+		resp.SupplierSignedAt = &t
+	}
+	if po.BuyerSignature != nil {
+		resp.BuyerSignature = po.BuyerSignature
+		t := ""
+		if po.BuyerSignedAt != nil {
+			t = po.BuyerSignedAt.Format(time.RFC3339)
+		}
+		resp.BuyerSignedAt = &t
+	}
 	for _, item := range po.Items {
 		resp.Items = append(resp.Items, dto.POItemResponse{
 			ID:          item.ID,
@@ -424,6 +440,22 @@ func (s *PurchaseOrderService) ListPayments(ctx context.Context, poID string) ([
 // PayableSummary returns aggregate debt metrics for the store.
 func (s *PurchaseOrderService) PayableSummary(ctx context.Context, storeID string) (*dto.PayableSummary, error) {
 	return s.paymentRepo.PayableSummary(ctx, storeID)
+}
+
+// SaveSignatures updates supplier and buyer signatures for a PO.
+func (s *PurchaseOrderService) SaveSignatures(ctx context.Context, poID string, req dto.SaveSignaturesRequest) (*dto.POResponse, error) {
+	po, err := s.poRepo.FindByID(ctx, poID)
+	if err != nil || po == nil {
+		return nil, ErrPONotFound
+	}
+
+	if err := s.poRepo.SaveSignatures(ctx, poID, req.SupplierSignature, req.BuyerSignature); err != nil {
+		return nil, fmt.Errorf("SaveSignatures: %w", err)
+	}
+
+	po.SupplierSignature = req.SupplierSignature
+	po.BuyerSignature = req.BuyerSignature
+	return toPOResponse(po), nil
 }
 
 func toPaymentResponse(p *domain.POPayment) *dto.POPaymentResponse {

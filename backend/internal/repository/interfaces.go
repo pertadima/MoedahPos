@@ -139,6 +139,7 @@ type PurchaseOrderRepository interface {
 	FindAll(ctx context.Context, filter dto.POListFilter) ([]*domain.PurchaseOrder, int, error)
 	FindByID(ctx context.Context, id string) (*domain.PurchaseOrder, error)
 	Update(ctx context.Context, po *domain.PurchaseOrder, items []domain.POItem) (*domain.PurchaseOrder, error)
+	SaveSignatures(ctx context.Context, poID string, supplierSig, buyerSig *string) error
 	Submit(ctx context.Context, poID, userID string) error
 	// Receive marks the PO received and atomically updates stock levels.
 	Receive(ctx context.Context, poID, userID string) error

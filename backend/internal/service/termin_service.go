@@ -230,6 +230,14 @@ func (s *TerminService) CalculatePODebt(ctx context.Context, poID string) (*dto.
 // GenerateDocumentData assembles everything the frontend needs to render
 // a printable invoice, payment receipt, or termin agreement.
 // docType must be one of: "invoice", "receipt", "termin_agreement".
+func timeToStrPtr(t *time.Time) *string {
+	if t == nil {
+		return nil
+	}
+	s := t.Format(time.RFC3339)
+	return &s
+}
+
 func (s *TerminService) GenerateDocumentData(ctx context.Context, poID, docType string) (*dto.PODocumentData, error) { //nolint:cyclop // data assembly is inherently branchy
 	po, err := s.poRepo.FindByID(ctx, poID)
 	if err != nil || po == nil {
@@ -252,16 +260,20 @@ func (s *TerminService) GenerateDocumentData(ctx context.Context, poID, docType 
 
 	// Map PO to POResponse for consistency with existing API shape.
 	poResp := dto.POResponse{
-		ID:           po.ID,
-		StoreID:      po.StoreID,
-		SupplierID:   po.SupplierID,
-		SupplierName: po.SupplierName,
-		PONumber:     po.PONumber,
-		Status:       po.Status,
-		TotalAmount:  po.TotalAmount,
-		Notes:        ptrToString(po.Notes),
-		CreatedAt:    po.CreatedAt.Format(time.RFC3339),
-		UpdatedAt:    po.UpdatedAt.Format(time.RFC3339),
+		ID:                po.ID,
+		StoreID:           po.StoreID,
+		SupplierID:        po.SupplierID,
+		SupplierName:      po.SupplierName,
+		PONumber:          po.PONumber,
+		Status:            po.Status,
+		TotalAmount:       po.TotalAmount,
+		Notes:             ptrToString(po.Notes),
+		SupplierSignature: po.SupplierSignature,
+		BuyerSignature:    po.BuyerSignature,
+		SupplierSignedAt:  timeToStrPtr(po.SupplierSignedAt),
+		BuyerSignedAt:     timeToStrPtr(po.BuyerSignedAt),
+		CreatedAt:         po.CreatedAt.Format(time.RFC3339),
+		UpdatedAt:         po.UpdatedAt.Format(time.RFC3339),
 	}
 
 	return &dto.PODocumentData{

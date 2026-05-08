@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import DatePicker from '@/components/ui/DatePicker';
 import Portal from '@/components/ui/Portal';
+import SignaturePad from '@/components/ui/SignaturePad';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { purchaseOrdersApi, suppliersApi, storesApi } from '@/lib/api/store-apis';
 import { productsApi } from '@/lib/api/products';
@@ -1958,6 +1959,48 @@ function PODetailDrawer({
           {/* Termin Schedule */}
           <div style={{ borderTop: '1px solid var(--border)', paddingTop: 14 }}>
             <TerminPanel po={po} storeId={storeId} onOpenDoc={onOpenDoc} onUpdate={onUpdate} />
+          </div>
+
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 12,
+              borderTop: '1px solid var(--border)',
+              paddingTop: 14,
+            }}
+          >
+            <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>Tanda Tangan Digital</div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <SignaturePad
+                label="Supplier"
+                value={po.supplier_signature}
+                onSave={data => {
+                  purchaseOrdersApi
+                    .saveSignatures(storeId, po.id, data, po.buyer_signature)
+                    .then(() => onUpdate?.());
+                }}
+                onClear={() => {
+                  purchaseOrdersApi
+                    .saveSignatures(storeId, po.id, '', po.buyer_signature)
+                    .then(() => onUpdate?.());
+                }}
+              />
+              <SignaturePad
+                label="Pembeli / Toko"
+                value={po.buyer_signature}
+                onSave={data => {
+                  purchaseOrdersApi
+                    .saveSignatures(storeId, po.id, po.supplier_signature, data)
+                    .then(() => onUpdate?.());
+                }}
+                onClear={() => {
+                  purchaseOrdersApi
+                    .saveSignatures(storeId, po.id, po.supplier_signature, '')
+                    .then(() => onUpdate?.());
+                }}
+              />
+            </div>
           </div>
 
           {/* Action buttons */}
