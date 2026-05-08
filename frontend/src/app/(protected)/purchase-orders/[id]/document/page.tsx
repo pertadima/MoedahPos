@@ -319,20 +319,19 @@ function PODocumentPDF({ data }: { data: PODocumentData }) {
             </View>
             <View style={s.sigBox}>
               <Text style={s.sigLabel}>Pihak Pembeli / Penerima</Text>
-              {isReceived && (
+{isReceived && (
                 <View style={s.stamp}>
-                  <Svg width={90} height={50} viewBox="0 0 90 50">
-                    <Rect
-                      x={2}
-                      y={2}
-                      width={86}
-                      height={46}
-                      rx={6}
-                      fill="none"
-                      stroke="#ef4444"
-                      strokeWidth={1.5}
-                    />
+                  <Svg width={110} height={60} viewBox="0 0 110 60">
+                    <Rect x={1} y={1} width={108} height={58} rx={6} fill="none" stroke="#ef4444" strokeWidth={2} />
+                    <Rect x={4} y={4} width={102} height={52} rx={4} fill="none" stroke="#ef4444" strokeWidth={0.5} />
                   </Svg>
+                  <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' }}>
+                    <Text style={{ fontSize: 11, fontWeight: 'bold', color: '#ef4444' }}>VERIFIED</Text>
+                    <Text style={{ fontSize: 6, fontWeight: 'bold', color: '#ef4444', marginTop: 1 }}>{data.store_name || 'MoedahPOS'}</Text>
+                    <Text style={{ fontSize: 5, color: '#ef4444', marginTop: 0.5 }}>
+                      {new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })} {new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                    </Text>
+                  </View>
                 </View>
               )}
               <Text style={s.sigLine}>Tanda Tangan &amp; Nama</Text>
