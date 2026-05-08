@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback, Fragment, useRef } from 'react';
+import { useEffect, useState, useCallback, Fragment, useRef, useMemo } from 'react';
 import {
   ClipboardList,
   Plus,
@@ -55,6 +55,7 @@ const STATUS_LABEL: Record<string, string> = {
   received: 'Diterima',
   cancelled: 'Dibatalkan',
 };
+const STATUS_GROUP_ORDER = ['ordered', 'draft', 'received', 'cancelled'] as const;
 const PAY_STATUS_CFG = {
   unpaid: { label: 'Belum Bayar', color: '#ef4444', bg: 'rgba(239,68,68,0.12)', icon: AlertCircle },
   partial: { label: 'Sebagian', color: '#f59e0b', bg: 'rgba(245,158,11,0.12)', icon: Clock },
@@ -2012,6 +2013,21 @@ export default function PurchaseOrdersPage() {
   const [showNotesPop, setShowNotesPop] = useState(false);
 
   const storeId = selectedStore?.store_id;
+  const groupedOrders = useMemo(() => {
+    const grouped = new Map<string, PurchaseOrder[]>();
+    orders.forEach(po => {
+      const key = po.status || 'draft';
+      const current = grouped.get(key) ?? [];
+      current.push(po);
+      grouped.set(key, current);
+    });
+
+    return STATUS_GROUP_ORDER.map(status => ({
+      status,
+      label: STATUS_LABEL[status],
+      items: grouped.get(status) ?? [],
+    })).filter(group => group.items.length > 0);
+  }, [orders]);
 
   const load = useCallback(() => {
     if (!storeId) return;
@@ -2369,182 +2385,218 @@ export default function PurchaseOrdersPage() {
                 </tr>
               </thead>
               <tbody>
-                {orders.map((po, i) => {
-                  const ps = po.payment_status ?? 'unpaid';
-                  const isExpanded = expandedRow === po.id;
-
-                  return (
-                    <Fragment key={po.id}>
-                      <tr
-                        className="reveal-animate"
+                {groupedOrders.map((group, groupIdx) => (
+                  <Fragment key={group.status}>
+                    <tr>
+                      <td
+                        colSpan={11}
                         style={{
-                          background: isExpanded ? 'var(--bg-elevated)' : 'transparent',
-                          animationDelay: `${0.35 + i * 0.02}s`,
+                          background: 'var(--bg-elevated)',
+                          borderTop: groupIdx === 0 ? 'none' : '1px solid var(--border)',
+                          borderBottom: '1px solid var(--border)',
+                          padding: '10px 12px',
                         }}
                       >
-                        <td
-                          onClick={() => setExpandedRow(isExpanded ? null : po.id)}
-                          style={{ textAlign: 'center', cursor: 'pointer' }}
-                        >
-                          {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-                        </td>
-                        <td
-                          style={{
-                            fontFamily: 'monospace',
-                            fontWeight: 700,
-                            color: 'var(--accent-em)',
-                          }}
-                        >
-                          {po.po_number}
-                        </td>
-                        <td style={{ color: 'var(--text-2)' }}>{po.supplier_name ?? '—'}</td>
-                        <td>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <span className={`badge ${STATUS_BADGE[group.status]}`}>
+                            {group.label}
+                          </span>
                           <span
+                            style={{ fontSize: '0.78rem', color: 'var(--text-3)', fontWeight: 600 }}
+                          >
+                            {group.items.length} PO
+                          </span>
+                        </div>
+                      </td>
+                    </tr>
+                    {group.items.map((po, i) => {
+                      const ps = po.payment_status ?? 'unpaid';
+                      const isExpanded = expandedRow === po.id;
+
+                      return (
+                        <Fragment key={po.id}>
+                          <tr
+                            className="reveal-animate"
                             style={{
-                              background: 'var(--bg-elevated)',
-                              borderRadius: 6,
-                              padding: '2px 8px',
-                              fontSize: '0.78rem',
-                              color: 'var(--text-2)',
+                              background: isExpanded ? 'var(--bg-elevated)' : 'transparent',
+                              animationDelay: `${0.35 + i * 0.02 + groupIdx * 0.03}s`,
                             }}
                           >
-                            {po.total_items ?? po.items?.length ?? 0} item
-                          </span>
-                        </td>
-                        <td style={{ fontWeight: 700, color: 'var(--accent-em)' }}>
-                          {formatRp(po.total_amount)}
-                        </td>
-                        <td>
-                          <span className={`badge ${STATUS_BADGE[po.status]}`}>
-                            {STATUS_LABEL[po.status]}
-                          </span>
-                        </td>
-                        <td>
-                          {po.status === 'received' ? (
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                              <PayStatusBadge status={ps} />
-                              {(po.amount_due ?? 0) > 0 && (
-                                <span
-                                  style={{ fontSize: '0.75rem', fontWeight: 600, color: '#ef4444' }}
-                                >
-                                  Sisa: {formatRp(po.amount_due ?? 0)}
+                            <td
+                              onClick={() => setExpandedRow(isExpanded ? null : po.id)}
+                              style={{ textAlign: 'center', cursor: 'pointer' }}
+                            >
+                              {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                            </td>
+                            <td
+                              style={{
+                                fontFamily: 'monospace',
+                                fontWeight: 700,
+                                color: 'var(--accent-em)',
+                              }}
+                            >
+                              {po.po_number}
+                            </td>
+                            <td style={{ color: 'var(--text-2)' }}>{po.supplier_name ?? '—'}</td>
+                            <td>
+                              <span
+                                style={{
+                                  background: 'var(--bg-elevated)',
+                                  borderRadius: 6,
+                                  padding: '2px 8px',
+                                  fontSize: '0.78rem',
+                                  color: 'var(--text-2)',
+                                }}
+                              >
+                                {po.total_items ?? po.items?.length ?? 0} item
+                              </span>
+                            </td>
+                            <td style={{ fontWeight: 700, color: 'var(--accent-em)' }}>
+                              {formatRp(po.total_amount)}
+                            </td>
+                            <td>
+                              <span className={`badge ${STATUS_BADGE[po.status]}`}>
+                                {STATUS_LABEL[po.status]}
+                              </span>
+                            </td>
+                            <td>
+                              {po.status === 'received' ? (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                                  <PayStatusBadge status={ps} />
+                                  {(po.amount_due ?? 0) > 0 && (
+                                    <span
+                                      style={{
+                                        fontSize: '0.75rem',
+                                        fontWeight: 600,
+                                        color: '#ef4444',
+                                      }}
+                                    >
+                                      Sisa: {formatRp(po.amount_due ?? 0)}
+                                    </span>
+                                  )}
+                                </div>
+                              ) : (
+                                <span style={{ color: 'var(--text-3)', fontSize: '0.78rem' }}>
+                                  —
                                 </span>
                               )}
-                            </div>
-                          ) : (
-                            <span style={{ color: 'var(--text-3)', fontSize: '0.78rem' }}>—</span>
+                            </td>
+                            <td>
+                              {po.next_deadline ? (
+                                <span
+                                  style={{ fontSize: '0.8rem', fontWeight: 600, color: '#dc2626' }}
+                                >
+                                  {formatDate(po.next_deadline)}
+                                </span>
+                              ) : (
+                                <span style={{ color: 'var(--text-3)', fontSize: '0.78rem' }}>
+                                  —
+                                </span>
+                              )}
+                            </td>
+                            <td style={{ color: 'var(--text-3)', fontSize: '0.8rem' }}>
+                              {formatDate(po.created_at)}
+                            </td>
+                            <td style={{ color: 'var(--text-3)', fontSize: '0.8rem' }}>
+                              {po.ordered_by_name || '—'}
+                            </td>
+                            <td>
+                              <div style={{ display: 'flex', gap: 4 }}>
+                                <button
+                                  className="btn btn-ghost btn-sm"
+                                  onClick={e => {
+                                    e.stopPropagation();
+                                    openDetail(po);
+                                  }}
+                                  title="Lihat detail"
+                                  aria-label={`Lihat detail pembelian ${po.po_number}`}
+                                >
+                                  <Eye size={13} />
+                                </button>
+                                {po.status === 'draft' && (
+                                  <button
+                                    className="btn btn-secondary btn-sm"
+                                    onClick={e => {
+                                      e.stopPropagation();
+                                      setConfirm({ po, action: 'submit' });
+                                    }}
+                                  >
+                                    Submit
+                                  </button>
+                                )}
+                                {po.status === 'ordered' && (
+                                  <button
+                                    className="btn btn-primary btn-sm"
+                                    onClick={e => {
+                                      e.stopPropagation();
+                                      setConfirm({ po, action: 'receive' });
+                                    }}
+                                  >
+                                    Terima
+                                  </button>
+                                )}
+                                {po.status === 'received' && ps !== 'paid' && (
+                                  <button
+                                    className="btn btn-secondary btn-sm"
+                                    style={{ color: '#10b981' }}
+                                    onClick={e => {
+                                      e.stopPropagation();
+                                      setPayingPO(po);
+                                    }}
+                                  >
+                                    <Wallet size={12} /> Bayar
+                                  </button>
+                                )}
+                                {(po.status === 'draft' || po.status === 'ordered') && (
+                                  <button
+                                    className="btn btn-danger btn-sm"
+                                    onClick={e => {
+                                      e.stopPropagation();
+                                      setConfirm({ po, action: 'cancel' });
+                                    }}
+                                  >
+                                    Batal
+                                  </button>
+                                )}
+                                <button
+                                  className="btn btn-ghost btn-sm"
+                                  onClick={e => {
+                                    e.stopPropagation();
+                                    openInvoice(po);
+                                  }}
+                                >
+                                  <Printer size={13} />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                          {isExpanded && (
+                            <tr>
+                              <td
+                                colSpan={11}
+                                style={{ padding: 0, borderBottom: '2px solid var(--accent-em)' }}
+                              >
+                                <div style={{ background: 'var(--bg-card)' }}>
+                                  <TerminPanel
+                                    po={po}
+                                    storeId={storeId ?? ''}
+                                    onOpenDoc={type =>
+                                      window.open(
+                                        `/purchase-orders/${po.id}/document?type=${type}`,
+                                        '_blank'
+                                      )
+                                    }
+                                    onUpdate={load}
+                                  />
+                                </div>
+                              </td>
+                            </tr>
                           )}
-                        </td>
-                        <td>
-                          {po.next_deadline ? (
-                            <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#dc2626' }}>
-                              {formatDate(po.next_deadline)}
-                            </span>
-                          ) : (
-                            <span style={{ color: 'var(--text-3)', fontSize: '0.78rem' }}>—</span>
-                          )}
-                        </td>
-                        <td style={{ color: 'var(--text-3)', fontSize: '0.8rem' }}>
-                          {formatDate(po.created_at)}
-                        </td>
-                        <td style={{ color: 'var(--text-3)', fontSize: '0.8rem' }}>
-                          {po.ordered_by_name || '—'}
-                        </td>
-                        <td>
-                          <div style={{ display: 'flex', gap: 4 }}>
-                            <button
-                              className="btn btn-ghost btn-sm"
-                              onClick={e => {
-                                e.stopPropagation();
-                                openDetail(po);
-                              }}
-                              title="Lihat detail"
-                              aria-label={`Lihat detail pembelian ${po.po_number}`}
-                            >
-                              <Eye size={13} />
-                            </button>
-                            {po.status === 'draft' && (
-                              <button
-                                className="btn btn-secondary btn-sm"
-                                onClick={e => {
-                                  e.stopPropagation();
-                                  setConfirm({ po, action: 'submit' });
-                                }}
-                              >
-                                Submit
-                              </button>
-                            )}
-                            {po.status === 'ordered' && (
-                              <button
-                                className="btn btn-primary btn-sm"
-                                onClick={e => {
-                                  e.stopPropagation();
-                                  setConfirm({ po, action: 'receive' });
-                                }}
-                              >
-                                Terima
-                              </button>
-                            )}
-                            {po.status === 'received' && ps !== 'paid' && (
-                              <button
-                                className="btn btn-secondary btn-sm"
-                                style={{ color: '#10b981' }}
-                                onClick={e => {
-                                  e.stopPropagation();
-                                  setPayingPO(po);
-                                }}
-                              >
-                                <Wallet size={12} /> Bayar
-                              </button>
-                            )}
-                            {(po.status === 'draft' || po.status === 'ordered') && (
-                              <button
-                                className="btn btn-danger btn-sm"
-                                onClick={e => {
-                                  e.stopPropagation();
-                                  setConfirm({ po, action: 'cancel' });
-                                }}
-                              >
-                                Batal
-                              </button>
-                            )}
-                            <button
-                              className="btn btn-ghost btn-sm"
-                              onClick={e => {
-                                e.stopPropagation();
-                                openInvoice(po);
-                              }}
-                            >
-                              <Printer size={13} />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                      {isExpanded && (
-                        <tr>
-                          <td
-                            colSpan={11}
-                            style={{ padding: 0, borderBottom: '2px solid var(--accent-em)' }}
-                          >
-                            <div style={{ background: 'var(--bg-card)' }}>
-                              <TerminPanel
-                                po={po}
-                                storeId={storeId ?? ''}
-                                onOpenDoc={type =>
-                                  window.open(
-                                    `/purchase-orders/${po.id}/document?type=${type}`,
-                                    '_blank'
-                                  )
-                                }
-                                onUpdate={load}
-                              />
-                            </div>
-                          </td>
-                        </tr>
-                      )}
-                    </Fragment>
-                  );
-                })}
+                        </Fragment>
+                      );
+                    })}
+                  </Fragment>
+                ))}
               </tbody>
             </table>
           </div>
