@@ -24,7 +24,6 @@ import {
   Trash2,
   FileText,
   Eye,
-  History,
 } from 'lucide-react';
 import DatePicker from '@/components/ui/DatePicker';
 import Portal from '@/components/ui/Portal';
@@ -32,19 +31,9 @@ import { useAuth } from '@/lib/auth/AuthContext';
 import { purchaseOrdersApi, suppliersApi, storesApi } from '@/lib/api/store-apis';
 import { productsApi } from '@/lib/api/products';
 import { formatRp, formatDate, formatNumberInput, parseNumberInput } from '@/lib/utils';
-import type {
-  PurchaseOrder,
-  Product,
-  Supplier,
-  Store,
-  Termin,
-  RecordPaymentRequest,
-  ActivityLog,
-  PaginatedData,
-} from '@/types';
+import type { PurchaseOrder, Product, Supplier, Termin, RecordPaymentRequest } from '@/types';
 import { ApiError } from '@/lib/api/client';
 import { listTermins, createTerminSchedule, recordPayment } from '@/lib/api/termins';
-import { activityLogsApi } from '@/lib/api/activity-logs';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 const STATUS_BADGE: Record<string, string> = {
@@ -308,6 +297,7 @@ function ProductSearchSelect({
   useEffect(() => {
     if (!open) return;
     let cancelled = false;
+
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setSearching(true);
     productsApi
@@ -523,16 +513,115 @@ function formatIDR(n: number) {
   }).format(n);
 }
 
+// ── Print Modal ───────────────────────────────────────────────────────────────
+
+interface PrintModalProps {
+  po: PurchaseOrder;
+  storeId: string;
+  onClose: () => void;
+}
+
+function PrintModal({ po, storeId, onClose }: PrintModalProps) {
+  const docTypes = [
+    { type: 'invoice' as const, label: 'Invoice', desc: 'Faktur Pembelian' },
+    { type: 'receipt' as const, label: 'Kwitansi', desc: 'Bukti Pembayaran' },
+    {
+      type: 'termin_agreement' as const,
+      label: 'Perjanjian Termin',
+      desc: 'Jadwal Pembayaran Bertahap',
+    },
+  ];
+
+  return (
+    <Portal>
+      <div
+        onClick={onClose}
+        style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(0,0,0,0.5)',
+          backdropFilter: 'blur(2px)',
+          zIndex: 5000,
+        }}
+      />
+      <div
+        style={{
+          position: 'fixed',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          background: 'var(--bg-card)',
+          borderRadius: 12,
+          padding: 24,
+          width: 320,
+          zIndex: 5001,
+          boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+        }}
+      >
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: 20,
+          }}
+        >
+          <div>
+            <div style={{ fontWeight: 700, fontSize: '1rem' }}>Cetak Dokumen</div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-3)', marginTop: 2 }}>
+              {po.po_number}
+            </div>
+          </div>
+          <button onClick={onClose} className="btn btn-ghost btn-sm" style={{ padding: 4 }}>
+            <X size={16} />
+          </button>
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {docTypes.map(({ type, label, desc }) => (
+            <button
+              key={type}
+              onClick={() => {
+                if (storeId) purchaseOrdersApi.logDocumentGenerate(storeId, po.id, type);
+                window.open(`/purchase-orders/${po.id}/document?type=${type}`, '_blank');
+                onClose();
+              }}
+              style={{
+                padding: '12px 14px',
+                borderRadius: 8,
+                border: '1px solid var(--border)',
+                background: 'var(--bg-elevated)',
+                cursor: 'pointer',
+                textAlign: 'left',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+              }}
+            >
+              <div>
+                <div style={{ fontWeight: 600, fontSize: '0.88rem' }}>{label}</div>
+                <div style={{ fontSize: '0.73rem', color: 'var(--text-3)', marginTop: 2 }}>
+                  {desc}
+                </div>
+              </div>
+              <Printer size={16} style={{ color: 'var(--text-3)', flexShrink: 0 }} />
+            </button>
+          ))}
+        </div>
+      </div>
+    </Portal>
+  );
+}
+
 // ── TerminPanel ───────────────────────────────────────────────────────────────
 
 interface TerminPanelProps {
   po: PurchaseOrder;
   storeId: string;
-  onOpenDoc: (type: 'invoice' | 'receipt' | 'termin_agreement') => void;
   onUpdate?: () => void;
 }
 
-function TerminPanel({ po, storeId, onOpenDoc, onUpdate }: TerminPanelProps) {
+function TerminPanel({ po, storeId, onUpdate }: TerminPanelProps) {
   const [termins, setTermins] = useState<Termin[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -574,28 +663,6 @@ function TerminPanel({ po, storeId, onOpenDoc, onUpdate }: TerminPanelProps) {
           Jadwal Termin
         </span>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          {(['invoice', 'receipt', 'termin_agreement'] as const).map(type => (
-            <button
-              key={type}
-              id={`doc-${type}-${po.id}`}
-              onClick={() => onOpenDoc(type)}
-              style={{
-                padding: '4px 10px',
-                borderRadius: 6,
-                border: '1px solid var(--border)',
-                background: 'transparent',
-                color: 'var(--text-2)',
-                fontSize: '0.75rem',
-                cursor: 'pointer',
-              }}
-            >
-              {type === 'invoice'
-                ? '📄 Invoice'
-                : type === 'receipt'
-                  ? '🧾 Kwitansi'
-                  : '📋 Perjanjian'}
-            </button>
-          ))}
           {po.status === 'received' && (
             <button
               id={`add-termin-${po.id}`}
@@ -1457,283 +1524,14 @@ function PayModal({ po, storeId, onSuccess, onCancel }: PayModalProps) {
   );
 }
 
-// ── Invoice Modal ─────────────────────────────────────────────────────────────
-interface InvoiceModalProps {
-  po: PurchaseOrder;
-  store: Store | null;
-  onClose: () => void;
-}
-function InvoiceModal({ po, store, onClose }: InvoiceModalProps) {
-  return (
-    <Portal>
-      <div className="modal-overlay no-print" style={{ zIndex: 5000 }} onClick={onClose} />
-      <div
-        style={{
-          position: 'fixed',
-          inset: 0,
-          zIndex: 5001,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          pointerEvents: 'none',
-        }}
-      >
-        <div
-          id="po-invoice"
-          style={{
-            background: '#fff',
-            color: '#111',
-            borderRadius: 12,
-            width: '100%',
-            maxWidth: 680,
-            maxHeight: '92vh',
-            overflowY: 'auto',
-            pointerEvents: 'auto',
-            boxShadow: '0 24px 80px rgba(0,0,0,0.4)',
-            fontFamily: '"Inter","Helvetica Neue",Arial,sans-serif',
-          }}
-        >
-          <div
-            className="no-print"
-            style={{
-              display: 'flex',
-              justifyContent: 'flex-end',
-              gap: 8,
-              padding: '12px 16px',
-              borderBottom: '1px solid #e5e7eb',
-            }}
-          >
-            <button
-              onClick={() => window.print()}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-                padding: '8px 16px',
-                borderRadius: 8,
-                border: 'none',
-                background: '#111',
-                color: '#fff',
-                fontWeight: 600,
-                fontSize: '0.85rem',
-                cursor: 'pointer',
-              }}
-            >
-              <Printer size={14} /> Cetak Invoice
-            </button>
-            <button
-              onClick={onClose}
-              style={{
-                padding: '8px 12px',
-                borderRadius: 8,
-                border: '1px solid #e5e7eb',
-                background: 'transparent',
-                cursor: 'pointer',
-              }}
-            >
-              <X size={14} />
-            </button>
-          </div>
-          <div style={{ padding: '32px 40px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24 }}>
-              <div>
-                <div style={{ fontWeight: 800, fontSize: '1.4rem', marginBottom: 4 }}>
-                  {store?.name ?? 'Toko'}
-                </div>
-                {store?.address && (
-                  <div style={{ fontSize: '0.82rem', color: '#6b7280' }}>{store.address}</div>
-                )}
-                {store?.phone && (
-                  <div style={{ fontSize: '0.82rem', color: '#6b7280' }}>Telp: {store.phone}</div>
-                )}
-              </div>
-              <div style={{ textAlign: 'right' }}>
-                <div
-                  style={{
-                    display: 'inline-block',
-                    padding: '4px 12px',
-                    borderRadius: 6,
-                    background: '#f3f4f6',
-                    fontSize: '0.75rem',
-                    fontWeight: 700,
-                    color: '#374151',
-                    marginBottom: 8,
-                  }}
-                >
-                  PURCHASE ORDER
-                </div>
-                <div style={{ fontWeight: 800, fontSize: '1.15rem' }}>{po.po_number}</div>
-                <div style={{ fontSize: '0.8rem', color: '#6b7280' }}>
-                  Tanggal: {formatDate(po.created_at)}
-                </div>
-              </div>
-            </div>
-            <div style={{ borderTop: '2px solid #111', marginBottom: 20 }} />
-            <div
-              style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, marginBottom: 24 }}
-            >
-              <div>
-                <div
-                  style={{
-                    fontSize: '0.7rem',
-                    fontWeight: 700,
-                    color: '#9ca3af',
-                    letterSpacing: '0.08em',
-                    marginBottom: 6,
-                  }}
-                >
-                  DARI (PEMBELI)
-                </div>
-                <div style={{ fontWeight: 700 }}>{store?.name ?? '—'}</div>
-                {store?.address && (
-                  <div style={{ fontSize: '0.8rem', color: '#4b5563' }}>{store.address}</div>
-                )}
-              </div>
-              <div>
-                <div
-                  style={{
-                    fontSize: '0.7rem',
-                    fontWeight: 700,
-                    color: '#9ca3af',
-                    letterSpacing: '0.08em',
-                    marginBottom: 6,
-                  }}
-                >
-                  KEPADA (SUPPLIER)
-                </div>
-                <div style={{ fontWeight: 700 }}>{po.supplier_name ?? 'Tanpa Supplier'}</div>
-              </div>
-            </div>
-            <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: 20 }}>
-              <thead>
-                <tr style={{ borderBottom: '2px solid #e5e7eb' }}>
-                  {['#', 'Nama Produk', 'SKU', 'Qty', 'Satuan', 'Harga Beli', 'Subtotal'].map(h => (
-                    <th
-                      key={h}
-                      style={{
-                        padding: '8px 10px',
-                        textAlign:
-                          h === 'Harga Beli' || h === 'Subtotal'
-                            ? 'right'
-                            : h === '#' || h === 'Qty'
-                              ? 'center'
-                              : 'left',
-                        fontSize: '0.72rem',
-                        fontWeight: 700,
-                        color: '#6b7280',
-                        textTransform: 'uppercase',
-                      }}
-                    >
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {(po.items ?? []).map((item, i) => (
-                  <tr key={item.id ?? i} style={{ borderBottom: '1px solid #f3f4f6' }}>
-                    <td
-                      style={{
-                        padding: '10px',
-                        textAlign: 'center',
-                        color: '#9ca3af',
-                        fontSize: '0.8rem',
-                      }}
-                    >
-                      {i + 1}
-                    </td>
-                    <td style={{ padding: '10px', fontWeight: 600, fontSize: '0.85rem' }}>
-                      {item.product_name}
-                    </td>
-                    <td
-                      style={{
-                        padding: '10px',
-                        color: '#6b7280',
-                        fontSize: '0.78rem',
-                        fontFamily: 'monospace',
-                      }}
-                    >
-                      {item.product_sku}
-                    </td>
-                    <td style={{ padding: '10px', textAlign: 'center', fontWeight: 600 }}>
-                      {item.quantity}
-                    </td>
-                    <td style={{ padding: '10px', color: '#6b7280' }}>{item.unit}</td>
-                    <td style={{ padding: '10px', textAlign: 'right' }}>
-                      {formatRp(item.unit_cost)}
-                    </td>
-                    <td style={{ padding: '10px', textAlign: 'right', fontWeight: 700 }}>
-                      {formatRp(item.subtotal)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 20 }}>
-              <div style={{ minWidth: 260, borderTop: '2px solid #111', paddingTop: 12 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ fontWeight: 800 }}>TOTAL PEMBELIAN</span>
-                  <span style={{ fontWeight: 800 }}>{formatRp(po.total_amount)}</span>
-                </div>
-              </div>
-            </div>
-            {po.notes && (
-              <div
-                style={{
-                  background: '#f9fafb',
-                  borderRadius: 8,
-                  padding: '12px 16px',
-                  marginBottom: 20,
-                }}
-              >
-                <div
-                  style={{
-                    fontSize: '0.72rem',
-                    color: '#9ca3af',
-                    fontWeight: 700,
-                    marginBottom: 4,
-                  }}
-                >
-                  CATATAN
-                </div>
-                <div style={{ fontSize: '0.85rem' }}>{po.notes}</div>
-              </div>
-            )}
-            <div
-              style={{
-                borderTop: '1px solid #e5e7eb',
-                paddingTop: 16,
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'flex-end',
-              }}
-            >
-              <div style={{ fontSize: '0.72rem', color: '#9ca3af' }}>
-                Dokumen dibuat otomatis oleh MoedahPOS
-              </div>
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ borderTop: '1px solid #9ca3af', width: 140, marginBottom: 4 }} />
-                <div style={{ fontSize: '0.72rem', color: '#9ca3af' }}>Tanda Tangan Supplier</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <style>{`@media print{body>*:not(#portal-root){display:none!important}.no-print{display:none!important}#po-invoice{position:fixed!important;inset:0!important;max-height:none!important;border-radius:0!important;box-shadow:none!important;overflow:visible!important}}`}</style>
-    </Portal>
-  );
-}
-
 // ── Detail Drawer ─────────────────────────────────────────────────────────────
 interface PODetailDrawerProps {
   po: PurchaseOrder;
   storeId: string;
   payments: POPayment[];
   onClose: () => void;
-  onInvoice: () => void;
   onAction: (action: ActionType) => void;
   onPay: () => void;
-  onOpenDoc: (type: 'invoice' | 'receipt' | 'termin_agreement') => void;
   onUpdate?: () => void;
 }
 function PODetailDrawer({
@@ -1741,10 +1539,8 @@ function PODetailDrawer({
   storeId,
   payments,
   onClose,
-  onInvoice,
   onAction,
   onPay,
-  onOpenDoc,
   onUpdate,
 }: PODetailDrawerProps) {
   const payStatus = po.payment_status ?? 'unpaid';
@@ -1800,9 +1596,6 @@ function PODetailDrawer({
             </div>
           </div>
           <div style={{ display: 'flex', gap: 6 }}>
-            <button className="btn btn-secondary btn-sm" onClick={onInvoice}>
-              <Printer size={13} /> Invoice
-            </button>
             <button className="btn btn-ghost btn-sm" onClick={onClose}>
               <X size={16} />
             </button>
@@ -1959,7 +1752,7 @@ function PODetailDrawer({
 
           {/* Termin Schedule */}
           <div style={{ borderTop: '1px solid var(--border)', paddingTop: 14 }}>
-            <TerminPanel po={po} storeId={storeId} onOpenDoc={onOpenDoc} onUpdate={onUpdate} />
+            <TerminPanel po={po} storeId={storeId} onUpdate={onUpdate} />
           </div>
 
           {/* Action buttons */}
@@ -2001,89 +1794,6 @@ function PODetailDrawer({
   );
 }
 
-interface DocumentLogModalProps {
-  po: PurchaseOrder;
-  storeId: string;
-  onClose: () => void;
-}
-
-function DocumentLogModal({ po, storeId, onClose }: DocumentLogModalProps) {
-  const [loading, setLoading] = useState(true);
-  const [rows, setRows] = useState<ActivityLog[]>([]);
-
-  useEffect(() => {
-    let mounted = true;
-    activityLogsApi
-      .list(storeId, {
-        per_page: 100,
-        module: 'PURCHASE',
-        action_type: 'PURCHASE_ORDER_DOCUMENT_GENERATE',
-      })
-      .then(res => {
-        if (!mounted) return;
-        const data = ((res.data as PaginatedData<ActivityLog>).data ?? []).filter(
-          l => l.reference_id === po.id
-        );
-        setRows(data);
-      })
-      .finally(() => {
-        if (mounted) setLoading(false);
-      });
-
-    return () => {
-      mounted = false;
-    };
-  }, [storeId, po.id]);
-
-  return (
-    <Portal>
-      <div className="modal-overlay" style={{ zIndex: 5000 }} onClick={onClose}>
-        <div className="modal-box" style={{ maxWidth: 760 }} onClick={e => e.stopPropagation()}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
-            <h2 className="type-subheading">Log Generate Dokumen · {po.po_number}</h2>
-            <button className="btn btn-ghost btn-sm" onClick={onClose}>
-              <X size={14} />
-            </button>
-          </div>
-          {loading ? (
-            <div style={{ display: 'flex', justifyContent: 'center', padding: 26 }}>
-              <Loader2 size={20} className="loading-spin" />
-            </div>
-          ) : rows.length === 0 ? (
-            <div className="empty-state" style={{ padding: 20 }}>
-              Belum ada log generate dokumen
-            </div>
-          ) : (
-            <div className="tbl-container">
-              <table className="tbl">
-                <thead>
-                  <tr>
-                    <th>Waktu</th>
-                    <th>User</th>
-                    <th>Tipe Dokumen</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows.map(r => {
-                    const metadata = r.metadata as { document_type?: string } | null;
-                    return (
-                      <tr key={r.id}>
-                        <td>{formatDate(r.created_at)}</td>
-                        <td>{r.user_name}</td>
-                        <td>{metadata?.document_type ?? '-'}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      </div>
-    </Portal>
-  );
-}
-
 // ── Main Page ─────────────────────────────────────────────────────────────────
 export default function PurchaseOrdersPage() {
   const { selectedStore } = useAuth();
@@ -2092,10 +1802,8 @@ export default function PurchaseOrdersPage() {
   const [payable, setPayable] = useState<PayableSummary | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [detailPO, setDetailPO] = useState<PurchaseOrder | null>(null);
-  const [invoicePO, setInvoicePO] = useState<PurchaseOrder | null>(null);
-  const [docLogPO, setDocLogPO] = useState<PurchaseOrder | null>(null);
+  const [docPO, setDocPO] = useState<PurchaseOrder | null>(null);
   const [payingPO, setPayingPO] = useState<PurchaseOrder | null>(null);
-  const [storeDetail, setStoreDetail] = useState<Store | null>(null);
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
   const [confirm, setConfirm] = useState<{ po: PurchaseOrder; action: ActionType } | null>(null);
   const [confirmLoading, setConfirmLoading] = useState(false);
@@ -2205,9 +1913,8 @@ export default function PurchaseOrdersPage() {
 
   useEffect(() => {
     if (!storeId) return;
-    Promise.all([suppliersApi.list({ per_page: 100 }), storesApi.get(storeId)]).then(([s, st]) => {
+    Promise.all([suppliersApi.list({ per_page: 100 }), storesApi.get(storeId)]).then(([s, _st]) => {
       setSuppliers((s.data as SupplierListResponse).data ?? []);
-      setStoreDetail(st.data as Store);
     });
   }, [storeId]);
 
@@ -2255,23 +1962,6 @@ export default function PurchaseOrdersPage() {
       } catch (e) {
         console.error(e);
       }
-    },
-    [storeId]
-  );
-
-  const openInvoice = useCallback(
-    async (po: PurchaseOrder) => {
-      if (!storeId) return;
-      let fullPO = po;
-      if (!po.items?.length) {
-        try {
-          const r = await purchaseOrdersApi.get(storeId, po.id);
-          fullPO = r.data as PurchaseOrder;
-        } catch (e) {
-          console.error(e);
-        }
-      }
-      setInvoicePO(fullPO);
     },
     [storeId]
   );
@@ -2696,20 +2386,11 @@ export default function PurchaseOrdersPage() {
                                   className="btn btn-ghost btn-sm"
                                   onClick={e => {
                                     e.stopPropagation();
-                                    openInvoice(po);
+                                    setDocPO(po);
                                   }}
+                                  title="Cetak Dokumen"
                                 >
                                   <Printer size={13} />
-                                </button>
-                                <button
-                                  className="btn btn-ghost btn-sm"
-                                  onClick={e => {
-                                    e.stopPropagation();
-                                    setDocLogPO(po);
-                                  }}
-                                  title="Lihat log dokumen"
-                                >
-                                  <History size={13} />
                                 </button>
                               </div>
                             </td>
@@ -2721,19 +2402,7 @@ export default function PurchaseOrdersPage() {
                                 style={{ padding: 0, borderBottom: '2px solid var(--accent-em)' }}
                               >
                                 <div style={{ background: 'var(--bg-card)' }}>
-                                  <TerminPanel
-                                    po={po}
-                                    storeId={storeId ?? ''}
-                                    onOpenDoc={type => {
-                                      if (storeId)
-                                        purchaseOrdersApi.logDocumentGenerate(storeId, po.id, type);
-                                      window.open(
-                                        `/purchase-orders/${po.id}/document?type=${type}`,
-                                        '_blank'
-                                      );
-                                    }}
-                                    onUpdate={load}
-                                  />
+                                  <TerminPanel po={po} storeId={storeId ?? ''} onUpdate={load} />
                                 </div>
                               </td>
                             </tr>
@@ -2756,26 +2425,17 @@ export default function PurchaseOrdersPage() {
           storeId={storeId ?? ''}
           payments={payments}
           onClose={() => setDetailPO(null)}
-          onInvoice={() => openInvoice(detailPO)}
           onAction={a => setConfirm({ po: detailPO, action: a })}
           onPay={() => setPayingPO(detailPO)}
-          onOpenDoc={type => {
-            if (storeId) purchaseOrdersApi.logDocumentGenerate(storeId, detailPO.id, type);
-            window.open(`/purchase-orders/${detailPO.id}/document?type=${type}`, '_blank');
-          }}
           onUpdate={() => {
             load();
             openDetail(detailPO);
           }}
         />
       )}
-      {invoicePO && (
-        <Portal>
-          <InvoiceModal po={invoicePO} store={storeDetail} onClose={() => setInvoicePO(null)} />
-        </Portal>
-      )}
-      {docLogPO && storeId && (
-        <DocumentLogModal po={docLogPO} storeId={storeId} onClose={() => setDocLogPO(null)} />
+
+      {docPO && storeId && (
+        <PrintModal po={docPO} storeId={storeId} onClose={() => setDocPO(null)} />
       )}
       {payingPO && (
         <Portal>
