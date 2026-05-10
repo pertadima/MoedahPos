@@ -1823,17 +1823,28 @@ export default function PurchaseOrdersPage() {
   }, [actionToast]);
 
   const [activeTab, setActiveTab] = useState<'all' | PurchaseOrder['status']>('all');
+  const [activeDebt, setActiveDebt] = useState<'all' | 'unpaid' | 'partial' | 'paid'>('all');
 
   const filteredOrders = useMemo(() => {
-    if (activeTab === 'all') return orders;
-    return orders.filter(o => o.status === activeTab);
-  }, [orders, activeTab]);
+    let result = activeTab === 'all' ? orders : orders.filter(o => o.status === activeTab);
+    if (activeDebt !== 'all') {
+      result = result.filter(o => o.payment_status === activeDebt);
+    }
+    return result;
+  }, [orders, activeTab, activeDebt]);
 
   const tabs = [
     { key: 'all' as const, label: 'Semua' },
     { key: 'draft' as const, label: 'Draft', badge: 'badge-gray' },
     { key: 'ordered' as const, label: 'Dikirim', badge: 'badge-blue' },
     { key: 'received' as const, label: 'Diterima', badge: 'badge-green' },
+  ];
+
+  const debtTabs = [
+    { key: 'all' as const, label: 'Semua' },
+    { key: 'unpaid' as const, label: 'Belum Bayar' },
+    { key: 'partial' as const, label: 'Sebagian' },
+    { key: 'paid' as const, label: 'Lunas' },
   ];
 
   const load = useCallback(() => {
@@ -2219,6 +2230,64 @@ export default function PurchaseOrdersPage() {
                     fontSize: '0.65rem',
                     fontWeight: 800,
                     marginLeft: 6,
+                  }}
+                >
+                  {count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+        <div
+          style={{
+            display: 'flex',
+            gap: 4,
+            padding: '8px 16px',
+            borderBottom: '1px solid var(--border)',
+            background: 'var(--bg-elevated)',
+          }}
+        >
+          {debtTabs.map(tab => {
+            const statusFiltered =
+              activeTab === 'all' ? orders : orders.filter(o => o.status === activeTab);
+            const count =
+              tab.key === 'all'
+                ? statusFiltered.length
+                : statusFiltered.filter(o => o.payment_status === tab.key).length;
+            return (
+              <button
+                key={tab.key}
+                onClick={() => setActiveDebt(tab.key)}
+                style={{
+                  padding: '4px 12px',
+                  borderRadius: 6,
+                  border: 'none',
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  background:
+                    activeDebt === tab.key
+                      ? (PAY_STATUS_CFG[tab.key === 'all' ? 'unpaid' : tab.key]?.color ??
+                        'var(--accent-em)')
+                      : 'transparent',
+                  color: activeDebt === tab.key ? '#fff' : 'var(--text-3)',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                {tab.label}
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: 16,
+                    height: 16,
+                    borderRadius: '50%',
+                    background: activeDebt === tab.key ? 'rgba(255,255,255,0.25)' : 'var(--border)',
+                    color: activeDebt === tab.key ? '#fff' : 'var(--text-3)',
+                    fontSize: '0.6rem',
+                    fontWeight: 800,
+                    marginLeft: 5,
                   }}
                 >
                   {count}
