@@ -44,8 +44,8 @@ async function attemptRefresh(): Promise<string | null> {
     }
     const json = await res.json();
     const newAccess = json.data?.access_token;
-    const newRefresh = json.data?.refresh_token;
-    if (newAccess) setTokens(newAccess, newRefresh ?? refreshToken);
+    const newRefresh = json.data?.refresh_token ?? refreshToken;
+    if (newAccess) setTokens(newAccess, newRefresh);
     return newAccess ?? null;
   } catch {
     return null;

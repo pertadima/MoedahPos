@@ -2,7 +2,13 @@
 
 import React, { createContext, useContext, useEffect, useMemo, useState, useCallback } from 'react';
 import { authApi } from '@/lib/api/auth';
-import { setTokens, clearTokens, getAccessToken, getRefreshToken } from '@/lib/api/client';
+import {
+  setTokens,
+  clearTokens,
+  getAccessToken,
+  getRefreshToken,
+  ApiError,
+} from '@/lib/api/client';
 import type { User, UserStore } from '@/types';
 
 interface AuthState {
@@ -26,19 +32,43 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const stores = useMemo(() => user?.stores ?? [], [user?.stores]);
 
-  // On mount: try to restore session from stored refresh token
+// On mount: try to restore session from stored refresh token
   useEffect(() => {
     const restore = async () => {
       const token = getAccessToken();
-      if (!token) {
+      const refreshToken = getRefreshToken();
+      if (!token && !refreshToken) {
         setIsLoading(false);
         return;
       }
       try {
-        const res = await authApi.me();
-        const u = res.data;
+        let u: User | null = null;
+        try {
+          const res = await authApi.me();
+          u = res.data;
+        } catch (meErr: unknown) {
+          if (
+            (meErr instanceof ApiError && meErr.status === 401) ||
+            (typeof meErr === 'object' && meErr !== null && 'status' in meErr && (meErr as { status: number }).status === 401)
+          ) {
+            if (refreshToken) {
+              const refreshed = await authApi.refresh(refreshToken);
+              const rd = refreshed as unknown as { data: { access_token?: string } };
+              if (rd.data?.access_token) {
+                const meRes = await authApi.me();
+                u = meRes.data as User;
+              }
+            }
+          } else {
+            throw meErr;
+          }
+        }
+        if (!u) {
+          clearTokens();
+          setIsLoading(false);
+          return;
+        }
         setUser(u);
-        // Restore selected store from localStorage
         const savedStoreId = localStorage.getItem('selected_store_id');
         const storeList = u.stores ?? [];
         const preferred = savedStoreId ? storeList.find(s => s.store_id === savedStoreId) : null;
