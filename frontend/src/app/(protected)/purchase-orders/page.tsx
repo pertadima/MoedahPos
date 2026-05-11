@@ -1824,14 +1824,24 @@ export default function PurchaseOrdersPage() {
 
   const [activeTab, setActiveTab] = useState<'all' | PurchaseOrder['status']>('all');
   const [activeDebt, setActiveDebt] = useState<'all' | 'unpaid' | 'partial' | 'paid'>('all');
+  const [sortBy, setSortBy] = useState<'next_deadline' | 'created_at'>('next_deadline');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
 
   const filteredOrders = useMemo(() => {
     let result = activeTab === 'all' ? orders : orders.filter(o => o.status === activeTab);
     if (activeDebt !== 'all') {
       result = result.filter(o => o.payment_status === activeDebt);
     }
+    result = [...result].sort((a, b) => {
+      const av = a[sortBy] ?? '';
+      const bv = b[sortBy] ?? '';
+      if (!av && !bv) return 0;
+      if (!av) return 1;
+      if (!bv) return -1;
+      return sortDir === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av);
+    });
     return result;
-  }, [orders, activeTab, activeDebt]);
+  }, [orders, activeTab, activeDebt, sortBy, sortDir]);
 
   const tabs = [
     { key: 'all' as const, label: 'Semua' },
@@ -2195,6 +2205,8 @@ export default function PurchaseOrdersPage() {
             gap: 4,
             padding: '12px 16px',
             borderBottom: '1px solid var(--border)',
+            overflowX: 'auto',
+            WebkitOverflowScrolling: 'touch',
           }}
         >
           {tabs.map(tab => {
@@ -2214,6 +2226,8 @@ export default function PurchaseOrdersPage() {
                   background: activeTab === tab.key ? 'var(--accent-em)' : 'var(--bg-elevated)',
                   color: activeTab === tab.key ? '#fff' : 'var(--text-2)',
                   transition: 'all 0.15s ease',
+                  whiteSpace: 'nowrap',
+                  flexShrink: 0,
                 }}
               >
                 {tab.label}
@@ -2241,60 +2255,100 @@ export default function PurchaseOrdersPage() {
         <div
           style={{
             display: 'flex',
-            gap: 4,
+            alignItems: 'center',
+            justifyContent: 'space-between',
             padding: '8px 16px',
             borderBottom: '1px solid var(--border)',
             background: 'var(--bg-elevated)',
+            gap: 8,
+            overflowX: 'auto',
+            WebkitOverflowScrolling: 'touch',
           }}
         >
-          {debtTabs.map(tab => {
-            const statusFiltered =
-              activeTab === 'all' ? orders : orders.filter(o => o.status === activeTab);
-            const count =
-              tab.key === 'all'
-                ? statusFiltered.length
-                : statusFiltered.filter(o => o.payment_status === tab.key).length;
-            return (
-              <button
-                key={tab.key}
-                onClick={() => setActiveDebt(tab.key)}
-                style={{
-                  padding: '4px 12px',
-                  borderRadius: 6,
-                  border: 'none',
-                  fontSize: '0.75rem',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  background:
-                    activeDebt === tab.key
-                      ? (PAY_STATUS_CFG[tab.key === 'all' ? 'unpaid' : tab.key]?.color ??
-                        'var(--accent-em)')
-                      : 'transparent',
-                  color: activeDebt === tab.key ? '#fff' : 'var(--text-3)',
-                  transition: 'all 0.15s ease',
-                }}
-              >
-                {tab.label}
-                <span
+          <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
+            {debtTabs.map(tab => {
+              const statusFiltered =
+                activeTab === 'all' ? orders : orders.filter(o => o.status === activeTab);
+              const count =
+                tab.key === 'all'
+                  ? statusFiltered.length
+                  : statusFiltered.filter(o => o.payment_status === tab.key).length;
+              return (
+                <button
+                  key={tab.key}
+                  onClick={() => setActiveDebt(tab.key)}
                   style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    width: 16,
-                    height: 16,
-                    borderRadius: '50%',
-                    background: activeDebt === tab.key ? 'rgba(255,255,255,0.25)' : 'var(--border)',
+                    padding: '4px 12px',
+                    borderRadius: 6,
+                    border: 'none',
+                    fontSize: '0.75rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    background:
+                      activeDebt === tab.key
+                        ? (PAY_STATUS_CFG[tab.key === 'all' ? 'unpaid' : tab.key]?.color ??
+                          'var(--accent-em)')
+                        : 'transparent',
                     color: activeDebt === tab.key ? '#fff' : 'var(--text-3)',
-                    fontSize: '0.6rem',
-                    fontWeight: 800,
-                    marginLeft: 5,
+                    transition: 'all 0.15s ease',
+                    whiteSpace: 'nowrap',
                   }}
                 >
-                  {count}
-                </span>
-              </button>
-            );
-          })}
+                  {tab.label}
+                  <span
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: 16,
+                      height: 16,
+                      borderRadius: '50%',
+                      background:
+                        activeDebt === tab.key ? 'rgba(255,255,255,0.25)' : 'var(--border)',
+                      color: activeDebt === tab.key ? '#fff' : 'var(--text-3)',
+                      fontSize: '0.6rem',
+                      fontWeight: 800,
+                      marginLeft: 5,
+                    }}
+                  >
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+          <button
+            onClick={() => {
+              if (sortBy === 'next_deadline') {
+                setSortDir(d => (d === 'asc' ? 'desc' : 'asc'));
+              } else {
+                setSortBy('next_deadline');
+                setSortDir('asc');
+              }
+            }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4,
+              padding: '6px 14px',
+              borderRadius: 20,
+              border: '1px solid var(--border)',
+              background: '#fff',
+              color: sortBy === 'next_deadline' ? 'var(--accent-em)' : 'var(--text-3)',
+              fontSize: '0.78rem',
+              fontWeight: 700,
+              cursor: 'pointer',
+              transition: 'all 0.15s ease',
+              boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
+              flexShrink: 0,
+              whiteSpace: 'nowrap',
+            }}
+          >
+            <span>Deadline</span>
+            <span style={{ fontSize: '0.65rem', opacity: 0.85 }}>
+              {sortBy === 'next_deadline' ? (sortDir === 'asc' ? '↑' : '↓') : ''}
+            </span>
+          </button>
         </div>
         {loading ? (
           <div style={{ display: 'flex', justifyContent: 'center', padding: 40 }}>
