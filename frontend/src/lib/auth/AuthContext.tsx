@@ -32,7 +32,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const stores = useMemo(() => user?.stores ?? [], [user?.stores]);
 
-// On mount: try to restore session from stored refresh token
+  // On mount: try to restore session from stored refresh token
   useEffect(() => {
     const restore = async () => {
       const token = getAccessToken();
@@ -49,7 +49,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } catch (meErr: unknown) {
           if (
             (meErr instanceof ApiError && meErr.status === 401) ||
-            (typeof meErr === 'object' && meErr !== null && 'status' in meErr && (meErr as { status: number }).status === 401)
+            (typeof meErr === 'object' &&
+              meErr !== null &&
+              'status' in meErr &&
+              (meErr as { status: number }).status === 401)
           ) {
             if (refreshToken) {
               const refreshed = await authApi.refresh(refreshToken);
