@@ -1,0 +1,40 @@
+# .understandignore — patterns for files/dirs to exclude from analysis
+# Syntax: same as .gitignore (globs, # comments, ! negation, trailing / for dirs)
+# Lines below are suggestions — uncomment to activate.
+# Use ! prefix to force-include something excluded by defaults.
+#
+# Built-in defaults (always excluded unless negated):
+#   node_modules/, .git/, dist/, build/, obj/, *.lock, *.min.js, etc.
+#
+# --- From .gitignore (uncomment to exclude) ---
+
+# .DS_Store
+# .DS_Store?
+# ._*
+# Thumbs.db
+# *.swp
+# *.swo
+# *.code-workspace
+# backend/bin/
+# backend/*.exe
+# backend/*.test
+# backend/vendor/
+# backend/.env
+# backend/.env.prod
+# !backend/.env.example
+# frontend/.next/
+# frontend/out/
+# frontend/build/
+# frontend/node_modules/
+# frontend/.env.local
+# frontend/.env*.local
+# !frontend/.env.example
+# .docker/
+# logs/
+# /tmp/
+
+# --- Test file patterns (uncomment to exclude) ---
+
+# *.test.*
+# *.spec.*
+# *.snap

@@ -1,0 +1,635 @@
+{
+  "version": "1.0.0",
+  "kind": "knowledge",
+  "project": {
+    "name": "moedah-pos-wiki",
+    "languages": [
+      "markdown"
+    ],
+    "frameworks": [],
+    "description": "Knowledge wiki for the Moedah POS project",
+    "analyzedAt": "2026-05-12T02:25:32.387Z",
+    "gitCommitHash": "ba859bc7dc39eb2c6a8ede82bc6ac79b4b30c76b"
+  },
+  "nodes": [
+    {
+      "id": "topic:Architecture",
+      "type": "concept",
+      "name": "Architecture",
+      "filePath": "index.md",
+      "summary": "Wiki category: Architecture",
+      "tags": [
+        "topic",
+        "wiki"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "topic:Development",
+      "type": "concept",
+      "name": "Development",
+      "filePath": "index.md",
+      "summary": "Wiki category: Development",
+      "tags": [
+        "topic",
+        "wiki"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "topic:Operations",
+      "type": "concept",
+      "name": "Operations",
+      "filePath": "index.md",
+      "summary": "Wiki category: Operations",
+      "tags": [
+        "topic",
+        "wiki"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "topic:Concepts",
+      "type": "concept",
+      "name": "Concepts",
+      "filePath": "index.md",
+      "summary": "Wiki category: Concepts",
+      "tags": [
+        "topic",
+        "wiki"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "article:API Endpoints",
+      "type": "document",
+      "name": "API Endpoints",
+      "filePath": "API Endpoints.md",
+      "summary": "API Endpoints",
+      "tags": [
+        "wiki",
+        "Development",
+        "article"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "article:Authentication",
+      "type": "document",
+      "name": "Authentication",
+      "filePath": "Authentication.md",
+      "summary": "Authentication",
+      "tags": [
+        "wiki",
+        "Concepts",
+        "article"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "article:Backend Architecture",
+      "type": "document",
+      "name": "Backend Architecture",
+      "filePath": "Backend Architecture.md",
+      "summary": "Backend Architecture",
+      "tags": [
+        "wiki",
+        "Architecture",
+        "article"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "article:Configuration",
+      "type": "document",
+      "name": "Configuration",
+      "filePath": "Configuration.md",
+      "summary": "Configuration",
+      "tags": [
+        "wiki",
+        "Development",
+        "article"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "article:Database Schema",
+      "type": "document",
+      "name": "Database Schema",
+      "filePath": "Database Schema.md",
+      "summary": "Database Schema",
+      "tags": [
+        "wiki",
+        "Architecture",
+        "article"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "article:Deployment",
+      "type": "document",
+      "name": "Deployment",
+      "filePath": "Deployment.md",
+      "summary": "Deployment",
+      "tags": [
+        "wiki",
+        "Operations",
+        "article"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "article:Frontend Architecture",
+      "type": "document",
+      "name": "Frontend Architecture",
+      "filePath": "Frontend Architecture.md",
+      "summary": "Frontend Architecture",
+      "tags": [
+        "wiki",
+        "Architecture",
+        "article"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "article:Getting Started",
+      "type": "document",
+      "name": "Getting Started",
+      "filePath": "Getting Started.md",
+      "summary": "Getting Started",
+      "tags": [
+        "wiki",
+        "Development",
+        "article"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "article:Loyalty System",
+      "type": "document",
+      "name": "Loyalty System",
+      "filePath": "Loyalty System.md",
+      "summary": "Loyalty System",
+      "tags": [
+        "wiki",
+        "Concepts",
+        "article"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "article:POS Transactions",
+      "type": "document",
+      "name": "POS Transactions",
+      "filePath": "POS Transactions.md",
+      "summary": "POS Transactions",
+      "tags": [
+        "wiki",
+        "Concepts",
+        "article"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "article:Project Overview",
+      "type": "document",
+      "name": "Project Overview",
+      "filePath": "Project Overview.md",
+      "summary": "Project Overview",
+      "tags": [
+        "wiki",
+        "Architecture",
+        "article"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "article:Testing",
+      "type": "document",
+      "name": "Testing",
+      "filePath": "Testing.md",
+      "summary": "Testing",
+      "tags": [
+        "wiki",
+        "Operations",
+        "article"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "article:index",
+      "type": "document",
+      "name": "index",
+      "filePath": "index.md",
+      "summary": "Moedah POS Wiki",
+      "tags": [
+        "wiki",
+        "uncategorized",
+        "article"
+      ],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {
+      "source": "article:API Endpoints",
+      "target": "article:Authentication",
+      "type": "related",
+      "weight": 0.5
+    },
+    {
+      "source": "article:API Endpoints",
+      "target": "article:Backend Architecture",
+      "type": "related",
+      "weight": 0.5
+    },
+    {
+      "source": "article:Authentication",
+      "target": "article:API Endpoints",
+      "type": "related",
+      "weight": 0.5
+    },
+    {
+      "source": "article:Authentication",
+      "target": "article:Backend Architecture",
+      "type": "related",
+      "weight": 0.5
+    },
+    {
+      "source": "article:Backend Architecture",
+      "target": "article:API Endpoints",
+      "type": "related",
+      "weight": 0.5
+    },
+    {
+      "source": "article:Backend Architecture",
+      "target": "article:Authentication",
+      "type": "related",
+      "weight": 0.5
+    },
+    {
+      "source": "article:Backend Architecture",
+      "target": "article:Database Schema",
+      "type": "related",
+      "weight": 0.5
+    },
+    {
+      "source": "article:Backend Architecture",
+      "target": "article:Configuration",
+      "type": "related",
+      "weight": 0.5
+    },
+    {
+      "source": "article:Configuration",
+      "target": "article:Getting Started",
+      "type": "related",
+      "weight": 0.5
+    },
+    {
+      "source": "article:Configuration",
+      "target": "article:Deployment",
+      "type": "related",
+      "weight": 0.5
+    },
+    {
+      "source": "article:Database Schema",
+      "target": "article:Backend Architecture",
+      "type": "related",
+      "weight": 0.5
+    },
+    {
+      "source": "article:Database Schema",
+      "target": "article:Loyalty System",
+      "type": "related",
+      "weight": 0.5
+    },
+    {
+      "source": "article:Deployment",
+      "target": "article:Configuration",
+      "type": "related",
+      "weight": 0.5
+    },
+    {
+      "source": "article:Deployment",
+      "target": "article:Getting Started",
+      "type": "related",
+      "weight": 0.5
+    },
+    {
+      "source": "article:Frontend Architecture",
+      "target": "article:Project Overview",
+      "type": "related",
+      "weight": 0.5
+    },
+    {
+      "source": "article:Frontend Architecture",
+      "target": "article:Getting Started",
+      "type": "related",
+      "weight": 0.5
+    },
+    {
+      "source": "article:Getting Started",
+      "target": "article:Deployment",
+      "type": "related",
+      "weight": 0.5
+    },
+    {
+      "source": "article:Getting Started",
+      "target": "article:Configuration",
+      "type": "related",
+      "weight": 0.5
+    },
+    {
+      "source": "article:Getting Started",
+      "target": "article:Project Overview",
+      "type": "related",
+      "weight": 0.5
+    },
+    {
+      "source": "article:Loyalty System",
+      "target": "article:POS Transactions",
+      "type": "related",
+      "weight": 0.5
+    },
+    {
+      "source": "article:Loyalty System",
+      "target": "article:Database Schema",
+      "type": "related",
+      "weight": 0.5
+    },
+    {
+      "source": "article:POS Transactions",
+      "target": "article:Database Schema",
+      "type": "related",
+      "weight": 0.5
+    },
+    {
+      "source": "article:POS Transactions",
+      "target": "article:Loyalty System",
+      "type": "related",
+      "weight": 0.5
+    },
+    {
+      "source": "article:Project Overview",
+      "target": "article:Backend Architecture",
+      "type": "related",
+      "weight": 0.5
+    },
+    {
+      "source": "article:Project Overview",
+      "target": "article:Frontend Architecture",
+      "type": "related",
+      "weight": 0.5
+    },
+    {
+      "source": "article:Project Overview",
+      "target": "article:Getting Started",
+      "type": "related",
+      "weight": 0.5
+    },
+    {
+      "source": "article:Project Overview",
+      "target": "article:Configuration",
+      "type": "related",
+      "weight": 0.5
+    },
+    {
+      "source": "article:Testing",
+      "target": "article:Backend Architecture",
+      "type": "related",
+      "weight": 0.5
+    },
+    {
+      "source": "article:index",
+      "target": "article:Project Overview",
+      "type": "related",
+      "weight": 0.5
+    },
+    {
+      "source": "article:index",
+      "target": "article:Backend Architecture",
+      "type": "related",
+      "weight": 0.5
+    },
+    {
+      "source": "article:index",
+      "target": "article:Frontend Architecture",
+      "type": "related",
+      "weight": 0.5
+    },
+    {
+      "source": "article:index",
+      "target": "article:Database Schema",
+      "type": "related",
+      "weight": 0.5
+    },
+    {
+      "source": "article:index",
+      "target": "article:Getting Started",
+      "type": "related",
+      "weight": 0.5
+    },
+    {
+      "source": "article:index",
+      "target": "article:API Endpoints",
+      "type": "related",
+      "weight": 0.5
+    },
+    {
+      "source": "article:index",
+      "target": "article:Configuration",
+      "type": "related",
+      "weight": 0.5
+    },
+    {
+      "source": "article:index",
+      "target": "article:Deployment",
+      "type": "related",
+      "weight": 0.5
+    },
+    {
+      "source": "article:index",
+      "target": "article:Testing",
+      "type": "related",
+      "weight": 0.5
+    },
+    {
+      "source": "article:index",
+      "target": "article:Authentication",
+      "type": "related",
+      "weight": 0.5
+    },
+    {
+      "source": "article:index",
+      "target": "article:POS Transactions",
+      "type": "related",
+      "weight": 0.5
+    },
+    {
+      "source": "article:index",
+      "target": "article:Loyalty System",
+      "type": "related",
+      "weight": 0.5
+    },
+    {
+      "source": "article:API Endpoints",
+      "target": "topic:Development",
+      "type": "categorized_under",
+      "weight": 0.6
+    },
+    {
+      "source": "article:Authentication",
+      "target": "topic:Concepts",
+      "type": "categorized_under",
+      "weight": 0.6
+    },
+    {
+      "source": "article:Backend Architecture",
+      "target": "topic:Architecture",
+      "type": "categorized_under",
+      "weight": 0.6
+    },
+    {
+      "source": "article:Configuration",
+      "target": "topic:Development",
+      "type": "categorized_under",
+      "weight": 0.6
+    },
+    {
+      "source": "article:Database Schema",
+      "target": "topic:Architecture",
+      "type": "categorized_under",
+      "weight": 0.6
+    },
+    {
+      "source": "article:Deployment",
+      "target": "topic:Operations",
+      "type": "categorized_under",
+      "weight": 0.6
+    },
+    {
+      "source": "article:Frontend Architecture",
+      "target": "topic:Architecture",
+      "type": "categorized_under",
+      "weight": 0.6
+    },
+    {
+      "source": "article:Getting Started",
+      "target": "topic:Development",
+      "type": "categorized_under",
+      "weight": 0.6
+    },
+    {
+      "source": "article:Loyalty System",
+      "target": "topic:Concepts",
+      "type": "categorized_under",
+      "weight": 0.6
+    },
+    {
+      "source": "article:POS Transactions",
+      "target": "topic:Concepts",
+      "type": "categorized_under",
+      "weight": 0.6
+    },
+    {
+      "source": "article:Project Overview",
+      "target": "topic:Architecture",
+      "type": "categorized_under",
+      "weight": 0.6
+    },
+    {
+      "source": "article:Testing",
+      "target": "topic:Operations",
+      "type": "categorized_under",
+      "weight": 0.6
+    }
+  ],
+  "layers": [
+    {
+      "id": "layer:architecture",
+      "name": "Architecture",
+      "description": "Architecture articles in the wiki",
+      "nodeIds": [
+        "topic:Architecture",
+        "article:Backend Architecture",
+        "article:Database Schema",
+        "article:Frontend Architecture",
+        "article:Project Overview"
+      ]
+    },
+    {
+      "id": "layer:development",
+      "name": "Development",
+      "description": "Development articles in the wiki",
+      "nodeIds": [
+        "topic:Development",
+        "article:API Endpoints",
+        "article:Configuration",
+        "article:Getting Started"
+      ]
+    },
+    {
+      "id": "layer:operations",
+      "name": "Operations",
+      "description": "Operations articles in the wiki",
+      "nodeIds": [
+        "topic:Operations",
+        "article:Deployment",
+        "article:Testing"
+      ]
+    },
+    {
+      "id": "layer:concepts",
+      "name": "Concepts",
+      "description": "Concepts articles in the wiki",
+      "nodeIds": [
+        "topic:Concepts",
+        "article:Authentication",
+        "article:Loyalty System",
+        "article:POS Transactions"
+      ]
+    }
+  ],
+  "tour": [
+    {
+      "order": 1,
+      "title": "Architecture",
+      "description": "Articles about architecture in the Moedah POS wiki",
+      "nodeIds": [
+        "article:Backend Architecture",
+        "article:Database Schema",
+        "article:Frontend Architecture",
+        "article:Project Overview"
+      ]
+    },
+    {
+      "order": 2,
+      "title": "Development",
+      "description": "Articles about development in the Moedah POS wiki",
+      "nodeIds": [
+        "article:API Endpoints",
+        "article:Configuration",
+        "article:Getting Started"
+      ]
+    },
+    {
+      "order": 3,
+      "title": "Operations",
+      "description": "Articles about operations in the Moedah POS wiki",
+      "nodeIds": [
+        "article:Deployment",
+        "article:Testing"
+      ]
+    },
+    {
+      "order": 4,
+      "title": "Concepts",
+      "description": "Articles about concepts in the Moedah POS wiki",
+      "nodeIds": [
+        "article:Authentication",
+        "article:Loyalty System",
+        "article:POS Transactions"
+      ]
+    }
+  ]
+}
