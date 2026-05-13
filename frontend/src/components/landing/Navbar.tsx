@@ -6,11 +6,13 @@ import Image from 'next/image';
 import { motion } from 'framer-motion';
 
 export default function Navbar() {
+  const [scrollY, setScrollY] = useState(0);
   const [section, setSection] = useState<'hero' | 'other'>('hero');
   const heroRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleScroll = () => {
+      setScrollY(window.scrollY);
       if (!heroRef.current) return;
       const rect = heroRef.current.getBoundingClientRect();
       setSection(rect.bottom > 100 ? 'hero' : 'other');
@@ -22,11 +24,16 @@ export default function Navbar() {
   }, []);
 
   const isHero = section === 'hero';
-  const textClass = isHero ? 'text-white' : 'text-gray-900';
-  const hoverClass = isHero ? 'hover:text-white/80' : 'hover:text-gray-600';
-  const bgClass = isHero
-    ? 'bg-transparent backdrop-blur-none border-transparent'
-    : 'bg-white/90 backdrop-blur-md border-gray-100 shadow-sm';
+  const isAtTop = scrollY < 50;
+  const textClass = isHero && !isAtTop ? 'text-white' : isHero ? 'text-white' : 'text-gray-900';
+  const hoverClass =
+    isHero && !isAtTop ? 'text-white/80' : isHero ? 'hover:text-white/80' : 'hover:text-gray-600';
+  const bgClass =
+    isAtTop && isHero
+      ? 'bg-transparent backdrop-blur-none border-transparent'
+      : isHero
+        ? 'bg-[#0884F6]/95 backdrop-blur-md border-white/10'
+        : 'bg-white/90 backdrop-blur-md border-gray-100 shadow-sm';
 
   return (
     <>
@@ -60,9 +67,9 @@ export default function Navbar() {
             <Link
               href="/login"
               className={`h-10 px-5 flex items-center text-sm font-bold rounded-lg transition-all duration-200 shadow-lg shadow-black/5 ${
-                isHero
+                isAtTop && isHero
                   ? 'bg-white text-[#0884F6] hover:bg-blue-50'
-                  : 'bg-[#0884F6] text-white hover:bg-[#0770d4]'
+                  : 'bg-white text-[#0884F6] hover:bg-blue-50'
               }`}
             >
               Mulai Sekarang

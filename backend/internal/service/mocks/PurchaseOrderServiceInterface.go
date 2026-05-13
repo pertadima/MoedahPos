@@ -285,7 +285,7 @@ func (_m *PurchaseOrderServiceInterface) UpdatePO(ctx context.Context, id string
 	return r0, r1
 }
 
-// NewPurchaseOrderServiceInterface creates a new instance of PurchaseOrderServiceInterface. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
+// creates a new instance of PurchaseOrderServiceInterface. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewPurchaseOrderServiceInterface(t interface {
 	mock.TestingT

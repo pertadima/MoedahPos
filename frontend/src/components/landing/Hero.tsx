@@ -55,8 +55,8 @@ export default function Hero() {
 
       {/* ── CONTENT ─────────────────────────────────────────────────────── */}
 
-      <div className="relative z-10 max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-12 items-center gap-12 w-full">
-        <div className="lg:col-span-6 text-left py-8 flex flex-col justify-center">
+      <div className="relative z-10 max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-12 items-center gap-4 md:gap-12 w-full">
+        <div className="lg:col-span-6 text-left pt-32 md:pt-20 lg:py-8 flex flex-col justify-center">
           <motion.div
             initial={{ opacity: 0, x: -30 }}
             animate={{ opacity: 1, x: 0 }}

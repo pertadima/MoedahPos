@@ -13,10 +13,45 @@ import {
   Moon,
   ChevronRight,
   ChevronLeft,
+  User,
+  ShieldCheck,
+  UserCircle,
+  Briefcase,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { ApiError } from '@/lib/api/client';
 import { useTheme } from '@/lib/theme/ThemeContext';
+
+const DEMO_ACCOUNTS = [
+  {
+    role: 'superadmin',
+    label: 'Super Admin',
+    email: process.env.NEXT_PUBLIC_DEMO_ADMIN_EMAIL,
+    password: process.env.NEXT_PUBLIC_DEMO_ADMIN_PASSWORD,
+    icon: ShieldCheck,
+  },
+  {
+    role: 'manager',
+    label: 'Manager',
+    email: process.env.NEXT_PUBLIC_DEMO_MANAGER_EMAIL,
+    password: process.env.NEXT_PUBLIC_DEMO_MANAGER_PASSWORD,
+    icon: Briefcase,
+  },
+  {
+    role: 'cashier',
+    label: 'Kasir',
+    email: process.env.NEXT_PUBLIC_DEMO_CASHIER_EMAIL,
+    password: process.env.NEXT_PUBLIC_DEMO_CASHIER_PASSWORD,
+    icon: UserCircle,
+  },
+  {
+    role: 'staff',
+    label: 'Staff',
+    email: process.env.NEXT_PUBLIC_DEMO_STAFF_EMAIL,
+    password: process.env.NEXT_PUBLIC_DEMO_STAFF_PASSWORD,
+    icon: User,
+  },
+];
 
 const SLIDES = [
   {
@@ -85,6 +120,7 @@ export default function LoginPage() {
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [quickLoginLoading, setQuickLoginLoading] = useState<string | null>(null);
   const { login } = useAuth();
   const router = useRouter();
   const { toggleTheme, isDark } = useTheme();
@@ -123,6 +159,21 @@ export default function LoginPage() {
       else setError('Terjadi kesalahan. Coba lagi.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleQuickLogin = async (account: (typeof DEMO_ACCOUNTS)[number]) => {
+    if (!account.email || !account.password) return;
+    setError('');
+    setQuickLoginLoading(account.role);
+    try {
+      await login(account.email, account.password);
+      router.push('/dashboard');
+    } catch (err) {
+      if (err instanceof ApiError) setError(err.message);
+      else setError('Terjadi kesalahan. Coba lagi.');
+    } finally {
+      setQuickLoginLoading(null);
     }
   };
 
@@ -430,6 +481,65 @@ export default function LoginPage() {
               {error}
             </div>
           )}
+
+          <div style={{ marginTop: 32 }}>
+            <p
+              style={{
+                fontSize: '0.8rem',
+                color: 'var(--text-3)',
+                textAlign: 'center',
+                marginBottom: 16,
+              }}
+            >
+              Login cepat dengan akun demo
+            </p>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10 }}>
+              {DEMO_ACCOUNTS.map(account => {
+                const Icon = account.icon;
+                const isLoading = quickLoginLoading === account.role;
+                return (
+                  <button
+                    key={account.role}
+                    type="button"
+                    onClick={() => handleQuickLogin(account)}
+                    disabled={isLoading || !!quickLoginLoading}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                      padding: '10px 14px',
+                      borderRadius: '12px',
+                      border: '1.5px solid var(--border)',
+                      background: 'var(--bg-elevated)',
+                      color: 'var(--text-2)',
+                      fontSize: '0.82rem',
+                      fontWeight: 600,
+                      cursor: isLoading || !!quickLoginLoading ? 'not-allowed' : 'pointer',
+                      opacity: isLoading || !!quickLoginLoading ? 0.5 : 1,
+                      transition: 'all 0.2s',
+                    }}
+                    onMouseEnter={e => {
+                      if (!quickLoginLoading) {
+                        e.currentTarget.style.borderColor = 'var(--brand)';
+                        e.currentTarget.style.color = 'var(--brand)';
+                      }
+                    }}
+                    onMouseLeave={e => {
+                      e.currentTarget.style.borderColor = 'var(--border)';
+                      e.currentTarget.style.color = 'var(--text-2)';
+                    }}
+                  >
+                    {isLoading ? (
+                      <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} />
+                    ) : (
+                      <Icon size={14} />
+                    )}
+                    {account.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         </div>
 
         {/* Footer */}

@@ -120,6 +120,29 @@ func (h *TerminHandler) GetDocument(w http.ResponseWriter, r *http.Request) {
 	response.Success(w, data)
 }
 
+// LogDocumentGenerate handles POST /stores/:storeId/purchase-orders/:poId/document-log
+// Logs a document generation event to activity_logs (called once per click, not on doc page load).
+func (h *TerminHandler) LogDocumentGenerate(w http.ResponseWriter, r *http.Request) {
+	poID := chi.URLParam(r, "poId")
+	storeID := chi.URLParam(r, "storeId")
+	userID := userIDFromCtx(r)
+
+	var body struct {
+		DocumentType string `json:"document_type"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil || body.DocumentType == "" {
+		response.Error(w, http.StatusBadRequest, "document_type is required")
+		return
+	}
+
+	if err := h.terminSvc.LogDocumentGenerate(r.Context(), poID, storeID, userID, body.DocumentType); err != nil {
+		h.log.Error().Err(err).Msg("LogDocumentGenerate failed")
+		response.InternalError(w)
+		return
+	}
+	response.Success(w, map[string]string{"status": "logged"})
+}
+
 // handleErr maps service-layer sentinel errors to HTTP status codes.
 func (h *TerminHandler) handleErr(w http.ResponseWriter, err error) {
 	switch {

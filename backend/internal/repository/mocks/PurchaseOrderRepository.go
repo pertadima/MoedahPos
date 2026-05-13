@@ -197,7 +197,7 @@ func (_m *PurchaseOrderRepository) Update(ctx context.Context, po *domain.Purcha
 	return r0, r1
 }
 
-// NewPurchaseOrderRepository creates a new instance of PurchaseOrderRepository. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
+// creates a new instance of PurchaseOrderRepository. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewPurchaseOrderRepository(t interface {
 	mock.TestingT

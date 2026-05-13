@@ -104,6 +104,21 @@ func (_m *TerminServiceInterface) GenerateDocumentData(ctx context.Context, poID
 	return r0, r1
 }
 
+// LogDocumentGenerate provides a mock function with given fields: ctx, poID, storeID, userID, docType
+func (_m *TerminServiceInterface) LogDocumentGenerate(ctx context.Context, poID string, storeID string, userID string, docType string) error {
+	ret := _m.Called(ctx, poID, storeID, userID, docType)
+
+	if len(ret) == 0 {
+		panic("no return value specified for LogDocumentGenerate")
+	}
+
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string) error); ok {
+		return rf(ctx, poID, storeID, userID, docType)
+	}
+
+	return ret.Error(0)
+}
+
 // GetTerminSchedule provides a mock function with given fields: ctx, poID
 func (_m *TerminServiceInterface) GetTerminSchedule(ctx context.Context, poID string) ([]dto.TerminResponse, error) {
 	ret := _m.Called(ctx, poID)

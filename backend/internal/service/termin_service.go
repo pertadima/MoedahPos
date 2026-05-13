@@ -250,6 +250,12 @@ func (s *TerminService) GenerateDocumentData(ctx context.Context, poID, docType 
 		supplierName = *po.SupplierName
 	}
 
+	storeName := ""
+	store, err := s.storeRepo.FindByID(ctx, po.StoreID)
+	if err == nil && store != nil {
+		storeName = store.Name
+	}
+
 	// Map PO to POResponse for consistency with existing API shape.
 	poResp := dto.POResponse{
 		ID:           po.ID,
@@ -260,8 +266,25 @@ func (s *TerminService) GenerateDocumentData(ctx context.Context, poID, docType 
 		Status:       po.Status,
 		TotalAmount:  po.TotalAmount,
 		Notes:        ptrToString(po.Notes),
-		CreatedAt:    po.CreatedAt.Format(time.RFC3339),
-		UpdatedAt:    po.UpdatedAt.Format(time.RFC3339),
+		Items: func() []dto.POItemResponse {
+			items := make([]dto.POItemResponse, 0, len(po.Items))
+			for _, it := range po.Items {
+				items = append(items, dto.POItemResponse{
+					ID:          it.ID,
+					ProductID:   it.ProductID,
+					ProductName: it.ProductName,
+					ProductSKU:  it.ProductSKU,
+					Unit:        it.Unit,
+					Quantity:    it.Quantity,
+					UnitCost:    it.UnitCost,
+					ReceivedQty: it.ReceivedQty,
+					Subtotal:    it.Subtotal,
+				})
+			}
+			return items
+		}(),
+		CreatedAt: po.CreatedAt.Format(time.RFC3339),
+		UpdatedAt: po.UpdatedAt.Format(time.RFC3339),
 	}
 
 	return &dto.PODocumentData{
@@ -271,7 +294,20 @@ func (s *TerminService) GenerateDocumentData(ctx context.Context, poID, docType 
 		DebtSummary:  *debt,
 		Termins:      termins,
 		SupplierName: supplierName,
+		StoreName:    storeName,
 	}, nil
+}
+
+func (s *TerminService) LogDocumentGenerate(ctx context.Context, poID, storeID, userID, docType string) error {
+	po, err := s.poRepo.FindByID(ctx, poID)
+	if err != nil || po == nil {
+		return fmt.Errorf("LogDocumentGenerate find PO: %w", err)
+	}
+	s.activitySvc.LogActivity(ctx, userID, storeID, domain.ActionPurchaseOrderDocumentGenerate, domain.ModulePurchase, poID, map[string]interface{}{
+		"po_number":     po.PONumber,
+		"document_type": docType,
+	})
+	return nil
 }
 
 // ─── Mappers ─────────────────────────────────────────────────────────────────
